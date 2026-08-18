@@ -3,7 +3,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=24G
-#SBATCH --time=5-00:00:00
+#SBATCH --time=3-00:00:00
 #SBATCH --array=REQUIRED
 #SBATCH -o slurm_logs/mujoco_sac_td3_sql_5env_5seed/%A_%a.out
 #SBATCH -e slurm_logs/mujoco_sac_td3_sql_5env_5seed/%A_%a.err
