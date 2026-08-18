@@ -11,6 +11,8 @@ paper draft.
 - `environment.py`: four-way continuous-control task.
 - `policy_extraction.py`: categorical OT versus independent assignment.
 - `train.py`: end-to-end online OptiQ training and rollout visualization.
+- `plot_density_correction_ablation.py`: matched-format rollout comparison for
+  trained policies with and without proposal-density correction.
 
 Generated results belong in `outputs/four_way_multigoal/`; selected figures are
 versioned in `assets/figures/four_way_multigoal/`.
