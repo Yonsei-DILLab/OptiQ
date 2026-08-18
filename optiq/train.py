@@ -204,8 +204,8 @@ def train(args: argparse.Namespace) -> None:
         discount=args.discount,
         target_tau=args.target_tau,
         actor_update_frequency=args.actor_update_frequency,
-        num_particles=args.num_particles,
-        proposals_per_particle=args.proposals_per_particle,
+        num_policy_samples=args.num_policy_samples,
+        proposals_per_policy_sample=args.proposals_per_policy_sample,
         proposal_std=args.proposal_std,
         proposal_clip=args.proposal_clip,
         include_anchor=args.include_anchor,
@@ -356,8 +356,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--target-tau", type=float, default=0.005)
     parser.add_argument("--actor-update-frequency", type=int, default=1)
 
-    parser.add_argument("--num-particles", type=int, default=16)
-    parser.add_argument("--proposals-per-particle", type=int, default=5)
+    parser.add_argument("--num-policy-samples", type=int, default=16)
+    parser.add_argument("--proposals-per-policy-sample", type=int, default=5)
     parser.add_argument("--proposal-std", type=float, default=0.2)
     parser.add_argument("--proposal-clip", type=float, default=0.5)
     parser.add_argument(

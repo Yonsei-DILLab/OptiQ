@@ -4,7 +4,7 @@ Controlled experiments for critic-induced Boltzmann policy extraction.
 
 The reproduction suite contains:
 
-- `particle_refinement.py`: exact equal-mass refinement as policy capacity grows;
+- `sample_refinement.py`: exact equal-mass refinement as policy capacity grows;
 - `neural_distillation.py`: neural categorical OT amortization; and
 - `density_correction.py`: correction under uniform and truncated-Gaussian
   proposals.

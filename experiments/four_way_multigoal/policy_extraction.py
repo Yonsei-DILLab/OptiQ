@@ -23,7 +23,7 @@ MODE_CENTERS = np.asarray(
     dtype=np.float32,
 )
 TARGET_WEIGHTS = np.full(4, 0.25, dtype=np.float32)
-PARTICLE_COUNTS = (1, 2, 4, 16, 32, 64)
+POLICY_SAMPLE_COUNTS = (1, 2, 4, 16, 32, 64)
 METHODS = ("ot_categorical", "independent_categorical")
 SEEDS = (0, 1, 2)
 TRAIN_STEPS = 3_000
@@ -69,9 +69,9 @@ def actor_apply(params, latent):
 def sinkhorn_plan(actions):
     centers = jnp.asarray(MODE_CENTERS, dtype=actions.dtype)
     cost = jnp.sum(jnp.square(actions[:, None, :] - centers[None, :, :]), axis=-1)
-    num_particles = actions.shape[0]
+    num_policy_samples = actions.shape[0]
     log_kernel = -cost / jnp.asarray(SINKHORN_EPSILON, dtype=cost.dtype)
-    log_row = jnp.full((num_particles,), -jnp.log(num_particles), dtype=cost.dtype)
+    log_row = jnp.full((num_policy_samples,), -jnp.log(num_policy_samples), dtype=cost.dtype)
     log_column = jnp.full((4,), -jnp.log(4.0), dtype=cost.dtype)
 
     def body(_, duals):
@@ -98,7 +98,7 @@ def sinkhorn_plan(actions):
 
     def balance(_, current_plan):
         current_plan = current_plan * (
-            (1.0 / num_particles)
+            (1.0 / num_policy_samples)
             / jnp.maximum(jnp.sum(current_plan, axis=1, keepdims=True), 1.0e-30)
         )
         current_plan = current_plan * (
@@ -115,14 +115,14 @@ def sinkhorn_plan(actions):
     )
 
 
-@partial(jax.jit, static_argnames=("num_particles", "use_ot"))
-def train_chunk(params, optimizer_state, key, num_particles, use_ot):
+@partial(jax.jit, static_argnames=("num_policy_samples", "use_ot"))
+def train_chunk(params, optimizer_state, key, num_policy_samples, use_ot):
     centers = jnp.asarray(MODE_CENTERS)
 
     def step(carry, _):
         current_params, current_optimizer_state, current_key = carry
         current_key, latent_key, target_key = jax.random.split(current_key, 3)
-        latent = jax.random.normal(latent_key, (num_particles, 2))
+        latent = jax.random.normal(latent_key, (num_policy_samples, 2))
         actions = actor_apply(current_params, latent)
 
         if use_ot:
@@ -130,7 +130,7 @@ def train_chunk(params, optimizer_state, key, num_particles, use_ot):
             row_mass = jnp.sum(plan, axis=1, keepdims=True)
             conditionals = plan / jnp.maximum(row_mass, 1.0e-30)
             row_error = jnp.max(
-                jnp.abs(jnp.sum(plan, axis=1) - 1.0 / num_particles)
+                jnp.abs(jnp.sum(plan, axis=1) - 1.0 / num_policy_samples)
             )
             column_error = jnp.max(
                 jnp.abs(jnp.sum(plan, axis=0) - jnp.asarray(TARGET_WEIGHTS))
@@ -139,7 +139,7 @@ def train_chunk(params, optimizer_state, key, num_particles, use_ot):
                 jnp.abs(jnp.mean(conditionals, axis=0) - jnp.asarray(TARGET_WEIGHTS))
             )
         else:
-            conditionals = jnp.full((num_particles, 4), 0.25)
+            conditionals = jnp.full((num_policy_samples, 4), 0.25)
             row_error = jnp.asarray(0.0)
             column_error = jnp.asarray(0.0)
             selection_marginal_error = jnp.asarray(0.0)
@@ -216,7 +216,7 @@ def distribution_metrics(actions, directions):
     }
 
 
-def train(seed, num_particles, method, train_steps, snapshot_steps):
+def train(seed, num_policy_samples, method, train_steps, snapshot_steps):
     use_ot = method == "ot_categorical"
     key = jax.random.PRNGKey(seed)
     key, init_key = jax.random.split(key)
@@ -243,7 +243,7 @@ def train(seed, num_particles, method, train_steps, snapshot_steps):
             params,
             optimizer_state,
             key,
-            num_particles=num_particles,
+            num_policy_samples=num_policy_samples,
             use_ot=use_ot,
         )
         final_loss = float(chunk_metrics[0])
@@ -304,27 +304,27 @@ def pooled_histogram(axis, actions, color, show_target=True):
 
 def draw_ot_scaling(results, arrays, train_steps):
     display_steps = (0, 500, train_steps)
-    particle_counts = results["setup"]["particle_counts_N"]
+    policy_sample_counts = results["setup"]["policy_sample_counts_N"]
     figure, axes = plt.subplots(
         len(display_steps),
-        len(particle_counts),
+        len(policy_sample_counts),
         figsize=(16.7, 8.4),
         sharex=True,
         sharey=True,
     )
     for row, step in enumerate(display_steps):
-        for column, num_particles in enumerate(particle_counts):
+        for column, num_policy_samples in enumerate(policy_sample_counts):
             axis = axes[row, column]
             pooled = np.concatenate(
                 [
-                    arrays[f"ot_categorical_N{num_particles}_seed{seed}_step{step}"]
+                    arrays[f"ot_categorical_N{num_policy_samples}_seed{seed}_step{step}"]
                     for seed in results["setup"]["seeds"]
                 ],
                 axis=0,
             )
             pooled_histogram(axis, pooled, "RdPu")
             values = [
-                results["runs"]["ot_categorical"][str(num_particles)][str(seed)][
+                results["runs"]["ot_categorical"][str(num_policy_samples)][str(seed)][
                     "metrics"
                 ][str(step)]["sliced_w2"]
                 for seed in results["setup"]["seeds"]
@@ -339,7 +339,7 @@ def draw_ot_scaling(results, arrays, train_steps):
                 fontsize=8,
             )
             if row == 0:
-                axis.set_title(rf"$N={num_particles}$", fontsize=11)
+                axis.set_title(rf"$N={num_policy_samples}$", fontsize=11)
             if column == 0:
                 axis.set_ylabel(f"Step {step:,}\nAction 2")
             if row == len(display_steps) - 1:
@@ -356,10 +356,10 @@ def draw_ot_scaling(results, arrays, train_steps):
 
 
 def draw_method_comparison(results, arrays, train_steps):
-    particle_counts = results["setup"]["particle_counts_N"]
+    policy_sample_counts = results["setup"]["policy_sample_counts_N"]
     figure, axes = plt.subplots(
         len(METHODS),
-        len(particle_counts),
+        len(policy_sample_counts),
         figsize=(16.7, 5.8),
         sharex=True,
         sharey=True,
@@ -373,18 +373,18 @@ def draw_method_comparison(results, arrays, train_steps):
         "independent_categorical": "Blues",
     }
     for row, method in enumerate(METHODS):
-        for column, num_particles in enumerate(particle_counts):
+        for column, num_policy_samples in enumerate(policy_sample_counts):
             axis = axes[row, column]
             pooled = np.concatenate(
                 [
-                    arrays[f"{method}_N{num_particles}_seed{seed}_step{train_steps}"]
+                    arrays[f"{method}_N{num_policy_samples}_seed{seed}_step{train_steps}"]
                     for seed in results["setup"]["seeds"]
                 ],
                 axis=0,
             )
             pooled_histogram(axis, pooled, colormaps[method])
             values = [
-                results["runs"][method][str(num_particles)][str(seed)]["metrics"][
+                results["runs"][method][str(num_policy_samples)][str(seed)]["metrics"][
                     str(train_steps)
                 ]["sliced_w2"]
                 for seed in results["setup"]["seeds"]
@@ -399,7 +399,7 @@ def draw_method_comparison(results, arrays, train_steps):
                 fontsize=8,
             )
             if row == 0:
-                axis.set_title(rf"$N={num_particles}$", fontsize=11)
+                axis.set_title(rf"$N={num_policy_samples}$", fontsize=11)
             if column == 0:
                 axis.set_ylabel(f"{labels[method]}\nAction 2")
             if row == len(METHODS) - 1:
@@ -416,7 +416,7 @@ def draw_method_comparison(results, arrays, train_steps):
 
 
 def draw_scaling_metrics(results, train_steps):
-    particle_counts = np.asarray(results["setup"]["particle_counts_N"])
+    policy_sample_counts = np.asarray(results["setup"]["policy_sample_counts_N"])
     figure, axes = plt.subplots(1, 3, figsize=(13.8, 4.1))
     colors = {
         "ot_categorical": "#c51b7d",
@@ -436,16 +436,16 @@ def draw_scaling_metrics(results, train_steps):
             values = np.asarray(
                 [
                     [
-                        results["runs"][method][str(num_particles)][str(seed)][
+                        results["runs"][method][str(num_policy_samples)][str(seed)][
                             "metrics"
                         ][str(train_steps)][metric]
                         for seed in results["setup"]["seeds"]
                     ]
-                    for num_particles in particle_counts
+                    for num_policy_samples in policy_sample_counts
                 ]
             )
             axis.errorbar(
-                particle_counts,
+                policy_sample_counts,
                 values.mean(axis=1),
                 yerr=values.std(axis=1),
                 marker="o",
@@ -455,15 +455,15 @@ def draw_scaling_metrics(results, train_steps):
                 label=labels[method],
             )
         axis.set_xscale("log", base=2)
-        axis.set_xticks(particle_counts)
-        axis.set_xticklabels(particle_counts)
+        axis.set_xticks(policy_sample_counts)
+        axis.set_xticklabels(policy_sample_counts)
         axis.set(xlabel="Policy samples per OT update N", ylabel=ylabel)
         if limits is not None:
             axis.set_ylim(*limits)
         axis.grid(alpha=0.22)
     axes[0].legend(frameon=False, fontsize=9)
     figure.tight_layout()
-    path = OUTPUT_DIR / "fourway_particle_scaling_metrics.png"
+    path = OUTPUT_DIR / "fourway_sample_scaling_metrics.png"
     figure.savefig(path, dpi=220, bbox_inches="tight")
     plt.close(figure)
     return path
@@ -498,7 +498,7 @@ def main():
     OUTPUT_DIR = output_dir
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    particle_counts = (1, 4, 16) if args.quick else PARTICLE_COUNTS
+    policy_sample_counts = (1, 4, 16) if args.quick else POLICY_SAMPLE_COUNTS
     seeds = (0,) if args.quick else SEEDS
     train_steps = 500 if args.quick else TRAIN_STEPS
     snapshot_steps = (0, 500) if args.quick else SNAPSHOT_STEPS
@@ -509,7 +509,7 @@ def main():
             "target": "four equal Dirac modes at cardinal directions",
             "mode_centers": MODE_CENTERS.tolist(),
             "target_weights": TARGET_WEIGHTS.tolist(),
-            "particle_counts_N": list(particle_counts),
+            "policy_sample_counts_N": list(policy_sample_counts),
             "methods": list(METHODS),
             "seeds": list(seeds),
             "train_steps": train_steps,
@@ -526,24 +526,24 @@ def main():
 
     for method in METHODS:
         results["runs"][method] = {}
-        for num_particles in particle_counts:
-            results["runs"][method][str(num_particles)] = {}
+        for num_policy_samples in policy_sample_counts:
+            results["runs"][method][str(num_policy_samples)] = {}
             for seed in seeds:
                 run = train(
                     seed,
-                    num_particles,
+                    num_policy_samples,
                     method,
                     train_steps,
                     snapshot_steps,
                 )
                 for step, actions in run["snapshots"].items():
-                    arrays[f"{method}_N{num_particles}_seed{seed}_step{step}"] = actions
-                results["runs"][method][str(num_particles)][str(seed)] = (
+                    arrays[f"{method}_N{num_policy_samples}_seed{seed}_step{step}"] = actions
+                results["runs"][method][str(num_policy_samples)][str(seed)] = (
                     serializable_run(run)
                 )
                 final_metrics = run["metrics"][train_steps]
                 print(
-                    f"finished method={method} N={num_particles} seed={seed} "
+                    f"finished method={method} N={num_policy_samples} seed={seed} "
                     f"SW2={final_metrics['sliced_w2']:.5f} "
                     f"modes={final_metrics['covered_modes']}",
                     flush=True,

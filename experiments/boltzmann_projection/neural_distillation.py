@@ -14,7 +14,7 @@ ACTION_LOW = -2.0
 ACTION_HIGH = 2.0
 TEMPERATURE = 1.0
 NUM_PROPOSALS = 512
-PARTICLE_COUNTS = (1, 2, 4, 16, 32, 64)
+POLICY_SAMPLE_COUNTS = (1, 2, 4, 16, 32, 64)
 SEEDS = (0, 1, 2)
 TRAIN_STEPS = 3_000
 CHUNK_STEPS = 500
@@ -49,19 +49,19 @@ def make_target():
     return proposals.astype(np.float32), weights.astype(np.float32)
 
 
-def monotone_row_conditionals(num_particles, target_weights):
+def monotone_row_conditionals(num_policy_samples, target_weights):
     target_cdf = np.concatenate(([0.0], np.cumsum(target_weights)))
     target_cdf[-1] = 1.0
-    conditionals = np.zeros((num_particles, len(target_weights)), dtype=np.float64)
-    for row in range(num_particles):
-        lower = row / num_particles
-        upper = (row + 1) / num_particles
+    conditionals = np.zeros((num_policy_samples, len(target_weights)), dtype=np.float64)
+    for row in range(num_policy_samples):
+        lower = row / num_policy_samples
+        upper = (row + 1) / num_policy_samples
         overlaps = np.maximum(
             0.0,
             np.minimum(upper, target_cdf[1:])
             - np.maximum(lower, target_cdf[:-1]),
         )
-        conditionals[row] = num_particles * overlaps
+        conditionals[row] = num_policy_samples * overlaps
     conditionals /= conditionals.sum(axis=1, keepdims=True)
     return conditionals.astype(np.float32)
 
@@ -96,12 +96,12 @@ def actor_apply(params, latent):
 
 @jax.jit
 def train_chunk(params, optimizer_state, key, proposals, log_conditionals):
-    num_particles = log_conditionals.shape[0]
+    num_policy_samples = log_conditionals.shape[0]
 
     def step(carry, _):
         current_params, current_optimizer_state, current_key = carry
         current_key, latent_key, target_key = jax.random.split(current_key, 3)
-        latent = jax.random.normal(latent_key, (num_particles,))
+        latent = jax.random.normal(latent_key, (num_policy_samples,))
         actions = actor_apply(current_params, latent)
         order = jnp.argsort(actions)
         target_indices_by_rank = jax.random.categorical(
@@ -177,8 +177,8 @@ def evaluate_actor(params, evaluation_latent, proposals, target_weights):
     return actions, w2
 
 
-def train(seed, num_particles, proposals, target_weights):
-    conditionals = monotone_row_conditionals(num_particles, target_weights)
+def train(seed, num_policy_samples, proposals, target_weights):
+    conditionals = monotone_row_conditionals(num_policy_samples, target_weights)
     log_conditionals = np.log(np.maximum(conditionals, 1.0e-30)).astype(np.float32)
     key = jax.random.PRNGKey(seed)
     key, init_key = jax.random.split(key)
@@ -234,7 +234,7 @@ def train(seed, num_particles, proposals, target_weights):
 
 
 def draw_distribution_grid(results, proposals, target_weights):
-    particle_counts = results["setup"]["particle_counts_N"]
+    policy_sample_counts = results["setup"]["policy_sample_counts_N"]
     display_steps = (0, 500, 3_000)
     colors = plt.cm.magma(np.linspace(0.35, 0.78, len(display_steps)))
     width = (ACTION_HIGH - ACTION_LOW) / NUM_PROPOSALS
@@ -244,15 +244,15 @@ def draw_distribution_grid(results, proposals, target_weights):
 
     figure, axes = plt.subplots(
         len(display_steps),
-        len(particle_counts),
+        len(policy_sample_counts),
         figsize=(17.0, 8.0),
         sharex=True,
         sharey=True,
     )
     for row, (step, color) in enumerate(zip(display_steps, colors)):
-        for column, num_particles in enumerate(particle_counts):
+        for column, num_policy_samples in enumerate(policy_sample_counts):
             axis = axes[row, column]
-            runs = results["runs"][str(num_particles)]
+            runs = results["runs"][str(num_policy_samples)]
             pooled = np.concatenate(
                 [np.asarray(run["snapshots"][str(step)]) for run in runs]
             )
@@ -285,7 +285,7 @@ def draw_distribution_grid(results, proposals, target_weights):
                 fontsize=8,
             )
             if row == 0:
-                axis.set_title(rf"$N={num_particles}$", fontsize=11)
+                axis.set_title(rf"$N={num_policy_samples}$", fontsize=11)
             if column == 0:
                 axis.set_ylabel(f"Step {step:,}\nDensity")
             if row == len(display_steps) - 1:
@@ -305,14 +305,14 @@ def draw_distribution_grid(results, proposals, target_weights):
 
 
 def draw_final_w2(results):
-    particle_counts = results["setup"]["particle_counts_N"]
+    policy_sample_counts = results["setup"]["policy_sample_counts_N"]
     means = []
     standard_deviations = []
-    for num_particles in particle_counts:
+    for num_policy_samples in policy_sample_counts:
         values = np.asarray(
             [
                 run["snapshot_w2"][str(TRAIN_STEPS)]
-                for run in results["runs"][str(num_particles)]
+                for run in results["runs"][str(num_policy_samples)]
             ]
         )
         means.append(values.mean())
@@ -320,7 +320,7 @@ def draw_final_w2(results):
 
     figure, axis = plt.subplots(figsize=(6.6, 4.5))
     axis.errorbar(
-        particle_counts,
+        policy_sample_counts,
         means,
         yerr=standard_deviations,
         marker="o",
@@ -330,12 +330,12 @@ def draw_final_w2(results):
     )
     axis.set_xscale("log", base=2)
     axis.set(
-        title="Neural categorical projection vs. particles per update",
-        xlabel="Categorical OT particles N",
+        title="Neural categorical projection vs. samples per update",
+        xlabel="Policy samples per OT update N",
         ylabel=r"Final $W_2(\pi_\theta,\rho_M^Q)$",
-        xticks=particle_counts,
+        xticks=policy_sample_counts,
     )
-    axis.set_xticklabels(particle_counts)
+    axis.set_xticklabels(policy_sample_counts)
     axis.grid(alpha=0.25)
     figure.tight_layout()
     path = OUTPUT_DIR / "categorical_nn_scaling_w2.png"
@@ -352,7 +352,7 @@ def main():
             "action_bounds": [ACTION_LOW, ACTION_HIGH],
             "temperature": TEMPERATURE,
             "proposal_count_M": NUM_PROPOSALS,
-            "particle_counts_N": list(PARTICLE_COUNTS),
+            "policy_sample_counts_N": list(POLICY_SAMPLE_COUNTS),
             "seeds": list(SEEDS),
             "train_steps": TRAIN_STEPS,
             "snapshot_steps": list(SNAPSHOT_STEPS),
@@ -362,16 +362,16 @@ def main():
         "runs": {},
     }
 
-    for num_particles in PARTICLE_COUNTS:
+    for num_policy_samples in POLICY_SAMPLE_COUNTS:
         runs = []
         for seed in SEEDS:
-            result = train(seed, num_particles, proposals, target_weights)
+            result = train(seed, num_policy_samples, proposals, target_weights)
             runs.append(result)
             print(
-                f"finished N={num_particles} seed={seed} "
+                f"finished N={num_policy_samples} seed={seed} "
                 f"W2={result['snapshot_w2'][str(TRAIN_STEPS)]:.6f}"
             )
-        results["runs"][str(num_particles)] = runs
+        results["runs"][str(num_policy_samples)] = runs
 
     distribution_path = draw_distribution_grid(results, proposals, target_weights)
     w2_path = draw_final_w2(results)

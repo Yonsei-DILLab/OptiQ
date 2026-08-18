@@ -16,17 +16,17 @@ $$
 a=\mu_\theta(s,z),\qquad z\sim\mathcal N(0,I).
 $$
 
-Given policy particles $x_i$ and proposals $y_j\sim q_F(\cdot\mid s)$, OptiQ
+Given policy samples $x_i$ and proposals $y_j\sim q_F(\cdot\mid s)$, OptiQ
 constructs the density-corrected value weights
 
 $$
 w_j\propto\exp\left(\frac{Q(s,y_j)}{\tau}-\log q_F(y_j\mid s)\right).
 $$
 
-The target weights and uniform policy-particle marginal define an entropic OT
-problem. A target is sampled from each conditional transport row and regressed
-by squared error. The correction is enabled by default; disabling it is exposed
-only as an ablation.
+The target weights and the uniform marginal over current-policy samples define
+an entropic OT problem. A target is sampled from each conditional transport row
+and regressed by squared error. The correction is enabled by default; disabling
+it is exposed only as an ablation.
 
 ## Installation
 
@@ -54,8 +54,8 @@ The canonical CLI trains the density-corrected method:
 optiq-train \
   --env HalfCheetah-v4 \
   --seed 1 \
-  --num-particles 16 \
-  --proposals-per-particle 5 \
+  --num-policy-samples 16 \
+  --proposals-per-policy-sample 5 \
   --proposal-std 0.2 \
   --temperature 0.25 \
   --density-correction

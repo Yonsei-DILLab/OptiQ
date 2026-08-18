@@ -4,7 +4,7 @@ Controlled validation of multimodal policy extraction in the four-way
 multi-goal task.
 
 The suite contains the local environment definition and a controlled
-finite-particle policy-extraction experiment. The versioned assets additionally
+finite-sample policy-extraction experiment. The versioned assets additionally
 include the online policy rollouts and proposal-correction mechanism used in the
 paper draft.
 

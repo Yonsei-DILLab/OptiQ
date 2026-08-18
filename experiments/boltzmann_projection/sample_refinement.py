@@ -10,12 +10,12 @@ import optax
 from scipy.special import logsumexp, ndtri
 
 
-OUTPUT_DIR = Path("outputs/boltzmann_projection/particle_refinement")
+OUTPUT_DIR = Path("outputs/boltzmann_projection/sample_refinement")
 ACTION_LOW = -2.0
 ACTION_HIGH = 2.0
 TEMPERATURE = 1.0
 PROPOSAL_COUNTS = (8, 32, 128, 512)
-PARTICLE_COUNTS = (1, 2, 4, 16, 32, 64)
+POLICY_SAMPLE_COUNTS = (1, 2, 4, 16, 32, 64)
 SEEDS = (0, 1, 2)
 TRAIN_STEPS = 4_000
 EVAL_SAMPLES = 50_000
@@ -81,16 +81,16 @@ def weighted_wasserstein_2(samples_a, weights_a, samples_b, weights_b):
     return float(np.sqrt(max(squared_cost, 0.0)))
 
 
-def optimal_equal_mass_particles(proposals, target_weights, num_particles):
+def optimal_equal_mass_policy_samples(proposals, target_weights, num_policy_samples):
     # In one dimension, optimal quadratic transport is the monotone quantile
-    # coupling. Each particle represents one interval of mass 1 / N.
+    # coupling. Each policy sample represents one interval of mass 1 / N.
     cumulative = np.concatenate(([0.0], np.cumsum(target_weights)))
     cumulative[-1] = 1.0
-    particles = np.empty(num_particles, dtype=np.float64)
+    policy_samples = np.empty(num_policy_samples, dtype=np.float64)
 
-    for particle_index in range(num_particles):
-        lower = particle_index / num_particles
-        upper = (particle_index + 1) / num_particles
+    for sample_index in range(num_policy_samples):
+        lower = sample_index / num_policy_samples
+        upper = (sample_index + 1) / num_policy_samples
         first_moment = 0.0
         for proposal_index, proposal in enumerate(proposals):
             overlap = max(
@@ -99,16 +99,16 @@ def optimal_equal_mass_particles(proposals, target_weights, num_particles):
                 - max(lower, cumulative[proposal_index]),
             )
             first_moment += overlap * proposal
-        particles[particle_index] = num_particles * first_moment
+        policy_samples[sample_index] = num_policy_samples * first_moment
 
-    particle_weights = np.full(num_particles, 1.0 / num_particles)
+    sample_weights = np.full(num_policy_samples, 1.0 / num_policy_samples)
     error = weighted_wasserstein_2(
-        particles,
-        particle_weights,
+        policy_samples,
+        sample_weights,
         proposals,
         target_weights,
     )
-    return particles, error
+    return policy_samples, error
 
 
 def init_actor(key):
@@ -166,25 +166,25 @@ def train_actor(params, optimizer_state, latent, targets):
     return params, optimizer_state, losses[-1]
 
 
-def latent_anchors(num_particles):
-    quantiles = (np.arange(num_particles) + 0.5) / num_particles
+def latent_anchors(num_policy_samples):
+    quantiles = (np.arange(num_policy_samples) + 0.5) / num_policy_samples
     return ndtri(quantiles).astype(np.float32)
 
 
-def run_neural_realization(seed, target_particles, proposals, target_weights):
-    num_particles = len(target_particles)
-    anchors = latent_anchors(num_particles)
+def run_neural_realization(seed, target_samples, proposals, target_weights):
+    num_policy_samples = len(target_samples)
+    anchors = latent_anchors(num_policy_samples)
     params = init_actor(jax.random.PRNGKey(seed))
     optimizer_state = OPTIMIZER.init(params)
     params, _, final_loss = train_actor(
         params,
         optimizer_state,
         jnp.asarray(anchors),
-        jnp.asarray(target_particles, dtype=jnp.float32),
+        jnp.asarray(target_samples, dtype=jnp.float32),
     )
 
     realized_slots = np.asarray(actor_apply(params, jnp.asarray(anchors)))
-    slot_weights = np.full(num_particles, 1.0 / num_particles)
+    slot_weights = np.full(num_policy_samples, 1.0 / num_policy_samples)
     slot_w2 = weighted_wasserstein_2(
         realized_slots,
         slot_weights,
@@ -214,8 +214,8 @@ def run_neural_realization(seed, target_particles, proposals, target_weights):
 
 def verify_integer_refinement(errors):
     violations = []
-    for smaller in PARTICLE_COUNTS:
-        for larger in PARTICLE_COUNTS:
+    for smaller in POLICY_SAMPLE_COUNTS:
+        for larger in POLICY_SAMPLE_COUNTS:
             if larger > smaller and larger % smaller == 0:
                 if errors[larger] > errors[smaller] + 1.0e-11:
                     violations.append(
@@ -249,22 +249,24 @@ def plot_results(results):
     rug_counts = (1, 2, 4, 16, 64)
     rug_colors = plt.cm.viridis(np.linspace(0.08, 0.92, len(rug_counts)))
     density_max = float(np.max(weights / bin_width))
-    for row, (num_particles, color) in enumerate(zip(rug_counts, rug_colors)):
-        particles = np.asarray(results["exact"]["512"][str(num_particles)]["particles"])
+    for row, (num_policy_samples, color) in enumerate(zip(rug_counts, rug_colors)):
+        policy_samples = np.asarray(
+            results["exact"]["512"][str(num_policy_samples)]["policy_samples"]
+        )
         level = -0.07 * density_max * (row + 1)
         axes[0, 0].scatter(
-            particles,
-            np.full_like(particles, level),
+            policy_samples,
+            np.full_like(policy_samples, level),
             marker="|",
             s=90,
             linewidths=1.5,
             color=color,
-            label=f"N={num_particles}",
+            label=f"N={num_policy_samples}",
             clip_on=False,
         )
     axes[0, 0].set_ylim(-0.42 * density_max, 1.08 * density_max)
     axes[0, 0].set(
-        title="Optimal equal-mass particles refine the bimodal target",
+        title="Optimal equal-mass samples refine the bimodal target",
         xlabel="Action",
         ylabel="Soft-Q density",
     )
@@ -273,10 +275,10 @@ def plot_results(results):
     for num_proposals in PROPOSAL_COUNTS:
         exact_errors = [
             results["exact"][str(num_proposals)][str(n)]["w2"]
-            for n in PARTICLE_COUNTS
+            for n in POLICY_SAMPLE_COUNTS
         ]
         axes[0, 1].plot(
-            PARTICLE_COUNTS,
+            POLICY_SAMPLE_COUNTS,
             exact_errors,
             marker="o",
             color=colors[num_proposals],
@@ -286,24 +288,24 @@ def plot_results(results):
     axes[0, 1].set_yscale("log")
     axes[0, 1].set(
         title="Exact Wasserstein projection",
-        xlabel="Policy particles N",
+        xlabel="Policy samples N",
         ylabel=r"$W_2(\pi^*_{N,M},\rho_M^Q)$",
-        xticks=PARTICLE_COUNTS,
+        xticks=POLICY_SAMPLE_COUNTS,
     )
-    axes[0, 1].set_xticklabels(PARTICLE_COUNTS)
+    axes[0, 1].set_xticklabels(POLICY_SAMPLE_COUNTS)
     axes[0, 1].grid(alpha=0.25)
     axes[0, 1].legend(frameon=False)
 
     for num_proposals in PROPOSAL_COUNTS:
         means = []
         standard_deviations = []
-        for num_particles in PARTICLE_COUNTS:
-            runs = results["neural"][str(num_proposals)][str(num_particles)]
+        for num_policy_samples in POLICY_SAMPLE_COUNTS:
+            runs = results["neural"][str(num_proposals)][str(num_policy_samples)]
             values = np.asarray([run["slot_w2"] for run in runs])
             means.append(values.mean())
             standard_deviations.append(values.std())
         axes[1, 0].errorbar(
-            PARTICLE_COUNTS,
+            POLICY_SAMPLE_COUNTS,
             means,
             yerr=standard_deviations,
             marker="o",
@@ -317,9 +319,9 @@ def plot_results(results):
         title="NN realization at the fixed latent slots",
         xlabel="Distilled latent slots N",
         ylabel=r"$W_2(\hat\pi_{\theta,N},\rho_M^Q)$",
-        xticks=PARTICLE_COUNTS,
+        xticks=POLICY_SAMPLE_COUNTS,
     )
-    axes[1, 0].set_xticklabels(PARTICLE_COUNTS)
+    axes[1, 0].set_xticklabels(POLICY_SAMPLE_COUNTS)
     axes[1, 0].grid(alpha=0.25)
     axes[1, 0].legend(frameon=False)
 
@@ -327,15 +329,15 @@ def plot_results(results):
     exact = np.asarray(
         [
             results["exact"][str(num_proposals)][str(n)]["w2"]
-            for n in PARTICLE_COUNTS
+            for n in POLICY_SAMPLE_COUNTS
         ]
     )
     slot_means = []
     slot_stds = []
     actor_means = []
     actor_stds = []
-    for num_particles in PARTICLE_COUNTS:
-        runs = results["neural"][str(num_proposals)][str(num_particles)]
+    for num_policy_samples in POLICY_SAMPLE_COUNTS:
+        runs = results["neural"][str(num_proposals)][str(num_policy_samples)]
         slots = np.asarray([run["slot_w2"] for run in runs])
         actors = np.asarray([run["full_actor_w2"] for run in runs])
         slot_means.append(slots.mean())
@@ -343,14 +345,14 @@ def plot_results(results):
         actor_means.append(actors.mean())
         actor_stds.append(actors.std())
     axes[1, 1].plot(
-        PARTICLE_COUNTS,
+        POLICY_SAMPLE_COUNTS,
         exact,
         marker="o",
         color="black",
-        label="Ideal particles",
+        label="Ideal samples",
     )
     axes[1, 1].errorbar(
-        PARTICLE_COUNTS,
+        POLICY_SAMPLE_COUNTS,
         slot_means,
         yerr=slot_stds,
         marker="s",
@@ -359,7 +361,7 @@ def plot_results(results):
         label="NN at anchors",
     )
     axes[1, 1].errorbar(
-        PARTICLE_COUNTS,
+        POLICY_SAMPLE_COUNTS,
         actor_means,
         yerr=actor_stds,
         marker="^",
@@ -371,16 +373,16 @@ def plot_results(results):
     axes[1, 1].set_yscale("log")
     axes[1, 1].set(
         title="Ideal refinement vs. neural amortization (M=512)",
-        xlabel="Policy particles N",
+        xlabel="Policy samples N",
         ylabel=r"$W_2$ to fixed soft-Q target",
-        xticks=PARTICLE_COUNTS,
+        xticks=POLICY_SAMPLE_COUNTS,
     )
-    axes[1, 1].set_xticklabels(PARTICLE_COUNTS)
+    axes[1, 1].set_xticklabels(POLICY_SAMPLE_COUNTS)
     axes[1, 1].grid(alpha=0.25)
     axes[1, 1].legend(frameon=False)
 
     figure.tight_layout()
-    figure_path = OUTPUT_DIR / "fixed_proposal_particle_refinement.png"
+    figure_path = OUTPUT_DIR / "fixed_proposal_sample_refinement.png"
     figure.savefig(figure_path, dpi=220, bbox_inches="tight")
     plt.close(figure)
 
@@ -403,24 +405,24 @@ def plot_exact_main(results):
         color="black",
         linewidth=2.0,
     )
-    for row, (num_particles, color) in enumerate(zip(rug_counts, rug_colors)):
-        particles = np.asarray(
-            results["exact"]["512"][str(num_particles)]["particles"]
+    for row, (num_policy_samples, color) in enumerate(zip(rug_counts, rug_colors)):
+        policy_samples = np.asarray(
+            results["exact"]["512"][str(num_policy_samples)]["policy_samples"]
         )
         level = -0.07 * density_max * (row + 1)
         main_axes[0].scatter(
-            particles,
-            np.full_like(particles, level),
+            policy_samples,
+            np.full_like(policy_samples, level),
             marker="|",
             s=90,
             linewidths=1.5,
             color=color,
-            label=f"N={num_particles}",
+            label=f"N={num_policy_samples}",
             clip_on=False,
         )
     main_axes[0].set_ylim(-0.42 * density_max, 1.08 * density_max)
     main_axes[0].set(
-        title="Equal-mass particle refinement (M=512)",
+        title="Equal-mass sample refinement (M=512)",
         xlabel="Action",
         ylabel="Soft-Q density",
     )
@@ -429,10 +431,10 @@ def plot_exact_main(results):
     for num_proposals in PROPOSAL_COUNTS:
         exact_errors = [
             results["exact"][str(num_proposals)][str(n)]["w2"]
-            for n in PARTICLE_COUNTS
+            for n in POLICY_SAMPLE_COUNTS
         ]
         main_axes[1].plot(
-            PARTICLE_COUNTS,
+            POLICY_SAMPLE_COUNTS,
             exact_errors,
             marker="o",
             color=colors[num_proposals],
@@ -442,15 +444,15 @@ def plot_exact_main(results):
     main_axes[1].set_yscale("log")
     main_axes[1].set(
         title="Monotone Wasserstein refinement",
-        xlabel="Policy particles N",
+        xlabel="Policy samples N",
         ylabel=r"$W_2(\pi^*_{N,M},\rho_M^Q)$",
-        xticks=PARTICLE_COUNTS,
+        xticks=POLICY_SAMPLE_COUNTS,
     )
-    main_axes[1].set_xticklabels(PARTICLE_COUNTS)
+    main_axes[1].set_xticklabels(POLICY_SAMPLE_COUNTS)
     main_axes[1].grid(alpha=0.25)
     main_axes[1].legend(frameon=False)
     main_figure.tight_layout()
-    main_figure_path = OUTPUT_DIR / "exact_particle_refinement_main.png"
+    main_figure_path = OUTPUT_DIR / "exact_sample_refinement_main.png"
     main_figure.savefig(main_figure_path, dpi=220, bbox_inches="tight")
     plt.close(main_figure)
     return main_figure_path
@@ -461,7 +463,7 @@ def main():
     parser.add_argument(
         "--exact-only",
         action="store_true",
-        help="Recompute only the exact finite-particle projection figure.",
+        help="Recompute only the exact finite-sample projection figure.",
     )
     args = parser.parse_args()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -470,7 +472,7 @@ def main():
             "action_bounds": [ACTION_LOW, ACTION_HIGH],
             "temperature": TEMPERATURE,
             "proposal_counts_M": list(PROPOSAL_COUNTS),
-            "particle_counts_N": list(PARTICLE_COUNTS),
+            "policy_sample_counts_N": list(POLICY_SAMPLE_COUNTS),
             "seeds": list(SEEDS),
             "train_steps": TRAIN_STEPS,
             "actor_width": ACTOR_WIDTH,
@@ -499,29 +501,29 @@ def main():
         exact_for_m = {}
         neural_for_m = {}
         exact_errors = {}
-        for num_particles in PARTICLE_COUNTS:
-            target_particles, exact_w2 = optimal_equal_mass_particles(
+        for num_policy_samples in POLICY_SAMPLE_COUNTS:
+            target_samples, exact_w2 = optimal_equal_mass_policy_samples(
                 proposals,
                 target_weights,
-                num_particles,
+                num_policy_samples,
             )
-            exact_for_m[str(num_particles)] = {
+            exact_for_m[str(num_policy_samples)] = {
                 "w2": exact_w2,
-                "particles": target_particles.tolist(),
+                "policy_samples": target_samples.tolist(),
             }
-            exact_errors[num_particles] = exact_w2
+            exact_errors[num_policy_samples] = exact_w2
             if not args.exact_only:
-                neural_for_m[str(num_particles)] = [
+                neural_for_m[str(num_policy_samples)] = [
                     run_neural_realization(
                         seed,
-                        target_particles,
+                        target_samples,
                         proposals,
                         target_weights,
                     )
                     for seed in SEEDS
                 ]
             print(
-                f"finished M={num_proposals} N={num_particles} "
+                f"finished M={num_proposals} N={num_policy_samples} "
                 f"exact_W2={exact_w2:.8f}"
             )
         results["exact"][str(num_proposals)] = exact_for_m

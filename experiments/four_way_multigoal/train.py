@@ -147,8 +147,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--horizon", type=int, default=20)
     parser.add_argument("--init-steps", type=int, default=1_500)
     parser.add_argument("--trajectory-count", type=int, default=100)
-    parser.add_argument("--num-particles", type=int, default=16)
-    parser.add_argument("--proposals-per-particle", type=int, default=5)
+    parser.add_argument("--num-policy-samples", type=int, default=16)
+    parser.add_argument("--proposals-per-policy-sample", type=int, default=5)
     parser.add_argument("--proposal-std", type=float, default=0.2)
     parser.add_argument("--temperature", type=float, default=0.25)
     parser.add_argument(
@@ -168,8 +168,8 @@ def main() -> None:
     environment = MultiGoalEnv(horizon=args.horizon)
     observation, _ = environment.reset(seed=args.seed)
     config = OptiQConfig(
-        num_particles=args.num_particles,
-        proposals_per_particle=args.proposals_per_particle,
+        num_policy_samples=args.num_policy_samples,
+        proposals_per_policy_sample=args.proposals_per_policy_sample,
         proposal_std=args.proposal_std,
         proposal_clip=2.5 * args.proposal_std,
         density_correction=args.density_correction,

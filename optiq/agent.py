@@ -30,8 +30,8 @@ class OptiQConfig:
     target_tau: float = 0.005
     actor_update_frequency: int = 1
 
-    num_particles: int = 16
-    proposals_per_particle: int = 5
+    num_policy_samples: int = 16
+    proposals_per_policy_sample: int = 5
     proposal_std: float = 0.2
     proposal_clip: float = 0.5
     include_anchor: bool = True
@@ -57,10 +57,12 @@ class OptiQConfig:
             raise ValueError("target_tau must be in (0, 1].")
         if self.actor_update_frequency < 1:
             raise ValueError("actor_update_frequency must be at least one.")
-        if self.num_particles < 1 or self.proposals_per_particle < 1:
-            raise ValueError("num_particles and proposals_per_particle must be positive.")
-        if self.include_anchor and self.proposals_per_particle < 2:
-            raise ValueError("An anchor requires at least two proposals per particle.")
+        if self.num_policy_samples < 1 or self.proposals_per_policy_sample < 1:
+            raise ValueError(
+                "num_policy_samples and proposals_per_policy_sample must be positive."
+            )
+        if self.include_anchor and self.proposals_per_policy_sample < 2:
+            raise ValueError("An anchor requires at least two proposals per policy sample.")
         if self.proposal_std <= 0.0 or self.td_noise_std <= 0.0:
             raise ValueError("Proposal and TD noise standard deviations must be positive.")
         if self.proposal_clip <= 0.0 or self.td_noise_clip <= 0.0:
@@ -191,38 +193,38 @@ class OptiQ(flax.struct.PyTreeNode):
         observations = batch["observations"]
         batch_size = observations.shape[0]
         action_dim = len(self.config.action_low)
-        num_particles = self.config.num_particles
-        repeats = self.config.proposals_per_particle
+        num_policy_samples = self.config.num_policy_samples
+        repeats = self.config.proposals_per_policy_sample
         latent_rng, proposal_rng, assignment_rng = jax.random.split(rng, 3)
 
         latents = jax.random.normal(
             latent_rng,
-            (batch_size, num_particles, action_dim),
+            (batch_size, num_policy_samples, action_dim),
             dtype=observations.dtype,
         )
         repeated_observations = jnp.broadcast_to(
             observations[:, None, :],
-            (batch_size, num_particles, observations.shape[-1]),
+            (batch_size, num_policy_samples, observations.shape[-1]),
         )
         raw_actions = self.actor.apply_fn(
             {"params": actor_params},
-            repeated_observations.reshape(batch_size * num_particles, -1),
-            latents.reshape(batch_size * num_particles, action_dim),
-        ).reshape(batch_size, num_particles, action_dim)
-        particles = clip_action(
+            repeated_observations.reshape(batch_size * num_policy_samples, -1),
+            latents.reshape(batch_size * num_policy_samples, action_dim),
+        ).reshape(batch_size, num_policy_samples, action_dim)
+        policy_samples = clip_action(
             raw_actions, self.config.action_low, self.config.action_high
         )
 
         proposals = sample_truncated_gaussian(
             proposal_rng,
-            particles,
+            policy_samples,
             repeats,
             self.config.proposal_std,
             self.config.proposal_clip,
             self.config.action_low,
             self.config.action_high,
             include_anchor=self.config.include_anchor,
-        ).reshape(batch_size, num_particles * repeats, action_dim)
+        ).reshape(batch_size, num_policy_samples * repeats, action_dim)
         num_proposals = proposals.shape[1]
         proposal_observations = jnp.broadcast_to(
             observations[:, None, :],
@@ -239,7 +241,7 @@ class OptiQ(flax.struct.PyTreeNode):
         if self.config.density_correction:
             proposal_log_density = truncated_mixture_log_density(
                 jax.lax.stop_gradient(proposals),
-                jax.lax.stop_gradient(particles),
+                jax.lax.stop_gradient(policy_samples),
                 self.config.proposal_std,
                 self.config.proposal_clip,
                 self.config.action_low,
@@ -249,7 +251,7 @@ class OptiQ(flax.struct.PyTreeNode):
         source_weights = jax.lax.stop_gradient(jax.nn.softmax(logits, axis=-1))
 
         squared_costs = jnp.sum(
-            jnp.square(particles[:, :, None, :] - proposals[:, None, :, :]),
+            jnp.square(policy_samples[:, :, None, :] - proposals[:, None, :, :]),
             axis=-1,
         )
         costs = squared_costs / (
@@ -282,10 +284,10 @@ class OptiQ(flax.struct.PyTreeNode):
             "actor/loss": loss,
             "actor/source_ess_fraction": (source_ess / num_proposals).mean(),
             "actor/selected_delta_l2": jnp.linalg.norm(
-                particles - selected_actions, axis=-1
+                policy_samples - selected_actions, axis=-1
             ).mean(),
             "actor/policy_spread_l2": jnp.linalg.norm(
-                particles.std(axis=1), axis=-1
+                policy_samples.std(axis=1), axis=-1
             ).mean(),
         }
         return loss, metrics
