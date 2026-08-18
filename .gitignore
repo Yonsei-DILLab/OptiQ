@@ -220,3 +220,4 @@ __marimo__/
 # OptiQ experiment artifacts
 outputs/
 wandb/
+slurm-*.out

@@ -64,10 +64,29 @@ optiq-train \
 Runs are written to `outputs/`. Pass `--wandb-project PROJECT` for W&B logging.
 Use `--no-density-correction` only for the proposal-bias ablation.
 
+MuJoCo benchmark settings are versioned as a common method config plus one
+environment override. Later config files override earlier ones, while explicit
+CLI options have the highest priority:
+
+```bash
+optiq-train \
+  --config configs/mujoco/default.yaml \
+  --config configs/mujoco/envs/ant.yaml \
+  --seed 1
+```
+
+The 5-environment, 5-seed Slurm array can be launched with:
+
+```bash
+sbatch --array=0-24%8 launch/mujoco_5env_5seed.sh
+```
+
 ## Repository Layout
 
 ```text
 optiq/                               Core actor, critic, OT, and training code
+configs/mujoco/                      Reproducible MuJoCo benchmark settings
+launch/                              Cluster launchers
 experiments/boltzmann_projection/    Analytic and neural controlled studies
 experiments/four_way_multigoal/      Multimodal online-control study
 assets/figures/                      Selected paper-facing figures

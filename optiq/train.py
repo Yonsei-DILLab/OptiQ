@@ -1,8 +1,8 @@
 import argparse
 import csv
+import json
 from dataclasses import asdict
 from datetime import datetime
-import json
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +11,7 @@ import gymnasium as gym
 import jax
 import jax.numpy as jnp
 import numpy as np
+import yaml
 
 from .agent import OptiQ, OptiQConfig
 
@@ -86,6 +87,8 @@ class Logger:
         config: dict[str, Any],
         wandb_project: str | None,
         run_name: str,
+        wandb_entity: str | None = None,
+        wandb_group: str | None = None,
     ) -> None:
         output_dir.mkdir(parents=True, exist_ok=True)
         self.output_dir = output_dir
@@ -102,6 +105,8 @@ class Logger:
 
             self.wandb_run = wandb.init(
                 project=wandb_project,
+                entity=wandb_entity,
+                group=wandb_group,
                 name=run_name,
                 config=config,
             )
@@ -192,7 +197,9 @@ def train(args: argparse.Namespace) -> None:
     observation = flatten_observation(observation)
     action_space = environment.action_space
     if not isinstance(action_space, gym.spaces.Box) or len(action_space.shape) != 1:
-        raise ValueError("OptiQ requires a one-dimensional continuous Box action space.")
+        raise ValueError(
+            "OptiQ requires a one-dimensional continuous Box action space."
+        )
     action_low = np.asarray(action_space.low, np.float32)
     action_high = np.asarray(action_space.high, np.float32)
 
@@ -231,11 +238,18 @@ def train(args: argparse.Namespace) -> None:
     )
 
     run_name = args.run_name or f"optiq_{args.env}_seed{args.seed}"
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().astimezone().strftime("%Y%m%d_%H%M%S")
     output_dir = Path(args.output_dir) / f"{run_name}_{timestamp}"
     full_config = {**vars(args), "agent": asdict(agent.config)}
     full_config["output_dir"] = str(full_config["output_dir"])
-    logger = Logger(output_dir, full_config, args.wandb_project, run_name)
+    logger = Logger(
+        output_dir,
+        full_config,
+        args.wandb_project,
+        run_name,
+        args.wandb_entity,
+        args.wandb_group,
+    )
 
     np_rng = np.random.default_rng(args.seed + 2)
     action_rng = jax.random.PRNGKey(args.seed + 3)
@@ -266,7 +280,9 @@ def train(args: argparse.Namespace) -> None:
 
         if step > args.warmup_steps and replay.size >= args.batch_size:
             for _ in range(args.updates_per_step):
-                agent, last_update_metrics = agent.update(replay.sample(args.batch_size))
+                agent, last_update_metrics = agent.update(
+                    replay.sample(args.batch_size)
+                )
 
         if terminated or truncated:
             logger.log(
@@ -331,15 +347,46 @@ def train(args: argparse.Namespace) -> None:
     environment.close()
 
 
-def parse_hidden_dims(value: str) -> tuple[int, ...]:
-    dimensions = tuple(int(item) for item in value.split(",") if item)
+def parse_hidden_dims(value: str | list[int] | tuple[int, ...]) -> tuple[int, ...]:
+    if isinstance(value, str):
+        dimensions = tuple(int(item) for item in value.split(",") if item)
+    else:
+        dimensions = tuple(int(item) for item in value)
     if not dimensions or any(dimension < 1 for dimension in dimensions):
-        raise argparse.ArgumentTypeError("hidden dims must be comma-separated positives")
+        raise argparse.ArgumentTypeError(
+            "hidden dims must be comma-separated positives"
+        )
     return dimensions
+
+
+def load_config_defaults(
+    paths: list[str], parser: argparse.ArgumentParser
+) -> dict[str, Any]:
+    valid_keys = {action.dest for action in parser._actions}
+    merged: dict[str, Any] = {}
+    for path_string in paths:
+        path = Path(path_string)
+        with path.open() as handle:
+            values = yaml.safe_load(handle) or {}
+        if not isinstance(values, dict):
+            raise TypeError(f"Config must contain a mapping: {path}")
+        unknown_keys = sorted(set(values) - valid_keys)
+        if unknown_keys:
+            unknown = ", ".join(unknown_keys)
+            raise ValueError(f"Unknown config keys in {path}: {unknown}")
+        merged.update(values)
+    return merged
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--config",
+        action="append",
+        default=[],
+        metavar="PATH",
+        help="YAML config to merge; may be repeated and CLI options take precedence.",
+    )
     parser.add_argument("--env", default="HalfCheetah-v4")
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--total-steps", type=int, default=1_000_000)
@@ -349,7 +396,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--updates-per-step", type=int, default=1)
     parser.add_argument("--behavior-noise-std", type=float, default=0.0)
 
-    parser.add_argument("--hidden-dims", type=parse_hidden_dims, default=(256, 256, 256))
+    parser.add_argument(
+        "--hidden-dims", type=parse_hidden_dims, default=(256, 256, 256)
+    )
     parser.add_argument("--actor-lr", type=float, default=3.0e-4)
     parser.add_argument("--critic-lr", type=float, default=3.0e-4)
     parser.add_argument("--discount", type=float, default=0.99)
@@ -392,12 +441,29 @@ def build_parser() -> argparse.ArgumentParser:
         "--save-replay-buffer", action=argparse.BooleanOptionalAction, default=False
     )
     parser.add_argument("--wandb-project")
+    parser.add_argument("--wandb-entity")
+    parser.add_argument("--wandb-group")
     parser.add_argument("--run-name")
     return parser
 
 
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    config_parser = argparse.ArgumentParser(add_help=False)
+    config_parser.add_argument("--config", action="append", default=[])
+    config_args, _ = config_parser.parse_known_args(argv)
+
+    parser = build_parser()
+    try:
+        parser.set_defaults(**load_config_defaults(config_args.config, parser))
+    except (OSError, TypeError, ValueError, yaml.YAMLError) as error:
+        parser.error(str(error))
+    args = parser.parse_args(argv)
+    args.hidden_dims = parse_hidden_dims(args.hidden_dims)
+    return args
+
+
 def main() -> None:
-    train(build_parser().parse_args())
+    train(parse_args())
 
 
 if __name__ == "__main__":

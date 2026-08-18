@@ -1,0 +1,33 @@
+warmup_steps: 10000
+replay_capacity: 1000000
+batch_size: 256
+updates_per_step: 1
+behavior_noise_std: 0.0
+
+hidden_dims: [256, 256, 256]
+actor_lr: 0.0003
+critic_lr: 0.0003
+discount: 0.99
+target_tau: 0.005
+actor_update_frequency: 1
+
+num_policy_samples: 16
+proposals_per_policy_sample: 5
+proposal_std: 0.2
+proposal_clip: 0.5
+include_anchor: true
+density_correction: true
+temperature: 0.25
+sinkhorn_epsilon: 0.05
+sinkhorn_iterations: 30
+
+td_noise_std: 0.2
+td_noise_clip: 0.5
+
+eval_interval: 5000
+eval_episodes: 10
+log_interval: 5000
+save_checkpoints: true
+checkpoint_interval: 0
+save_replay_buffer: false
+output_dir: outputs/mujoco5

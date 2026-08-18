@@ -1,0 +1,2 @@
+env: HalfCheetah-v4
+total_steps: 3000000
