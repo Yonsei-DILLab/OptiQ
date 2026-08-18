@@ -34,7 +34,8 @@ the project and entity.
 `mujoco_sac_td3_sql_5env_5seed.sh` maps task IDs `0-74` to SAC, TD3, and
 Soft Q-Learning across the same environments and seeds. SAC and TD3 use the
 existing SBX JAX wrapper. SQL uses the modern PyTorch reproduction released
-with MEow, pinned and prepared by `scripts/setup_softqlearning_pytorch.sh`.
+with MEow (`ChienFeng-hub/softqlearning-pytorch`, commit `5d6bd410`), pinned and
+prepared by `scripts/setup_softqlearning_pytorch.sh`.
 All methods share 256x3 GELU networks, 10k random warmup, batch size 256,
 replay size 1M, and the same evaluation protocol. Algorithm-specific entropy,
 exploration, target, and SVGD settings remain unchanged.
