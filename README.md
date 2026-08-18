@@ -1,15 +1,12 @@
 # OptiQ
 
-**Density-corrected value-weighted optimal transport for one-step implicit
-policies in online reinforcement learning.**
+**OptiQ: Learning Expressive Soft-Q Policy via Value-Weighted Optimal Transport**
 
 OptiQ fits a likelihood-free implicit actor to a critic-induced Boltzmann
-target. For each state, it samples policy particles and local action proposals,
+target. For each state, it samples policy actions and local action proposals,
 corrects the proposal-sampling bias, solves a value-weighted optimal transport
 problem, and distills categorical assignments into the actor. The learned actor
 retains one-step inference and does not require policy-density evaluation.
-
-![Proposal-density correction](assets/figures/four_way_multigoal/density_correction_mechanism.png)
 
 ## Method
 
@@ -66,23 +63,6 @@ optiq-train \
 
 Runs are written to `outputs/`. Pass `--wandb-project PROJECT` for W&B logging.
 Use `--no-density-correction` only for the proposal-bias ablation.
-
-## Controlled Experiments
-
-The finite-particle experiments isolate the theoretical claims from critic and
-online-learning error:
-
-```bash
-python -m experiments.boltzmann_projection.particle_refinement
-python -m experiments.boltzmann_projection.neural_distillation
-python -m experiments.boltzmann_projection.density_correction
-```
-
-The four-way task evaluates multimodal extraction and proposal-density
-correction. Reproduction commands are documented in
-[`experiments/four_way_multigoal`](experiments/four_way_multigoal/README.md).
-
-![Finite-particle refinement](assets/figures/boltzmann_projection/particle_refinement.png)
 
 ## Repository Layout
 
