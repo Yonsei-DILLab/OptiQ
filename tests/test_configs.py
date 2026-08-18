@@ -14,7 +14,7 @@ BASE_CONFIG = ROOT / "configs/mujoco/default.yaml"
         ("hopper", "Hopper-v4", 1_000_000),
         ("walker2d", "Walker2d-v4", 1_500_000),
         ("halfcheetah", "HalfCheetah-v4", 3_000_000),
-        ("ant", "Ant-v4", 2_000_000),
+        ("ant", "Ant-v4", 3_000_000),
         ("humanoid", "Humanoid-v4", 5_000_000),
     ),
 )

@@ -221,3 +221,5 @@ __marimo__/
 outputs/
 wandb/
 slurm-*.out
+slurm_logs/
+.third_party/

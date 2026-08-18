@@ -1,0 +1,90 @@
+diff --git a/modules/network.py b/modules/network.py
+index cf9005c..0788565 100644
+--- a/modules/network.py
++++ b/modules/network.py
+@@ -12,7 +12,7 @@ class MLP(nn.Module):
+         input_dim: int,
+         output_dim: int = 0,
+         hidden_sizes: Sequence[int] = (),
+-        activation: Optional[Union[ModuleType, Sequence[ModuleType]]] = nn.ReLU(),
++        activation: Optional[Union[ModuleType, Sequence[ModuleType]]] = nn.GELU(),
+     ) -> None:
+         super().__init__()
+         if activation:
+diff --git a/modules/train_loop.py b/modules/train_loop.py
+index dfdde79..3bf5ee7 100644
+--- a/modules/train_loop.py
++++ b/modules/train_loop.py
+@@ -4,12 +4,12 @@ import torch
+ from modules.utils import log
+ 
+ 
+-def evaluate(envs, agent, deterministic=True):
++def evaluate(envs, agent, seed, deterministic=True):
+     with torch.no_grad():
+         num_envs = envs.unwrapped.num_envs
+         rewards = np.zeros((num_envs,))
+         dones = np.zeros((num_envs,)).astype(bool)
+-        s, _ = envs.reset(seed=range(num_envs))
++        s, _ = envs.reset(seed=range(seed, seed + num_envs))
+         while not all(dones):
+             a = agent.act(s, deterministic=deterministic)
+             a = a.cpu().detach().numpy()
+@@ -18,7 +18,7 @@ def evaluate(envs, agent, deterministic=True):
+             rewards += r * (1-dones)
+             dones |= done
+             s = s_
+-    return rewards.mean()
++    return rewards.mean(), rewards.std()
+ 
+ def train_loop(agent, args, buffer, train_envs, test_envs, logger):
+     best_test_return = -np.inf
+@@ -55,7 +55,12 @@ def train_loop(agent, args, buffer, train_envs, test_envs, logger):
+         if t >= args.warmup_steps:
+             result = agent.update()
+             if t % args.eval_every == 0:
+-                test_return = evaluate(test_envs, agent, deterministic=args.deterministic)
++                test_return, test_return_std = evaluate(
++                    test_envs,
++                    agent,
++                    seed=args.seed + 10_000,
++                    deterministic=args.deterministic,
++                )
+                 print(f"return = {test_return} at step {t}")
+                 if test_return > best_test_return:
+                     best_test_return = test_return
+@@ -64,6 +69,8 @@ def train_loop(agent, args, buffer, train_envs, test_envs, logger):
+                 log({
+                     **result,
+                     "Test/return": test_return,
++                    "eval/episode_return": test_return,
++                    "eval/episode_return_std": test_return_std,
+                     "Test/best_return": best_test_return,
+                     "Steps": t,
+                 }, t, logger)
+diff --git a/train.py b/train.py
+index d929b4e..535b4c0 100644
+--- a/train.py
++++ b/train.py
+@@ -7,7 +7,7 @@ import numpy as np
+ import torch
+ from torch.utils.tensorboard import SummaryWriter
+ import gymnasium as gym
+-from gymnasium.wrappers import RescaleAction
++from gymnasium.wrappers.vector import RescaleAction
+ import argparse
+ import toy_envs
+ from agents import *
+@@ -30,8 +30,11 @@ def main(cfg : DictConfig) -> None:
+     t0 = datetime.datetime.now().strftime("%m%d_%H%M%S")
+     if args.wandb:
+         wandb.init(
++            entity=os.environ.get("WANDB_ENTITY") or None,
+             project=args.project,
+-            name=f"{args.env}_{args.algo}_{args.description}_{t0}_seed{args.seed}",
++            group=os.environ.get("WANDB_GROUP") or None,
++            name=os.environ.get("WANDB_RUN_NAME")
++            or f"{args.env}_{args.algo}_{args.description}_{t0}_seed{args.seed}",
+             config=args,
+             sync_tensorboard=True,
+         )
