@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "optiq-rl"
+version = "0.1.0"
+description = "Density-corrected value-weighted optimal transport for online RL."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flax>=0.10",
+    "gymnasium[mujoco]>=1.0",
+    "jax>=0.4.35",
+    "numpy>=1.24",
+    "optax>=0.2.3",
+]
+
+[project.optional-dependencies]
+experiments = [
+    "matplotlib>=3.7",
+    "scipy>=1.10",
+]
+logging = ["wandb>=0.16"]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.8",
+]
+
+[project.scripts]
+optiq-train = "optiq.train:main"
+
+[tool.setuptools.packages.find]
+include = ["optiq*", "experiments*"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"

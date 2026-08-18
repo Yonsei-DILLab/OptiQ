@@ -9,7 +9,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-from environment import MultiGoalEnv
+from experiments.four_way_multigoal.environment import MultiGoalEnv
 
 
 def reward_surface(points: np.ndarray, goals: np.ndarray) -> np.ndarray:
@@ -21,6 +21,15 @@ def load_result(run_dir: Path) -> tuple[list[np.ndarray], dict]:
     with np.load(run_dir / "trajectories.npz") as archive:
         trajectories = [archive[key] for key in sorted(archive.files)]
     summary = json.loads((run_dir / "summary.json").read_text())
+    if "trajectory_goal_counts" not in summary:
+        summary["trajectory_goal_counts"] = summary["goal_counts"]
+    if "trajectory_goal_entropy" not in summary:
+        counts = np.asarray(summary["trajectory_goal_counts"], dtype=np.float64)
+        probabilities = counts / max(counts.sum(), 1.0)
+        positive = probabilities > 0.0
+        summary["trajectory_goal_entropy"] = float(
+            -np.sum(probabilities[positive] * np.log(probabilities[positive]))
+        )
     return trajectories, summary
 
 

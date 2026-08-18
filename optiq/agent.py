@@ -35,6 +35,7 @@ class OptiQConfig:
     proposal_std: float = 0.2
     proposal_clip: float = 0.5
     include_anchor: bool = True
+    density_correction: bool = True
     temperature: float = 0.25
     sinkhorn_epsilon: float = 0.05
     sinkhorn_iterations: int = 30
@@ -234,15 +235,17 @@ class OptiQ(flax.struct.PyTreeNode):
         ).reshape(2, batch_size, num_proposals)
         source_q = jax.lax.stop_gradient(source_qs.mean(axis=0))
 
-        proposal_log_density = truncated_mixture_log_density(
-            jax.lax.stop_gradient(proposals),
-            jax.lax.stop_gradient(particles),
-            self.config.proposal_std,
-            self.config.proposal_clip,
-            self.config.action_low,
-            self.config.action_high,
-        )
-        logits = source_q / self.config.temperature - proposal_log_density
+        logits = source_q / self.config.temperature
+        if self.config.density_correction:
+            proposal_log_density = truncated_mixture_log_density(
+                jax.lax.stop_gradient(proposals),
+                jax.lax.stop_gradient(particles),
+                self.config.proposal_std,
+                self.config.proposal_clip,
+                self.config.action_low,
+                self.config.action_high,
+            )
+            logits = logits - proposal_log_density
         source_weights = jax.lax.stop_gradient(jax.nn.softmax(logits, axis=-1))
 
         squared_costs = jnp.sum(

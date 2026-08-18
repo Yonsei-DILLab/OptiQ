@@ -209,6 +209,7 @@ def train(args: argparse.Namespace) -> None:
         proposal_std=args.proposal_std,
         proposal_clip=args.proposal_clip,
         include_anchor=args.include_anchor,
+        density_correction=args.density_correction,
         temperature=args.temperature,
         sinkhorn_epsilon=args.sinkhorn_epsilon,
         sinkhorn_iterations=args.sinkhorn_iterations,
@@ -361,6 +362,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--proposal-clip", type=float, default=0.5)
     parser.add_argument(
         "--include-anchor", action=argparse.BooleanOptionalAction, default=True
+    )
+    parser.add_argument(
+        "--density-correction",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Correct proposal-sampling bias in the value-weighted marginal.",
     )
     parser.add_argument("--temperature", type=float, default=0.25)
     parser.add_argument("--sinkhorn-epsilon", type=float, default=0.05)

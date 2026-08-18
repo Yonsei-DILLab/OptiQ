@@ -88,13 +88,24 @@ def collect_trajectories(
     return trajectories
 
 
-def goal_counts(trajectories: list[np.ndarray]) -> np.ndarray:
+def summarize_trajectories(trajectories: list[np.ndarray]) -> dict[str, object]:
     endpoints = np.asarray([trajectory[-1] for trajectory in trajectories])
     goals = MultiGoalEnv().goal_positions
-    nearest = np.argmin(
-        np.linalg.norm(endpoints[:, None, :] - goals[None, :, :], axis=-1), axis=1
-    )
-    return np.bincount(nearest, minlength=4)
+    distances = np.linalg.norm(endpoints[:, None, :] - goals[None, :, :], axis=-1)
+    nearest = np.argmin(distances, axis=1)
+    successes = distances.min(axis=1) < 1.0
+    counts = np.bincount(nearest[successes], minlength=len(goals))
+    probabilities = counts / max(counts.sum(), 1)
+    positive = probabilities > 0.0
+    entropy = -np.sum(probabilities[positive] * np.log(probabilities[positive]))
+    lengths = np.asarray([len(trajectory) - 1 for trajectory in trajectories])
+    return {
+        "trajectory_count": len(trajectories),
+        "trajectory_success_rate": float(successes.mean()),
+        "trajectory_goal_counts": counts.tolist(),
+        "trajectory_goal_entropy": float(entropy),
+        "trajectory_mean_length": float(lengths.mean()),
+    }
 
 
 def plot_trajectories(trajectories: list[np.ndarray], path: Path) -> None:
@@ -144,6 +155,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--proposals-per-particle", type=int, default=5)
     parser.add_argument("--proposal-std", type=float, default=0.2)
     parser.add_argument("--temperature", type=float, default=0.25)
+    parser.add_argument(
+        "--density-correction",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
     parser.add_argument("--output-dir", default="outputs/four_way_multigoal/online")
     parser.add_argument("--save-replay-buffer", action="store_true")
     return parser.parse_args()
@@ -160,6 +176,7 @@ def main() -> None:
         proposals_per_particle=args.proposals_per_particle,
         proposal_std=args.proposal_std,
         proposal_clip=2.5 * args.proposal_std,
+        density_correction=args.density_correction,
         temperature=args.temperature,
         td_noise_std=args.proposal_std,
         td_noise_clip=2.5 * args.proposal_std,
@@ -198,7 +215,7 @@ def main() -> None:
     trajectories = collect_trajectories(
         agent, args.trajectory_count, args.horizon, args.seed + 10_000
     )
-    counts = goal_counts(trajectories)
+    trajectory_summary = summarize_trajectories(trajectories)
     np.savez_compressed(
         output_dir / "trajectories.npz",
         **{
@@ -215,7 +232,11 @@ def main() -> None:
         replay,
         args.save_replay_buffer,
     )
-    summary = {"seed": args.seed, "goal_counts": counts.tolist()}
+    summary = {
+        "seed": args.seed,
+        "density_correction": args.density_correction,
+        **trajectory_summary,
+    }
     (output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     environment.close()
     print(json.dumps(summary, indent=2))

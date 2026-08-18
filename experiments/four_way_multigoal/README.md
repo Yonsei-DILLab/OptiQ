@@ -14,5 +14,20 @@ paper draft.
 - `plot_density_correction_ablation.py`: matched-format rollout comparison for
   trained policies with and without proposal-density correction.
 
+Run the controlled correction ablation from the repository root:
+
+```bash
+python -m experiments.four_way_multigoal.train \
+  --density-correction \
+  --output-dir outputs/four_way_multigoal/corrected
+python -m experiments.four_way_multigoal.train \
+  --no-density-correction \
+  --output-dir outputs/four_way_multigoal/uncorrected
+python -m experiments.four_way_multigoal.plot_density_correction_ablation \
+  --uncorrected-run outputs/four_way_multigoal/uncorrected/seed_1 \
+  --corrected-run outputs/four_way_multigoal/corrected/seed_1 \
+  --output outputs/four_way_multigoal/density_correction_ablation.png
+```
+
 Generated results belong in `outputs/four_way_multigoal/`; selected figures are
 versioned in `assets/figures/four_way_multigoal/`.
