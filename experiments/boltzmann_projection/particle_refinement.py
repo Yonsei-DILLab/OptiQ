@@ -1,5 +1,3 @@
-"""Exact and neural finite-particle approximation of a bimodal target."""
-
 import argparse
 import json
 from pathlib import Path

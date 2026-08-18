@@ -1,7 +1,3 @@
-"""Train OptiQ on the four-way multi-goal task and visualize rollouts."""
-
-from __future__ import annotations
-
 import argparse
 import json
 from pathlib import Path
@@ -144,7 +140,7 @@ def plot_trajectories(trajectories: list[np.ndarray], path: Path) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--total-steps", type=int, default=100_000)
     parser.add_argument("--warmup-steps", type=int, default=1_000)

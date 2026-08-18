@@ -1,5 +1,3 @@
-"""Four-way multi-goal environment used for controlled policy validation."""
-
 import gymnasium as gym
 import numpy as np
 

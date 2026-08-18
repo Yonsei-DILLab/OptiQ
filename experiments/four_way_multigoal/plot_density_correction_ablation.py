@@ -1,7 +1,3 @@
-"""Compare four-way policy rollouts with and without density correction."""
-
-from __future__ import annotations
-
 import argparse
 import json
 from pathlib import Path
@@ -34,7 +30,7 @@ def load_result(run_dir: Path) -> tuple[list[np.ndarray], dict]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser()
     parser.add_argument("--uncorrected-run", type=Path, required=True)
     parser.add_argument("--corrected-run", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)

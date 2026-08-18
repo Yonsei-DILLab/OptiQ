@@ -1,5 +1,3 @@
-"""Neural amortization of categorical finite-particle OT projection."""
-
 import json
 from pathlib import Path
 

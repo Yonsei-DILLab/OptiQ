@@ -1,5 +1,3 @@
-"""Finite-particle categorical OT extraction of a four-mode policy."""
-
 import argparse
 import json
 from functools import partial
