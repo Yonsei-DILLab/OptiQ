@@ -55,6 +55,12 @@ if [ "${DRY_RUN:-0}" = "1" ]; then
 fi
 nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
 
+if [ "$method" = "sql" ]; then
+  python -c 'import torch; assert torch.cuda.is_available(); torch.zeros(1, device="cuda")'
+else
+  python -c 'import jax; assert jax.default_backend() == "gpu"'
+fi
+
 if [ "$method" = "sac" ] || [ "$method" = "td3" ]; then
   cd "$parent_root"
   common_args=(

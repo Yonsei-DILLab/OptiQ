@@ -39,7 +39,22 @@ index dfdde79..3bf5ee7 100644
  
  def train_loop(agent, args, buffer, train_envs, test_envs, logger):
      best_test_return = -np.inf
-@@ -55,7 +55,12 @@ def train_loop(agent, args, buffer, train_envs, test_envs, logger):
+@@ -37,9 +37,11 @@ def train_loop(agent, args, buffer, train_envs, test_envs, logger):
+ 
+         # Be careful of final observation in vectorized env, see: https://gymnasium.farama.org/api/vector/#gymnasium.vector.VectorEnv.step
+         real_next_obs = next_obs.copy()
+-        for idx, trunc in enumerate(truncated):
+-            if trunc:
+-                real_next_obs[idx] = info["final_observation"][idx]
++        final_observations = info.get("final_observation", info.get("final_obs"))
++        if final_observations is not None:
++            for idx, trunc in enumerate(truncated):
++                if trunc and final_observations[idx] is not None:
++                    real_next_obs[idx] = final_observations[idx]
+ 
+         # Note that done now change to "termination. see: https://gymnasium.farama.org/tutorials/gymnasium_basics/handling_time_limits/
+         buffer.store(
+@@ -55,7 +57,12 @@ def train_loop(agent, args, buffer, train_envs, test_envs, logger):
          if t >= args.warmup_steps:
              result = agent.update()
              if t % args.eval_every == 0:
@@ -53,7 +68,7 @@ index dfdde79..3bf5ee7 100644
                  print(f"return = {test_return} at step {t}")
                  if test_return > best_test_return:
                      best_test_return = test_return
-@@ -64,6 +69,8 @@ def train_loop(agent, args, buffer, train_envs, test_envs, logger):
+@@ -64,6 +71,8 @@ def train_loop(agent, args, buffer, train_envs, test_envs, logger):
                  log({
                      **result,
                      "Test/return": test_return,
