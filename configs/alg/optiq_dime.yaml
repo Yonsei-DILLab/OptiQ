@@ -1,0 +1,58 @@
+# DIME training and critic settings. Only the actor is replaced by OptiQ.
+tau: 1.0
+policy_tau: 1.0
+utd: 2
+gamma: 0.99
+# OptiQ's supplied actor update frequency takes precedence over DIME's delay of 3.
+policy_delay: 1
+batch_size: 256
+buffer_size: 1000000
+learning_starts: 5000
+reset_models: false
+
+# OptiQ has no tractable diffusion path entropy. The supplied setup uses alpha=0.
+ent_coef:
+  type: const
+  init: 0.0
+
+# Kept identical to the public DIME DMC configuration.
+critic:
+  activation: relu
+  n_critics: 2
+  hs: [2048, 2048]
+  dropout_rate: null
+  use_layer_norm: false
+  n_atoms: 101
+  v_min: -200
+  v_max: 200
+  entr_coeff: 0.005
+
+optimizer:
+  bn: true
+  bn_momentum: 0.99
+  bn_mode: brn_actor
+  bn_warmup: 100000
+  lr_critic: 3.0e-4
+  lr_actor: 3.0e-4
+  critic_b1: 0.5
+  critic_b2: 0.999
+  actor_b1: 0.9
+  actor_b2: 0.999
+
+# Ported from the supplied online OptiFlow/OptiQ configuration.
+actor:
+  hidden_dims: [256, 256, 256]
+  num_policy_samples: 16
+  proposals_per_policy_sample: 5
+  proposal_std: 0.2
+  proposal_clip: 0.5
+  include_anchor: true
+  density_correction: true
+  source_q_eval: mean
+  source_reference: uniform_action
+  temperature: 0.25
+  sinkhorn_epsilon: 0.05
+  sinkhorn_iterations: 30
+  transport_target_mode: argmax
+  td_noise_std: 0.2
+  td_noise_clip: 0.5

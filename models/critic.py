@@ -11,14 +11,8 @@ from flax.linen.normalization import _canonicalize_axes, _compute_stats, _normal
 from gymnasium import spaces
 from stable_baselines3.common.type_aliases import Schedule
 
-from common.distributions import TanhTransformedDistribution
-import tensorflow_probability
-
 from common.policies import BaseJaxPolicy
 from common.type_aliases import ActorTrainState, RLTrainState
-
-tfp = tensorflow_probability.substrates.jax
-tfd = tfp.distributions
 
 PRNGKey = Any
 Array = Any
@@ -265,5 +259,4 @@ class VectorCritic(nn.Module):
             n_atoms=self.n_atoms
         )(obs, action, train)
         return q_values
-
 

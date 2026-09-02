@@ -37,6 +37,26 @@ For example if you would like to run DIME on gym's Humanoid-v3 environment, you 
 python run_dime.py env_name=Humanoid-v3  alg.critic.v_min=-1600 alg.critic.v_max=1600
 ```
 
+### OptiQ actor with the DIME critic
+
+`run_optiq_dime.py` keeps DIME's distributional CrossQ critic, replay buffer,
+batch renormalization, and UTD=2 update loop, while replacing the 16-step
+diffusion policy with OptiQ's one-step implicit actor and density-corrected OT
+distillation. The default experiment covers DMC Dog with the supplied OptiQ
+actor settings (N=16, R=5, anchor, temperature 0.25, argmax assignment):
+
+```bash
+source /workspace/.venv-dime/bin/activate
+python run_optiq_dime.py task=run seed=0
+```
+
+The supported tasks are `run`, `trot`, `walk`, and `stand`. The helper script
+accepts a task, seed, and optional step count:
+
+```bash
+scripts/run_dog_experiment.sh trot 1 1000000
+```
+
 
 ## Acknowledgements
 Portions of the project are adapted from other repositories: 
