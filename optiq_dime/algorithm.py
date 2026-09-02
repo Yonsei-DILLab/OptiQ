@@ -382,7 +382,7 @@ class OptiQDIME(DIME):
                 raise ValueError(f"Unknown source_q_eval: {source_q_eval}")
             source_q = jax.lax.stop_gradient(source_q)
 
-            logits = source_q / temperature
+            proposal_log_density = jnp.zeros_like(source_q)
             if density_correction:
                 proposal_log_density = truncated_mixture_log_density(
                     jax.lax.stop_gradient(proposals),
@@ -390,7 +390,8 @@ class OptiQDIME(DIME):
                     proposal_std,
                     proposal_clip,
                 )
-                logits = logits - proposal_log_density
+            density_score = -proposal_log_density
+            logits = source_q / temperature + density_score
             source_weights = jax.lax.stop_gradient(jax.nn.softmax(logits, axis=-1))
 
             squared_costs = jnp.sum(
@@ -429,9 +430,22 @@ class OptiQDIME(DIME):
                 jnp.sum(jnp.square(raw_actions - selected_actions), axis=-1)
             )
             source_ess = 1.0 / jnp.sum(jnp.square(source_weights), axis=-1)
+            density_only_weights = jax.nn.softmax(density_score, axis=-1)
+            density_only_ess = 1.0 / jnp.sum(jnp.square(density_only_weights), axis=-1)
+            centered_q = source_q - source_q.mean(axis=-1, keepdims=True)
+            centered_density = density_score - density_score.mean(
+                axis=-1, keepdims=True
+            )
+            q_density_correlation = jnp.mean(centered_q * centered_density, axis=-1) / (
+                jnp.std(source_q, axis=-1) * jnp.std(density_score, axis=-1) + 1.0e-8
+            )
             metrics = {
                 "actor_loss": loss,
                 "source_ess_fraction": (source_ess / num_proposals).mean(),
+                "density_only_ess_fraction": (density_only_ess / num_proposals).mean(),
+                "source_q_std": jnp.std(source_q, axis=-1).mean(),
+                "neg_log_proposal_std": jnp.std(density_score, axis=-1).mean(),
+                "q_neglogq_correlation": q_density_correlation.mean(),
                 "selected_delta_l2": jnp.linalg.norm(
                     policy_samples - selected_actions, axis=-1
                 ).mean(),
@@ -439,6 +453,24 @@ class OptiQDIME(DIME):
                     policy_samples.std(axis=1), axis=-1
                 ).mean(),
             }
+            for label, counterfactual_temperature in (
+                ("0p05", 0.05),
+                ("0p1", 0.1),
+                ("0p2", 0.2),
+                ("0p25", 0.25),
+                ("0p5", 0.5),
+                ("1p0", 1.0),
+            ):
+                counterfactual_weights = jax.nn.softmax(
+                    source_q / counterfactual_temperature + density_score,
+                    axis=-1,
+                )
+                counterfactual_ess = 1.0 / jnp.sum(
+                    jnp.square(counterfactual_weights), axis=-1
+                )
+                metrics[f"counterfactual_ess_T{label}"] = (
+                    counterfactual_ess / num_proposals
+                ).mean()
             return loss, metrics
 
         (loss, metrics), grads = jax.value_and_grad(actor_loss, has_aux=True)(
@@ -506,9 +538,15 @@ class OptiQDIME(DIME):
         actor_metrics = {
             "actor_loss": jnp.asarray(0.0),
             "source_ess_fraction": jnp.asarray(0.0),
+            "density_only_ess_fraction": jnp.asarray(0.0),
+            "source_q_std": jnp.asarray(0.0),
+            "neg_log_proposal_std": jnp.asarray(0.0),
+            "q_neglogq_correlation": jnp.asarray(0.0),
             "selected_delta_l2": jnp.asarray(0.0),
             "policy_spread_l2": jnp.asarray(0.0),
         }
+        for label in ("0p05", "0p1", "0p2", "0p25", "0p5", "1p0"):
+            actor_metrics[f"counterfactual_ess_T{label}"] = jnp.asarray(0.0)
         for i in range(gradient_steps):
 
             def slice_batch(array, step=i):
