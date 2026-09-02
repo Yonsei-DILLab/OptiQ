@@ -19,6 +19,12 @@ case "$temperature" in
   *) echo "unsupported OptiQ temperature: $temperature" >&2; exit 2 ;;
 esac
 
+single_seed_marker=/workspace/DIME/outputs/optiq_dime_dog/completed/.single_seed_only
+if [[ "$seed" != "1" && -f "$single_seed_marker" ]]; then
+  echo "Skipping task=$task temperature=$temperature seed=$seed: single-seed plan is active"
+  exit 0
+fi
+
 temperature_tag=${temperature/./p}
 extra_overrides=("alg.actor.temperature=$temperature")
 if [[ "$temperature" != "0.25" ]]; then
