@@ -26,8 +26,13 @@ for temperature in 0.5 0.1; do
   temperature_tag=${temperature/./p}
   for seed in 1; do
     marker="$completion_dir/${task}_T${temperature_tag}_seed${seed}.done"
+    in_progress_marker="$completion_dir/${task}_T${temperature_tag}_seed${seed}.in_progress"
     if [[ -f "$marker" ]]; then
       echo "Skipping completed task=$task temperature=$temperature seed=$seed"
+      continue
+    fi
+    if [[ -f "$in_progress_marker" ]]; then
+      echo "Skipping externally running task=$task temperature=$temperature seed=$seed"
       continue
     fi
     echo "Starting task=$task temperature=$temperature seed=$seed on CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES"
