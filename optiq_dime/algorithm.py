@@ -390,8 +390,9 @@ class OptiQDIME(DIME):
                     proposal_std,
                     proposal_clip,
                 )
+            q_score = source_q / temperature
             density_score = -proposal_log_density
-            logits = source_q / temperature + density_score
+            logits = q_score + density_score
             source_weights = jax.lax.stop_gradient(jax.nn.softmax(logits, axis=-1))
 
             squared_costs = jnp.sum(
@@ -430,6 +431,8 @@ class OptiQDIME(DIME):
                 jnp.sum(jnp.square(raw_actions - selected_actions), axis=-1)
             )
             source_ess = 1.0 / jnp.sum(jnp.square(source_weights), axis=-1)
+            q_only_weights = jax.nn.softmax(q_score, axis=-1)
+            q_only_ess = 1.0 / jnp.sum(jnp.square(q_only_weights), axis=-1)
             density_only_weights = jax.nn.softmax(density_score, axis=-1)
             density_only_ess = 1.0 / jnp.sum(jnp.square(density_only_weights), axis=-1)
             centered_q = source_q - source_q.mean(axis=-1, keepdims=True)
@@ -439,13 +442,46 @@ class OptiQDIME(DIME):
             q_density_correlation = jnp.mean(centered_q * centered_density, axis=-1) / (
                 jnp.std(source_q, axis=-1) * jnp.std(density_score, axis=-1) + 1.0e-8
             )
+            q_logit_std = jnp.std(q_score, axis=-1)
+            density_logit_std = jnp.std(density_score, axis=-1)
+
+            def weighted_q_gain(weights, q_values):
+                return jnp.sum(weights * q_values, axis=-1) - q_values.mean(axis=-1)
+
+            q_only_q_gain = weighted_q_gain(q_only_weights, source_q)
+            density_only_q_gain = weighted_q_gain(density_only_weights, source_q)
+            full_q_gain = weighted_q_gain(source_weights, source_q)
+
+            # Cross-evaluate selection by each twin critic with the other critic.
+            # This is still not a fully independent estimate, but is less optimistic
+            # than evaluating a Q-weighted selection with the exact same Q values.
+            q1, q2 = source_qs[0], source_qs[1]
+            q1_weights = jax.nn.softmax(q1 / temperature + density_score, axis=-1)
+            q2_weights = jax.nn.softmax(q2 / temperature + density_score, axis=-1)
+            cross_critic_q_gain = 0.5 * (
+                weighted_q_gain(q1_weights, q2)
+                + weighted_q_gain(q2_weights, q1)
+            )
             metrics = {
                 "actor_loss": loss,
                 "source_ess_fraction": (source_ess / num_proposals).mean(),
+                "q_only_ess_fraction": (q_only_ess / num_proposals).mean(),
                 "density_only_ess_fraction": (density_only_ess / num_proposals).mean(),
+                "max_source_weight": source_weights.max(axis=-1).mean(),
                 "source_q_std": jnp.std(source_q, axis=-1).mean(),
                 "neg_log_proposal_std": jnp.std(density_score, axis=-1).mean(),
+                "q_logit_std": q_logit_std.mean(),
+                "density_logit_std": density_logit_std.mean(),
+                "combined_logit_std": jnp.std(logits, axis=-1).mean(),
+                "q_to_density_logit_std_ratio": (
+                    q_logit_std / (density_logit_std + 1.0e-8)
+                ).mean(),
                 "q_neglogq_correlation": q_density_correlation.mean(),
+                "q_only_weighted_q_gain": q_only_q_gain.mean(),
+                "density_only_weighted_q_gain": density_only_q_gain.mean(),
+                "full_weighted_q_gain": full_q_gain.mean(),
+                "cross_critic_weighted_q_gain": cross_critic_q_gain.mean(),
+                "twin_q_abs_diff": jnp.abs(q1 - q2).mean(),
                 "selected_delta_l2": jnp.linalg.norm(
                     policy_samples - selected_actions, axis=-1
                 ).mean(),
@@ -538,10 +574,21 @@ class OptiQDIME(DIME):
         actor_metrics = {
             "actor_loss": jnp.asarray(0.0),
             "source_ess_fraction": jnp.asarray(0.0),
+            "q_only_ess_fraction": jnp.asarray(0.0),
             "density_only_ess_fraction": jnp.asarray(0.0),
+            "max_source_weight": jnp.asarray(0.0),
             "source_q_std": jnp.asarray(0.0),
             "neg_log_proposal_std": jnp.asarray(0.0),
+            "q_logit_std": jnp.asarray(0.0),
+            "density_logit_std": jnp.asarray(0.0),
+            "combined_logit_std": jnp.asarray(0.0),
+            "q_to_density_logit_std_ratio": jnp.asarray(0.0),
             "q_neglogq_correlation": jnp.asarray(0.0),
+            "q_only_weighted_q_gain": jnp.asarray(0.0),
+            "density_only_weighted_q_gain": jnp.asarray(0.0),
+            "full_weighted_q_gain": jnp.asarray(0.0),
+            "cross_critic_weighted_q_gain": jnp.asarray(0.0),
+            "twin_q_abs_diff": jnp.asarray(0.0),
             "selected_delta_l2": jnp.asarray(0.0),
             "policy_spread_l2": jnp.asarray(0.0),
         }
