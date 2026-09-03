@@ -17,6 +17,7 @@ from .policy import OptiQPolicy
 from .transport import (
     clip_action,
     sample_truncated_gaussian,
+    select_density_beta_for_ess,
     sinkhorn,
     truncated_mixture_log_density,
 )
@@ -94,6 +95,10 @@ class OptiQDIME(DIME):
             actor.proposal_clip,
             actor.include_anchor,
             actor.density_correction,
+            actor.density_beta,
+            actor.adaptive_density_beta,
+            actor.minimum_source_ess,
+            actor.density_beta_grid_size,
             actor.temperature,
             actor.sinkhorn_epsilon,
             actor.sinkhorn_iterations,
@@ -323,6 +328,8 @@ class OptiQDIME(DIME):
             "proposals_per_policy_sample",
             "include_anchor",
             "density_correction",
+            "adaptive_density_beta",
+            "density_beta_grid_size",
             "sinkhorn_iterations",
             "source_q_eval",
             "transport_target_mode",
@@ -340,6 +347,10 @@ class OptiQDIME(DIME):
         proposal_clip: float,
         include_anchor: bool,
         density_correction: bool,
+        density_beta: float,
+        adaptive_density_beta: bool,
+        minimum_source_ess: float,
+        density_beta_grid_size: int,
         temperature: float,
         sinkhorn_epsilon: float,
         sinkhorn_iterations: int,
@@ -410,7 +421,29 @@ class OptiQDIME(DIME):
                 )
             q_score = source_q / temperature
             density_score = -proposal_log_density
-            logits = q_score + density_score
+            if adaptive_density_beta and density_correction:
+                selected_density_beta, selected_beta_ess = (
+                    select_density_beta_for_ess(
+                        q_score,
+                        density_score,
+                        minimum_source_ess,
+                        density_beta_grid_size,
+                    )
+                )
+            else:
+                selected_density_beta = jnp.full(
+                    (batch_size,), density_beta, dtype=q_score.dtype
+                )
+                fixed_logits = (
+                    q_score + selected_density_beta[:, None] * density_score
+                )
+                fixed_weights = jax.nn.softmax(fixed_logits, axis=-1)
+                selected_beta_ess = 1.0 / jnp.sum(
+                    jnp.square(fixed_weights), axis=-1
+                )
+            selected_density_beta = jax.lax.stop_gradient(selected_density_beta)
+            effective_density_score = selected_density_beta[:, None] * density_score
+            logits = q_score + effective_density_score
             source_weights = jax.lax.stop_gradient(jax.nn.softmax(logits, axis=-1))
 
             squared_costs = jnp.sum(
@@ -453,6 +486,12 @@ class OptiQDIME(DIME):
             q_only_ess = 1.0 / jnp.sum(jnp.square(q_only_weights), axis=-1)
             density_only_weights = jax.nn.softmax(density_score, axis=-1)
             density_only_ess = 1.0 / jnp.sum(jnp.square(density_only_weights), axis=-1)
+            effective_density_only_weights = jax.nn.softmax(
+                effective_density_score, axis=-1
+            )
+            effective_density_only_ess = 1.0 / jnp.sum(
+                jnp.square(effective_density_only_weights), axis=-1
+            )
             centered_q = source_q - source_q.mean(axis=-1, keepdims=True)
             centered_density = density_score - density_score.mean(
                 axis=-1, keepdims=True
@@ -462,6 +501,9 @@ class OptiQDIME(DIME):
             )
             q_logit_std = jnp.std(q_score, axis=-1)
             density_logit_std = jnp.std(density_score, axis=-1)
+            effective_density_logit_std = jnp.std(
+                effective_density_score, axis=-1
+            )
 
             def weighted_q_gain(weights, q_values):
                 return jnp.sum(weights * q_values, axis=-1) - q_values.mean(axis=-1)
@@ -474,8 +516,12 @@ class OptiQDIME(DIME):
             # This is still not a fully independent estimate, but is less optimistic
             # than evaluating a Q-weighted selection with the exact same Q values.
             q1, q2 = source_qs[0], source_qs[1]
-            q1_weights = jax.nn.softmax(q1 / temperature + density_score, axis=-1)
-            q2_weights = jax.nn.softmax(q2 / temperature + density_score, axis=-1)
+            q1_weights = jax.nn.softmax(
+                q1 / temperature + effective_density_score, axis=-1
+            )
+            q2_weights = jax.nn.softmax(
+                q2 / temperature + effective_density_score, axis=-1
+            )
             cross_critic_q_gain = 0.5 * (
                 weighted_q_gain(q1_weights, q2)
                 + weighted_q_gain(q2_weights, q1)
@@ -543,16 +589,38 @@ class OptiQDIME(DIME):
             metrics = {
                 "actor_loss": loss,
                 "source_ess_fraction": (source_ess / num_proposals).mean(),
+                "source_ess_absolute": source_ess.mean(),
+                "source_ess_min": source_ess.min(),
+                "source_ess_target": jnp.asarray(
+                    minimum_source_ess, dtype=source_q.dtype
+                ),
                 "q_only_ess_fraction": (q_only_ess / num_proposals).mean(),
                 "density_only_ess_fraction": (density_only_ess / num_proposals).mean(),
+                "effective_density_only_ess_fraction": (
+                    effective_density_only_ess / num_proposals
+                ).mean(),
+                "density_beta_mean": selected_density_beta.mean(),
+                "density_beta_min": selected_density_beta.min(),
+                "density_beta_max": selected_density_beta.max(),
+                "density_beta_at_one_fraction": jnp.mean(
+                    selected_density_beta >= 1.0 - 1.0e-6
+                ),
+                "density_beta_infeasible_fraction": jnp.mean(
+                    q_only_ess < minimum_source_ess
+                ),
+                "selected_beta_search_ess": selected_beta_ess.mean(),
                 "max_source_weight": source_weights.max(axis=-1).mean(),
                 "source_q_std": jnp.std(source_q, axis=-1).mean(),
                 "neg_log_proposal_std": jnp.std(density_score, axis=-1).mean(),
                 "q_logit_std": q_logit_std.mean(),
                 "density_logit_std": density_logit_std.mean(),
+                "effective_density_logit_std": effective_density_logit_std.mean(),
                 "combined_logit_std": jnp.std(logits, axis=-1).mean(),
                 "q_to_density_logit_std_ratio": (
                     q_logit_std / (density_logit_std + 1.0e-8)
+                ).mean(),
+                "q_to_effective_density_logit_std_ratio": (
+                    q_logit_std / (effective_density_logit_std + 1.0e-8)
                 ).mean(),
                 "q_neglogq_correlation": q_density_correlation.mean(),
                 "q_only_weighted_q_gain": q_only_q_gain.mean(),
@@ -590,7 +658,7 @@ class OptiQDIME(DIME):
                 ("1p0", 1.0),
             ):
                 counterfactual_weights = jax.nn.softmax(
-                    source_q / counterfactual_temperature + density_score,
+                    source_q / counterfactual_temperature + effective_density_score,
                     axis=-1,
                 )
                 counterfactual_ess = 1.0 / jnp.sum(
@@ -626,6 +694,8 @@ class OptiQDIME(DIME):
             "sinkhorn_iterations",
             "source_q_eval",
             "transport_target_mode",
+            "adaptive_density_beta",
+            "density_beta_grid_size",
         ],
     )
     def _train(
@@ -654,6 +724,10 @@ class OptiQDIME(DIME):
         proposal_clip,
         include_anchor,
         density_correction,
+        density_beta,
+        adaptive_density_beta,
+        minimum_source_ess,
+        density_beta_grid_size,
         temperature,
         sinkhorn_epsilon,
         sinkhorn_iterations,
@@ -666,15 +740,27 @@ class OptiQDIME(DIME):
         actor_metrics = {
             "actor_loss": jnp.asarray(0.0),
             "source_ess_fraction": jnp.asarray(0.0),
+            "source_ess_absolute": jnp.asarray(0.0),
+            "source_ess_min": jnp.asarray(0.0),
+            "source_ess_target": jnp.asarray(0.0),
             "q_only_ess_fraction": jnp.asarray(0.0),
             "density_only_ess_fraction": jnp.asarray(0.0),
+            "effective_density_only_ess_fraction": jnp.asarray(0.0),
+            "density_beta_mean": jnp.asarray(0.0),
+            "density_beta_min": jnp.asarray(0.0),
+            "density_beta_max": jnp.asarray(0.0),
+            "density_beta_at_one_fraction": jnp.asarray(0.0),
+            "density_beta_infeasible_fraction": jnp.asarray(0.0),
+            "selected_beta_search_ess": jnp.asarray(0.0),
             "max_source_weight": jnp.asarray(0.0),
             "source_q_std": jnp.asarray(0.0),
             "neg_log_proposal_std": jnp.asarray(0.0),
             "q_logit_std": jnp.asarray(0.0),
             "density_logit_std": jnp.asarray(0.0),
+            "effective_density_logit_std": jnp.asarray(0.0),
             "combined_logit_std": jnp.asarray(0.0),
             "q_to_density_logit_std_ratio": jnp.asarray(0.0),
+            "q_to_effective_density_logit_std_ratio": jnp.asarray(0.0),
             "q_neglogq_correlation": jnp.asarray(0.0),
             "q_only_weighted_q_gain": jnp.asarray(0.0),
             "density_only_weighted_q_gain": jnp.asarray(0.0),
@@ -737,6 +823,10 @@ class OptiQDIME(DIME):
                     proposal_clip,
                     include_anchor,
                     density_correction,
+                    density_beta,
+                    adaptive_density_beta,
+                    minimum_source_ess,
+                    density_beta_grid_size,
                     temperature,
                     sinkhorn_epsilon,
                     sinkhorn_iterations,

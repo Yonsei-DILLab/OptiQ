@@ -69,6 +69,47 @@ def truncated_mixture_log_density(
     return jsp.special.logsumexp(log_density, axis=-1) - jnp.log(centers.shape[1])
 
 
+def select_density_beta_for_ess(
+    q_score: jax.Array,
+    density_score: jax.Array,
+    minimum_ess: float,
+    grid_size: int = 257,
+) -> tuple[jax.Array, jax.Array]:
+    """Select the strongest density correction whose ESS stays above a floor.
+
+    For every batch row this searches beta in ``[0, 1]`` for weights
+
+      softmax(q_score + beta * density_score).
+
+    The returned beta is the largest point in the feasible prefix connected to
+    beta=0.  Using a prefix instead of an unconstrained maximum is robust to a
+    rare non-monotone ESS curve caused by correlation between Q and density.
+    ``grid_size=257`` resolves beta to 1/256 while keeping the computation tiny
+    relative to the critic forward pass.
+    """
+    beta_grid = jnp.linspace(0.0, 1.0, grid_size, dtype=q_score.dtype)
+    candidate_logits = (
+        q_score[None, ...]
+        + beta_grid[:, None, None] * density_score[None, ...]
+    )
+    log_weight_sum = jsp.special.logsumexp(candidate_logits, axis=-1)
+    log_squared_weight_sum = jsp.special.logsumexp(
+        2.0 * candidate_logits, axis=-1
+    )
+    candidate_ess = jnp.exp(2.0 * log_weight_sum - log_squared_weight_sum)
+    feasible = candidate_ess >= jnp.asarray(minimum_ess, q_score.dtype)
+    feasible_prefix = jnp.cumprod(feasible.astype(jnp.int32), axis=0).astype(bool)
+    grid_indices = jnp.arange(grid_size, dtype=jnp.int32)[:, None]
+    selected_indices = jnp.max(
+        jnp.where(feasible_prefix, grid_indices, 0), axis=0
+    )
+    selected_beta = beta_grid[selected_indices]
+    selected_ess = jnp.take_along_axis(
+        candidate_ess, selected_indices[None, :], axis=0
+    )[0]
+    return selected_beta, selected_ess
+
+
 def sinkhorn(
     costs: jax.Array,
     source_weights: jax.Array,

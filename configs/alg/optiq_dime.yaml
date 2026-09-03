@@ -48,6 +48,12 @@ actor:
   proposal_clip: 0.5
   include_anchor: true
   density_correction: true
+  # Fixed beta=1 reproduces exact density correction.  Adaptive mode selects
+  # the largest per-state beta whose 80 source weights retain the requested ESS.
+  density_beta: 1.0
+  adaptive_density_beta: false
+  minimum_source_ess: 16.0
+  density_beta_grid_size: 257
   source_q_eval: mean
   source_reference: uniform_action
   temperature: 0.25
