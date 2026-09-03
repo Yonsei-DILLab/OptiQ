@@ -98,6 +98,9 @@ def replicate_metrics(
 
     sorted_weights = np.sort(full_weights, axis=-1)[:, ::-1]
     full_groups = full_weights.reshape(states, 16, 5)
+    q_groups = q_weights.reshape(states, 16, 5)
+    density_groups = density_weights.reshape(states, 16, 5)
+    density_scores_grouped = flat_density.reshape(states, 16, 5)
     group_mass = np.sum(full_groups, axis=-1)
     conditional = np.divide(
         full_groups,
@@ -136,6 +139,13 @@ def replicate_metrics(
         "top5_weight_mass": scalar_mean(np.sum(sorted_weights[:, :5], axis=-1)),
         "q_logit_std": scalar_mean(np.std(q_score, axis=-1)),
         "density_logit_std": scalar_mean(np.std(flat_density, axis=-1)),
+        "density_logit_std_perturbations_only": scalar_mean(
+            np.std(density_scores_grouped[..., 1:].reshape(states, 64), axis=-1)
+        ),
+        "density_perturbation_minus_anchor_score": scalar_mean(
+            np.mean(density_scores_grouped[..., 1:], axis=(1, 2))
+            - np.mean(density_scores_grouped[..., 0], axis=1)
+        ),
         "combined_logit_std": scalar_mean(
             np.std(q_score + flat_density, axis=-1)
         ),
@@ -155,6 +165,16 @@ def replicate_metrics(
         "q_changes_density_argmax_fraction": scalar_mean(
             top_index != density_top_index
         ),
+        "full_anchor_weight_mass": scalar_mean(
+            np.sum(full_groups[..., 0], axis=-1)
+        ),
+        "density_only_anchor_weight_mass": scalar_mean(
+            np.sum(density_groups[..., 0], axis=-1)
+        ),
+        "q_only_anchor_weight_mass": scalar_mean(
+            np.sum(q_groups[..., 0], axis=-1)
+        ),
+        "top_weight_is_anchor_fraction": scalar_mean(top_index % 5 == 0),
         "uniform_candidate_radius": scalar_mean(flat_radii),
         "full_weighted_candidate_radius": scalar_mean(
             np.sum(full_weights * flat_radii, axis=-1)
