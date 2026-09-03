@@ -16,8 +16,9 @@ seed=1
 temperature=0.25
 proposal_std=0.2
 proposal_clip=0.5
-minimum_source_ess=16
-output_root=outputs/optiq_dime_dog_adaptive_beta_ess16_t0p25_sigma0p2_clip2p5
+minimum_source_ess=${MINIMUM_SOURCE_ESS:-16}
+ess_tag=${minimum_source_ess//./p}
+output_root=outputs/optiq_dime_dog_adaptive_beta_ess${ess_tag}_t0p25_sigma0p2_clip2p5
 completion_dir=/workspace/DIME/${output_root}/completed
 mkdir -p "$completion_dir"
 
@@ -31,7 +32,7 @@ if [[ -f "$marker" ]]; then
   exit 0
 fi
 
-run_name="optiq_dime_dog_${task}_seed${seed}_adaptiveBeta_ESS16_N16R5_T0p25_sigma0p2_clip0p5_1m"
+run_name="optiq_dime_dog_${task}_seed${seed}_adaptiveBeta_ESS${ess_tag}_N16R5_T0p25_sigma0p2_clip0p5_1m"
 echo "Starting adaptive-beta task=$task ESS>=$minimum_source_ess seed=$seed on CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES"
 python run_optiq_dime.py \
   task="$task" \
@@ -46,6 +47,6 @@ python run_optiq_dime.py \
   alg.actor.minimum_source_ess="$minimum_source_ess" \
   output_root="$output_root" \
   run_name="$run_name" \
-  wandb.project="optiq_dime_dog_adaptive_beta_ess16_t0p25_sigma0p2_clip2p5_1seed_1m" \
-  wandb.group="dog-${task}_adaptive-beta-ess16-sigma0p2-clip2p5"
+  wandb.project="optiq_dime_dog_adaptive_beta_ess${ess_tag}_t0p25_sigma0p2_clip2p5_1seed_1m" \
+  wandb.group="dog-${task}_adaptive-beta-ess${ess_tag}-sigma0p2-clip2p5"
 touch "$marker"
