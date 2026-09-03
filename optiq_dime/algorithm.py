@@ -1,6 +1,7 @@
 """DIME critic/replay/UTD training with OptiQ actor distillation."""
 
 from functools import partial
+from pathlib import Path
 from typing import ClassVar
 
 import flax
@@ -103,11 +104,28 @@ class OptiQDIME(DIME):
         )
         self._n_updates += gradient_steps
 
-        if self.model_save_path is not None and (
+        checkpoint_due = self.model_save_path is not None and (
             self.num_timesteps % self.save_every_n_steps == 0
             or self.num_timesteps == self.learning_starts + 1
-        ):
+        )
+        if checkpoint_due:
             self._save_model()
+            # Keep one fixed batch of states for comparing the same local Q
+            # landscape across all later actor/critic checkpoints.  The 5k
+            # warm-up save is deliberately excluded so the probe comes from
+            # the first regular checkpoint's replay distribution.
+            if self.num_timesteps >= self.save_every_n_steps:
+                probe_path = Path(self.model_save_path) / "landscape_probe_batch.npz"
+                if not probe_path.exists():
+                    probe_size = min(128, data.observations.shape[0])
+                    np.savez_compressed(
+                        probe_path,
+                        observations=data.observations[:probe_size],
+                        actions=data.actions[:probe_size],
+                        rewards=data.rewards[:probe_size],
+                        dones=data.dones[:probe_size],
+                        source_step=np.asarray(self.num_timesteps, dtype=np.int64),
+                    )
 
         self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
         for key, value in log_metrics.items():
@@ -462,6 +480,66 @@ class OptiQDIME(DIME):
                 weighted_q_gain(q1_weights, q2)
                 + weighted_q_gain(q2_weights, q1)
             )
+
+            # Local landscape diagnostics. Proposals are laid out as
+            # [policy sample, local repeat], and repeat zero is the exact
+            # anchor whenever include_anchor=True. These reductions do not
+            # alter the actor objective or consume additional randomness.
+            local_q = source_q.reshape(
+                batch_size, num_policy_samples, proposals_per_policy_sample
+            )
+            local_q1 = q1.reshape(
+                batch_size, num_policy_samples, proposals_per_policy_sample
+            )
+            local_q2 = q2.reshape(
+                batch_size, num_policy_samples, proposals_per_policy_sample
+            )
+            local_q_range = local_q.max(axis=-1) - local_q.min(axis=-1)
+            local_q_top_gap = jnp.zeros_like(local_q_range)
+            if proposals_per_policy_sample > 1:
+                local_top_two = jax.lax.top_k(
+                    local_q, min(2, proposals_per_policy_sample)
+                )[0]
+                local_q_top_gap = local_top_two[..., 0] - local_top_two[..., 1]
+
+            local_best_q_gain = jnp.zeros_like(local_q_range)
+            local_improvement_fraction = jnp.asarray(0.0)
+            local_anchor_argmax_fraction = jnp.asarray(0.0)
+            twin_local_delta_correlation = jnp.asarray(0.0)
+            twin_local_improvement_sign_agreement = jnp.asarray(0.0)
+            if include_anchor:
+                anchor_q = local_q[..., 0]
+                local_best_q_gain = local_q.max(axis=-1) - anchor_q
+                local_anchor_argmax_fraction = jnp.mean(
+                    jnp.argmax(local_q, axis=-1) == 0
+                )
+                if proposals_per_policy_sample > 1:
+                    local_deltas = local_q[..., 1:] - anchor_q[..., None]
+                    local_improvement_fraction = jnp.mean(local_deltas > 0.0)
+                    q1_deltas = local_q1[..., 1:] - local_q1[..., :1]
+                    q2_deltas = local_q2[..., 1:] - local_q2[..., :1]
+                    centered_q1_deltas = q1_deltas - q1_deltas.mean(
+                        axis=-1, keepdims=True
+                    )
+                    centered_q2_deltas = q2_deltas - q2_deltas.mean(
+                        axis=-1, keepdims=True
+                    )
+                    twin_local_delta_correlation = jnp.mean(
+                        jnp.mean(
+                            centered_q1_deltas * centered_q2_deltas, axis=-1
+                        )
+                        / (
+                            jnp.std(q1_deltas, axis=-1)
+                            * jnp.std(q2_deltas, axis=-1)
+                            + 1.0e-8
+                        )
+                    )
+                    twin_local_improvement_sign_agreement = jnp.mean(
+                        (q1_deltas > 0.0) == (q2_deltas > 0.0)
+                    )
+            twin_local_argmax_agreement = jnp.mean(
+                jnp.argmax(local_q1, axis=-1) == jnp.argmax(local_q2, axis=-1)
+            )
             metrics = {
                 "actor_loss": loss,
                 "source_ess_fraction": (source_ess / num_proposals).mean(),
@@ -482,6 +560,20 @@ class OptiQDIME(DIME):
                 "full_weighted_q_gain": full_q_gain.mean(),
                 "cross_critic_weighted_q_gain": cross_critic_q_gain.mean(),
                 "twin_q_abs_diff": jnp.abs(q1 - q2).mean(),
+                "source_q_mean": source_q.mean(),
+                "source_q_global_range": (
+                    source_q.max(axis=-1) - source_q.min(axis=-1)
+                ).mean(),
+                "local_q_range": local_q_range.mean(),
+                "local_q_top_gap": local_q_top_gap.mean(),
+                "local_best_q_gain_over_anchor": local_best_q_gain.mean(),
+                "local_improvement_fraction": local_improvement_fraction,
+                "local_anchor_argmax_fraction": local_anchor_argmax_fraction,
+                "twin_local_argmax_agreement": twin_local_argmax_agreement,
+                "twin_local_delta_correlation": twin_local_delta_correlation,
+                "twin_local_improvement_sign_agreement": (
+                    twin_local_improvement_sign_agreement
+                ),
                 "selected_delta_l2": jnp.linalg.norm(
                     policy_samples - selected_actions, axis=-1
                 ).mean(),
@@ -589,6 +681,16 @@ class OptiQDIME(DIME):
             "full_weighted_q_gain": jnp.asarray(0.0),
             "cross_critic_weighted_q_gain": jnp.asarray(0.0),
             "twin_q_abs_diff": jnp.asarray(0.0),
+            "source_q_mean": jnp.asarray(0.0),
+            "source_q_global_range": jnp.asarray(0.0),
+            "local_q_range": jnp.asarray(0.0),
+            "local_q_top_gap": jnp.asarray(0.0),
+            "local_best_q_gain_over_anchor": jnp.asarray(0.0),
+            "local_improvement_fraction": jnp.asarray(0.0),
+            "local_anchor_argmax_fraction": jnp.asarray(0.0),
+            "twin_local_argmax_agreement": jnp.asarray(0.0),
+            "twin_local_delta_correlation": jnp.asarray(0.0),
+            "twin_local_improvement_sign_agreement": jnp.asarray(0.0),
             "selected_delta_l2": jnp.asarray(0.0),
             "policy_spread_l2": jnp.asarray(0.0),
         }
