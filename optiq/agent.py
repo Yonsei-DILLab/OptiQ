@@ -14,7 +14,9 @@ from .transport import (
     gradient_skewed_mixture_log_density,
     sample_gradient_skewed_mixture,
     sample_truncated_gaussian,
+    sample_truncated_gaussian_mixture,
     sinkhorn,
+    truncated_mixture_log_density,
 )
 
 
@@ -36,6 +38,7 @@ class OptiQConfig:
     proposal_std: float = 0.2
     proposal_clip: float = 0.5
     include_anchor: bool = True
+    proposal_sampling_mode: str = "skewed"
     temperature: float = 0.25
     sinkhorn_epsilon: float = 0.05
     sinkhorn_iterations: int = 30
@@ -61,6 +64,8 @@ class OptiQConfig:
             raise ValueError("num_particles and proposals_per_particle must be positive.")
         if self.include_anchor and self.proposals_per_particle < 2:
             raise ValueError("An anchor requires at least two proposals per particle.")
+        if self.proposal_sampling_mode not in {"skewed", "exact"}:
+            raise ValueError("proposal_sampling_mode must be 'skewed' or 'exact'.")
         if self.proposal_std <= 0.0 or self.td_noise_std <= 0.0:
             raise ValueError("Proposal and TD noise standard deviations must be positive.")
         if self.proposal_clip <= 0.0 or self.td_noise_clip <= 0.0:
@@ -218,29 +223,43 @@ class OptiQ(flax.struct.PyTreeNode):
             batch_size * num_particles, observations.shape[-1]
         )
 
-        def summed_center_q(flat_particle_actions):
-            center_qs = self.critic.apply_fn(
-                {"params": critic_params},
-                flat_particle_observations,
-                flat_particle_actions,
-            ).reshape(2, batch_size * num_particles)
-            return center_qs.mean(axis=0).sum()
+        proposal_gradients = jnp.zeros_like(detached_particles)
+        if self.config.proposal_sampling_mode == "skewed":
+            def summed_center_q(flat_particle_actions):
+                center_qs = self.critic.apply_fn(
+                    {"params": critic_params},
+                    flat_particle_observations,
+                    flat_particle_actions,
+                ).reshape(2, batch_size * num_particles)
+                return center_qs.mean(axis=0).sum()
 
-        proposal_gradients = jax.grad(summed_center_q)(
-            detached_particles.reshape(batch_size * num_particles, action_dim)
-        ).reshape(batch_size, num_particles, action_dim)
-        proposal_gradients = jax.lax.stop_gradient(proposal_gradients)
-        proposals = sample_gradient_skewed_mixture(
-            proposal_rng,
-            detached_particles,
-            proposal_gradients,
-            repeats,
-            self.config.proposal_std,
-            self.config.proposal_clip,
-            self.config.action_low,
-            self.config.action_high,
-            include_anchor=self.config.include_anchor,
-        ).reshape(batch_size, num_particles * repeats, action_dim)
+            proposal_gradients = jax.grad(summed_center_q)(
+                detached_particles.reshape(batch_size * num_particles, action_dim)
+            ).reshape(batch_size, num_particles, action_dim)
+            proposal_gradients = jax.lax.stop_gradient(proposal_gradients)
+            proposals = sample_gradient_skewed_mixture(
+                proposal_rng,
+                detached_particles,
+                proposal_gradients,
+                repeats,
+                self.config.proposal_std,
+                self.config.proposal_clip,
+                self.config.action_low,
+                self.config.action_high,
+                include_anchor=self.config.include_anchor,
+            )
+        else:
+            proposals = sample_truncated_gaussian_mixture(
+                proposal_rng,
+                detached_particles,
+                repeats,
+                self.config.proposal_std,
+                self.config.proposal_clip,
+                self.config.action_low,
+                self.config.action_high,
+                include_anchor=self.config.include_anchor,
+            )
+        proposals = proposals.reshape(batch_size, num_particles * repeats, action_dim)
         num_proposals = proposals.shape[1]
         proposal_observations = jnp.broadcast_to(
             observations[:, None, :],
@@ -253,15 +272,25 @@ class OptiQ(flax.struct.PyTreeNode):
         ).reshape(2, batch_size, num_proposals)
         source_q = jax.lax.stop_gradient(source_qs.mean(axis=0))
 
-        proposal_log_density = gradient_skewed_mixture_log_density(
-            jax.lax.stop_gradient(proposals),
-            detached_particles,
-            proposal_gradients,
-            self.config.proposal_std,
-            self.config.proposal_clip,
-            self.config.action_low,
-            self.config.action_high,
-        )
+        if self.config.proposal_sampling_mode == "skewed":
+            proposal_log_density = gradient_skewed_mixture_log_density(
+                jax.lax.stop_gradient(proposals),
+                detached_particles,
+                proposal_gradients,
+                self.config.proposal_std,
+                self.config.proposal_clip,
+                self.config.action_low,
+                self.config.action_high,
+            )
+        else:
+            proposal_log_density = truncated_mixture_log_density(
+                jax.lax.stop_gradient(proposals),
+                detached_particles,
+                self.config.proposal_std,
+                self.config.proposal_clip,
+                self.config.action_low,
+                self.config.action_high,
+            )
         logits = source_q / self.config.temperature - proposal_log_density
         source_weights = jax.lax.stop_gradient(jax.nn.softmax(logits, axis=-1))
 

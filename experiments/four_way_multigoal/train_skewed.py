@@ -124,6 +124,26 @@ def summarize_initial_actions(actions: np.ndarray) -> dict[str, object]:
     cosine_scores = actions @ cardinal_directions.T / np.maximum(norms[:, None], 1e-8)
     assignments = np.argmax(cosine_scores, axis=-1)
     confident = (norms >= 0.05) & (np.max(cosine_scores, axis=-1) >= np.cos(np.pi / 6.0))
+    nonzero = norms >= 0.05
+    angles = np.arctan2(actions[nonzero, 1], actions[nonzero, 0])
+    cardinal_order = (
+        float(np.mean(np.cos(4.0 * angles))) if len(angles) else 0.0
+    )
+    axis_mass_15deg = float(
+        np.mean(np.max(cosine_scores[nonzero], axis=-1) >= np.cos(np.pi / 12.0))
+    ) if np.any(nonzero) else 0.0
+    diagonal_directions = np.asarray(
+        [[1.0, 1.0], [-1.0, 1.0], [-1.0, -1.0], [1.0, -1.0]],
+        dtype=np.float32,
+    ) / np.sqrt(2.0)
+    diagonal_scores = (
+        actions @ diagonal_directions.T / np.maximum(norms[:, None], 1e-8)
+    )
+    diagonal_mass_15deg = float(
+        np.mean(
+            np.max(diagonal_scores[nonzero], axis=-1) >= np.cos(np.pi / 12.0)
+        )
+    ) if np.any(nonzero) else 0.0
     counts = np.bincount(assignments[confident], minlength=4)
     probabilities = counts / max(counts.sum(), 1)
     positive = probabilities > 0.0
@@ -134,6 +154,9 @@ def summarize_initial_actions(actions: np.ndarray) -> dict[str, object]:
         "s0_confident_fraction": float(confident.mean()),
         "s0_action_norm_mean": float(norms.mean()),
         "s0_action_norm_median": float(np.median(norms)),
+        "s0_cardinal_order_cos4theta": cardinal_order,
+        "s0_axis_mass_within_15deg": axis_mass_15deg,
+        "s0_diagonal_mass_within_15deg": diagonal_mass_15deg,
         "s0_action_mode_counts": counts.tolist(),
         "s0_action_mode_probabilities": probabilities.tolist(),
         "s0_action_mode_entropy_normalized": float(entropy / np.log(4.0)),
@@ -284,6 +307,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--initial-action-count", type=int, default=4096)
     parser.add_argument("--num-policy-samples", type=int, default=16)
     parser.add_argument("--proposals-per-policy-sample", type=int, default=5)
+    parser.add_argument(
+        "--proposal-mode",
+        choices=("skewed", "exact"),
+        default="skewed",
+        help="Gradient-skewed or ordinary truncated-Gaussian proposal mixture.",
+    )
     parser.add_argument("--proposal-std", type=float, default=0.2)
     parser.add_argument("--proposal-clip", type=float, default=0.5)
     parser.add_argument(
@@ -313,6 +342,7 @@ def main() -> None:
         proposal_std=args.proposal_std,
         proposal_clip=args.proposal_clip,
         include_anchor=args.include_anchor,
+        proposal_sampling_mode=args.proposal_mode,
         temperature=args.temperature,
         td_noise_std=args.proposal_std,
         td_noise_clip=args.proposal_clip,
@@ -364,6 +394,7 @@ def main() -> None:
                 f"s0/covered_modes={initial_summary['s0_action_covered_modes']} "
                 f"s0/entropy={initial_summary['s0_action_mode_entropy_normalized']:.4f} "
                 f"s0/confident={initial_summary['s0_confident_fraction']:.4f} "
+                f"s0/cos4theta={initial_summary['s0_cardinal_order_cos4theta']:.4f} "
                 f"s0/counts={initial_summary['s0_action_mode_counts']}",
                 flush=True,
             )
@@ -377,7 +408,7 @@ def main() -> None:
     summary = {
         "seed": args.seed,
         "total_steps": args.total_steps,
-        "proposal": "pairwise_skewed_truncated_gaussian",
+        "proposal": args.proposal_mode,
         "proposal_std": args.proposal_std,
         "proposal_clip": args.proposal_clip,
         "include_anchor": args.include_anchor,

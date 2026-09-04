@@ -58,6 +58,61 @@ def sample_truncated_gaussian(
     return midpoint + half_range * normalized_actions
 
 
+def sample_truncated_gaussian_mixture(
+    rng: jax.Array,
+    centers: jax.Array,
+    repeats: int,
+    std: float,
+    perturb_clip: float,
+    action_low,
+    action_high,
+    include_anchor: bool = False,
+) -> jax.Array:
+    """Sample IID proposals from the exact uniform mixture over actor centers."""
+
+    if centers.ndim != 3:
+        raise ValueError("centers must have shape [batch, components, action_dim]")
+    random_repeats = repeats - int(include_anchor)
+    if random_repeats < 0:
+        raise ValueError("repeats must be at least one when include_anchor=True")
+
+    _, _, midpoint, half_range = _action_geometry(
+        action_low, action_high, centers.dtype
+    )
+    normalized_centers = (centers - midpoint) / half_range
+    batch_size, num_centers, action_dim = centers.shape
+    component_key, sample_key = jax.random.split(rng)
+    component_indices = jax.random.randint(
+        component_key,
+        (batch_size, num_centers, random_repeats),
+        minval=0,
+        maxval=num_centers,
+    )
+    selected_centers = jax.vmap(
+        lambda batch_centers, batch_indices: batch_centers[batch_indices]
+    )(normalized_centers, component_indices)
+
+    lower = jnp.maximum(-1.0 - selected_centers, -perturb_clip)
+    upper = jnp.minimum(1.0 - selected_centers, perturb_clip)
+    lower_cdf = jsp.special.ndtr(lower / std)
+    upper_cdf = jsp.special.ndtr(upper / std)
+    uniform = jax.random.uniform(
+        sample_key,
+        (batch_size, num_centers, random_repeats, action_dim),
+        minval=jnp.finfo(centers.dtype).eps,
+        maxval=1.0 - jnp.finfo(centers.dtype).eps,
+    )
+    quantiles = lower_cdf + uniform * (upper_cdf - lower_cdf)
+    noise = std * jsp.special.ndtri(
+        jnp.clip(quantiles, 1.0e-7, 1.0 - 1.0e-7)
+    )
+    random_samples = midpoint + half_range * (selected_centers + noise)
+
+    if include_anchor:
+        return jnp.concatenate((centers[..., None, :], random_samples), axis=-2)
+    return random_samples
+
+
 def _sample_truncated_chi_square(
     rng: jax.Array,
     shape: tuple[int, ...],

@@ -5,6 +5,8 @@ import numpy as np
 from optiq.transport import (
     gradient_skewed_mixture_log_density,
     sample_gradient_skewed_mixture,
+    sample_truncated_gaussian_mixture,
+    truncated_mixture_log_density,
 )
 
 
@@ -65,3 +67,33 @@ def test_zero_gradient_recovers_a_symmetric_proposal():
     )
     positive_fraction = float(jnp.mean(samples[..., 0] > 0.0))
     assert 0.48 < positive_fraction < 0.52
+
+
+def test_exact_truncated_gaussian_mixture_matches_its_density():
+    centers = jnp.asarray([[[-0.5], [0.5]]], dtype=jnp.float32)
+    samples = sample_truncated_gaussian_mixture(
+        jax.random.PRNGKey(3),
+        centers,
+        repeats=10_000,
+        std=0.1,
+        perturb_clip=0.25,
+        action_low=(-1.0,),
+        action_high=(1.0,),
+    ).reshape(1, -1, 1)
+    assert 0.48 < float(jnp.mean(samples > 0.0)) < 0.52
+    assert float(jnp.min(samples)) >= -0.75001
+    assert float(jnp.max(samples)) <= 0.75001
+
+    coordinates = jnp.linspace(-1.0, 1.0, 4001)[None, :, None]
+    density = jnp.exp(
+        truncated_mixture_log_density(
+            coordinates,
+            centers,
+            std=0.1,
+            perturb_clip=0.25,
+            action_low=(-1.0,),
+            action_high=(1.0,),
+        )
+    )[0]
+    mass = np.trapezoid(np.asarray(density), x=np.asarray(coordinates[0, :, 0]))
+    assert np.isclose(mass, 1.0, atol=2.0e-3)
