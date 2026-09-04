@@ -286,6 +286,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--proposals-per-policy-sample", type=int, default=5)
     parser.add_argument("--proposal-std", type=float, default=0.2)
     parser.add_argument("--proposal-clip", type=float, default=0.5)
+    parser.add_argument(
+        "--include-anchor",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Retain deterministic actor centers among proposals (off for exact IID IS).",
+    )
     parser.add_argument("--temperature", type=float, default=0.25)
     parser.add_argument("--log-interval", type=int, default=5_000)
     parser.add_argument(
@@ -306,6 +312,7 @@ def main() -> None:
         proposals_per_particle=args.proposals_per_policy_sample,
         proposal_std=args.proposal_std,
         proposal_clip=args.proposal_clip,
+        include_anchor=args.include_anchor,
         temperature=args.temperature,
         td_noise_std=args.proposal_std,
         td_noise_clip=args.proposal_clip,
@@ -373,6 +380,7 @@ def main() -> None:
         "proposal": "pairwise_skewed_truncated_gaussian",
         "proposal_std": args.proposal_std,
         "proposal_clip": args.proposal_clip,
+        "include_anchor": args.include_anchor,
         "temperature": args.temperature,
         **summarize_initial_actions(initial_actions),
         **summarize_trajectories(trajectories),
