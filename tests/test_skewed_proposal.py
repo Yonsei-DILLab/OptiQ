@@ -12,6 +12,15 @@ from optiq.transport import (
 )
 
 
+def _trapezoid(values, *, x, axis=-1):
+    """Integrate on both NumPy 1.x (`trapz`) and NumPy 2.x (`trapezoid`)."""
+
+    integrate = getattr(np, "trapezoid", None)
+    if integrate is None:
+        integrate = np.trapz
+    return integrate(values, x=x, axis=axis)
+
+
 def test_skewed_samples_respect_radius_and_follow_positive_gradient():
     centers = jnp.zeros((1, 1, 2), dtype=jnp.float32)
     gradients = jnp.asarray([[[1.26, 0.0]]], dtype=jnp.float32)
@@ -47,8 +56,8 @@ def test_skewed_density_is_numerically_normalized_in_two_dimensions():
         action_high=(1.0, 1.0),
     )
     density = np.asarray(jnp.exp(log_density)).reshape(xx.shape)
-    mass = np.trapezoid(
-        np.trapezoid(density, x=np.asarray(coordinates), axis=1),
+    mass = _trapezoid(
+        _trapezoid(density, x=np.asarray(coordinates), axis=1),
         x=np.asarray(coordinates),
     )
     assert np.isclose(mass, 1.0, atol=2.0e-3)
@@ -97,7 +106,7 @@ def test_exact_truncated_gaussian_mixture_matches_its_density():
             action_high=(1.0,),
         )
     )[0]
-    mass = np.trapezoid(np.asarray(density), x=np.asarray(coordinates[0, :, 0]))
+    mass = _trapezoid(np.asarray(density), x=np.asarray(coordinates[0, :, 0]))
     assert np.isclose(mass, 1.0, atol=2.0e-3)
 
 
@@ -144,8 +153,8 @@ def test_perpendicular_density_is_numerically_normalized():
             )
         )
     ).reshape(xx.shape)
-    mass = np.trapezoid(
-        np.trapezoid(density, x=np.asarray(x_coordinates), axis=1),
+    mass = _trapezoid(
+        _trapezoid(density, x=np.asarray(x_coordinates), axis=1),
         x=np.asarray(y_coordinates),
     )
     assert np.isclose(mass, 1.0, atol=3.0e-3)
