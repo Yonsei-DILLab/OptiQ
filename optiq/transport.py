@@ -228,6 +228,172 @@ def sample_gradient_skewed_mixture(
     return random_samples
 
 
+def sample_gradient_perpendicular_mixture(
+    rng: jax.Array,
+    centers: jax.Array,
+    gradients: jax.Array,
+    repeats: int,
+    std: float,
+    perturb_clip: float,
+    action_low,
+    action_high,
+    include_anchor: bool = False,
+) -> jax.Array:
+    """Take a gradient step, then sample mostly in its perpendicular plane.
+
+    A strictly projected Gaussian has rank ``d - 1`` and no ordinary action
+    density.  To preserve exact importance correction, this proposal retains a
+    fixed ``std / 4`` parallel scale and uses the same amount as its normalized
+    gradient-ascent step.  The Mahalanobis radius is truncated at the existing
+    ``perturb_clip / std`` value, so no new proposal hyperparameter is added.
+    """
+
+    if centers.ndim != 3 or gradients.shape != centers.shape:
+        raise ValueError(
+            "centers and gradients must have shape [batch, components, action_dim]"
+        )
+    random_repeats = repeats - int(include_anchor)
+    if random_repeats < 0:
+        raise ValueError("repeats must be at least one when include_anchor=True")
+
+    _, _, midpoint, half_range = _action_geometry(
+        action_low, action_high, centers.dtype
+    )
+    normalized_centers = (centers - midpoint) / half_range
+    batch_size, num_centers, action_dim = centers.shape
+    component_key, direction_key, radius_key = jax.random.split(rng, 3)
+    component_indices = jax.random.randint(
+        component_key,
+        (batch_size, num_centers, random_repeats),
+        minval=0,
+        maxval=num_centers,
+    )
+
+    def select(values, indices):
+        return values[indices]
+
+    selected_centers = jax.vmap(select)(normalized_centers, component_indices)
+    selected_gradients = jax.vmap(select)(gradients, component_indices)
+    normalized_gradients = selected_gradients * half_range
+    gradient_norms = jnp.linalg.norm(
+        normalized_gradients, axis=-1, keepdims=True
+    )
+    has_gradient = gradient_norms > 1.0e-8
+    directions = jnp.where(
+        has_gradient,
+        normalized_gradients / jnp.maximum(gradient_norms, 1.0e-8),
+        0.0,
+    )
+    parallel_std = jnp.where(has_gradient, 0.25 * std, std)
+    ascent_step = jnp.where(has_gradient, parallel_std, 0.0)
+
+    spherical_directions = jax.random.normal(
+        direction_key,
+        (batch_size, num_centers, random_repeats, action_dim),
+        dtype=centers.dtype,
+    )
+    spherical_directions /= jnp.maximum(
+        jnp.linalg.norm(spherical_directions, axis=-1, keepdims=True), 1.0e-8
+    )
+    squared_radii = _sample_truncated_chi_square(
+        radius_key,
+        (batch_size, num_centers, random_repeats, 1),
+        action_dim,
+        perturb_clip / std,
+        centers.dtype,
+    )
+    whitened_noise = spherical_directions * jnp.sqrt(squared_radii)
+    parallel_white = (
+        jnp.sum(whitened_noise * directions, axis=-1, keepdims=True)
+        * directions
+    )
+    perpendicular_white = whitened_noise - parallel_white
+    normalized_samples = (
+        selected_centers
+        + ascent_step * directions
+        + std * perpendicular_white
+        + parallel_std * parallel_white
+    )
+    random_samples = midpoint + half_range * normalized_samples
+
+    if include_anchor:
+        return jnp.concatenate((centers[..., None, :], random_samples), axis=-2)
+    return random_samples
+
+
+def gradient_perpendicular_mixture_log_density(
+    samples: jax.Array,
+    centers: jax.Array,
+    gradients: jax.Array,
+    std: float,
+    perturb_clip: float,
+    action_low,
+    action_high,
+) -> jax.Array:
+    """Evaluate the exact full-rank gradient-perpendicular mixture density."""
+
+    _, _, _, half_range = _action_geometry(action_low, action_high, samples.dtype)
+    normalized_differences = (
+        samples[:, :, None, :] - centers[:, None, :, :]
+    ) / half_range
+    normalized_gradients = gradients * half_range
+    gradient_norms = jnp.linalg.norm(normalized_gradients, axis=-1, keepdims=True)
+    has_gradient = gradient_norms > 1.0e-8
+    directions = jnp.where(
+        has_gradient,
+        normalized_gradients / jnp.maximum(gradient_norms, 1.0e-8),
+        0.0,
+    )
+    parallel_std = jnp.where(has_gradient, 0.25 * std, std)
+    ascent_step = jnp.where(has_gradient, parallel_std, 0.0)
+    centered = (
+        normalized_differences
+        - ascent_step[:, None, :, :] * directions[:, None, :, :]
+    )
+    parallel_scalar = jnp.sum(
+        centered * directions[:, None, :, :], axis=-1, keepdims=True
+    )
+    parallel = parallel_scalar * directions[:, None, :, :]
+    perpendicular = centered - parallel
+    squared_mahalanobis = (
+        jnp.sum(jnp.square(perpendicular / std), axis=-1)
+        + jnp.square(parallel_scalar[..., 0] / parallel_std[:, None, :, 0])
+    )
+
+    action_dim = samples.shape[-1]
+    maximum_squared_radius = jnp.square(
+        jnp.asarray(perturb_clip / std, dtype=samples.dtype)
+    )
+    log_radial_normalizer = jnp.log(
+        jnp.maximum(
+            jsp.special.gammainc(
+                jnp.asarray(0.5 * action_dim, dtype=samples.dtype),
+                0.5 * maximum_squared_radius,
+            ),
+            jnp.finfo(samples.dtype).tiny,
+        )
+    )
+    log_determinant = (
+        (action_dim - 1) * jnp.log(std)
+        + jnp.log(parallel_std[..., 0])
+        + jnp.sum(jnp.log(half_range))
+    )
+    component_log_density = (
+        -0.5 * squared_mahalanobis
+        - 0.5 * action_dim * jnp.log(2.0 * jnp.pi)
+        - log_determinant[:, None, :]
+        - log_radial_normalizer
+    )
+    component_log_density = jnp.where(
+        squared_mahalanobis <= maximum_squared_radius + 1.0e-5,
+        component_log_density,
+        -jnp.inf,
+    )
+    return jsp.special.logsumexp(component_log_density, axis=-1) - jnp.log(
+        centers.shape[1]
+    )
+
+
 def gradient_skewed_mixture_log_density(
     samples: jax.Array,
     centers: jax.Array,

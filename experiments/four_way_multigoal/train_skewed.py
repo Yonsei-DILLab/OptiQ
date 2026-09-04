@@ -309,9 +309,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--proposals-per-policy-sample", type=int, default=5)
     parser.add_argument(
         "--proposal-mode",
-        choices=("skewed", "exact"),
+        choices=("skewed", "perpendicular", "exact"),
         default="skewed",
-        help="Gradient-skewed or ordinary truncated-Gaussian proposal mixture.",
+        help="Gradient-skewed, gradient-perpendicular, or ordinary proposal mixture.",
     )
     parser.add_argument("--proposal-std", type=float, default=0.2)
     parser.add_argument("--proposal-clip", type=float, default=0.5)

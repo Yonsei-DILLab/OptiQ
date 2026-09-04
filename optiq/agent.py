@@ -11,7 +11,9 @@ import optax
 from .networks import Actor, TwinCritic
 from .transport import (
     clip_action,
+    gradient_perpendicular_mixture_log_density,
     gradient_skewed_mixture_log_density,
+    sample_gradient_perpendicular_mixture,
     sample_gradient_skewed_mixture,
     sample_truncated_gaussian,
     sample_truncated_gaussian_mixture,
@@ -64,8 +66,10 @@ class OptiQConfig:
             raise ValueError("num_particles and proposals_per_particle must be positive.")
         if self.include_anchor and self.proposals_per_particle < 2:
             raise ValueError("An anchor requires at least two proposals per particle.")
-        if self.proposal_sampling_mode not in {"skewed", "exact"}:
-            raise ValueError("proposal_sampling_mode must be 'skewed' or 'exact'.")
+        if self.proposal_sampling_mode not in {"skewed", "perpendicular", "exact"}:
+            raise ValueError(
+                "proposal_sampling_mode must be 'skewed', 'perpendicular', or 'exact'."
+            )
         if self.proposal_std <= 0.0 or self.td_noise_std <= 0.0:
             raise ValueError("Proposal and TD noise standard deviations must be positive.")
         if self.proposal_clip <= 0.0 or self.td_noise_clip <= 0.0:
@@ -224,7 +228,7 @@ class OptiQ(flax.struct.PyTreeNode):
         )
 
         proposal_gradients = jnp.zeros_like(detached_particles)
-        if self.config.proposal_sampling_mode == "skewed":
+        if self.config.proposal_sampling_mode in {"skewed", "perpendicular"}:
             def summed_center_q(flat_particle_actions):
                 center_qs = self.critic.apply_fn(
                     {"params": critic_params},
@@ -237,17 +241,30 @@ class OptiQ(flax.struct.PyTreeNode):
                 detached_particles.reshape(batch_size * num_particles, action_dim)
             ).reshape(batch_size, num_particles, action_dim)
             proposal_gradients = jax.lax.stop_gradient(proposal_gradients)
-            proposals = sample_gradient_skewed_mixture(
-                proposal_rng,
-                detached_particles,
-                proposal_gradients,
-                repeats,
-                self.config.proposal_std,
-                self.config.proposal_clip,
-                self.config.action_low,
-                self.config.action_high,
-                include_anchor=self.config.include_anchor,
-            )
+            if self.config.proposal_sampling_mode == "skewed":
+                proposals = sample_gradient_skewed_mixture(
+                    proposal_rng,
+                    detached_particles,
+                    proposal_gradients,
+                    repeats,
+                    self.config.proposal_std,
+                    self.config.proposal_clip,
+                    self.config.action_low,
+                    self.config.action_high,
+                    include_anchor=self.config.include_anchor,
+                )
+            else:
+                proposals = sample_gradient_perpendicular_mixture(
+                    proposal_rng,
+                    detached_particles,
+                    proposal_gradients,
+                    repeats,
+                    self.config.proposal_std,
+                    self.config.proposal_clip,
+                    self.config.action_low,
+                    self.config.action_high,
+                    include_anchor=self.config.include_anchor,
+                )
         else:
             proposals = sample_truncated_gaussian_mixture(
                 proposal_rng,
@@ -274,6 +291,16 @@ class OptiQ(flax.struct.PyTreeNode):
 
         if self.config.proposal_sampling_mode == "skewed":
             proposal_log_density = gradient_skewed_mixture_log_density(
+                jax.lax.stop_gradient(proposals),
+                detached_particles,
+                proposal_gradients,
+                self.config.proposal_std,
+                self.config.proposal_clip,
+                self.config.action_low,
+                self.config.action_high,
+            )
+        elif self.config.proposal_sampling_mode == "perpendicular":
+            proposal_log_density = gradient_perpendicular_mixture_log_density(
                 jax.lax.stop_gradient(proposals),
                 detached_particles,
                 proposal_gradients,
