@@ -44,15 +44,13 @@ actor:
   hidden_dims: [256, 256, 256]
   num_policy_samples: 16
   proposals_per_policy_sample: 5
-  # chi_square: IID uniform center selection followed by a one-gradient,
-  # anisotropic Gaussian draw with a truncated chi-square Mahalanobis radius.
-  # The critic gradient only constructs the proposal; actor inference is unchanged.
-  proposal_sampling_mode: chi_square
+  # skewed: draw from the same 2.5-sigma radial truncation, then keep or
+  # reflect each perturbation using its pairwise linearized Boltzmann score.
+  # This adds no proposal-specific tuning beyond std and clip.  Temperature
+  # remains only in the Boltzmann target weights, not in proposal geometry.
+  proposal_sampling_mode: skewed
   proposal_std: 0.2
-  proposal_parallel_std: 0.4
-  proposal_gradient_step: 0.1
-  # The prior clip/std ratio, 0.5/0.2=2.5, is the Mahalanobis-radius cap.
-  proposal_chi_square_radius: 2.5
+  # The radial Mahalanobis cap is proposal_clip / proposal_std = 2.5.
   proposal_clip: 0.5
   include_anchor: true
   density_correction: true

@@ -93,14 +93,6 @@ def sample_truncated_gaussian_mixture(
     return random_samples
 
 
-def _gradient_directions(gradients: jax.Array) -> tuple[jax.Array, jax.Array]:
-    """Return unit Q-gradient directions and a mask for non-flat gradients."""
-    norms = jnp.linalg.norm(gradients, axis=-1, keepdims=True)
-    valid = norms > 1.0e-8
-    directions = jnp.where(valid, gradients / jnp.maximum(norms, 1.0e-8), 0.0)
-    return directions, valid[..., 0]
-
-
 def _sample_truncated_chi_square(
     rng: jax.Array,
     shape: tuple[int, ...],
@@ -143,25 +135,26 @@ def _sample_truncated_chi_square(
     return 0.5 * (lower + upper)
 
 
-def sample_gradient_chi_square_mixture(
+def sample_gradient_skewed_mixture(
     rng: jax.Array,
     centers: jax.Array,
     gradients: jax.Array,
     repeats: int,
-    perpendicular_std: float,
-    parallel_std: float,
-    gradient_step: float,
-    maximum_radius: float,
+    std: float,
+    perturb_clip: float,
     include_anchor: bool = False,
 ) -> jax.Array:
-    """Sample IID proposals from a Q-gradient-aligned truncated mixture.
+    """Sample IID proposals from a pairwise-skewed truncated mixture.
 
     Every random proposal independently selects an actor center.  The component
-    mean is shifted along its normalized Q gradient and its covariance has
-    ``parallel_std`` on the gradient axis and ``perpendicular_std`` elsewhere.
-    Its squared Mahalanobis radius follows a chi-square distribution truncated
-    at ``maximum_radius ** 2``.  Original actor samples can be retained as
-    deterministic anchors in slot zero.
+    first draws ``delta`` from an isotropic Gaussian conditioned on
+    ``||delta|| <= perturb_clip``.  It keeps ``delta`` with probability
+
+        sigmoid(2 * unit_grad_Q.T @ delta / std)
+
+    and otherwise reflects it to ``-delta``.  The symmetric truncation makes
+    the resulting component density exactly normalized.  Original actor
+    samples can be retained as deterministic anchors in slot zero.
     """
     if centers.ndim != 3 or gradients.shape != centers.shape:
         raise ValueError(
@@ -173,9 +166,7 @@ def sample_gradient_chi_square_mixture(
         raise ValueError("repeats must be at least one when include_anchor=True")
 
     batch_size, num_centers, action_dim = centers.shape
-    directions, _ = _gradient_directions(gradients)
-    means = centers + gradient_step * directions
-    component_key, direction_key, radius_key = jax.random.split(rng, 3)
+    component_key, direction_key, radius_key, sign_key = jax.random.split(rng, 4)
     component_indices = jax.random.randint(
         component_key,
         (batch_size, num_centers, random_repeats),
@@ -186,8 +177,14 @@ def sample_gradient_chi_square_mixture(
     def select(values, indices):
         return values[indices]
 
-    selected_means = jax.vmap(select)(means, component_indices)
-    selected_directions = jax.vmap(select)(directions, component_indices)
+    selected_centers = jax.vmap(select)(centers, component_indices)
+    selected_gradients = jax.vmap(select)(gradients, component_indices)
+    gradient_norms = jnp.linalg.norm(selected_gradients, axis=-1, keepdims=True)
+    selected_directions = jnp.where(
+        gradient_norms > 1.0e-8,
+        selected_gradients / jnp.maximum(gradient_norms, 1.0e-8),
+        0.0,
+    )
     spherical_directions = jax.random.normal(
         direction_key,
         (batch_size, num_centers, random_repeats, action_dim),
@@ -196,6 +193,7 @@ def sample_gradient_chi_square_mixture(
     spherical_directions /= jnp.maximum(
         jnp.linalg.norm(spherical_directions, axis=-1, keepdims=True), 1.0e-8
     )
+    maximum_radius = perturb_clip / std
     squared_radii = _sample_truncated_chi_square(
         radius_key,
         (batch_size, num_centers, random_repeats, 1),
@@ -204,50 +202,34 @@ def sample_gradient_chi_square_mixture(
         centers.dtype,
     )
     whitened_noise = spherical_directions * jnp.sqrt(squared_radii)
-    parallel_coordinates = jnp.sum(
-        whitened_noise * selected_directions, axis=-1, keepdims=True
+    base_noise = std * whitened_noise
+    keep_logits = (
+        2.0
+        * jnp.sum(selected_directions * base_noise, axis=-1)
+        / std
     )
-    noise = perpendicular_std * whitened_noise + (
-        parallel_std - perpendicular_std
-    ) * parallel_coordinates * selected_directions
-    random_samples = selected_means + noise
+    keep = jax.random.bernoulli(sign_key, jax.nn.sigmoid(keep_logits))
+    oriented_noise = jnp.where(keep[..., None], base_noise, -base_noise)
+    random_samples = selected_centers + oriented_noise
 
     if include_anchor:
         return jnp.concatenate((centers[..., None, :], random_samples), axis=-2)
     return random_samples
 
 
-def gradient_chi_square_mixture_log_density(
+def gradient_skewed_mixture_log_density(
     samples: jax.Array,
     centers: jax.Array,
     gradients: jax.Array,
-    perpendicular_std: float,
-    parallel_std: float,
-    gradient_step: float,
-    maximum_radius: float,
+    std: float,
+    perturb_clip: float,
 ) -> jax.Array:
-    """Evaluate the exact gradient-aligned truncated mixture log density."""
-    directions, valid_gradients = _gradient_directions(gradients)
-    means = centers + gradient_step * directions
-    differences = samples[:, :, None, :] - means[:, None, :, :]
-    parallel_coordinates = jnp.sum(
-        differences * directions[:, None, :, :], axis=-1
-    )
-    squared_norms = jnp.sum(jnp.square(differences), axis=-1)
-    perpendicular_squared_norms = jnp.maximum(
-        squared_norms - jnp.square(parallel_coordinates), 0.0
-    )
-    squared_mahalanobis = (
-        perpendicular_squared_norms / jnp.square(perpendicular_std)
-        + jnp.square(parallel_coordinates) / jnp.square(parallel_std)
-    )
+    """Evaluate the exact pairwise-skewed proposal-mixture log density."""
+    differences = samples[:, :, None, :] - centers[:, None, :, :]
+    squared_mahalanobis = jnp.sum(jnp.square(differences / std), axis=-1)
 
     action_dim = samples.shape[-1]
-    log_scale_determinant = (
-        action_dim * jnp.log(perpendicular_std)
-        + valid_gradients
-        * (jnp.log(parallel_std) - jnp.log(perpendicular_std))
-    )
+    maximum_radius = perturb_clip / std
     maximum_squared_radius = jnp.square(
         jnp.asarray(maximum_radius, dtype=samples.dtype)
     )
@@ -260,11 +242,25 @@ def gradient_chi_square_mixture_log_density(
             jnp.finfo(samples.dtype).tiny,
         )
     )
-    component_log_density = (
+    base_component_log_density = (
         -0.5 * squared_mahalanobis
         - 0.5 * action_dim * jnp.log(2.0 * jnp.pi)
-        - log_scale_determinant[:, None, :]
+        - action_dim * jnp.log(std)
         - log_radial_normalizer
+    )
+    gradient_norms = jnp.linalg.norm(gradients, axis=-1, keepdims=True)
+    directions = jnp.where(
+        gradient_norms > 1.0e-8,
+        gradients / jnp.maximum(gradient_norms, 1.0e-8),
+        0.0,
+    )
+    skew_logits = (
+        2.0 * jnp.sum(differences * directions[:, None, :, :], axis=-1) / std
+    )
+    component_log_density = (
+        base_component_log_density
+        + jnp.log(jnp.asarray(2.0, dtype=samples.dtype))
+        + jax.nn.log_sigmoid(skew_logits)
     )
     component_log_density = jnp.where(
         squared_mahalanobis <= maximum_squared_radius + 1.0e-5,

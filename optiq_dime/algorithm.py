@@ -16,8 +16,8 @@ from diffusion.dime import DIME
 from .policy import OptiQPolicy
 from .transport import (
     clip_action,
-    gradient_chi_square_mixture_log_density,
-    sample_gradient_chi_square_mixture,
+    gradient_skewed_mixture_log_density,
+    sample_gradient_skewed_mixture,
     sample_truncated_gaussian,
     sample_truncated_gaussian_mixture,
     select_density_beta_for_ess,
@@ -96,9 +96,6 @@ class OptiQDIME(DIME):
             actor.proposals_per_policy_sample,
             actor.proposal_sampling_mode,
             actor.proposal_std,
-            actor.proposal_parallel_std,
-            actor.proposal_gradient_step,
-            actor.proposal_chi_square_radius,
             actor.proposal_clip,
             actor.include_anchor,
             actor.density_correction,
@@ -353,9 +350,6 @@ class OptiQDIME(DIME):
         proposals_per_policy_sample: int,
         proposal_sampling_mode: str,
         proposal_std: float,
-        proposal_parallel_std: float,
-        proposal_gradient_step: float,
-        proposal_chi_square_radius: float,
         proposal_clip: float,
         include_anchor: bool,
         density_correction: bool,
@@ -395,7 +389,7 @@ class OptiQDIME(DIME):
                 proposal_sampler = sample_truncated_gaussian
             elif proposal_sampling_mode == "exact":
                 proposal_sampler = sample_truncated_gaussian_mixture
-            elif proposal_sampling_mode == "chi_square":
+            elif proposal_sampling_mode == "skewed":
                 detached_policy_samples = jax.lax.stop_gradient(policy_samples)
                 flat_center_observations = repeated_observations.reshape(
                     batch_size * num_policy_samples, observation_dim
@@ -427,15 +421,13 @@ class OptiQDIME(DIME):
                     )
                 ).reshape(batch_size, num_policy_samples, action_dim)
                 proposal_gradients = jax.lax.stop_gradient(proposal_gradients)
-                proposals = sample_gradient_chi_square_mixture(
+                proposals = sample_gradient_skewed_mixture(
                     proposal_key,
                     detached_policy_samples,
                     proposal_gradients,
                     repeats=proposals_per_policy_sample,
-                    perpendicular_std=proposal_std,
-                    parallel_std=proposal_parallel_std,
-                    gradient_step=proposal_gradient_step,
-                    maximum_radius=proposal_chi_square_radius,
+                    std=proposal_std,
+                    perturb_clip=proposal_clip,
                     include_anchor=include_anchor,
                 )
                 proposal_sampler = None
@@ -480,16 +472,14 @@ class OptiQDIME(DIME):
 
             proposal_log_density = jnp.zeros_like(source_q)
             if density_correction:
-                if proposal_sampling_mode == "chi_square":
+                if proposal_sampling_mode == "skewed":
                     proposal_log_density = (
-                        gradient_chi_square_mixture_log_density(
+                        gradient_skewed_mixture_log_density(
                             jax.lax.stop_gradient(proposals),
                             jax.lax.stop_gradient(policy_samples),
                             proposal_gradients,
                             proposal_std,
-                            proposal_parallel_std,
-                            proposal_gradient_step,
-                            proposal_chi_square_radius,
+                            proposal_clip,
                         )
                     )
                 else:
@@ -812,9 +802,6 @@ class OptiQDIME(DIME):
         proposals_per_policy_sample,
         proposal_sampling_mode,
         proposal_std,
-        proposal_parallel_std,
-        proposal_gradient_step,
-        proposal_chi_square_radius,
         proposal_clip,
         include_anchor,
         density_correction,
@@ -918,9 +905,6 @@ class OptiQDIME(DIME):
                     proposals_per_policy_sample,
                     proposal_sampling_mode,
                     proposal_std,
-                    proposal_parallel_std,
-                    proposal_gradient_step,
-                    proposal_chi_square_radius,
                     proposal_clip,
                     include_anchor,
                     density_correction,

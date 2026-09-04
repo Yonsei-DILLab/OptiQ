@@ -17,12 +17,12 @@ eval_at_start: true
 stochastic_eval: true
 
 checkpoint_interval: 0
-output_root: outputs/optiq_dime_dog_chi_square
-run_name: optiq_dime_chi_square_${task}_seed${seed}_N16R5_argmax_1m
+output_root: outputs/optiq_dime_dog_skewed_proposal
+run_name: optiq_dime_skewed_${task}_seed${seed}_N16R5_argmax_1m
 
 wandb:
   entity: online-optiflow
-  project: optiq_dime_dog_chi_square_n16r5_anchor_t025
+  project: optiq_dime_dog_skewed_proposal_n16r5_anchor_t025
   group: dog-${task}_optiq-dime-chi-square
   job_type: seed-${seed}
   mode: online

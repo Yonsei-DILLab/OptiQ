@@ -11,9 +11,10 @@ import optax
 from .networks import Actor, TwinCritic
 from .transport import (
     clip_action,
+    gradient_skewed_mixture_log_density,
+    sample_gradient_skewed_mixture,
     sample_truncated_gaussian,
     sinkhorn,
-    truncated_mixture_log_density,
 )
 
 
@@ -212,9 +213,27 @@ class OptiQ(flax.struct.PyTreeNode):
             raw_actions, self.config.action_low, self.config.action_high
         )
 
-        proposals = sample_truncated_gaussian(
+        detached_particles = jax.lax.stop_gradient(particles)
+        flat_particle_observations = repeated_observations.reshape(
+            batch_size * num_particles, observations.shape[-1]
+        )
+
+        def summed_center_q(flat_particle_actions):
+            center_qs = self.critic.apply_fn(
+                {"params": critic_params},
+                flat_particle_observations,
+                flat_particle_actions,
+            ).reshape(2, batch_size * num_particles)
+            return center_qs.mean(axis=0).sum()
+
+        proposal_gradients = jax.grad(summed_center_q)(
+            detached_particles.reshape(batch_size * num_particles, action_dim)
+        ).reshape(batch_size, num_particles, action_dim)
+        proposal_gradients = jax.lax.stop_gradient(proposal_gradients)
+        proposals = sample_gradient_skewed_mixture(
             proposal_rng,
-            particles,
+            detached_particles,
+            proposal_gradients,
             repeats,
             self.config.proposal_std,
             self.config.proposal_clip,
@@ -234,9 +253,10 @@ class OptiQ(flax.struct.PyTreeNode):
         ).reshape(2, batch_size, num_proposals)
         source_q = jax.lax.stop_gradient(source_qs.mean(axis=0))
 
-        proposal_log_density = truncated_mixture_log_density(
+        proposal_log_density = gradient_skewed_mixture_log_density(
             jax.lax.stop_gradient(proposals),
-            jax.lax.stop_gradient(particles),
+            detached_particles,
+            proposal_gradients,
             self.config.proposal_std,
             self.config.proposal_clip,
             self.config.action_low,
@@ -283,6 +303,9 @@ class OptiQ(flax.struct.PyTreeNode):
             ).mean(),
             "actor/policy_spread_l2": jnp.linalg.norm(
                 particles.std(axis=1), axis=-1
+            ).mean(),
+            "actor/proposal_gradient_norm": jnp.linalg.norm(
+                proposal_gradients, axis=-1
             ).mean(),
         }
         return loss, metrics
