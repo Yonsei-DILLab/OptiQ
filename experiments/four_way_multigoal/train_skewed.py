@@ -91,6 +91,113 @@ def collect_trajectories(
     return trajectories
 
 
+def sample_initial_actions(
+    agent: OptiQ,
+    count: int,
+    seed: int,
+) -> np.ndarray:
+    """Draw policy actions at the symmetric initial state s_0 = (0, 0)."""
+
+    observations = jnp.zeros((count, 2), dtype=jnp.float32)
+    actions = agent.sample_actions(
+        observations,
+        jax.random.PRNGKey(seed),
+        deterministic=False,
+    )
+    return np.asarray(actions)
+
+
+def summarize_initial_actions(actions: np.ndarray) -> dict[str, object]:
+    """Measure occupancy of the four cardinal action modes at s_0.
+
+    Assignment alone would make a circular cloud look four-modal.  We therefore
+    also report the fraction of samples that are non-trivial and lie within 30
+    degrees of a cardinal axis.  Covered-mode counts use only those confident
+    samples.
+    """
+
+    cardinal_directions = np.asarray(
+        [[1.0, 0.0], [-1.0, 0.0], [0.0, 1.0], [0.0, -1.0]],
+        dtype=np.float32,
+    )
+    norms = np.linalg.norm(actions, axis=-1)
+    cosine_scores = actions @ cardinal_directions.T / np.maximum(norms[:, None], 1e-8)
+    assignments = np.argmax(cosine_scores, axis=-1)
+    confident = (norms >= 0.05) & (np.max(cosine_scores, axis=-1) >= np.cos(np.pi / 6.0))
+    counts = np.bincount(assignments[confident], minlength=4)
+    probabilities = counts / max(counts.sum(), 1)
+    positive = probabilities > 0.0
+    entropy = -np.sum(probabilities[positive] * np.log(probabilities[positive]))
+    minimum_mode_count = max(1, int(np.ceil(0.05 * len(actions))))
+    return {
+        "s0_action_sample_count": int(len(actions)),
+        "s0_confident_fraction": float(confident.mean()),
+        "s0_action_norm_mean": float(norms.mean()),
+        "s0_action_norm_median": float(np.median(norms)),
+        "s0_action_mode_counts": counts.tolist(),
+        "s0_action_mode_probabilities": probabilities.tolist(),
+        "s0_action_mode_entropy_normalized": float(entropy / np.log(4.0)),
+        "s0_action_covered_modes": int(np.sum(counts >= minimum_mode_count)),
+    }
+
+
+def plot_initial_actions(actions: np.ndarray, path: Path) -> None:
+    cardinal_directions = np.asarray(
+        [[1.0, 0.0], [-1.0, 0.0], [0.0, 1.0], [0.0, -1.0]],
+        dtype=np.float32,
+    )
+    norms = np.linalg.norm(actions, axis=-1)
+    assignments = np.argmax(actions @ cardinal_directions.T, axis=-1)
+    colors = ("#2775c9", "#df6b2f", "#2e9b59", "#8b55b5")
+
+    figure, axes = plt.subplots(1, 2, figsize=(11.2, 5.0))
+    for mode, color in enumerate(colors):
+        selected = actions[assignments == mode]
+        axes[0].scatter(
+            selected[:, 0],
+            selected[:, 1],
+            s=7,
+            alpha=0.22,
+            color=color,
+            rasterized=True,
+        )
+    axes[0].axhline(0.0, color="black", linewidth=0.8, alpha=0.35)
+    axes[0].axvline(0.0, color="black", linewidth=0.8, alpha=0.35)
+    axes[0].set(
+        title=r"Actor samples at $s_0=(0,0)$",
+        xlabel="action x",
+        ylabel="action y",
+        xlim=(-1.0, 1.0),
+        ylim=(-1.0, 1.0),
+        aspect="equal",
+    )
+    axes[0].grid(alpha=0.10)
+
+    nonzero = norms > 1e-8
+    angles = np.arctan2(actions[nonzero, 1], actions[nonzero, 0])
+    axes[1].hist(
+        angles,
+        bins=72,
+        range=(-np.pi, np.pi),
+        color="#4267a9",
+        alpha=0.85,
+    )
+    axes[1].set(
+        title="Initial-action angular occupancy",
+        xlabel="angle (radians)",
+        ylabel="sample count",
+        xlim=(-np.pi, np.pi),
+    )
+    axes[1].set_xticks(
+        [-np.pi, -np.pi / 2.0, 0.0, np.pi / 2.0, np.pi],
+        [r"$-\pi$", r"$-\pi/2$", "0", r"$\pi/2$", r"$\pi$"],
+    )
+    axes[1].grid(alpha=0.10)
+    figure.tight_layout()
+    figure.savefig(path, dpi=220, bbox_inches="tight")
+    plt.close(figure)
+
+
 def summarize_trajectories(trajectories: list[np.ndarray]) -> dict[str, object]:
     endpoints = np.asarray([trajectory[-1] for trajectory in trajectories])
     goals = MultiGoalEnv().goal_positions
@@ -174,6 +281,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--horizon", type=int, default=20)
     parser.add_argument("--init-steps", type=int, default=1_500)
     parser.add_argument("--trajectory-count", type=int, default=400)
+    parser.add_argument("--initial-action-count", type=int, default=4096)
     parser.add_argument("--num-policy-samples", type=int, default=16)
     parser.add_argument("--proposals-per-policy-sample", type=int, default=5)
     parser.add_argument("--proposal-std", type=float, default=0.2)
@@ -234,12 +342,28 @@ def main() -> None:
         if terminated or truncated:
             observation, _ = environment.reset(seed=int(numpy_rng.integers(2**31)))
         if step % args.log_interval == 0:
+            initial_actions = sample_initial_actions(
+                agent,
+                args.initial_action_count,
+                args.seed + 1_000_000 + step,
+            )
+            initial_summary = summarize_initial_actions(initial_actions)
             metrics_text = " ".join(
                 f"{key}={float(value):.4f}"
                 for key, value in sorted(latest_metrics.items())
             )
-            print(f"step={step} {metrics_text}", flush=True)
+            print(
+                f"step={step} {metrics_text} "
+                f"s0/covered_modes={initial_summary['s0_action_covered_modes']} "
+                f"s0/entropy={initial_summary['s0_action_mode_entropy_normalized']:.4f} "
+                f"s0/confident={initial_summary['s0_confident_fraction']:.4f} "
+                f"s0/counts={initial_summary['s0_action_mode_counts']}",
+                flush=True,
+            )
 
+    initial_actions = sample_initial_actions(
+        agent, args.initial_action_count, args.seed + 2_000_000
+    )
     trajectories = collect_trajectories(
         agent, args.trajectory_count, args.horizon, args.seed + 10_000
     )
@@ -250,8 +374,10 @@ def main() -> None:
         "proposal_std": args.proposal_std,
         "proposal_clip": args.proposal_clip,
         "temperature": args.temperature,
+        **summarize_initial_actions(initial_actions),
         **summarize_trajectories(trajectories),
     }
+    np.savez_compressed(output_dir / "s0_actions.npz", actions=initial_actions)
     np.savez_compressed(
         output_dir / "trajectories.npz",
         **{
@@ -260,6 +386,7 @@ def main() -> None:
         },
     )
     plot_trajectories(trajectories, output_dir / "policy_rollouts.png")
+    plot_initial_actions(initial_actions, output_dir / "s0_action_modes.png")
     (output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     environment.close()
     print(json.dumps(summary, indent=2), flush=True)
