@@ -39,6 +39,60 @@ def sample_truncated_gaussian(
     return centers[..., None, :] + noise
 
 
+def sample_truncated_gaussian_mixture(
+    rng: jax.Array,
+    centers: jax.Array,
+    repeats: int,
+    std: float,
+    perturb_clip: float,
+    include_anchor: bool = False,
+) -> jax.Array:
+    """Sample IID random proposals from the uniform mixture over centers.
+
+    The leading two dimensions of ``centers`` are batch and mixture component.
+    Every random proposal first selects a component independently and uniformly,
+    then draws from that component's exactly truncated Gaussian.  When requested,
+    one deterministic copy of every original center is retained in slot zero;
+    those anchors are intentionally separate from the IID random proposals.
+    """
+    if centers.ndim != 3:
+        raise ValueError("centers must have shape [batch, components, action_dim]")
+
+    random_repeats = repeats - int(include_anchor)
+    if random_repeats < 0:
+        raise ValueError("repeats must be at least one when include_anchor=True")
+
+    batch_size, num_centers, action_dim = centers.shape
+    component_key, sample_key = jax.random.split(rng)
+    component_indices = jax.random.randint(
+        component_key,
+        (batch_size, num_centers, random_repeats),
+        minval=0,
+        maxval=num_centers,
+    )
+    selected_centers = jax.vmap(
+        lambda batch_centers, batch_indices: batch_centers[batch_indices]
+    )(centers, component_indices)
+
+    lower = jnp.maximum(-1.0 - selected_centers, -perturb_clip)
+    upper = jnp.minimum(1.0 - selected_centers, perturb_clip)
+    lower_cdf = jsp.special.ndtr(lower / std)
+    upper_cdf = jsp.special.ndtr(upper / std)
+    uniform = jax.random.uniform(
+        sample_key,
+        (batch_size, num_centers, random_repeats, action_dim),
+        minval=jnp.finfo(centers.dtype).eps,
+        maxval=1.0 - jnp.finfo(centers.dtype).eps,
+    )
+    quantiles = lower_cdf + uniform * (upper_cdf - lower_cdf)
+    noise = std * jsp.special.ndtri(jnp.clip(quantiles, 1.0e-7, 1.0 - 1.0e-7))
+    random_samples = selected_centers + noise
+
+    if include_anchor:
+        return jnp.concatenate((centers[..., None, :], random_samples), axis=-2)
+    return random_samples
+
+
 def truncated_mixture_log_density(
     samples: jax.Array,
     centers: jax.Array,

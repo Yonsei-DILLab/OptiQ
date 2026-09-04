@@ -44,6 +44,9 @@ actor:
   hidden_dims: [256, 256, 256]
   num_policy_samples: 16
   proposals_per_policy_sample: 5
+  # stratified: equal random draws per center; exact: independently choose each
+  # random proposal's center from the uniform KDE mixture. Anchors are unchanged.
+  proposal_sampling_mode: stratified
   proposal_std: 0.2
   proposal_clip: 0.5
   include_anchor: true

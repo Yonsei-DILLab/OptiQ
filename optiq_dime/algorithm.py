@@ -17,6 +17,7 @@ from .policy import OptiQPolicy
 from .transport import (
     clip_action,
     sample_truncated_gaussian,
+    sample_truncated_gaussian_mixture,
     select_density_beta_for_ess,
     sinkhorn,
     truncated_mixture_log_density,
@@ -91,6 +92,7 @@ class OptiQDIME(DIME):
             self.cfg.alg.critic.n_atoms,
             actor.num_policy_samples,
             actor.proposals_per_policy_sample,
+            actor.proposal_sampling_mode,
             actor.proposal_std,
             actor.proposal_clip,
             actor.include_anchor,
@@ -326,6 +328,7 @@ class OptiQDIME(DIME):
         static_argnames=[
             "num_policy_samples",
             "proposals_per_policy_sample",
+            "proposal_sampling_mode",
             "include_anchor",
             "density_correction",
             "adaptive_density_beta",
@@ -343,6 +346,7 @@ class OptiQDIME(DIME):
         z_atoms: jax.Array,
         num_policy_samples: int,
         proposals_per_policy_sample: int,
+        proposal_sampling_mode: str,
         proposal_std: float,
         proposal_clip: float,
         include_anchor: bool,
@@ -378,7 +382,15 @@ class OptiQDIME(DIME):
                 latents.reshape(batch_size * num_policy_samples, action_dim),
             ).reshape(batch_size, num_policy_samples, action_dim)
             policy_samples = clip_action(raw_actions)
-            proposals = sample_truncated_gaussian(
+            if proposal_sampling_mode == "stratified":
+                proposal_sampler = sample_truncated_gaussian
+            elif proposal_sampling_mode == "exact":
+                proposal_sampler = sample_truncated_gaussian_mixture
+            else:
+                raise ValueError(
+                    f"Unknown proposal_sampling_mode: {proposal_sampling_mode}"
+                )
+            proposals = proposal_sampler(
                 proposal_key,
                 policy_samples,
                 repeats=proposals_per_policy_sample,
@@ -689,6 +701,7 @@ class OptiQDIME(DIME):
             "entr_coeff",
             "num_policy_samples",
             "proposals_per_policy_sample",
+            "proposal_sampling_mode",
             "include_anchor",
             "density_correction",
             "sinkhorn_iterations",
@@ -720,6 +733,7 @@ class OptiQDIME(DIME):
         num_atoms,
         num_policy_samples,
         proposals_per_policy_sample,
+        proposal_sampling_mode,
         proposal_std,
         proposal_clip,
         include_anchor,
@@ -819,6 +833,7 @@ class OptiQDIME(DIME):
                     z_atoms,
                     num_policy_samples,
                     proposals_per_policy_sample,
+                    proposal_sampling_mode,
                     proposal_std,
                     proposal_clip,
                     include_anchor,
