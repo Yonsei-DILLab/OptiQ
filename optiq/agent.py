@@ -295,9 +295,30 @@ class OptiQ(flax.struct.PyTreeNode):
         loss = jnp.mean(jnp.sum(jnp.square(raw_actions - selected_actions), axis=-1))
 
         source_ess = 1.0 / jnp.sum(jnp.square(source_weights), axis=-1)
+        q_scores = source_q / self.config.temperature
+        density_scores = -proposal_log_density
+        q_only_weights = jax.nn.softmax(q_scores, axis=-1)
+        density_only_weights = jax.nn.softmax(density_scores, axis=-1)
+        q_only_ess = 1.0 / jnp.sum(jnp.square(q_only_weights), axis=-1)
+        density_only_ess = 1.0 / jnp.sum(
+            jnp.square(density_only_weights), axis=-1
+        )
+
+        def mean_range(values):
+            return jnp.mean(
+                jnp.max(values, axis=-1) - jnp.min(values, axis=-1)
+            )
+
         metrics = {
             "actor/loss": loss,
             "actor/source_ess_fraction": (source_ess / num_proposals).mean(),
+            "actor/q_only_ess_fraction": (q_only_ess / num_proposals).mean(),
+            "actor/density_only_ess_fraction": (
+                density_only_ess / num_proposals
+            ).mean(),
+            "actor/q_over_temperature_range": mean_range(q_scores),
+            "actor/neg_log_proposal_range": mean_range(density_scores),
+            "actor/combined_logit_range": mean_range(logits),
             "actor/selected_delta_l2": jnp.linalg.norm(
                 particles - selected_actions, axis=-1
             ).mean(),
