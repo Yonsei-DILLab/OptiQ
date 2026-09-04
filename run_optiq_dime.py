@@ -89,7 +89,13 @@ def initialize_and_run(cfg: DictConfig):
             entity=cfg.wandb.entity,
             mode=cfg.wandb.mode,
             sync_tensorboard=True,
-            tags=["optiq", "dime-critic", "dmc-dog", cfg.task],
+            tags=[
+                "optiq",
+                "dime-critic",
+                "dmc-dog",
+                cfg.alg.actor.proposal_sampling_mode,
+                cfg.task,
+            ],
         )
     model, callbacks = create_algorithm(cfg)
     model.learn(

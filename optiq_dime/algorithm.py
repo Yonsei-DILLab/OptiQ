@@ -16,6 +16,8 @@ from diffusion.dime import DIME
 from .policy import OptiQPolicy
 from .transport import (
     clip_action,
+    gradient_chi_square_mixture_log_density,
+    sample_gradient_chi_square_mixture,
     sample_truncated_gaussian,
     sample_truncated_gaussian_mixture,
     select_density_beta_for_ess,
@@ -94,6 +96,9 @@ class OptiQDIME(DIME):
             actor.proposals_per_policy_sample,
             actor.proposal_sampling_mode,
             actor.proposal_std,
+            actor.proposal_parallel_std,
+            actor.proposal_gradient_step,
+            actor.proposal_chi_square_radius,
             actor.proposal_clip,
             actor.include_anchor,
             actor.density_correction,
@@ -348,6 +353,9 @@ class OptiQDIME(DIME):
         proposals_per_policy_sample: int,
         proposal_sampling_mode: str,
         proposal_std: float,
+        proposal_parallel_std: float,
+        proposal_gradient_step: float,
+        proposal_chi_square_radius: float,
         proposal_clip: float,
         include_anchor: bool,
         density_correction: bool,
@@ -382,22 +390,69 @@ class OptiQDIME(DIME):
                 latents.reshape(batch_size * num_policy_samples, action_dim),
             ).reshape(batch_size, num_policy_samples, action_dim)
             policy_samples = clip_action(raw_actions)
+            proposal_gradients = jnp.zeros_like(policy_samples)
             if proposal_sampling_mode == "stratified":
                 proposal_sampler = sample_truncated_gaussian
             elif proposal_sampling_mode == "exact":
                 proposal_sampler = sample_truncated_gaussian_mixture
+            elif proposal_sampling_mode == "chi_square":
+                detached_policy_samples = jax.lax.stop_gradient(policy_samples)
+                flat_center_observations = repeated_observations.reshape(
+                    batch_size * num_policy_samples, observation_dim
+                )
+
+                def summed_center_q(flat_center_actions):
+                    center_distributions = qf_state.apply_fn(
+                        {
+                            "params": qf_state.params,
+                            "batch_stats": qf_state.batch_stats,
+                        },
+                        flat_center_observations,
+                        flat_center_actions,
+                        rngs={"dropout": dropout_key},
+                        train=False,
+                    ).reshape(2, batch_size * num_policy_samples, -1)
+                    center_qs = jnp.sum(center_distributions * z_atoms, axis=-1)
+                    if source_q_eval == "mean":
+                        center_q = center_qs.mean(axis=0)
+                    elif source_q_eval == "min":
+                        center_q = center_qs.min(axis=0)
+                    else:
+                        raise ValueError(f"Unknown source_q_eval: {source_q_eval}")
+                    return center_q.sum()
+
+                proposal_gradients = jax.grad(summed_center_q)(
+                    detached_policy_samples.reshape(
+                        batch_size * num_policy_samples, action_dim
+                    )
+                ).reshape(batch_size, num_policy_samples, action_dim)
+                proposal_gradients = jax.lax.stop_gradient(proposal_gradients)
+                proposals = sample_gradient_chi_square_mixture(
+                    proposal_key,
+                    detached_policy_samples,
+                    proposal_gradients,
+                    repeats=proposals_per_policy_sample,
+                    perpendicular_std=proposal_std,
+                    parallel_std=proposal_parallel_std,
+                    gradient_step=proposal_gradient_step,
+                    maximum_radius=proposal_chi_square_radius,
+                    include_anchor=include_anchor,
+                )
+                proposal_sampler = None
             else:
                 raise ValueError(
                     f"Unknown proposal_sampling_mode: {proposal_sampling_mode}"
                 )
-            proposals = proposal_sampler(
-                proposal_key,
-                policy_samples,
-                repeats=proposals_per_policy_sample,
-                std=proposal_std,
-                perturb_clip=proposal_clip,
-                include_anchor=include_anchor,
-            ).reshape(
+            if proposal_sampler is not None:
+                proposals = proposal_sampler(
+                    proposal_key,
+                    policy_samples,
+                    repeats=proposals_per_policy_sample,
+                    std=proposal_std,
+                    perturb_clip=proposal_clip,
+                    include_anchor=include_anchor,
+                )
+            proposals = proposals.reshape(
                 batch_size,
                 num_policy_samples * proposals_per_policy_sample,
                 action_dim,
@@ -425,12 +480,25 @@ class OptiQDIME(DIME):
 
             proposal_log_density = jnp.zeros_like(source_q)
             if density_correction:
-                proposal_log_density = truncated_mixture_log_density(
-                    jax.lax.stop_gradient(proposals),
-                    jax.lax.stop_gradient(policy_samples),
-                    proposal_std,
-                    proposal_clip,
-                )
+                if proposal_sampling_mode == "chi_square":
+                    proposal_log_density = (
+                        gradient_chi_square_mixture_log_density(
+                            jax.lax.stop_gradient(proposals),
+                            jax.lax.stop_gradient(policy_samples),
+                            proposal_gradients,
+                            proposal_std,
+                            proposal_parallel_std,
+                            proposal_gradient_step,
+                            proposal_chi_square_radius,
+                        )
+                    )
+                else:
+                    proposal_log_density = truncated_mixture_log_density(
+                        jax.lax.stop_gradient(proposals),
+                        jax.lax.stop_gradient(policy_samples),
+                        proposal_std,
+                        proposal_clip,
+                    )
             q_score = source_q / temperature
             density_score = -proposal_log_density
             if adaptive_density_beta and density_correction:
@@ -539,10 +607,10 @@ class OptiQDIME(DIME):
                 + weighted_q_gain(q2_weights, q1)
             )
 
-            # Local landscape diagnostics. Proposals are laid out as
-            # [policy sample, local repeat], and repeat zero is the exact
-            # anchor whenever include_anchor=True. These reductions do not
-            # alter the actor objective or consume additional randomness.
+            # Local landscape diagnostics are semantically local only for the
+            # stratified sampler. Exact and chi-square modes select their random
+            # mixture component independently; local_diagnostics_valid marks this.
+            # Repeat zero remains the exact anchor whenever include_anchor=True.
             local_q = source_q.reshape(
                 batch_size, num_policy_samples, proposals_per_policy_sample
             )
@@ -660,6 +728,15 @@ class OptiQDIME(DIME):
                 "policy_spread_l2": jnp.linalg.norm(
                     policy_samples.std(axis=1), axis=-1
                 ).mean(),
+                "proposal_gradient_norm": jnp.linalg.norm(
+                    proposal_gradients, axis=-1
+                ).mean(),
+                "proposal_out_of_bounds_fraction": jnp.mean(
+                    jnp.any(jnp.abs(proposals) > 1.0, axis=-1)
+                ),
+                "local_diagnostics_valid": jnp.asarray(
+                    proposal_sampling_mode == "stratified", dtype=source_q.dtype
+                ),
             }
             for label, counterfactual_temperature in (
                 ("0p05", 0.05),
@@ -735,6 +812,9 @@ class OptiQDIME(DIME):
         proposals_per_policy_sample,
         proposal_sampling_mode,
         proposal_std,
+        proposal_parallel_std,
+        proposal_gradient_step,
+        proposal_chi_square_radius,
         proposal_clip,
         include_anchor,
         density_correction,
@@ -793,6 +873,9 @@ class OptiQDIME(DIME):
             "twin_local_improvement_sign_agreement": jnp.asarray(0.0),
             "selected_delta_l2": jnp.asarray(0.0),
             "policy_spread_l2": jnp.asarray(0.0),
+            "proposal_gradient_norm": jnp.asarray(0.0),
+            "proposal_out_of_bounds_fraction": jnp.asarray(0.0),
+            "local_diagnostics_valid": jnp.asarray(0.0),
         }
         for label in ("0p05", "0p1", "0p2", "0p25", "0p5", "1p0"):
             actor_metrics[f"counterfactual_ess_T{label}"] = jnp.asarray(0.0)
@@ -835,6 +918,9 @@ class OptiQDIME(DIME):
                     proposals_per_policy_sample,
                     proposal_sampling_mode,
                     proposal_std,
+                    proposal_parallel_std,
+                    proposal_gradient_step,
+                    proposal_chi_square_radius,
                     proposal_clip,
                     include_anchor,
                     density_correction,
