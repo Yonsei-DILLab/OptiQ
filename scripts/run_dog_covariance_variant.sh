@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -ne 2 ]]; then
-  echo "usage: $0 TASK METHOD" >&2
+if [[ $# -lt 2 || $# -gt 3 ]]; then
+  echo "usage: $0 TASK METHOD [RUN_TAG]" >&2
   exit 2
 fi
 
 task=$1
 method=$2
+run_tag=${3:-}
+if [[ -n "$run_tag" && ! "$run_tag" =~ ^[A-Za-z0-9_-]+$ ]]; then
+  echo "invalid run tag: $run_tag" >&2
+  exit 2
+fi
 case "$task" in
   trot|walk|run) ;;
   *) echo "unknown dog task: $task" >&2; exit 2 ;;
@@ -31,7 +36,9 @@ esac
 
 repo_dir=/lustre/hobbit9882/OptiQ
 python_bin=/lustre/hobbit9882/.venvs/optiq-dime/bin/python
-output_root_rel=outputs/optiq_dime_dog_covariance_comparison_1m
+suffix=${run_tag:+_$run_tag}
+group_suffix=${run_tag:+-$run_tag}
+output_root_rel="outputs/optiq_dime_dog_covariance_comparison_1m${suffix}"
 output_root="$repo_dir/$output_root_rel"
 seed=1
 
@@ -55,8 +62,8 @@ export HYDRA_FULL_ERROR=1
 export WANDB_DIR="$wandb_dir"
 unset LD_LIBRARY_PATH
 
-run_name="optiq_dime_dog_${task}_seed${seed}_${method}_N16R5_T0p25_sigma0p1_clip0p15_1m"
-group="dog-${task}_proposal-covariance-comparison-1m"
+run_name="optiq_dime_dog_${task}_seed${seed}_${method}_N16R5_T0p25_sigma0p1_clip0p15_1m${suffix}"
+group="dog-${task}_proposal-covariance-comparison-1m${group_suffix}"
 
 printf 'task=%s\nmethod=%s\nseed=%s\nslurm_job_id=%s\ncuda_visible_devices=%s\nstarted_utc=%s\n' \
   "$task" "$method" "$seed" "${SLURM_JOB_ID:-none}" \

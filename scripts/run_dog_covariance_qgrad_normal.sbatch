@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=dog-cov-normal
-#SBATCH --partition=suma_a6000
+#SBATCH --job-name=dog-cov-normal-rerun
+#SBATCH --partition=gigabyte_a6000
 #SBATCH --gres=gpu:A6000:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=48G
@@ -17,4 +17,4 @@ runner=/lustre/hobbit9882/OptiQ/scripts/run_dog_covariance_variant.sh
 
 echo "Launching task=$task method=qgradcov_gaussian_stratified CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-unset}"
 nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader
-exec bash "$runner" "$task" qgradcov_gaussian_stratified
+exec bash "$runner" "$task" qgradcov_gaussian_stratified rerun

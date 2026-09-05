@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=dog-cov-paired
+#SBATCH --job-name=dog-cov-paired-rerun
 #SBATCH --partition=suma_a6000
 #SBATCH --gres=gpu:A6000:1
 #SBATCH --cpus-per-task=16
@@ -20,10 +20,10 @@ mkdir -p "$log_dir"
 echo "Launching paired task=$task on CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-unset}"
 nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader
 
-bash "$runner" "$task" qgradcov_truncated_stratified \
+bash "$runner" "$task" qgradcov_truncated_stratified rerun \
   > "$log_dir/qgradcov_truncated_stratified.out" 2>&1 &
 qgrad_pid=$!
-bash "$runner" "$task" isotropic_truncated_exact \
+bash "$runner" "$task" isotropic_truncated_exact rerun \
   > "$log_dir/isotropic_truncated_exact.out" 2>&1 &
 isotropic_pid=$!
 
