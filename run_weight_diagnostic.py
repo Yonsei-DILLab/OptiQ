@@ -9,11 +9,13 @@ import jax.numpy as jnp
 import numpy as np
 from omegaconf import DictConfig
 
-from optiq_dime.transport import (
-    clip_action,
-    sample_truncated_gaussian,
-    truncated_mixture_log_density,
+from optiq_dime.proposals import (
+    proposal_log_density,
+    q_action_gradients,
+    sample_proposals,
+    stabilize_proposal_log_density,
 )
+from optiq_dime.transport import clip_action
 from run_optiq_dime import create_algorithm
 
 SIGMAS = (0.05, 0.1, 0.2, 0.3, 0.4)
@@ -55,11 +57,20 @@ def policy_samples(
     return clip_action(actions.reshape(batch_size, num_policy_samples, action_dim))
 
 
-@partial(jax.jit, static_argnames=("proposals_per_policy_sample",))
+@partial(
+    jax.jit,
+    static_argnames=(
+        "proposals_per_policy_sample",
+        "proposal_family",
+        "proposal_sampling_mode",
+        "clip_untruncated_proposals",
+    ),
+)
 def diagnose_sigma(
     qf_state,
     observations,
     centers,
+    q_gradients,
     proposal_key,
     dropout_key,
     z_atoms,
@@ -67,17 +78,32 @@ def diagnose_sigma(
     sigma,
     perturb_clip,
     proposals_per_policy_sample: int,
+    proposal_family: str,
+    proposal_sampling_mode: str,
+    proposal_perpendicular_std_ratio: float,
+    gamma_shape: float,
+    gamma_scale: float,
+    clip_untruncated_proposals: bool,
 ):
     batch_size, num_policy_samples, action_dim = centers.shape
     observation_dim = observations.shape[-1]
-    proposals = sample_truncated_gaussian(
+    proposals, _, out_of_bounds_fraction = sample_proposals(
         proposal_key,
         centers,
-        repeats=proposals_per_policy_sample,
-        std=sigma,
-        perturb_clip=perturb_clip,
-        include_anchor=True,
-    ).reshape(
+        q_gradients,
+        proposals_per_policy_sample,
+        proposal_sampling_mode,
+        proposal_family,
+        sigma,
+        perturb_clip,
+        True,
+        proposal_perpendicular_std_ratio,
+        gamma_shape,
+        gamma_scale,
+        sigma,
+        clip_untruncated_proposals,
+    )
+    proposals = proposals.reshape(
         batch_size,
         num_policy_samples * proposals_per_policy_sample,
         action_dim,
@@ -95,12 +121,20 @@ def diagnose_sigma(
         train=False,
     ).reshape(2, batch_size, num_proposals, -1)
     expected_q = jnp.sum(distributions * z_atoms, axis=-1).mean(axis=0)
-    log_density = truncated_mixture_log_density(
+    log_density = proposal_log_density(
         proposals,
         centers,
+        q_gradients,
+        proposal_family,
         sigma,
         perturb_clip,
+        proposal_perpendicular_std_ratio,
+        gamma_shape,
+        gamma_scale,
+        sigma,
     )
+    unsupported_fraction = jnp.mean(~jnp.isfinite(log_density))
+    log_density = stabilize_proposal_log_density(log_density)
     density_score = -log_density
 
     logits = (
@@ -128,6 +162,8 @@ def diagnose_sigma(
         "source_q_std": jnp.std(expected_q, axis=-1).mean(),
         "neg_log_proposal_std": jnp.std(density_score, axis=-1).mean(),
         "q_neglogq_correlation": correlation.mean(),
+        "proposal_out_of_bounds_fraction": out_of_bounds_fraction,
+        "proposal_unsupported_fraction": unsupported_fraction,
     }
 
 
@@ -162,6 +198,17 @@ def main(cfg: DictConfig) -> None:
         cfg.alg.critic.v_max,
         cfg.alg.critic.n_atoms,
     )
+    q_gradients = None
+    if str(cfg.alg.actor.proposal_family) != "isotropic_truncated":
+        key, qgrad_dropout_key = jax.random.split(key)
+        q_gradients = q_action_gradients(
+            model.policy.qf_state,
+            observations,
+            centers,
+            z_atoms,
+            qgrad_dropout_key,
+            str(cfg.alg.actor.source_q_eval),
+        )
 
     rows = []
     for sigma in SIGMAS:
@@ -171,6 +218,7 @@ def main(cfg: DictConfig) -> None:
             model.policy.qf_state,
             observations,
             centers,
+            q_gradients,
             proposal_key,
             dropout_key,
             z_atoms,
@@ -178,6 +226,12 @@ def main(cfg: DictConfig) -> None:
             sigma,
             perturb_clip,
             int(cfg.alg.actor.proposals_per_policy_sample),
+            str(cfg.alg.actor.proposal_family),
+            str(cfg.alg.actor.proposal_sampling_mode),
+            float(cfg.alg.actor.proposal_perpendicular_std_ratio),
+            float(cfg.alg.actor.gamma_shape),
+            float(cfg.alg.actor.gamma_scale),
+            bool(cfg.alg.actor.clip_untruncated_proposals),
         )
         row = {
             "sigma": sigma,
@@ -186,6 +240,12 @@ def main(cfg: DictConfig) -> None:
             "source_q_std": float(metrics["source_q_std"]),
             "neg_log_proposal_std": float(metrics["neg_log_proposal_std"]),
             "q_neglogq_correlation": float(metrics["q_neglogq_correlation"]),
+            "proposal_out_of_bounds_fraction": float(
+                metrics["proposal_out_of_bounds_fraction"]
+            ),
+            "proposal_unsupported_fraction": float(
+                metrics["proposal_unsupported_fraction"]
+            ),
             "ess_fraction": {
                 str(temperature): float(value)
                 for temperature, value in zip(
@@ -211,6 +271,16 @@ def main(cfg: DictConfig) -> None:
         "training_steps": int(cfg.total_steps),
         "num_policy_samples": int(cfg.alg.actor.num_policy_samples),
         "proposals_per_policy_sample": int(cfg.alg.actor.proposals_per_policy_sample),
+        "proposal_family": str(cfg.alg.actor.proposal_family),
+        "proposal_sampling_mode": str(cfg.alg.actor.proposal_sampling_mode),
+        "proposal_perpendicular_std_ratio": float(
+            cfg.alg.actor.proposal_perpendicular_std_ratio
+        ),
+        "gamma_shape": float(cfg.alg.actor.gamma_shape),
+        "gamma_scale": float(cfg.alg.actor.gamma_scale),
+        "clip_untruncated_proposals": bool(
+            cfg.alg.actor.clip_untruncated_proposals
+        ),
         "diagnostic_batch_size": DIAGNOSTIC_BATCH_SIZE,
         "temperatures": TEMPERATURES,
         "rows": rows,

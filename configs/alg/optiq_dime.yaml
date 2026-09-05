@@ -44,11 +44,21 @@ actor:
   hidden_dims: [256, 256, 256]
   num_policy_samples: 16
   proposals_per_policy_sample: 5
+  # Proposal geometry is independent of component allocation below.
+  # Choices: isotropic_truncated, qgradcov_truncated, qgradcov_gaussian,
+  # gamma_qgradcov_gaussian.
+  proposal_family: isotropic_truncated
   # stratified: equal random draws per center; exact: independently choose each
   # random proposal's center from the uniform KDE mixture. Anchors are unchanged.
   proposal_sampling_mode: stratified
   proposal_std: 0.2
   proposal_clip: 0.5
+  proposal_perpendicular_std_ratio: 0.5
+  gamma_shape: 2.0
+  gamma_scale: 0.1
+  gamma_perpendicular_std: 0.1
+  # Clipping intentionally leaves the analytical untruncated density unchanged.
+  clip_untruncated_proposals: true
   include_anchor: true
   density_correction: true
   # Fixed beta=1 reproduces exact density correction.  Adaptive mode selects

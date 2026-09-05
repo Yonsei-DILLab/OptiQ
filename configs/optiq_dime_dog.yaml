@@ -21,7 +21,7 @@ output_root: outputs/optiq_dime_dog
 run_name: optiq_dime_dog_${task}_seed${seed}_N16R5_argmax_1m
 
 wandb:
-  entity: online-optiflow
+  entity: hobbit9882-yonsei-university
   project: optiq_dime_dog_n16r5_anchor_t025_2seed_1m
   group: dog-${task}_optiq-dime
   job_type: seed-${seed}
