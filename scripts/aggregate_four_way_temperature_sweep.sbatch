@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=optiq-4way-temp-aggregate
 #SBATCH --partition=suma_rtx4090
+#SBATCH --exclude=cs-gpu-01
 #SBATCH --gres=gpu:RTX4090:1
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=8G
@@ -17,8 +18,13 @@ mkdir -p "$MPLCONFIGDIR" /lustre/hobbit9882/slurm_logs/optiq
 unset LD_LIBRARY_PATH
 
 for temperature in 4 16 64; do
+  input_dir="outputs/four_way_multigoal/proposal_recovery_temperature/temperature_${temperature}"
+  summary_count=$(find "$input_dir" -mindepth 3 -maxdepth 3 -type f -name summary.json | wc -l)
+  if [[ "$summary_count" -ne 24 ]]; then
+    echo "Expected 24 summaries for temperature=$temperature, found $summary_count" >&2
+    exit 1
+  fi
   /lustre/hobbit9882/.venvs/optiq-dime/bin/python -m \
     experiments.four_way_multigoal.aggregate_proposal_recovery \
-    --input-dir \
-    "outputs/four_way_multigoal/proposal_recovery_temperature/temperature_${temperature}"
+    --input-dir "$input_dir"
 done

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=optiq-4way-temp
 #SBATCH --partition=suma_rtx4090
+#SBATCH --exclude=cs-gpu-01
 #SBATCH --gres=gpu:RTX4090:1
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=8G
@@ -31,6 +32,7 @@ seed=$(( within_temperature % 3 + 1 ))
 temperature=${temperatures[$temperature_index]}
 method=${methods[$method_index]}
 output_dir="outputs/four_way_multigoal/proposal_recovery_temperature/temperature_${temperature}"
+summary_path="${output_dir}/${method}/seed_${seed}/summary.json"
 
 cd /lustre/hobbit9882/OptiQ
 export PYTHONPATH=/lustre/hobbit9882/OptiQ
@@ -39,7 +41,15 @@ export MPLCONFIGDIR="${SLURM_TMPDIR:-/tmp}/matplotlib-optiq"
 mkdir -p "$MPLCONFIGDIR" /lustre/hobbit9882/slurm_logs/optiq
 unset LD_LIBRARY_PATH
 
-echo "Starting temperature=$temperature method=$method seed=$seed CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-unset}"
+if [[ -s "$summary_path" ]]; then
+  echo "Skipping completed temperature=$temperature method=$method seed=$seed summary=$summary_path"
+  exit 0
+fi
+
+echo "Starting temperature=$temperature method=$method seed=$seed host=$(hostname) CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-unset}"
+nvidia-smi --query-gpu=index,name,uuid,memory.total --format=csv,noheader
+/lustre/hobbit9882/.venvs/optiq-dime/bin/python -c \
+  'import jax; devices = jax.devices(); assert any(d.platform == "gpu" for d in devices), devices; print("JAX devices:", devices, flush=True)'
 exec /lustre/hobbit9882/.venvs/optiq-dime/bin/python -m \
   experiments.four_way_multigoal.proposal_recovery \
   --method "$method" \
