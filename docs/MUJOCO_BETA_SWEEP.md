@@ -12,8 +12,8 @@ the existing isotropic samplers and actor objective are retained.
 | Setting | Value |
 | --- | --- |
 | Environments | Ant-v4, Humanoid-v4 |
-| Steps | Ant: 3,000,000; Humanoid: 5,000,000 |
-| Seeds | 1, 2, 3, 4, 5 (override with `--seeds`) |
+| Steps | 1,000,000 for both, matching the supplied run |
+| Seeds | 1, 2, 3, 4 (requested four-seed expansion; override with `--seeds`) |
 | Sampling | `stratified`, `exact` |
 | Fixed density beta | 0.1, 0.25, 0.5, 0.75, 1.0 |
 | Adaptive beta | Off |
@@ -34,13 +34,24 @@ the existing isotropic samplers and actor objective are retained.
 | Sinkhorn epsilon / iterations | 0.05 / 30 |
 | OT target | Argmax of each conditional transport row, MSE distillation |
 | TD noise std / clip | 0.2 / 0.5 |
-| Evaluation | Stochastic, 10 episodes at step 1, every 5,000 steps, and final step |
+| Evaluation | Stochastic, 10 episodes at step 1 and every 5,000 steps, using the original callback |
+| Training log interval | Every completed episode (`DIME.learn(log_interval=1)`) |
+| Progress bar | Enabled, as in the original runner |
 | Checkpoints | Initial trained state, every 50,000 steps, and final actor/critic |
 
 The supplied Dog configuration is used except for the approved Gym critic
-support, environment budgets, and the fixed-beta/sampling sweep axes. The
+support and the fixed-beta/sampling/four-seed sweep axes. The reference is the supplied
+landscape rerun (`scripts/run_dog_landscape_rerun.sh`), not the older
+`EXPERIMENT_DESIGN.md` suite with seeds 1 and 2 and proposal std/clip 0.2/0.5. The
 network, optimizer and actor proposal hyperparameters are not tuned separately
 for the two samplers. v3 and v5 are outside this experiment.
+
+The actual reference run uses seed 1. The user requested four seeds for this
+sweep, so the default is 1,2,3,4. Existing launch settings use 1,2 in the older
+`critic-dime` design, 1,2,3 in `heejoon`'s proposal-recovery jobs, and 1 through 5
+in `dev`'s MuJoCo jobs. No dedicated four-seed suite was found in the inspected
+remote-branch launch settings; 1,2,3,4 is the new requested expansion, not a claim
+that the supplied record contained four seeds. See [reference audit](MUJOCO_REFERENCE_AUDIT.md).
 
 ## What the sampling comparison means
 
@@ -100,20 +111,24 @@ errors. It never prints dotenv contents or saves credentials in configuration.
 W&B config records `env_name`, environment observation/action shapes and action
 bounds, sampling, fixed beta, anchor/random counts, resolved hyperparameters,
 Git SHA/dirty state, package versions, command and actual JAX GPU devices.
-Metrics use `env_steps` as the x-axis. Evaluation uses separate action/environment
-random streams and restores the training policy's RNG state afterward.
+Metrics use `env_steps` as the x-axis. Evaluation directly reuses the original
+`models.actor_critic_evaluation_callback.EvalCallback`: its 10,000,000-element
+seed array and policy RNG consumption are retained. Evaluation therefore advances
+the training policy RNG just as it did in the reference run. No separate RNG
+stream or extra off-schedule final evaluation is introduced. Saved evaluation
+arrays and W&B metadata do not change this behavior.
 
 ## Inspect or run
 
 ```bash
-# Print all 100 commands without starting training.
+# Print all 80 commands without starting training.
 bash scripts/run_mujoco_beta_sweep.sh --list
 
 # First task: Ant-v4, stratified, beta=0.1, seed=1.
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_mujoco_beta_sweep.sh --task 0
 
-# Inspect a smaller seed set (IDs are regenerated for the selected seeds).
-bash scripts/run_mujoco_beta_sweep.sh --list --seeds 1,2
+# Inspect only the supplied reference seed (20 runs).
+bash scripts/run_mujoco_beta_sweep.sh --list --seeds 1
 
 # Foreground worker 0 of 4 on an allocated GPU. Workers partition the task table.
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_mujoco_beta_sweep.sh --worker 0 4
@@ -123,9 +138,11 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/run_mujoco_beta_sweep.sh --worker 0 4 \
   alg.actor.include_anchor=false
 ```
 
-Default task IDs: 0-24 Ant/stratified; 25-49 Ant/exact;
-50-74 Humanoid/stratified; 75-99 Humanoid/exact. Within each block beta changes
-every 5 tasks and seed changes fastest. Matrix axes cannot be silently changed
+Default task IDs: 0-19 Ant/stratified; 20-39 Ant/exact;
+40-59 Humanoid/stratified; 60-79 Humanoid/exact. Within each block beta changes
+every four tasks and seed changes fastest. Four workers each receive 20 runs;
+worker 0/1/2/3 uses seed 1/2/3/4 across every environment/sampler/beta combination.
+Explicit `--seeds` regenerates the task IDs. Matrix axes cannot be silently changed
 by trailing Hydra overrides. Other overrides, such as a short validation budget,
 are written to the resolved W&B config.
 
@@ -147,8 +164,8 @@ actor/critic train states for analysis; they are not full replay/RNG resume file
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_mujoco_beta_sweep.sh --task 0 --seeds 1 \
-  total_steps=12 alg.learning_starts=8 num_eval_episodes=1 eval_at_start=false \
-  log_interval=4 checkpoint_interval=10 wandb.job_type=smoke-test \
+  total_steps=12 alg.learning_starts=8 num_eval_episodes=1 eval_interval=4 \
+  checkpoint_interval=10 progress_bar=false wandb.job_type=smoke-test \
   output_root=outputs/validation
 
 CUDA_VISIBLE_DEVICES=0 /workspace/.venv-optiq-mujoco/bin/python -m pytest -q tests
@@ -156,8 +173,10 @@ CUDA_VISIBLE_DEVICES=0 /workspace/.venv-optiq-mujoco/bin/python -m pytest -q tes
 
 Validation tests also create an online W&B run. They cover mixture sampling vs
 density consistency, component allocation/anchors, all ten fixed-beta/sampling
-actor updates, all 100 task configurations, v4 environment shapes/bounds,
-time-limit bootstrap masks, and evaluation RNG isolation/result persistence.
+actor updates, all 80 default task configurations, every hyperparameter in the supplied reference
+(except approved critic support), v4 environment shapes/bounds, timeout bootstrap,
+original actor-update equivalence, and original evaluation RNG/schedule equivalence
+with result persistence.
 Short training validation must not be used as a learning-performance comparison.
 
 Each run directory stores `config.json`, CSV/TensorBoard metrics, per-episode
@@ -166,7 +185,8 @@ training completion. W&B artifacts include the config, evaluations and final
 actor/critic checkpoint; intermediate checkpoints remain local. No external
 offline dataset or pretrained model is required. MuJoCo supplies online data.
 
-For analysis, filter W&B to `job_type=train`, compare sampling and beta within
-each environment and anchor setting, and report individual seeds plus aggregate
-return curves and uncertainty. ESS and Q diagnostics explain behavior; they do
+For analysis, filter W&B to `job_type=train` and compare sampling and beta within
+each environment and anchor setting. Report the four individual seed curves,
+their mean and uncertainty, using the same seed set for every comparison.
+ESS and Q diagnostics explain behavior; they do
 not replace evaluation return. The base `main`/`dev` OptiQ critic is not used.

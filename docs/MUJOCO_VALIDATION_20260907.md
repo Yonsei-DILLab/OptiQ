@@ -1,4 +1,8 @@
-# Validation on 2026-09-07 (UTC)
+# Initial validation on 2026-09-07 (UTC)
+
+Historical report for commit `2968f8f`. The later reference-alignment changes
+supersede its 5-seed/3M/5M defaults and evaluation RNG isolation. See
+[reference setting audit](MUJOCO_REFERENCE_AUDIT.md) for the current protocol.
 
 Prepared from `critic-dime` commit `8b8fee13b2cbc4d90183d7b803fce033eadf0a19`
 on the `heechan` branch. Validation runs record the base SHA plus dirty state;

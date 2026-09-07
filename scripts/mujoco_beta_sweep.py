@@ -12,6 +12,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 BETAS = (0.1, 0.25, 0.5, 0.75, 1.0)
+# Supplied run uses seed 1; requested four-seed sweep follows existing 1-based suites.
+DEFAULT_SEEDS = (1, 2, 3, 4)
 
 
 @dataclass(frozen=True)
@@ -22,7 +24,7 @@ class Task:
     seed: int
 
 
-def tasks(seeds):
+def tasks(seeds=DEFAULT_SEEDS):
     return [Task(env, mode, beta, seed)
             for env in ("ant", "humanoid")
             for mode in ("stratified", "exact")
@@ -62,7 +64,7 @@ def main():
     selection.add_argument("--worker", type=int, nargs=2, metavar=("INDEX", "COUNT"),
                            help="Run task IDs congruent to INDEX modulo COUNT")
     selection.add_argument("--all", action="store_true", help="Run all tasks sequentially")
-    parser.add_argument("--seeds", default="1,2,3,4,5")
+    parser.add_argument("--seeds", default=",".join(map(str, DEFAULT_SEEDS)))
     args, overrides = parser.parse_known_args()
     try:
         seeds = [int(s) for s in args.seeds.split(",")]

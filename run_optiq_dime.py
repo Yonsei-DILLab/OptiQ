@@ -50,6 +50,8 @@ def validate_config(cfg):
     if is_mujoco:
         if cfg.log_interval < 1:
             raise ValueError("log_interval must be positive")
+        if cfg.eval_interval < 1 or not cfg.eval_at_start:
+            raise ValueError("The reference protocol evaluates at step 1 and a positive interval")
         if not cfg.wandb.activate or cfg.wandb.mode != "online":
             raise ValueError("MuJoCo experiments require online W&B logging")
         if actor.adaptive_density_beta:
@@ -183,6 +185,7 @@ def initialize_and_run(cfg: DictConfig):
             progress_bar=cfg.get("progress_bar", True),
             callback=callbacks,
             tb_log_name="OptiQDIME",
+            log_interval=int(cfg.get("log_interval", 1)),
         )
         if is_mujoco:
             model._save_model()
@@ -193,6 +196,7 @@ def initialize_and_run(cfg: DictConfig):
                 "completed": True, "timesteps": model.num_timesteps,
                 "updates": model._n_updates,
                 "final_eval_return": float(sum(evaluation.returns[-1]) / len(evaluation.returns[-1])),
+                "last_eval_step": evaluation.evaluations_timesteps[-1],
             })
             artifact = wandb.Artifact(f"optiq-{run.id}", type="experiment")
             artifact.add_file(str(Path(cfg.output_root) / "config.json"))
