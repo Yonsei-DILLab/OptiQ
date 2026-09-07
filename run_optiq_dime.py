@@ -24,7 +24,11 @@ from optiq_dime.runtime import ROOT, WandbWriter, load_environment, provenance
 
 DOG_TASKS = {"run", "trot", "walk", "stand"}
 MUJOCO_ENVS = {"Ant-v4", "Humanoid-v4"}
-MYOSUITE_ENVS = {"myoHandPenTwirlRandom-v0"}
+MYOSUITE_ENVS = {
+    "myoHandPenTwirlRandom-v0",
+    "myoHandReachRandom-v0",
+    "myoHandObjHoldRandom-v0",
+}
 
 
 def is_tracked_environment(cfg):

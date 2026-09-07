@@ -86,14 +86,17 @@ training implementation. Override the former; conflicting values are rejected.
 | `pen_twirl_hard` (default) | `myoHandPenTwirlRandom-v0` | pen-twirl-hard | More than 5 solved steps per episode |
 | `ant` | `Ant-v4` | ant | Return |
 | `humanoid` | `Humanoid-v4` | humanoid | Return |
+| `reach_hard` | `myoHandReachRandom-v0` | reach-hard | More than 5 solved steps per episode |
+| `obj_hold_hard` | `myoHandObjHoldRandom-v0` | obj-hold-hard | More than 5 solved steps per episode |
 
 MyoSuite 2.11.5 counts total solved steps, including nonconsecutive steps, and
 uses strict `sum(solved) > successful_steps`. Evaluation logs success as a
 fraction from 0 to 1 and separately saves the solved-step count per episode.
-The registered maximum horizon is 50 for this MyoHand task and 1,000 for Ant
-and Humanoid. Actual horizons and action bounds are captured in each run.
+The registered maximum horizon is 50 for pen-twirl, 100 for reach, 75 for object
+hold, and 1,000 for Ant and Humanoid. Actual horizons and action bounds are
+captured in each run.
 
-The new baseline uses the supplied critic support [-3600, 3600] for all three
+The new baseline uses the supplied critic support [-3600, 3600] for all five
 benchmarks. The legacy `optiq_dime_mujoco` configuration still has [-1600, 1600].
 
 ## Environment and W&B
@@ -154,8 +157,19 @@ Task IDs follow benchmark order, then seed order. `--seeds 0,1,2` is already the
 default. `--benchmarks ant,humanoid` produces six runs. For long runs on the
 Vast instance, use these foreground commands in a supervisor service, following
 the instance guide. The worker lock prevents duplicate GPU workers within this
-checkout; it does not coordinate other checkouts. Existing `heechan` workers
-currently occupy all four GPUs, so these commands are preparation examples.
+checkout; it does not coordinate other checkouts. Allocate GPUs before starting
+workers, and use separate GPU indices for concurrent workers.
+
+For reach-hard and object-hold-hard, the six-run queue is:
+
+```bash
+bash scripts/run_no_anchor.sh --list --benchmarks reach_hard,obj_hold_hard
+```
+
+`scripts/supervisor_no_anchor.conf.example` runs this queue across four GPUs:
+GPU 0 runs reach seed 0 then hold seed 1; GPU 1 runs reach seed 1 then hold seed 2;
+GPU 2 runs reach seed 2; GPU 3 runs hold seed 0. Each run uses the unchanged
+no-anchor algorithm settings, 1,000,000 steps, and `successful_steps=5`.
 
 The shared entry point also supports a single explicit run and configuration
 inspection:
@@ -202,7 +216,7 @@ CUDA_VISIBLE_DEVICES='' JAX_PLATFORMS=cpu \
   /workspace/.venv-optiq-no-anchor/bin/python -m pytest -q
 ```
 
-All 33 tests passed on 2026-09-07 (43.88 seconds). The tests use the configured
+The initial 33-test suite passed on 2026-09-07 (43.88 seconds). The tests use the configured
 online W&B credentials. All three real environments
 were created and stepped in the isolated environment. A CPU/JIT MyoHand smoke
 run used the full requested networks, batch size 256, N=16/R=4 and seed 0, with
@@ -219,7 +233,23 @@ replay capacity 32, evaluation/diagnostics interval 4, one evaluation episode,
 and checkpoint interval 6. Evaluation arrays were finite, actual horizons were
 recorded correctly, and both final actor/critic checkpoint files were present
 for all three environments. The isolated lockfile passed `uv pip check` for
-all 126 installed packages. GPU execution of this new environment has not been
-validated during this preparation; the existing GPU workers were left running.
+all 126 installed packages. This initial preparation used CPU/JIT while the
+existing GPU workers were left running.
 These shortened runs verify execution and logging, not learning performance.
-No new full baseline training queue was started during branch preparation.
+No full baseline training queue was started during that initial preparation.
+
+The reach-hard/object-hold-hard extension passed all six affected configuration
+and queue tests. Both real environments reset and stepped successfully (reach:
+115 observations, 39 actions, horizon 100; hold: 91 observations, 39 actions,
+horizon 75). Full-network GPU/JIT smoke runs used 12 steps, warmup 8, batch size
+256, N=16/R=4, seed 0, one evaluation episode every 4 steps, diagnostics every
+4 steps, and checkpoint interval 10. Both completed eight gradient updates and
+saved final checkpoints and evaluation artifacts:
+[reach](https://wandb.ai/sae_project/optiq_dime_no_anchor/runs/6wtfg8qp),
+[object hold](https://wandb.ai/sae_project/optiq_dime_no_anchor/runs/3muv1h3l).
+
+On 2026-09-07, the user requested stopping the legacy sweep and launching these
+two benchmarks. The old workers were interrupted and exited; their W&B histories,
+evaluation NPZ files and periodic checkpoints were retained. The replacement
+six-run queue uses the supervisor configuration above with all baseline training
+and evaluation parameters unchanged.

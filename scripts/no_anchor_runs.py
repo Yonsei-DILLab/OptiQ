@@ -11,7 +11,7 @@ from scripts.mujoco_beta_sweep import worker_lock
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SEEDS = (0, 1, 2)
-BENCHMARKS = ("pen_twirl_hard", "ant", "humanoid")
+BENCHMARKS = ("pen_twirl_hard", "ant", "humanoid", "reach_hard", "obj_hold_hard")
 
 
 @dataclass(frozen=True)

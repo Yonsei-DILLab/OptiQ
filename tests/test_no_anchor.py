@@ -26,7 +26,7 @@ def config(overrides=()):
         return compose(config_name="optiq_dime_no_anchor", overrides=list(overrides))
 
 
-@pytest.mark.parametrize("benchmark", ["pen_twirl_hard", "ant", "humanoid"])
+@pytest.mark.parametrize("benchmark", ["pen_twirl_hard", "ant", "humanoid", "reach_hard", "obj_hold_hard"])
 def test_supplied_no_anchor_reference(benchmark):
     reference = json.loads((ROOT / "tests/data/no_anchor_reference.json").read_text())
     cfg = config([f"benchmark={benchmark}"])
@@ -62,7 +62,7 @@ def test_default_queue_uses_seeds_zero_one_two():
     assert DEFAULT_SEEDS == (0, 1, 2)
     assert [(t.benchmark, t.seed) for t in tasks()] == [("pen_twirl_hard", s) for s in (0, 1, 2)]
     table = tasks(BENCHMARKS)
-    assert len(table) == len(set(table)) == 9
+    assert len(table) == len(set(table)) == 15
     for task in table:
         cfg = config(command(task)[3:])
         assert validate_config(cfg)

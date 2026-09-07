@@ -4,6 +4,8 @@ The Code for the DIME paper submission at ICML2025.
 
 The default OptiQ experiment is now `myoHandPenTwirlRandom-v0` (pen-twirl-hard),
 with Ant-v4 and Humanoid-v4 selectable through `benchmark=ant` / `benchmark=humanoid`.
+MyoHand reach-hard and object-hold-hard are also available as
+`benchmark=reach_hard` / `benchmark=obj_hold_hard`.
 The actor defines a truncated Gaussian KDE from 16 policy samples, draws four
 random candidates per component, and distills a **16 × 64** transport plan.
 Candidate anchors are disabled; fixed density beta is 0.1. The launcher defaults
