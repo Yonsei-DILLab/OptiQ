@@ -46,7 +46,8 @@ def sample_truncated_gaussian_mixture(
     std: float,
     perturb_clip: float,
     include_anchor: bool = False,
-) -> jax.Array:
+    return_component_indices: bool = False,
+) -> jax.Array | tuple[jax.Array, jax.Array]:
     """Sample IID random proposals from the uniform mixture over centers.
 
     The leading two dimensions of ``centers`` are batch and mixture component.
@@ -89,7 +90,11 @@ def sample_truncated_gaussian_mixture(
     random_samples = selected_centers + noise
 
     if include_anchor:
-        return jnp.concatenate((centers[..., None, :], random_samples), axis=-2)
+        random_samples = jnp.concatenate((centers[..., None, :], random_samples), axis=-2)
+        anchors = jnp.broadcast_to(jnp.arange(num_centers)[None, :, None], (batch_size, num_centers, 1))
+        component_indices = jnp.concatenate((anchors, component_indices), axis=-1)
+    if return_component_indices:
+        return random_samples, component_indices
     return random_samples
 
 

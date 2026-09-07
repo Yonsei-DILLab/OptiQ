@@ -1,0 +1,3 @@
+# @package _global_
+env_name: Ant-v4
+total_steps: 3000000

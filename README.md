@@ -1,4 +1,11 @@
 The Code for the DIME paper submission at ICML2025.
+
+## Ant-v4 / Humanoid-v4 fixed-beta experiments (`heechan`)
+
+This branch adds a JAX OptiQ+DIME experiment path for Ant-v4 and Humanoid-v4,
+comparing stratified and IID KDE-mixture proposals at fixed density beta
+0.1, 0.25, 0.5, 0.75 and 1.0. See [setup, protocol and launch commands](docs/MUJOCO_BETA_SWEEP.md).
+The existing Dog path below is retained.
 ## DIME: Diffusion-Based Maximum Entropy Reinforcement Learning 
 
 This repository accompanies the paper "[DIME: Diffusion-Based Maximum Entropy Reinforcement Learning](https://arxiv.org/pdf/2502.02316)" published at ICML 2025.

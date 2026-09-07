@@ -390,14 +390,27 @@ class OptiQDIME(DIME):
                 raise ValueError(
                     f"Unknown proposal_sampling_mode: {proposal_sampling_mode}"
                 )
-            proposals = proposal_sampler(
+            sampler_kwargs = {}
+            if proposal_sampling_mode == "exact":
+                sampler_kwargs["return_component_indices"] = True
+            sampled = proposal_sampler(
                 proposal_key,
                 policy_samples,
                 repeats=proposals_per_policy_sample,
                 std=proposal_std,
                 perturb_clip=proposal_clip,
                 include_anchor=include_anchor,
-            ).reshape(
+                **sampler_kwargs,
+            )
+            if proposal_sampling_mode == "exact":
+                proposals, proposal_component_indices = sampled
+            else:
+                proposals = sampled
+                proposal_component_indices = jnp.broadcast_to(
+                    jnp.arange(num_policy_samples)[None, :, None], proposals.shape[:-1]
+                )
+            proposal_component_indices = proposal_component_indices.reshape(batch_size, -1)
+            proposals = proposals.reshape(
                 batch_size,
                 num_policy_samples * proposals_per_policy_sample,
                 action_dim,
@@ -539,26 +552,39 @@ class OptiQDIME(DIME):
                 + weighted_q_gain(q2_weights, q1)
             )
 
-            # Local landscape diagnostics. Proposals are laid out as
-            # [policy sample, local repeat], and repeat zero is the exact
-            # anchor whenever include_anchor=True. These reductions do not
-            # alter the actor objective or consume additional randomness.
-            local_q = source_q.reshape(
-                batch_size, num_policy_samples, proposals_per_policy_sample
+            # Group local diagnostics by the component that actually generated
+            # each proposal. This is identical to the old layout reduction for
+            # stratified draws and remains valid for IID mixture draws.
+            component_mask = (
+                proposal_component_indices[:, None, :]
+                == jnp.arange(num_policy_samples)[None, :, None]
             )
-            local_q1 = q1.reshape(
-                batch_size, num_policy_samples, proposals_per_policy_sample
+            component_count = component_mask.sum(axis=-1)
+
+            def grouped_values(values, fill_value):
+                return jnp.where(component_mask, values[:, None, :], fill_value)
+
+            grouped_q = grouped_values(source_q, -jnp.inf)
+            component_max_q = grouped_q.max(axis=-1)
+            component_min_q = grouped_values(source_q, jnp.inf).min(axis=-1)
+            local_q_range = jnp.where(
+                component_count > 0, component_max_q - component_min_q, 0.0
             )
-            local_q2 = q2.reshape(
-                batch_size, num_policy_samples, proposals_per_policy_sample
+            local_top_two = jax.lax.top_k(grouped_q, min(2, num_proposals))[0]
+            local_q_top_gap = jnp.where(
+                component_count > 1,
+                local_top_two[..., 0] - local_top_two[..., -1],
+                0.0,
             )
-            local_q_range = local_q.max(axis=-1) - local_q.min(axis=-1)
-            local_q_top_gap = jnp.zeros_like(local_q_range)
-            if proposals_per_policy_sample > 1:
-                local_top_two = jax.lax.top_k(
-                    local_q, min(2, proposals_per_policy_sample)
-                )[0]
-                local_q_top_gap = local_top_two[..., 0] - local_top_two[..., 1]
+
+            grouped_q1 = grouped_values(q1, -jnp.inf)
+            grouped_q2 = grouped_values(q2, -jnp.inf)
+            q1_argmax = jnp.argmax(grouped_q1, axis=-1)
+            q2_argmax = jnp.argmax(grouped_q2, axis=-1)
+            valid_components = component_count > 0
+            twin_local_argmax_agreement = jnp.sum(
+                valid_components * (q1_argmax == q2_argmax)
+            ) / jnp.maximum(valid_components.sum(), 1)
 
             local_best_q_gain = jnp.zeros_like(local_q_range)
             local_improvement_fraction = jnp.asarray(0.0)
@@ -566,38 +592,66 @@ class OptiQDIME(DIME):
             twin_local_delta_correlation = jnp.asarray(0.0)
             twin_local_improvement_sign_agreement = jnp.asarray(0.0)
             if include_anchor:
-                anchor_q = local_q[..., 0]
-                local_best_q_gain = local_q.max(axis=-1) - anchor_q
-                local_anchor_argmax_fraction = jnp.mean(
-                    jnp.argmax(local_q, axis=-1) == 0
+                anchor_indices = (
+                    jnp.arange(num_policy_samples) * proposals_per_policy_sample
                 )
-                if proposals_per_policy_sample > 1:
-                    local_deltas = local_q[..., 1:] - anchor_q[..., None]
-                    local_improvement_fraction = jnp.mean(local_deltas > 0.0)
-                    q1_deltas = local_q1[..., 1:] - local_q1[..., :1]
-                    q2_deltas = local_q2[..., 1:] - local_q2[..., :1]
-                    centered_q1_deltas = q1_deltas - q1_deltas.mean(
-                        axis=-1, keepdims=True
-                    )
-                    centered_q2_deltas = q2_deltas - q2_deltas.mean(
-                        axis=-1, keepdims=True
-                    )
-                    twin_local_delta_correlation = jnp.mean(
-                        jnp.mean(
-                            centered_q1_deltas * centered_q2_deltas, axis=-1
-                        )
-                        / (
-                            jnp.std(q1_deltas, axis=-1)
-                            * jnp.std(q2_deltas, axis=-1)
-                            + 1.0e-8
-                        )
-                    )
-                    twin_local_improvement_sign_agreement = jnp.mean(
-                        (q1_deltas > 0.0) == (q2_deltas > 0.0)
-                    )
-            twin_local_argmax_agreement = jnp.mean(
-                jnp.argmax(local_q1, axis=-1) == jnp.argmax(local_q2, axis=-1)
-            )
+                anchor_q = source_q[:, anchor_indices]
+                anchor_q1 = q1[:, anchor_indices]
+                anchor_q2 = q2[:, anchor_indices]
+                local_best_q_gain = component_max_q - anchor_q
+                local_anchor_argmax_fraction = jnp.mean(
+                    jnp.argmax(grouped_q, axis=-1) == anchor_indices[None, :]
+                )
+
+                anchor_slot_mask = jnp.zeros(
+                    (num_policy_samples, proposals_per_policy_sample), dtype=bool
+                ).at[:, 0].set(True).reshape(num_proposals)
+                random_mask = ~anchor_slot_mask[None, :]
+                sample_anchor_q = jnp.take_along_axis(
+                    anchor_q, proposal_component_indices, axis=1
+                )
+                sample_anchor_q1 = jnp.take_along_axis(
+                    anchor_q1, proposal_component_indices, axis=1
+                )
+                sample_anchor_q2 = jnp.take_along_axis(
+                    anchor_q2, proposal_component_indices, axis=1
+                )
+                local_improvement_fraction = jnp.sum(
+                    random_mask * (source_q > sample_anchor_q)
+                ) / jnp.maximum(random_mask.sum() * batch_size, 1)
+
+                q1_deltas = q1 - sample_anchor_q1
+                q2_deltas = q2 - sample_anchor_q2
+                random_component_mask = component_mask & random_mask[:, None, :]
+                random_count = random_component_mask.sum(axis=-1)
+                safe_count = jnp.maximum(random_count, 1)
+                q1_mean = jnp.sum(
+                    random_component_mask * q1_deltas[:, None, :], axis=-1
+                ) / safe_count
+                q2_mean = jnp.sum(
+                    random_component_mask * q2_deltas[:, None, :], axis=-1
+                ) / safe_count
+                centered_q1 = q1_deltas[:, None, :] - q1_mean[..., None]
+                centered_q2 = q2_deltas[:, None, :] - q2_mean[..., None]
+                covariance = jnp.sum(
+                    random_component_mask * centered_q1 * centered_q2, axis=-1
+                ) / safe_count
+                variance_q1 = jnp.sum(
+                    random_component_mask * jnp.square(centered_q1), axis=-1
+                ) / safe_count
+                variance_q2 = jnp.sum(
+                    random_component_mask * jnp.square(centered_q2), axis=-1
+                ) / safe_count
+                correlations = covariance / (
+                    jnp.sqrt(variance_q1 * variance_q2) + 1.0e-8
+                )
+                valid_correlations = random_count > 1
+                twin_local_delta_correlation = jnp.sum(
+                    jnp.where(valid_correlations, correlations, 0.0)
+                ) / jnp.maximum(valid_correlations.sum(), 1)
+                twin_local_improvement_sign_agreement = jnp.sum(
+                    random_mask * ((q1_deltas > 0.0) == (q2_deltas > 0.0))
+                ) / jnp.maximum(random_mask.sum() * batch_size, 1)
             metrics = {
                 "actor_loss": loss,
                 "source_ess_fraction": (source_ess / num_proposals).mean(),
