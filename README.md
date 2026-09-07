@@ -4,7 +4,8 @@ The Code for the DIME paper submission at ICML2025.
 
 This branch starts from `critic-dime-no-anchor` and makes the default entry
 Humanoid-v4 with **256x3 scalar twin critics and TD MSE**. No-anchor sampling,
-actor learning and twin-mean backup are preserved. Batch renorm is removed;
+actor learning are preserved. Critics use GELU, standard Adam betas (0.9,0.999),
+target-network min-Q backup and Polyak=0.005. Batch renorm is removed;
 there is one update per environment step (UTD=1).
 See [settings and commands](docs/MUJOCO_SCALAR_SETTING.md).
 

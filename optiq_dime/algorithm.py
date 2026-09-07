@@ -34,6 +34,12 @@ class OptiQDIME(DIME):
     }
     policy: OptiQPolicy
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # DIME defaults to live-network CrossQ; scalar defaults select a
+        # conventional target critic explicitly without changing legacy runs.
+        self.crossq_style = bool(self.cfg.alg.critic.get("crossq_style", True))
+
     def train(self, batch_size, gradient_steps):
         data = self.replay_buffer.sample(
             batch_size * gradient_steps, env=self._vec_normalize_env
@@ -259,9 +265,9 @@ class OptiQDIME(DIME):
                 )
 
             if num_atoms == 1:
-                # Preserve DIME's twin-MEAN backup and CrossQ forward pass.
+                # Conventional clipped double-Q backup for scalar critics.
                 # Scalar Q has no categorical support clipping or entropy loss.
-                next_q = next_q_values[..., 0].mean(axis=0)
+                next_q = next_q_values[..., 0].min(axis=0)
                 target_q = jax.lax.stop_gradient(
                     rewards + (1.0 - dones) * gamma * next_q
                 )

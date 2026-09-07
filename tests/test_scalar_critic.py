@@ -33,15 +33,22 @@ def test_only_critic_settings_change(benchmark):
     assert validate_config(new)
     a, b = [OmegaConf.to_container(c.alg, resolve=True) for c in (old, new)]
     assert b['critic']['type'] == 'scalar'
+    assert b['critic']['activation'] == 'gelu'
+    assert b['critic']['crossq_style'] is False
     assert b['critic']['hs'] == [256, 256, 256]
     assert b['critic']['n_atoms'] == 1
     assert b['critic']['entr_coeff'] == 0
     del b['critic']['type']
-    for key in ['hs', 'n_atoms', 'entr_coeff']:
+    del b['critic']['crossq_style']
+    for key in ['hs', 'n_atoms', 'entr_coeff', 'activation']:
         b['critic'][key] = a['critic'][key]
     assert b['optimizer']['bn'] is False and b['utd'] == 1
+    assert b['optimizer']['critic_b1'] == b['optimizer']['actor_b1'] == 0.9
+    assert b['tau'] == 0.005
     b['optimizer']['bn'] = a['optimizer']['bn']
+    b['optimizer']['critic_b1'] = a['optimizer']['critic_b1']
     b['utd'] = a['utd']
+    b['tau'] = a['tau']
     assert a == b  # All actor and remaining optimizer settings are unchanged.
     for key in ['env_name', 'seed', 'total_steps', 'eval_interval', 'num_eval_episodes',
                 'eval_at_start', 'stochastic_eval', 'diagnostic_interval', 'checkpoint_interval']:
@@ -82,7 +89,7 @@ def zero_actor(variables, observations, latents):
 
 @pytest.mark.parametrize('crossq', [True, False])
 @pytest.mark.parametrize('terminal_reward', [2., 10000.])
-def test_scalar_td_mean_backup_terminal_mask_stop_gradient_and_no_clipping(crossq, terminal_reward):
+def test_scalar_td_min_backup_terminal_mask_stop_gradient_and_no_clipping(crossq, terminal_reward):
     actor = TrainState.create(apply_fn=zero_actor,
         params={'Dense_0': {'bias': jnp.zeros(1)}}, tx=optax.sgd(0.01))
     critic = RLTrainState.create(apply_fn=constant_critic,
@@ -92,7 +99,7 @@ def test_scalar_td_mean_backup_terminal_mask_stop_gradient_and_no_clipping(cross
     new, metrics, _ = OptiQDIME.update_critic(crossq, False, 0.9, actor, critic,
         obs, acts, obs, jnp.array([1., terminal_reward]), jnp.array([0., 1.]),
         1, jnp.array([-1.]), -1., 1., 0., 0.2, 0.5, jax.random.PRNGKey(5))
-    target = np.array([1. + .9 * (4. if crossq else 12.), terminal_reward])
+    target = np.array([1. + .9 * (2. if crossq else 10.), terminal_reward])
     current = np.array([2., 6.])
     expected_loss = np.square(current[:, None] - target[None, :]).mean(axis=1).sum()
     np.testing.assert_allclose(metrics['critic_loss'], expected_loss, rtol=1e-6)
@@ -100,6 +107,9 @@ def test_scalar_td_mean_backup_terminal_mask_stop_gradient_and_no_clipping(cross
     expected_params = current - .01 * 2 * (current - target.mean())
     np.testing.assert_allclose(new.params['q'], expected_params, rtol=1e-6)
     assert metrics['entrQ_1'] == metrics['entrQ_2'] == 0
+    updated_target = OptiQDIME.soft_update(0.005, new)
+    np.testing.assert_allclose(updated_target.target_params['q'],
+        .995 * np.array([10., 14.]) + .005 * expected_params, rtol=1e-6)
 
 
 @pytest.mark.parametrize('benchmark', ['ant', 'humanoid'])
@@ -113,12 +123,16 @@ def test_real_environment_scalar_actor_critic_training_and_checkpoint(benchmark)
     actor_before = jax.tree_util.tree_leaves(model.policy.actor_state.params)
     critic_before = jax.tree_util.tree_leaves(model.policy.qf_state.params)
     try:
-        assert model.crossq_style
+        assert not model.crossq_style
+        assert model.tau == 0.005
         assert list(model.policy.qf.net_arch) == [256, 256, 256]
         model.learn(total_timesteps=8)
         assert model._n_updates == 6  # (8 - 2) x one update.
         assert not model.policy.qf_state.batch_stats
         assert not model.policy.qf_state.target_batch_stats
+        assert any(not np.array_equal(a, b) for a, b in zip(
+            jax.tree_util.tree_leaves(model.policy.qf_state.params),
+            jax.tree_util.tree_leaves(model.policy.qf_state.target_params)))
         for before, state in [(actor_before, model.policy.actor_state),
                               (critic_before, model.policy.qf_state)]:
             after = jax.tree_util.tree_leaves(state.params)

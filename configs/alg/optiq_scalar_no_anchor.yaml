@@ -3,14 +3,17 @@ defaults:
   - optiq_dime_no_anchor
   - _self_
 
-# Scalar ablation: no batch renormalization and one update per environment step.
-# Preserve the twin-mean backup, optimizer and all actor settings.
+# Conventional twin scalar critic; keep OptiQ's actor and proposal unchanged.
+tau: 0.005  # Critic Polyak coefficient, NOT the actor's Q-weight temperature.
 utd: 1
 optimizer:
   bn: false
+  critic_b1: 0.9
 
 critic:
   type: scalar
+  activation: gelu
+  crossq_style: false  # Bootstrap from target_params, not the live critic.
   hs: [256, 256, 256]
   n_atoms: 1  # Raw, unbounded Q output; never a one-atom softmax distribution.
   entr_coeff: 0.0  # No categorical distribution entropy for a scalar critic.
