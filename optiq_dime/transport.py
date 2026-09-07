@@ -343,6 +343,148 @@ def select_density_beta_for_ess(
     return selected_beta, selected_ess
 
 
+def _positive_kl_integrand(
+    reference_weights: jax.Array,
+    weights: jax.Array,
+    log_ratio: jax.Array,
+) -> jax.Array:
+    """KL as a sum of nonnegative terms, without first-order cancellation.
+
+    For normalized distributions, KL(w || r) = sum r * (u log u - u + 1),
+    where u = w/r. Two equivalent forms avoid exponentiating large positive
+    log-ratios. Taylor polynomials near zero preserve KLs well below float32
+    epsilon, unlike summing signed ``w * (log(w) - log(r))`` terms.
+    """
+    positive = jnp.maximum(log_ratio, 0.0)
+    negative = jnp.minimum(log_ratio, 0.0)
+    # g(t) = t + exp(-t) - 1, used with w for t >= 0.
+    small_positive = jnp.minimum(positive, 0.1)
+    g_series = jnp.square(small_positive) * (
+        0.5 + small_positive * (
+            -1.0 / 6.0 + small_positive * (
+                1.0 / 24.0 + small_positive * (
+                    -1.0 / 120.0 + small_positive * (
+                        1.0 / 720.0 + small_positive * (
+                            -1.0 / 5040.0 + small_positive / 40320.0
+                        )
+                    )
+                )
+            )
+        )
+    )
+    g = jnp.where(positive < 0.1, g_series, positive + jnp.expm1(-positive))
+    # h(t) = exp(t)*t - expm1(t), used with r for t < 0.
+    small_negative = jnp.maximum(negative, -0.1)
+    h_series = jnp.square(small_negative) * (
+        0.5 + small_negative * (
+            1.0 / 3.0 + small_negative * (
+                1.0 / 8.0 + small_negative * (
+                    1.0 / 30.0 + small_negative * (
+                        1.0 / 144.0 + small_negative * (
+                            1.0 / 840.0 + small_negative / 5760.0
+                        )
+                    )
+                )
+            )
+        )
+    )
+    h = jnp.where(
+        negative > -0.1,
+        h_series,
+        jnp.exp(negative) * negative - jnp.expm1(negative),
+    )
+    return jnp.maximum(
+        jnp.sum(jnp.where(log_ratio >= 0.0, weights * g, reference_weights * h), axis=-1),
+        0.0,
+    )
+
+
+def _exponential_tilt_kl(
+    reference_logits: jax.Array,
+    tilt: jax.Array,
+) -> jax.Array:
+    """Stable KL(softmax(reference_logits + tilt) || softmax(reference_logits))."""
+    reference_weights = jax.nn.softmax(reference_logits, axis=-1)
+    # The normalization removes a constant from tilt anyway. Centering first
+    # lets log1p/expm1 resolve tiny changes around a nearly flat reference.
+    centered = tilt - jnp.sum(reference_weights * tilt, axis=-1, keepdims=True)
+    small = jnp.max(jnp.abs(centered), axis=-1, keepdims=True) < 0.5
+    clipped = jnp.clip(centered, -0.5, 0.5)
+    small_log_normalizer = jnp.log1p(
+        jnp.sum(reference_weights * jnp.expm1(clipped), axis=-1, keepdims=True)
+    )
+    large_log_normalizer = jsp.special.logsumexp(
+        jax.nn.log_softmax(reference_logits, axis=-1) + centered,
+        axis=-1,
+        keepdims=True,
+    )
+    log_ratio = centered - jnp.where(small, small_log_normalizer, large_log_normalizer)
+    weights = jax.nn.softmax(reference_logits + centered, axis=-1)
+    return _positive_kl_integrand(reference_weights, weights, log_ratio)
+
+
+def select_density_beta_for_kl(
+    q_score: jax.Array,
+    density_score: jax.Array,
+    bisection_iterations: int = 32,
+) -> tuple[jax.Array, jax.Array, jax.Array]:
+    """Maximal beta in [0, 1] with KL(w_beta || r) <= KL(r || uniform).
+
+    ``r = softmax(q_score)`` and
+    ``w_beta = softmax(q_score + beta * density_score)``. The last axis holds
+    candidates; selection is independent across all leading axes. The budget
+    multiplier is exactly one, with no additional tunable coefficient.
+
+    KL(w_beta || r) is monotone since its beta derivative is
+    beta * Var_{w_beta}(density_score). Bisection returns the feasible lower
+    endpoint, except beta=1 is returned exactly when full correction is feasible.
+    Flat Q gives beta=0 unless density is constant (all betas then agree, so 1).
+
+    Inputs must be finite. Computation uses at least float32 and a cancellation-
+    resistant KL, important when Q-only KL is around 1e-10. Differences already
+    rounded out of input scores cannot be recovered. This is a finite-candidate
+    KL constraint, not a guaranteed population-KL or minimum-ESS constraint.
+    """
+    if q_score.shape != density_score.shape or q_score.ndim < 1 or q_score.shape[-1] < 1:
+        raise ValueError("q_score and density_score must have matching, nonempty candidate axes")
+    if bisection_iterations < 1:
+        raise ValueError("bisection_iterations must be positive")
+    dtype = jnp.result_type(q_score, density_score, jnp.float32)
+    q_score = jnp.asarray(q_score, dtype=dtype)
+    density_score = jnp.asarray(density_score, dtype=dtype)
+    # Remove large offsets before taking means; flatness is retained exactly.
+    q_centered = q_score - jnp.max(q_score, axis=-1, keepdims=True)
+    q_centered -= jnp.mean(q_centered, axis=-1, keepdims=True)
+    density_centered = density_score - jnp.max(density_score, axis=-1, keepdims=True)
+    density_centered -= jnp.mean(density_centered, axis=-1, keepdims=True)
+    kl_budget = _exponential_tilt_kl(jnp.zeros_like(q_centered), q_centered)
+
+    def correction_kl(beta):
+        return _exponential_tilt_kl(q_centered, beta[..., None] * density_centered)
+
+    zero = jnp.zeros(q_score.shape[:-1], dtype=dtype)
+    one = jnp.ones_like(zero)
+    full_kl = correction_kl(one)
+
+    def iteration(_, bounds):
+        lower, upper = bounds
+        midpoint = lower + 0.5 * (upper - lower)
+        feasible = correction_kl(midpoint) <= kl_budget
+        return jnp.where(feasible, midpoint, lower), jnp.where(feasible, upper, midpoint)
+
+    lower, _ = jax.lax.fori_loop(0, bisection_iterations, iteration, (zero, one))
+    selected_beta = jnp.where(full_kl <= kl_budget, one, lower)
+    # Enforce the exact flat-Q endpoint even when a nonconstant density's KL
+    # underflows to zero. A constant density leaves every beta equivalent.
+    flat_q = jnp.all(q_score == q_score[..., :1], axis=-1)
+    constant_density = jnp.all(density_score == density_score[..., :1], axis=-1)
+    selected_beta = jnp.where(
+        flat_q, jnp.where(constant_density, one, zero), selected_beta
+    )
+    selected_kl = correction_kl(selected_beta)
+    return selected_beta, selected_kl, kl_budget
+
+
 def sinkhorn(
     costs: jax.Array,
     source_weights: jax.Array,

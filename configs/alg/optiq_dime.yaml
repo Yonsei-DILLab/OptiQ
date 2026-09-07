@@ -54,10 +54,14 @@ actor:
   proposal_clip: 0.5
   include_anchor: true
   density_correction: true
-  # Fixed beta=1 reproduces exact density correction.  Adaptive mode selects
-  # the largest per-state beta whose 80 source weights retain the requested ESS.
+  # Fixed beta=1 uses full density correction on the candidate set.
+  # Adaptive 'ess' mode retains the legacy minimum-ESS rule.
+  # Adaptive 'kl' mode chooses the largest beta in [0,1] satisfying
+  # KL(w_beta || w_0) <= KL(w_0 || uniform), where w_0 = softmax(Q / T).
+  # These are finite-candidate constraints, not population guarantees.
   density_beta: 1.0
   adaptive_density_beta: false
+  adaptive_density_beta_mode: ess
   minimum_source_ess: 16.0
   density_beta_grid_size: 257
   source_q_eval: mean

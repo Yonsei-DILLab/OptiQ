@@ -21,6 +21,7 @@ from .transport import (
     sample_truncated_gaussian,
     sample_truncated_gaussian_mixture,
     select_density_beta_for_ess,
+    select_density_beta_for_kl,
     sinkhorn,
     truncated_mixture_log_density,
 )
@@ -126,6 +127,7 @@ class OptiQDIME(DIME):
             actor.td_noise_std,
             actor.td_noise_clip,
             collect_metrics=collect_metrics,
+            adaptive_density_beta_mode=actor.get("adaptive_density_beta_mode", "ess"),
         )
         self._n_updates += gradient_steps
 
@@ -349,6 +351,7 @@ class OptiQDIME(DIME):
             "include_anchor",
             "density_correction",
             "adaptive_density_beta",
+            "adaptive_density_beta_mode",
             "density_beta_grid_size",
             "sinkhorn_iterations",
             "source_q_eval",
@@ -379,7 +382,13 @@ class OptiQDIME(DIME):
         source_q_eval: str,
         transport_target_mode: str,
         collect_metrics: bool = True,
+        adaptive_density_beta_mode: str = "ess",
     ):
+        if adaptive_density_beta_mode not in {"ess", "kl"}:
+            raise ValueError(
+                "adaptive_density_beta_mode must be 'ess' or 'kl', got "
+                f"{adaptive_density_beta_mode!r}"
+            )
         key, latent_key, proposal_key, dropout_key = jax.random.split(key, 4)
         batch_size, observation_dim = observations.shape
 
@@ -508,15 +517,36 @@ class OptiQDIME(DIME):
                     )
             q_score = source_q / temperature
             density_score = -proposal_log_density
+            density_beta_kl = jnp.zeros((batch_size,), dtype=q_score.dtype)
+            density_beta_kl_budget = jnp.zeros_like(density_beta_kl)
+            kl_constraint_active = (
+                adaptive_density_beta
+                and density_correction
+                and adaptive_density_beta_mode == "kl"
+            )
             if adaptive_density_beta and density_correction:
-                selected_density_beta, selected_beta_ess = (
-                    select_density_beta_for_ess(
+                if adaptive_density_beta_mode == "kl":
+                    (
+                        selected_density_beta,
+                        density_beta_kl,
+                        density_beta_kl_budget,
+                    ) = select_density_beta_for_kl(
                         q_score,
                         density_score,
-                        minimum_source_ess,
-                        density_beta_grid_size,
+                        bisection_iterations=32,
                     )
-                )
+                    # Only used for logging; assigned from the actual weights
+                    # below, and eliminated when diagnostics are disabled.
+                    selected_beta_ess = jnp.zeros_like(selected_density_beta)
+                else:
+                    selected_density_beta, selected_beta_ess = (
+                        select_density_beta_for_ess(
+                            q_score,
+                            density_score,
+                            minimum_source_ess,
+                            density_beta_grid_size,
+                        )
+                    )
             else:
                 selected_density_beta = jnp.full(
                     (batch_size,), density_beta, dtype=q_score.dtype
@@ -531,6 +561,14 @@ class OptiQDIME(DIME):
             selected_density_beta = jax.lax.stop_gradient(selected_density_beta)
             effective_density_score = selected_density_beta[:, None] * density_score
             logits = q_score + effective_density_score
+            if kl_constraint_active:
+                # Match the selector's offset-free arithmetic: otherwise a
+                # small correction can round away when added to a large Q.
+                logits = (
+                    q_score - q_score.max(axis=-1, keepdims=True)
+                    + selected_density_beta[:, None]
+                    * (density_score - density_score.max(axis=-1, keepdims=True))
+                )
             source_weights = jax.lax.stop_gradient(jax.nn.softmax(logits, axis=-1))
 
             squared_costs = jnp.sum(
@@ -571,6 +609,34 @@ class OptiQDIME(DIME):
             if not collect_metrics:
                 return loss, {}
             source_ess = 1.0 / jnp.sum(jnp.square(source_weights), axis=-1)
+            if kl_constraint_active:
+                selected_beta_ess = source_ess
+            density_beta_kl_utilization = jnp.where(
+                density_beta_kl_budget > 0.0,
+                density_beta_kl
+                / jnp.maximum(
+                    density_beta_kl_budget, jnp.finfo(q_score.dtype).tiny
+                ),
+                0.0,
+            )
+            anchor_target_mass = jnp.asarray(0.0, dtype=source_q.dtype)
+            anchor_selected_fraction = jnp.asarray(0.0, dtype=source_q.dtype)
+            own_anchor_selected_fraction = jnp.asarray(0.0, dtype=source_q.dtype)
+            if include_anchor:
+                grouped_weights = source_weights.reshape(
+                    batch_size, num_policy_samples, proposals_per_policy_sample
+                )
+                anchor_target_mass = grouped_weights[..., 0].sum(axis=-1).mean()
+                if transport_target_mode == "argmax":
+                    anchor_selected_fraction = jnp.mean(
+                        selected_indices % proposals_per_policy_sample == 0
+                    )
+                    own_anchor_indices = (
+                        jnp.arange(num_policy_samples) * proposals_per_policy_sample
+                    )
+                    own_anchor_selected_fraction = jnp.mean(
+                        selected_indices == own_anchor_indices[None, :]
+                    )
             q_only_weights = jax.nn.softmax(q_score, axis=-1)
             q_only_ess = 1.0 / jnp.sum(jnp.square(q_only_weights), axis=-1)
             density_only_weights = jax.nn.softmax(density_score, axis=-1)
@@ -681,7 +747,8 @@ class OptiQDIME(DIME):
                 "source_ess_absolute": source_ess.mean(),
                 "source_ess_min": source_ess.min(),
                 "source_ess_target": jnp.asarray(
-                    minimum_source_ess, dtype=source_q.dtype
+                    0.0 if kl_constraint_active else minimum_source_ess,
+                    dtype=source_q.dtype,
                 ),
                 "q_only_ess_fraction": (q_only_ess / num_proposals).mean(),
                 "density_only_ess_fraction": (density_only_ess / num_proposals).mean(),
@@ -691,11 +758,17 @@ class OptiQDIME(DIME):
                 "density_beta_mean": selected_density_beta.mean(),
                 "density_beta_min": selected_density_beta.min(),
                 "density_beta_max": selected_density_beta.max(),
+                "density_beta_kl": density_beta_kl.mean(),
+                "density_beta_kl_budget": density_beta_kl_budget.mean(),
+                "density_beta_kl_utilization": density_beta_kl_utilization.mean(),
+                "density_beta_kl_valid": jnp.asarray(
+                    kl_constraint_active, dtype=source_q.dtype
+                ),
                 "density_beta_at_one_fraction": jnp.mean(
                     selected_density_beta >= 1.0 - 1.0e-6
                 ),
                 "density_beta_infeasible_fraction": jnp.mean(
-                    q_only_ess < minimum_source_ess
+                    (q_only_ess < minimum_source_ess) & (not kl_constraint_active)
                 ),
                 "selected_beta_search_ess": selected_beta_ess.mean(),
                 "max_source_weight": source_weights.max(axis=-1).mean(),
@@ -726,6 +799,15 @@ class OptiQDIME(DIME):
                 "local_best_q_gain_over_anchor": local_best_q_gain.mean(),
                 "local_improvement_fraction": local_improvement_fraction,
                 "local_anchor_argmax_fraction": local_anchor_argmax_fraction,
+                "anchor_target_mass": anchor_target_mass,
+                "anchor_selected_fraction": anchor_selected_fraction,
+                "own_anchor_selected_fraction": own_anchor_selected_fraction,
+                "anchor_present": jnp.asarray(include_anchor, dtype=source_q.dtype),
+                "anchor_selection_valid": jnp.asarray(
+                    include_anchor and transport_target_mode == "argmax",
+                    dtype=source_q.dtype,
+                ),
+                "candidate_count": jnp.asarray(num_proposals, dtype=source_q.dtype),
                 "twin_local_argmax_agreement": twin_local_argmax_agreement,
                 "twin_local_delta_correlation": twin_local_delta_correlation,
                 "twin_local_improvement_sign_agreement": (
@@ -794,6 +876,7 @@ class OptiQDIME(DIME):
             "source_q_eval",
             "transport_target_mode",
             "adaptive_density_beta",
+            "adaptive_density_beta_mode",
             "density_beta_grid_size",
             "collect_metrics",
         ],
@@ -837,6 +920,7 @@ class OptiQDIME(DIME):
         td_noise_std,
         td_noise_clip,
         collect_metrics=True,
+        adaptive_density_beta_mode="ess",
     ):
         del n_env_interacts
         actor_metrics = {
@@ -851,6 +935,10 @@ class OptiQDIME(DIME):
             "density_beta_mean": jnp.asarray(0.0),
             "density_beta_min": jnp.asarray(0.0),
             "density_beta_max": jnp.asarray(0.0),
+            "density_beta_kl": jnp.asarray(0.0),
+            "density_beta_kl_budget": jnp.asarray(0.0),
+            "density_beta_kl_utilization": jnp.asarray(0.0),
+            "density_beta_kl_valid": jnp.asarray(0.0),
             "density_beta_at_one_fraction": jnp.asarray(0.0),
             "density_beta_infeasible_fraction": jnp.asarray(0.0),
             "selected_beta_search_ess": jnp.asarray(0.0),
@@ -876,6 +964,12 @@ class OptiQDIME(DIME):
             "local_best_q_gain_over_anchor": jnp.asarray(0.0),
             "local_improvement_fraction": jnp.asarray(0.0),
             "local_anchor_argmax_fraction": jnp.asarray(0.0),
+            "anchor_target_mass": jnp.asarray(0.0),
+            "anchor_selected_fraction": jnp.asarray(0.0),
+            "own_anchor_selected_fraction": jnp.asarray(0.0),
+            "anchor_present": jnp.asarray(0.0),
+            "anchor_selection_valid": jnp.asarray(0.0),
+            "candidate_count": jnp.asarray(0.0),
             "twin_local_argmax_agreement": jnp.asarray(0.0),
             "twin_local_delta_correlation": jnp.asarray(0.0),
             "twin_local_improvement_sign_agreement": jnp.asarray(0.0),
@@ -939,6 +1033,7 @@ class OptiQDIME(DIME):
                     source_q_eval,
                     transport_target_mode,
                     collect_metrics=collect_metrics,
+                    adaptive_density_beta_mode=adaptive_density_beta_mode,
                 )
                 target_actor_state = cls.soft_update_target_actor(
                     policy_tau, actor_state, target_actor_state

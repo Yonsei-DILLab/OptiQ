@@ -32,6 +32,7 @@ alg:
     density_correction: true
     density_beta: 0.1
     adaptive_density_beta: false
+    adaptive_density_beta_mode: ess
     source_q_eval: mean
     source_reference: uniform_action
     sinkhorn_epsilon: 0.05
