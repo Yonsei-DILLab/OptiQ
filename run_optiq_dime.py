@@ -1,4 +1,4 @@
-"""Train OptiQ's one-step actor with DIME's critic; default: no-anchor MyoHand."""
+"""Train OptiQ; default: no-anchor Humanoid-v4 with 256x3 scalar twin critics."""
 
 import json
 import os
@@ -66,7 +66,17 @@ def validate_config(cfg):
         raise ValueError("total_steps must exceed learning_starts to exercise training")
     if cfg.checkpoint_interval < 0 or cfg.num_eval_episodes < 1:
         raise ValueError("Invalid checkpoint/evaluation configuration")
-    if cfg.alg.critic.v_min >= cfg.alg.critic.v_max:
+    critic = cfg.alg.critic
+    if critic.n_atoms < 1:
+        raise ValueError("critic.n_atoms must be positive")
+    critic_type = critic.get("type", "scalar" if critic.n_atoms == 1 else "categorical")
+    if critic_type not in {"scalar", "categorical"}:
+        raise ValueError("critic.type must be scalar or categorical")
+    if (critic_type == "scalar") != (critic.n_atoms == 1):
+        raise ValueError("Scalar critics require n_atoms=1; categorical critics require n_atoms>1")
+    if critic.n_atoms == 1 and critic.entr_coeff != 0:
+        raise ValueError("Scalar critics require entr_coeff=0 (no categorical entropy)")
+    if critic.n_atoms > 1 and critic.v_min >= critic.v_max:
         raise ValueError("critic.v_min must be below critic.v_max")
     if is_mujoco:
         if cfg.log_interval < 1:
@@ -246,7 +256,7 @@ def initialize_and_run(cfg: DictConfig):
                     callback.eval_env.close()
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="optiq_dime_no_anchor")
+@hydra.main(version_base=None, config_path="configs", config_name="mujoco_setting")
 def main(cfg: DictConfig) -> None:
     try:
         if cfg.use_jit:

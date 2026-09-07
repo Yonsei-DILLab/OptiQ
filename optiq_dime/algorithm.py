@@ -1,4 +1,4 @@
-"""DIME critic/replay/UTD training with OptiQ actor distillation."""
+"""Scalar or categorical DIME-style critic training with OptiQ distillation."""
 
 from functools import partial
 from pathlib import Path
@@ -14,6 +14,7 @@ from common.type_aliases import ReplayBufferSamplesNp, RLTrainState
 from diffusion.dime import DIME
 
 from .policy import OptiQPolicy
+from .critic_utils import critic_expectation
 from .transport import (
     TruncatedGaussianKDE,
     clip_action,
@@ -25,7 +26,7 @@ from .transport import (
 
 
 class OptiQDIME(DIME):
-    """One-step OptiQ actor with DIME's distributional CrossQ critic."""
+    """One-step OptiQ actor with scalar or categorical CrossQ critics."""
 
     policy_aliases: ClassVar[dict[str, type[OptiQPolicy]]] = {
         "MlpPolicy": OptiQPolicy,
@@ -257,6 +258,21 @@ class OptiQDIME(DIME):
                     axis=0,
                 )
 
+            if num_atoms == 1:
+                # Preserve DIME's twin-MEAN backup and CrossQ forward pass.
+                # Scalar Q has no categorical support clipping or entropy loss.
+                next_q = next_q_values[..., 0].mean(axis=0)
+                target_q = jax.lax.stop_gradient(
+                    rewards + (1.0 - dones) * gamma * next_q
+                )
+                current_q = current_q_values[..., 0]
+                loss = jnp.square(current_q - target_q[None, :]).mean(axis=1).sum()
+                zero = jnp.asarray(0.0, dtype=current_q.dtype)
+                return loss, (
+                    state_updates, current_q.min(axis=0).mean(),
+                    target_q.mean(), zero, zero,
+                )
+
             def projection(next_dist):
                 delta_z = (v_max - v_min) / (num_atoms - 1)
                 target_z = jnp.clip(
@@ -327,7 +343,7 @@ class OptiQDIME(DIME):
         )
         state_updates, current_q, target_q, entropy_1, entropy_2 = aux
         qf_state = qf_state.apply_gradients(grads=grads)
-        qf_state = qf_state.replace(batch_stats=state_updates["batch_stats"])
+        qf_state = qf_state.replace(batch_stats=state_updates.get("batch_stats", qf_state.batch_stats))
         metrics = {
             "critic_loss": loss,
             "current_q_values": current_q,
@@ -442,7 +458,7 @@ class OptiQDIME(DIME):
                 rngs={"dropout": dropout_key},
                 train=False,
             ).reshape(2, batch_size, num_proposals, -1)
-            source_qs = jnp.sum(source_distributions * z_atoms, axis=-1)
+            source_qs = critic_expectation(source_distributions, z_atoms)
             if source_q_eval == "mean":
                 source_q = source_qs.mean(axis=0)
             elif source_q_eval == "min":

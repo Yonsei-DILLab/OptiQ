@@ -1,4 +1,4 @@
-"""One-step implicit OptiQ policy backed by DIME's distributional critic."""
+"""One-step implicit OptiQ policy with scalar or categorical twin critics."""
 
 from collections.abc import Sequence
 from functools import partial
@@ -95,9 +95,9 @@ class OptiQPolicy(BaseJaxPolicy):
         self.qf_state = RLTrainState.create(
             apply_fn=self.qf.apply,
             params=qf_variables["params"],
-            batch_stats=qf_variables["batch_stats"],
+            batch_stats=qf_variables.get("batch_stats", {}),
             target_params=qf_variables["params"],
-            target_batch_stats=qf_variables["batch_stats"],
+            target_batch_stats=qf_variables.get("batch_stats", {}),
             tx=optax.adam(
                 learning_rate=qf_learning_rate,
                 b1=self.cfg.alg.optimizer.critic_b1,

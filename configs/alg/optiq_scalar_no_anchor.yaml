@@ -1,0 +1,16 @@
+# @package alg
+defaults:
+  - optiq_dime_no_anchor
+  - _self_
+
+# Scalar ablation: no batch renormalization and one update per environment step.
+# Preserve the twin-mean backup, optimizer and all actor settings.
+utd: 1
+optimizer:
+  bn: false
+
+critic:
+  type: scalar
+  hs: [256, 256, 256]
+  n_atoms: 1  # Raw, unbounded Q output; never a one-atom softmax distribution.
+  entr_coeff: 0.0  # No categorical distribution entropy for a scalar critic.

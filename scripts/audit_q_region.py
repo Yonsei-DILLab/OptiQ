@@ -33,6 +33,7 @@ from analyze_q_landscape import (
     find_checkpoint_dir,
     load_own_probe,
 )
+from optiq_dime.critic_utils import critic_expectation
 from optiq_dime.transport import (
     sample_truncated_gaussian,
     truncated_mixture_log_density,
@@ -247,7 +248,7 @@ def main():
                 train=False,
             )
             twin_q = np.asarray(
-                jnp.sum(distributions * z_atoms, axis=-1)
+                critic_expectation(distributions, z_atoms)
             ).reshape(2, args.states, 16, 5)
             results[reference][critic] = candidate_metrics(
                 twin_q, density_score, args.temperature

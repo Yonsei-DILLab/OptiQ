@@ -28,6 +28,7 @@ import numpy as np
 
 from analyze_q_landscape import TASKS, build_policy, find_checkpoint_dir, load_own_probe
 from optiq_dime.transport import sample_truncated_gaussian, truncated_mixture_log_density
+from optiq_dime.critic_utils import critic_expectation
 
 
 def parse_args() -> argparse.Namespace:
@@ -329,7 +330,7 @@ def main() -> None:
                 rngs={"dropout": jax.random.PRNGKey(0)},
                 train=False,
             )
-            return jnp.sum(distributions * z_atoms, axis=-1)
+            return critic_expectation(distributions, z_atoms)
 
         candidate_observations = np.repeat(
             observations[:, None, :], 80, axis=1

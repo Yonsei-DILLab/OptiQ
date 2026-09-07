@@ -1,8 +1,21 @@
 The Code for the DIME paper submission at ICML2025.
 
+## Scalar-critic ablation (`mujoco-setting`)
+
+This branch starts from `critic-dime-no-anchor` and makes the default entry
+Humanoid-v4 with **256x3 scalar twin critics and TD MSE**. No-anchor sampling,
+actor learning and twin-mean backup are preserved. Batch renorm is removed;
+there is one update per environment step (UTD=1).
+See [settings and commands](docs/MUJOCO_SCALAR_SETTING.md).
+
+```bash
+python run_optiq_dime.py --config-name=mujoco_setting benchmark=humanoid
+python run_optiq_dime.py --config-name=mujoco_setting benchmark=ant
+```
+
 ## No-anchor OptiQ with the DIME critic (`critic-dime-no-anchor`)
 
-The default OptiQ experiment is now `myoHandPenTwirlRandom-v0` (pen-twirl-hard),
+The retained `optiq_dime_no_anchor` experiment is `myoHandPenTwirlRandom-v0` (pen-twirl-hard),
 with Ant-v4 and Humanoid-v4 selectable through `benchmark=ant` / `benchmark=humanoid`.
 MyoHand reach-hard and object-hold-hard are also available as
 `benchmark=reach_hard` / `benchmark=obj_hold_hard`.

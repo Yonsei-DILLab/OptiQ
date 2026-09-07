@@ -34,6 +34,7 @@ from hydra import compose, initialize_config_dir
 
 from diffusion.dime import load_state
 from optiq_dime.policy import OptiQPolicy
+from optiq_dime.critic_utils import critic_expectation
 from optiq_dime.transport import sample_truncated_gaussian
 
 
@@ -223,7 +224,7 @@ def analyze_task(
             rngs={"dropout": jax.random.PRNGKey(0)},
             train=False,
         )
-        return jnp.sum(distributions * z_atoms, axis=-1)
+        return critic_expectation(distributions, z_atoms)
 
     def q_mean_one(action, observation):
         twins = evaluate_q(observation[None], action[None])[:, 0]
