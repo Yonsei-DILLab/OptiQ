@@ -1,0 +1,15 @@
+{
+  "seeds": [0, 1, 2],
+  "axes": {
+    "sigma": [0.1, 0.2],
+    "temperature": [0.1, 0.25, 1.0],
+    "beta": [0.0, 0.001, 0.1],
+    "anchor": [false, true]
+  },
+  "tasks": {
+    "gym-humanoid": {"env_name": "Humanoid-v4", "v_min": -1600, "v_max": 1600, "validation": "reset/step smoke test passed; full training not yet validated on this branch"},
+    "dog-run": {"env_name": "dm_control/dog-run", "v_min": -200, "v_max": 200, "validation": "existing benchmark"},
+    "humanoid-run": {"env_name": "dm_control/humanoid-run", "v_min": -200, "v_max": 200, "validation": "existing benchmark"},
+    "myo-pen-twirl-hard": {"env_name": "myoHandPenTwirlRandom-v0", "v_min": -200, "v_max": 200, "validation": "PENDING: dependency compatibility, environment smoke test and reward/value support"}
+  }
+}

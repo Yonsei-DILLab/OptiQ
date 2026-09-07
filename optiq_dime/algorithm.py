@@ -26,6 +26,12 @@ from .transport import (
 )
 
 
+@jax.jit
+def _pack_metrics(metrics):
+    """One device vector/host transfer instead of one synchronization per scalar."""
+    return jnp.stack([metrics[name] for name in sorted(metrics)])
+
+
 class OptiQDIME(DIME):
     """One-step OptiQ actor with DIME's distributional CrossQ critic."""
 
@@ -66,6 +72,15 @@ class OptiQDIME(DIME):
             data.rewards.numpy().flatten(),
         )
         actor = self.cfg.alg.actor
+        # Legacy configs retain their cadence; new sweep configs opt into sparse
+        # diagnostics. This affects telemetry only, never optimizer updates/RNG.
+        interval = int(self.cfg.get("diagnostics_interval", 1))
+        if interval < 0:
+            raise ValueError("diagnostics_interval must be >= 0 (0 disables diagnostics)")
+        bucket = self.num_timesteps // max(interval, 1)
+        collect_metrics = interval > 0 and bucket != getattr(
+            self, "_last_diagnostics_bucket", None
+        )
         (
             self.policy.qf_state,
             self.policy.actor_state,
@@ -110,6 +125,7 @@ class OptiQDIME(DIME):
             actor.transport_target_mode,
             actor.td_noise_std,
             actor.td_noise_clip,
+            collect_metrics=collect_metrics,
         )
         self._n_updates += gradient_steps
 
@@ -137,12 +153,11 @@ class OptiQDIME(DIME):
                     )
 
         self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
-        for key, value in log_metrics.items():
-            try:
-                value = value.item()
-            except (AttributeError, ValueError):
-                pass
-            self.logger.record(f"train/{key}", value)
+        if collect_metrics:
+            self._last_diagnostics_bucket = bucket
+            values = np.asarray(jax.device_get(_pack_metrics(log_metrics)))
+            for name, value in zip(sorted(log_metrics), values):
+                self.logger.record(f"train/{name}", float(value))
 
     @staticmethod
     @partial(
@@ -338,6 +353,7 @@ class OptiQDIME(DIME):
             "sinkhorn_iterations",
             "source_q_eval",
             "transport_target_mode",
+            "collect_metrics",
         ],
     )
     def update_actor(
@@ -362,6 +378,7 @@ class OptiQDIME(DIME):
         sinkhorn_iterations: int,
         source_q_eval: str,
         transport_target_mode: str,
+        collect_metrics: bool = True,
     ):
         key, latent_key, proposal_key, dropout_key = jax.random.split(key, 4)
         batch_size, observation_dim = observations.shape
@@ -551,6 +568,8 @@ class OptiQDIME(DIME):
             loss = jnp.mean(
                 jnp.sum(jnp.square(raw_actions - selected_actions), axis=-1)
             )
+            if not collect_metrics:
+                return loss, {}
             source_ess = 1.0 / jnp.sum(jnp.square(source_weights), axis=-1)
             q_only_weights = jax.nn.softmax(q_score, axis=-1)
             q_only_ess = 1.0 / jnp.sum(jnp.square(q_only_weights), axis=-1)
@@ -776,6 +795,7 @@ class OptiQDIME(DIME):
             "transport_target_mode",
             "adaptive_density_beta",
             "density_beta_grid_size",
+            "collect_metrics",
         ],
     )
     def _train(
@@ -816,6 +836,7 @@ class OptiQDIME(DIME):
         transport_target_mode,
         td_noise_std,
         td_noise_clip,
+        collect_metrics=True,
     ):
         del n_env_interacts
         actor_metrics = {
@@ -917,11 +938,12 @@ class OptiQDIME(DIME):
                     sinkhorn_iterations,
                     source_q_eval,
                     transport_target_mode,
+                    collect_metrics=collect_metrics,
                 )
                 target_actor_state = cls.soft_update_target_actor(
                     policy_tau, actor_state, target_actor_state
                 )
-        log_metrics = {**actor_metrics, **critic_metrics}
+        log_metrics = {**actor_metrics, **critic_metrics} if collect_metrics else {}
         return (
             qf_state,
             actor_state,

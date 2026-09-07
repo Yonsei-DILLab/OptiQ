@@ -1,0 +1,45 @@
+# @package _global_
+defaults:
+  - optiq_dime_dog
+  - _self_
+
+# Fixed protocol. Sweep axes are in sweeps/parameter_sweep.json.
+total_steps: 1000000
+eval_interval: 10000
+num_eval_episodes: 10
+eval_at_start: true
+stochastic_eval: true
+diagnostics_interval: 1000  # 1 restores every-step metrics; 0 disables them
+checkpoint_interval: 50000
+output_root: outputs/parameter_sweep
+run_name: parameter_sweep_${task}_seed${seed}
+
+alg:
+  utd: 2
+  batch_size: 256
+  learning_starts: 5000
+  buffer_size: 1000000
+  policy_delay: 1
+  actor:
+    hidden_dims: [256, 256, 256]
+    proposal_sampling_mode: stratified
+    num_policy_samples: 16
+    proposal_std: 0.2
+    proposal_clip: 0.5
+    proposals_per_policy_sample: 5
+    include_anchor: true
+    temperature: 0.25
+    density_correction: true
+    density_beta: 0.1
+    adaptive_density_beta: false
+    source_q_eval: mean
+    source_reference: uniform_action
+    sinkhorn_epsilon: 0.05
+    sinkhorn_iterations: 30
+    transport_target_mode: argmax
+    td_noise_std: 0.2
+    td_noise_clip: 0.5
+
+wandb:
+  project: optiq_parameter_sweep
+  group: ${task}

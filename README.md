@@ -39,6 +39,11 @@ python run_dime.py env_name=Humanoid-v3  alg.critic.v_min=-1600 alg.critic.v_max
 
 ### OptiQ actor with the DIME critic
 
+For the `parameter-sweep` branch, see [the common protocol and sweep matrix](docs/PARAMETER_SWEEP.md).
+`python scripts/parameter_sweep.py` summarizes the planned runs without launching
+anything. The new protocol evaluates every 10K steps and computes detailed
+training diagnostics every 1K steps.
+
 `run_optiq_dime.py` keeps DIME's distributional CrossQ critic, replay buffer,
 batch renormalization, and UTD=2 update loop, while replacing the 16-step
 diffusion policy with OptiQ's one-step implicit actor and density-corrected OT

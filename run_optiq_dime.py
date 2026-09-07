@@ -1,4 +1,4 @@
-"""Train OptiQ's one-step actor with DIME's critic on DMC Dog tasks."""
+"""Train OptiQ's one-step actor with DIME's critic on continuous-control tasks."""
 
 from pathlib import Path
 
@@ -15,20 +15,32 @@ from common.buffers import DMCCompatibleDictReplayBuffer
 from models.actor_critic_evaluation_callback import EvalCallback
 from optiq_dime import OptiQDIME
 
-DOG_TASKS = {"run", "trot", "walk", "stand"}
-
 
 def create_algorithm(cfg: DictConfig):
     import gymnasium as gym
 
-    if cfg.task not in DOG_TASKS:
-        raise ValueError(f"task must be one of {sorted(DOG_TASKS)}, got {cfg.task!r}")
+    if cfg.env_name.startswith("myo"):
+        try:
+            import myosuite  # noqa: F401 -- optional Gymnasium registration
+        except ImportError as exc:
+            raise RuntimeError(
+                "MyoSuite is optional: install a version compatible with this "
+                "environment in an isolated environment before running this task."
+            ) from exc
+        if cfg.env_name not in gym.registry:
+            raise RuntimeError(
+                f"{cfg.env_name} is not registered in Gymnasium. Check MyoSuite/"
+                "Gymnasium/MuJoCo compatibility; do not silently substitute a task."
+            )
     training_env = gym.make(cfg.env_name)
     eval_env = make_vec_env(cfg.env_name, n_envs=1, seed=cfg.seed)
 
     # Preserve DIME's original replay-buffer selection for dog tasks.
     replay_buffer_class = None
-    domain = cfg.env_name.split("/", 1)[1].split("-", 1)[0]
+    domain = (
+        cfg.env_name.split("/", 1)[1].split("-", 1)[0]
+        if cfg.env_name.startswith("dm_control/") else None
+    )
     if domain in {"humanoid", "fish", "walker", "quadruped", "finger"}:
         replay_buffer_class = DMCCompatibleDictReplayBuffer
 
@@ -92,7 +104,11 @@ def initialize_and_run(cfg: DictConfig):
             tags=[
                 "optiq",
                 "dime-critic",
-                "dmc-dog",
+                (
+                    "dmc-" + cfg.env_name.split("/", 1)[1].split("-", 1)[0]
+                    if cfg.env_name.startswith("dm_control/")
+                    else "myosuite" if cfg.env_name.startswith("myo") else "gymnasium"
+                ),
                 cfg.alg.actor.proposal_sampling_mode,
                 cfg.task,
             ],
