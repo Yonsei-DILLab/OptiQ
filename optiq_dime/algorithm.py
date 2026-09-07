@@ -15,12 +15,12 @@ from diffusion.dime import DIME
 
 from .policy import OptiQPolicy
 from .transport import (
+    TruncatedGaussianKDE,
     clip_action,
     sample_truncated_gaussian,
     sample_truncated_gaussian_mixture,
     select_density_beta_for_ess,
     sinkhorn,
-    truncated_mixture_log_density,
 )
 
 
@@ -37,10 +37,12 @@ class OptiQDIME(DIME):
         data = self.replay_buffer.sample(
             batch_size * gradient_steps, env=self._vec_normalize_env
         )
+        actor_learning_starts = self.cfg.alg.actor.get("learning_starts", self.learning_starts)
         policy_delay_indices = {
             i: True
             for i in range(gradient_steps)
-            if ((self._n_updates + i + 1) % self.policy_delay) == 0
+            if self.num_timesteps > actor_learning_starts
+            and ((self._n_updates + i + 1) % self.policy_delay) == 0
         }
         policy_delay_indices = flax.core.FrozenDict(policy_delay_indices)
 
@@ -135,12 +137,26 @@ class OptiQDIME(DIME):
                     )
 
         self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
+        diagnostic_interval = int(self.cfg.get("diagnostic_interval", 0))
+        diagnostic_due = diagnostic_interval > 0 and self.num_timesteps % diagnostic_interval == 0
+        core_metrics = {"actor_loss", "critic_loss", "current_q_values", "next_q_values",
+                        "entrQ_1", "entrQ_2", "ent_coef"}
+        anchor_metrics = {"local_best_q_gain_over_anchor", "local_improvement_fraction",
+                          "local_anchor_argmax_fraction", "twin_local_delta_correlation",
+                          "twin_local_improvement_sign_agreement"}
         for key, value in log_metrics.items():
+            if diagnostic_interval and not diagnostic_due and key not in core_metrics:
+                continue
+            if not actor.include_anchor and key in anchor_metrics:
+                continue  # These metrics require candidate anchors, absent in this baseline.
             try:
                 value = value.item()
             except (AttributeError, ValueError):
                 pass
             self.logger.record(f"train/{key}", value)
+        if diagnostic_due:
+            self.logger.record("time/total_timesteps", self.num_timesteps, exclude="tensorboard")
+            self.logger.dump(self.num_timesteps)
 
     @staticmethod
     @partial(
@@ -382,26 +398,25 @@ class OptiQDIME(DIME):
                 latents.reshape(batch_size * num_policy_samples, action_dim),
             ).reshape(batch_size, num_policy_samples, action_dim)
             policy_samples = clip_action(raw_actions)
+            # Define the KDE from actor centers BEFORE drawing its random candidates.
+            # Density evaluation below uses this very same distribution, never a
+            # KDE fitted to the newly drawn candidate cloud.
+            proposal_kde = TruncatedGaussianKDE.from_centers(
+                jax.lax.stop_gradient(policy_samples), proposal_std, proposal_clip
+            )
             if proposal_sampling_mode == "stratified":
-                proposal_sampler = sample_truncated_gaussian
+                sampled = proposal_kde.sample_stratified(
+                    proposal_key, proposals_per_policy_sample, include_anchor
+                )
             elif proposal_sampling_mode == "exact":
-                proposal_sampler = sample_truncated_gaussian_mixture
+                sampled = sample_truncated_gaussian_mixture(
+                    proposal_key, proposal_kde.centers, proposals_per_policy_sample,
+                    proposal_std, proposal_clip, include_anchor, return_component_indices=True,
+                )
             else:
                 raise ValueError(
                     f"Unknown proposal_sampling_mode: {proposal_sampling_mode}"
                 )
-            sampler_kwargs = {}
-            if proposal_sampling_mode == "exact":
-                sampler_kwargs["return_component_indices"] = True
-            sampled = proposal_sampler(
-                proposal_key,
-                policy_samples,
-                repeats=proposals_per_policy_sample,
-                std=proposal_std,
-                perturb_clip=proposal_clip,
-                include_anchor=include_anchor,
-                **sampler_kwargs,
-            )
             if proposal_sampling_mode == "exact":
                 proposals, proposal_component_indices = sampled
             else:
@@ -438,12 +453,7 @@ class OptiQDIME(DIME):
 
             proposal_log_density = jnp.zeros_like(source_q)
             if density_correction:
-                proposal_log_density = truncated_mixture_log_density(
-                    jax.lax.stop_gradient(proposals),
-                    jax.lax.stop_gradient(policy_samples),
-                    proposal_std,
-                    proposal_clip,
-                )
+                proposal_log_density = proposal_kde.log_prob(jax.lax.stop_gradient(proposals))
             q_score = source_q / temperature
             density_score = -proposal_log_density
             if adaptive_density_beta and density_correction:

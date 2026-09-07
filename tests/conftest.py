@@ -14,9 +14,9 @@ from optiq_dime.runtime import load_environment, provenance
 def validation_run(request):
     load_environment()
     run = wandb.init(
-        project=os.environ.get("WANDB_PROJECT", "optiq_dime_mujoco_v4"),
+        project=os.environ.get("WANDB_PROJECT", "optiq_dime_no_anchor"),
         entity=os.environ.get("WANDB_ENTITY"), mode="online",
-        job_type="validation", name="mujoco-sampling-regression-tests",
+        job_type="validation", name="no-anchor-regression-tests",
         config={"runtime": provenance()}, save_code=False,
     )
     yield run

@@ -33,6 +33,7 @@ for spec in "0.1 0.15 0p1 0p15"; do
   run_name="optiq_dime_dog_${task}_seed${seed}_N16R5_argmax_T0p25_sigma${std_tag}_clip${clip_tag}_trunc1p5_1m"
   echo "Starting task=$task temperature=$temperature sigma=$proposal_std clip=$proposal_clip seed=$seed on CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES"
   python run_optiq_dime.py \
+    --config-name=optiq_dime_dog \
     task="$task" \
     seed="$seed" \
     total_steps=1000000 \

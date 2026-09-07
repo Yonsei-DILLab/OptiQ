@@ -34,7 +34,8 @@ def provenance():
 
     versions = {}
     for name in ("jax", "jaxlib", "jax-cuda12-plugin", "flax", "optax", "numpy", "torch",
-                 "gymnasium", "mujoco", "stable-baselines3", "wandb", "nvidia-cudnn-cu12"):
+                 "gymnasium", "mujoco", "myosuite", "dm-control", "stable-baselines3",
+                 "wandb", "nvidia-cudnn-cu12"):
         try:
             versions[name] = importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError:

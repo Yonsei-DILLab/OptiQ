@@ -1,0 +1,28 @@
+# @package _global_
+defaults:
+  - alg: optiq_dime_no_anchor
+  - benchmark: pen_twirl_hard
+  - _self_
+
+seed: 0  # Single run; scripts/run_no_anchor.sh queues seeds 0,1,2 by default.
+use_jit: true
+require_gpu: true
+total_steps: 1000000
+eval_interval: 5000
+num_eval_episodes: 10
+eval_at_start: true
+stochastic_eval: true
+diagnostic_interval: 5000
+checkpoint_interval: 50000
+log_interval: 1
+progress_bar: true
+output_root: outputs/optiq_dime_no_anchor
+run_name: ${env_name}_${alg.actor.proposal_sampling_mode}_beta${alg.actor.density_beta}_anchor${alg.actor.include_anchor}_seed${seed}
+
+wandb:
+  activate: true
+  mode: ${oc.env:WANDB_MODE,online}
+  entity: ${oc.env:WANDB_ENTITY,null}
+  project: ${oc.env:WANDB_PROJECT,optiq_dime_no_anchor}
+  group: ${env_name}_${alg.actor.proposal_sampling_mode}_beta${alg.actor.density_beta}_anchor${alg.actor.include_anchor}
+  job_type: train

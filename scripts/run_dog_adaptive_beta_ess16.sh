@@ -56,6 +56,7 @@ fi
 run_name="optiq_dime_dog_${task}_seed${seed}_adaptiveBeta_ESS${ess_tag}_N16R5_T0p25_sigma0p2_clip0p5_1m${run_suffix}"
 echo "Starting adaptive-beta task=$task ESS>=$minimum_source_ess seed=$seed on CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES"
 python run_optiq_dime.py \
+  --config-name=optiq_dime_dog \
   task="$task" \
   seed="$seed" \
   total_steps=1000000 \

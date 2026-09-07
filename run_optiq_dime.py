@@ -1,4 +1,4 @@
-"""Train OptiQ's one-step actor with DIME's critic on DMC or MuJoCo v4."""
+"""Train OptiQ's one-step actor with DIME's critic; default: no-anchor MyoHand."""
 
 import json
 import os
@@ -24,15 +24,32 @@ from optiq_dime.runtime import ROOT, WandbWriter, load_environment, provenance
 
 DOG_TASKS = {"run", "trot", "walk", "stand"}
 MUJOCO_ENVS = {"Ant-v4", "Humanoid-v4"}
+MYOSUITE_ENVS = {"myoHandPenTwirlRandom-v0"}
+
+
+def is_tracked_environment(cfg):
+    return cfg.env_name in MUJOCO_ENVS | MYOSUITE_ENVS
 
 
 def validate_config(cfg):
-    is_mujoco = cfg.env_name in MUJOCO_ENVS
+    is_mujoco = is_tracked_environment(cfg)
     if not is_mujoco and not cfg.env_name.startswith("dm_control/"):
         raise ValueError(f"Unsupported environment: {cfg.env_name}")
     if cfg.env_name.startswith("dm_control/dog-") and cfg.task not in DOG_TASKS:
         raise ValueError(f"Invalid Dog task: {cfg.task}")
     actor = cfg.alg.actor
+    if actor.get("distillation_loss", "pointwise_mse") != "pointwise_mse":
+        raise ValueError("Only pointwise_mse distillation is implemented")
+    if "density_correction_beta" in actor and actor.density_correction_beta != actor.density_beta:
+        raise ValueError("density_correction_beta and density_beta must agree")
+    if actor.get("learning_starts", cfg.alg.learning_starts) < cfg.alg.learning_starts:
+        raise ValueError("Actor learning_starts must be at least alg.learning_starts")
+    if actor.get("learning_starts", cfg.alg.learning_starts) >= cfg.total_steps:
+        raise ValueError("total_steps must exceed actor.learning_starts")
+    if cfg.get("diagnostic_interval", 0) < 0:
+        raise ValueError("diagnostic_interval cannot be negative")
+    if cfg.env_name in MYOSUITE_ENVS and cfg.get("successful_steps", 0) < 1:
+        raise ValueError("MyoSuite requires positive successful_steps")
     if actor.proposal_sampling_mode not in {"stratified", "exact"}:
         raise ValueError("proposal_sampling_mode must be stratified or exact")
     if not 0 <= actor.density_beta <= 1:
@@ -62,7 +79,12 @@ def validate_config(cfg):
 def create_algorithm(cfg: DictConfig):
     import gymnasium as gym
 
-    is_mujoco = cfg.env_name in MUJOCO_ENVS
+    is_mujoco = is_tracked_environment(cfg)
+    if cfg.env_name in MYOSUITE_ENVS:
+        try:
+            import myosuite  # noqa: F401 -- registers the environment with Gymnasium.
+        except ImportError as error:
+            raise RuntimeError("Install the isolated environment with scripts/setup_no_anchor_env.sh") from error
     training_env = gym.make(cfg.env_name)
     eval_env = make_vec_env(cfg.env_name, n_envs=1, seed=cfg.seed)
 
@@ -171,12 +193,14 @@ def initialize_and_run(cfg: DictConfig):
                 "action_shape": list(model.action_space.shape),
                 "action_low": model.action_space.low.tolist(),
                 "action_high": model.action_space.high.tolist(),
-                "max_episode_steps": 1000,
+                "max_episode_steps": model.get_env().get_attr("spec")[0].max_episode_steps,
                 "replay_actions": "normalized [-1, 1]",
                 "random_proposal_count": cfg.alg.actor.num_policy_samples * (
                     cfg.alg.actor.proposals_per_policy_sample - int(cfg.alg.actor.include_anchor)),
                 "anchor_count": cfg.alg.actor.num_policy_samples * int(cfg.alg.actor.include_anchor),
             }
+            if cfg.env_name in MYOSUITE_ENVS:
+                environment_metadata["success_criterion"] = f"sum(solved) > {cfg.successful_steps} per episode"
             run.config.update({"environment": environment_metadata})
             wandb_config["environment"] = environment_metadata
             (Path(cfg.output_root) / "config.json").write_text(json.dumps(wandb_config, indent=2))
@@ -218,7 +242,7 @@ def initialize_and_run(cfg: DictConfig):
                     callback.eval_env.close()
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="optiq_dime_dog")
+@hydra.main(version_base=None, config_path="configs", config_name="optiq_dime_no_anchor")
 def main(cfg: DictConfig) -> None:
     try:
         if cfg.use_jit:

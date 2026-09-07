@@ -1,5 +1,7 @@
 """Density-corrected local proposals and entropic optimal transport."""
 
+from typing import NamedTuple
+
 import jax
 import jax.numpy as jnp
 import jax.scipy as jsp
@@ -8,6 +10,68 @@ import jax.scipy as jsp
 def clip_action(actions: jax.Array) -> jax.Array:
     """Clip normalized actions to the range expected by SB3 policies."""
     return jnp.clip(actions, -1.0, 1.0)
+
+
+class TruncatedGaussianKDE(NamedTuple):
+    """Uniform KDE defined by actor centers, before drawing any candidates.
+
+    Sampling and log_prob share the same kernels and truncation constants.
+    Stratification allocates an equal count to each mixture component; it does
+    not insert the component centers into the random candidate cloud.
+    """
+
+    centers: jax.Array
+    std: float
+    lower: jax.Array
+    upper: jax.Array
+    lower_cdf: jax.Array
+    upper_cdf: jax.Array
+    log_normalizer: jax.Array
+
+    @classmethod
+    def from_centers(cls, centers, std, perturb_clip):
+        lower = jnp.maximum(-1.0 - centers, -perturb_clip)
+        upper = jnp.minimum(1.0 - centers, perturb_clip)
+        lower_cdf = jsp.special.ndtr(lower / std)
+        upper_cdf = jsp.special.ndtr(upper / std)
+        log_normalizer = jnp.sum(
+            jnp.log(jnp.maximum(upper_cdf - lower_cdf, 1.0e-20)), axis=-1
+        )
+        return cls(centers, std, lower, upper, lower_cdf, upper_cdf, log_normalizer)
+
+    def sample_stratified(self, rng, repeats, include_anchor=False):
+        random_repeats = repeats - int(include_anchor)
+        if random_repeats < 1:
+            raise ValueError("At least one random draw per KDE component is required")
+        shape = self.centers.shape[:-1] + (random_repeats, self.centers.shape[-1])
+        uniform = jax.random.uniform(
+            rng, shape, minval=jnp.finfo(self.centers.dtype).eps,
+            maxval=1.0 - jnp.finfo(self.centers.dtype).eps,
+        )
+        quantiles = self.lower_cdf[..., None, :] + uniform * (
+            self.upper_cdf - self.lower_cdf
+        )[..., None, :]
+        noise = self.std * jsp.special.ndtri(jnp.clip(quantiles, 1.0e-7, 1.0 - 1.0e-7))
+        if include_anchor:  # Explicit legacy option; the new baseline disables it.
+            anchor = jnp.zeros(self.centers.shape[:-1] + (1, self.centers.shape[-1]),
+                               self.centers.dtype)
+            noise = jnp.concatenate((anchor, noise), axis=-2)
+        return self.centers[..., None, :] + noise
+
+    def log_prob(self, samples):
+        differences = samples[:, :, None, :] - self.centers[:, None, :, :]
+        action_dim = samples.shape[-1]
+        log_density = (
+            -0.5 * jnp.sum(jnp.square(differences / self.std), axis=-1)
+            - action_dim * (jnp.log(self.std) + 0.5 * jnp.log(2.0 * jnp.pi))
+            - self.log_normalizer[:, None, :]
+        )
+        in_support = jnp.all(
+            (differences >= self.lower[:, None, :, :] - 1.0e-6)
+            & (differences <= self.upper[:, None, :, :] + 1.0e-6), axis=-1,
+        )
+        log_density = jnp.where(in_support, log_density, -jnp.inf)
+        return jsp.special.logsumexp(log_density, axis=-1) - jnp.log(self.centers.shape[1])
 
 
 def sample_truncated_gaussian(
@@ -19,24 +83,8 @@ def sample_truncated_gaussian(
     include_anchor: bool = False,
 ) -> jax.Array:
     """Sample an exact Gaussian truncated by local and action-space bounds."""
-    lower = jnp.maximum(-1.0 - centers, -perturb_clip)
-    upper = jnp.minimum(1.0 - centers, perturb_clip)
-    random_repeats = repeats - int(include_anchor)
-    sample_shape = centers.shape[:-1] + (random_repeats, centers.shape[-1])
-    lower_cdf = jsp.special.ndtr(lower / std)[..., None, :]
-    upper_cdf = jsp.special.ndtr(upper / std)[..., None, :]
-    uniform = jax.random.uniform(
-        rng,
-        sample_shape,
-        minval=jnp.finfo(centers.dtype).eps,
-        maxval=1.0 - jnp.finfo(centers.dtype).eps,
-    )
-    quantiles = lower_cdf + uniform * (upper_cdf - lower_cdf)
-    noise = std * jsp.special.ndtri(jnp.clip(quantiles, 1.0e-7, 1.0 - 1.0e-7))
-    if include_anchor:
-        anchor = jnp.zeros(centers.shape[:-1] + (1, centers.shape[-1]), centers.dtype)
-        noise = jnp.concatenate((anchor, noise), axis=-2)
-    return centers[..., None, :] + noise
+    kde = TruncatedGaussianKDE.from_centers(centers, std, perturb_clip)
+    return kde.sample_stratified(rng, repeats, include_anchor)
 
 
 def sample_truncated_gaussian_mixture(
@@ -105,27 +153,7 @@ def truncated_mixture_log_density(
     perturb_clip: float,
 ) -> jax.Array:
     """Evaluate the local proposal mixture density at normalized actions."""
-    lower = jnp.maximum(-1.0 - centers, -perturb_clip)
-    upper = jnp.minimum(1.0 - centers, perturb_clip)
-    differences = samples[:, :, None, :] - centers[:, None, :, :]
-    lower_cdf = jsp.special.ndtr(lower / std)
-    upper_cdf = jsp.special.ndtr(upper / std)
-    log_normalizer = jnp.sum(
-        jnp.log(jnp.maximum(upper_cdf - lower_cdf, 1.0e-20)), axis=-1
-    )
-    action_dim = samples.shape[-1]
-    log_density = (
-        -0.5 * jnp.sum(jnp.square(differences / std), axis=-1)
-        - action_dim * (jnp.log(std) + 0.5 * jnp.log(2.0 * jnp.pi))
-        - log_normalizer[:, None, :]
-    )
-    in_support = jnp.all(
-        (differences >= lower[:, None, :, :] - 1.0e-6)
-        & (differences <= upper[:, None, :, :] + 1.0e-6),
-        axis=-1,
-    )
-    log_density = jnp.where(in_support, log_density, -jnp.inf)
-    return jsp.special.logsumexp(log_density, axis=-1) - jnp.log(centers.shape[1])
+    return TruncatedGaussianKDE.from_centers(centers, std, perturb_clip).log_prob(samples)
 
 
 def select_density_beta_for_ess(
