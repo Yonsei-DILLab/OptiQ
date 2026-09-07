@@ -49,13 +49,16 @@ The actor's target-copy coefficient remains1.0 (no actor EMA).
 
 - One-step actor: 256x3 GELU; N=16, four random candidates per center (M=64).
 - No anchor; stratified KDE proposals; sigma=0.2, clip=0.5 (2.5 sigma).
-- Temperature=0.25; fixed density beta=0.1; no adaptive-beta modification.
+- Temperature=0.25; fixed density beta=1 (subsequently requested); no adaptive beta.
 - Argmax OT distillation, Sinkhorn epsilon=0.05, 30 iterations, pointwise MSE.
 - Batch=256, replay=1M, critic/actor warmup=5K, gamma=0.99.
-- 1M steps, seed=0, evaluation every5K with10 stochastic episodes and at start,
+- 1M steps per run, seeds0,1,2 for the five-task protocol (single-entry default0),
+  evaluation every5K with10 stochastic episodes and at start,
   diagnostics every5K, checkpoint every50K. No experiments are launched by setup.
 
 ## Run
+
+The current five-task protocol is documented in [MUJOCO-README.md](../MUJOCO-README.md).
 
 Use the existing isolated environment and credential setup described in
 [NO_ANCHOR_BASELINE.md](NO_ANCHOR_BASELINE.md).

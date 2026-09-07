@@ -7,7 +7,9 @@ Humanoid-v4 with **256x3 scalar twin critics and TD MSE**. No-anchor sampling,
 actor learning are preserved. Critics use GELU, standard Adam betas (0.9,0.999),
 target-network min-Q backup and Polyak=0.005. Batch renorm is removed;
 there is one update per environment step (UTD=1).
-See [settings and commands](docs/MUJOCO_SCALAR_SETTING.md).
+All five MuJoCo tasks use fixed beta=1 and seeds0,1,2 (15 runs). See
+[MUJOCO-README.md](MUJOCO-README.md) for the protocol and launch commands,
+and [critic implementation details](docs/MUJOCO_SCALAR_SETTING.md).
 
 ```bash
 python run_optiq_dime.py --config-name=mujoco_setting benchmark=humanoid

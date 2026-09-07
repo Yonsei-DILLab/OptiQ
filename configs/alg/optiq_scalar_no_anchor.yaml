@@ -17,3 +17,6 @@ critic:
   hs: [256, 256, 256]
   n_atoms: 1  # Raw, unbounded Q output; never a one-atom softmax distribution.
   entr_coeff: 0.0  # No categorical distribution entropy for a scalar critic.
+
+actor:
+  density_correction_beta: 1.0  # Fixed full correction; density_beta is the inherited alias.

@@ -23,7 +23,7 @@ from optiq_dime.evaluation import MujocoEvalCallback
 from optiq_dime.runtime import ROOT, WandbWriter, load_environment, provenance
 
 DOG_TASKS = {"run", "trot", "walk", "stand"}
-MUJOCO_ENVS = {"Ant-v4", "Humanoid-v4"}
+MUJOCO_ENVS = {"Hopper-v4", "Walker2d-v4", "HalfCheetah-v4", "Ant-v4", "Humanoid-v4"}
 MYOSUITE_ENVS = {
     "myoHandPenTwirlRandom-v0",
     "myoHandReachRandom-v0",

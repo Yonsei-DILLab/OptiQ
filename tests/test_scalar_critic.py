@@ -19,6 +19,7 @@ from optiq_dime.critic_utils import critic_expectation
 from run_optiq_dime import validate_config
 
 ROOT = Path(__file__).resolve().parents[1]
+BENCHMARKS = ['hopper', 'walker2d', 'halfcheetah', 'ant', 'humanoid']
 
 
 def config(name='mujoco_setting', overrides=()):
@@ -26,10 +27,11 @@ def config(name='mujoco_setting', overrides=()):
         return compose(config_name=name, overrides=list(overrides))
 
 
-@pytest.mark.parametrize('benchmark', ['humanoid', 'ant'])
-def test_only_critic_settings_change(benchmark):
-    old = config('optiq_dime_no_anchor', [f'benchmark={benchmark}'])
-    new = config(overrides=[f'benchmark={benchmark}'])
+@pytest.mark.parametrize('benchmark', BENCHMARKS)
+@pytest.mark.parametrize('seed', [0, 1, 2])
+def test_only_requested_critic_and_beta_settings_change(benchmark, seed):
+    old = config('optiq_dime_no_anchor', [f'benchmark={benchmark}', f'seed={seed}'])
+    new = config(overrides=[f'benchmark={benchmark}', f'seed={seed}'])
     assert validate_config(new)
     a, b = [OmegaConf.to_container(c.alg, resolve=True) for c in (old, new)]
     assert b['critic']['type'] == 'scalar'
@@ -49,12 +51,16 @@ def test_only_critic_settings_change(benchmark):
     b['optimizer']['critic_b1'] = a['optimizer']['critic_b1']
     b['utd'] = a['utd']
     b['tau'] = a['tau']
-    assert a == b  # All actor and remaining optimizer settings are unchanged.
+    assert b['actor']['density_correction_beta'] == b['actor']['density_beta'] == 1.0
+    for key in ['density_correction_beta', 'density_beta']:
+        b['actor'][key] = a['actor'][key]
+    assert a == b  # All other actor and optimizer settings are unchanged.
     for key in ['env_name', 'seed', 'total_steps', 'eval_interval', 'num_eval_episodes',
                 'eval_at_start', 'stochastic_eval', 'diagnostic_interval', 'checkpoint_interval']:
         assert old[key] == new[key]
     assert new.alg.actor.include_anchor is False
-    assert new.alg.actor.density_beta == 0.1
+    assert new.alg.actor.density_beta == 1.0
+    assert not new.alg.actor.adaptive_density_beta
 
 
 def test_scalar_alias_and_validation():
@@ -112,7 +118,7 @@ def test_scalar_td_min_backup_terminal_mask_stop_gradient_and_no_clipping(crossq
         .995 * np.array([10., 14.]) + .005 * expected_params, rtol=1e-6)
 
 
-@pytest.mark.parametrize('benchmark', ['ant', 'humanoid'])
+@pytest.mark.parametrize('benchmark', BENCHMARKS)
 def test_real_environment_scalar_actor_critic_training_and_checkpoint(benchmark):
     cfg = config(overrides=[f'benchmark={benchmark}', 'alg.batch_size=4',
                            'alg.buffer_size=32', 'alg.learning_starts=2',
@@ -152,6 +158,7 @@ def test_real_environment_scalar_actor_critic_training_and_checkpoint(benchmark)
             a.temperature, a.sinkhorn_epsilon, a.sinkhorn_iterations,
             a.source_q_eval, a.transport_target_mode)
         assert np.isfinite(loss) and all(np.isfinite(v).all() for v in metrics.values())
+        assert float(metrics['density_beta_mean']) == 1.0
         assert 1 <= metrics['source_ess_absolute'] <= 64.001
         # Raw Q diagnostics must not silently multiply scalar outputs by v_min.
         _, loss2, _, metrics2 = OptiQDIME.update_actor(model.policy.actor_state,
