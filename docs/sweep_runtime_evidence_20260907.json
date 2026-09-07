@@ -1,0 +1,64 @@
+{
+  "server": "vast2",
+  "source": "/workspace/optiq-beta-sweep-20260905/state/*.json started_at/ended_at and TensorBoard eval/mean_reward wall_time",
+  "protocol": "old branch: every-step diagnostics, eval every 5000, 80 candidates, DIME UTD2",
+  "completed_1m_runs": [
+    {
+      "id": "dog_walk_beta0p1_seed2",
+      "hours": 11.136595770277777
+    },
+    {
+      "id": "dog_trot_beta0p1_seed2",
+      "hours": 11.216310845277777
+    },
+    {
+      "id": "dog_trot_beta0_seed2",
+      "hours": 11.301610573333335
+    },
+    {
+      "id": "dog_walk_beta0_seed2",
+      "hours": 11.112105113611111
+    },
+    {
+      "id": "dog_walk_beta0p25_seed2",
+      "hours": 11.279480383333333
+    },
+    {
+      "id": "dog_walk_beta0p5_seed2",
+      "hours": 11.453019760555556
+    },
+    {
+      "id": "dog_trot_beta0p5_seed2",
+      "hours": 11.666152924722223
+    },
+    {
+      "id": "dog_trot_beta0p25_seed2",
+      "hours": 10.942472069444444
+    },
+    {
+      "id": "dog_trot_beta1_seed2",
+      "hours": 11.124029006666666
+    },
+    {
+      "id": "dog_walk_beta1_seed2",
+      "hours": 11.439832630833333
+    },
+    {
+      "id": "dog_trot_beta0p05_seed2_20260906",
+      "hours": 10.609052496666667
+    },
+    {
+      "id": "dog_run_beta0p1_seed1_20260906_vast2_r2",
+      "hours": 10.79226245611111
+    }
+  ],
+  "humanoid_run_window": {
+    "start_step": 95000,
+    "end_step": 150000,
+    "start_wall": 1788750684.882,
+    "end_wall": 1788752531.743,
+    "extrapolated_hours_1m": 9.327580808389069
+  },
+  "dog_checkpoint_bytes_per_run": 3381216038,
+  "new_branch_gpu_benchmarked": false
+}

@@ -43,6 +43,8 @@ For the `parameter-sweep` branch, see [the common protocol and sweep matrix](doc
 `python scripts/parameter_sweep.py` summarizes the planned runs without launching
 anything. The new protocol evaluates every 10K steps and computes detailed
 training diagnostics every 1K steps.
+See [the runtime and 72-hour Vast budget plan](docs/SWEEP_BUDGET.md) for measured
+baseline timings, provisional GPU counts and a read-only market-price snapshot.
 
 `run_optiq_dime.py` keeps DIME's distributional CrossQ critic, replay buffer,
 batch renormalization, and UTD=2 update loop, while replacing the 16-step
