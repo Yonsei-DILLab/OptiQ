@@ -428,12 +428,18 @@ def select_density_beta_for_kl(
     density_score: jax.Array,
     bisection_iterations: int = 32,
 ) -> tuple[jax.Array, jax.Array, jax.Array]:
-    """Maximal beta in [0, 1] with KL(w_beta || r) <= KL(r || uniform).
+    """Maximal beta in [0, 1] with KL(w_beta || r) <= KL(uniform || r).
 
     ``r = softmax(q_score)`` and
     ``w_beta = softmax(q_score + beta * density_score)``. The last axis holds
     candidates; selection is independent across all leading axes. The budget
     multiplier is exactly one, with no additional tunable coefficient.
+
+    The budget direction is essential: for u=uniform and x=q_score,
+    E_w[x] - E_u[x] = KL(w || u) + KL(u || r) - KL(w || r).
+    Feasibility therefore guarantees E_w[x] - E_u[x] >= KL(w || u) >= 0
+    in exact arithmetic, on this fixed candidate set. The former KL(r || u)
+    budget does not provide this expected-score improvement guarantee.
 
     KL(w_beta || r) is monotone since its beta derivative is
     beta * Var_{w_beta}(density_score). Bisection returns the feasible lower
@@ -443,7 +449,8 @@ def select_density_beta_for_kl(
     Inputs must be finite. Computation uses at least float32 and a cancellation-
     resistant KL, important when Q-only KL is around 1e-10. Differences already
     rounded out of input scores cannot be recovered. This is a finite-candidate
-    KL constraint, not a guaranteed population-KL or minimum-ESS constraint.
+    KL constraint, not a guaranteed population-KL, minimum-ESS, or actor-return
+    improvement constraint. Distillation and KDE smoothing introduce errors.
     """
     if q_score.shape != density_score.shape or q_score.ndim < 1 or q_score.shape[-1] < 1:
         raise ValueError("q_score and density_score must have matching, nonempty candidate axes")
@@ -457,7 +464,9 @@ def select_density_beta_for_kl(
     q_centered -= jnp.mean(q_centered, axis=-1, keepdims=True)
     density_centered = density_score - jnp.max(density_score, axis=-1, keepdims=True)
     density_centered -= jnp.mean(density_centered, axis=-1, keepdims=True)
-    kl_budget = _exponential_tilt_kl(jnp.zeros_like(q_centered), q_centered)
+    # Starting from r and undoing its Q tilt gives u, hence KL(u || r).
+    # Keep the cancellation-resistant helper for nearly flat Q in float32.
+    kl_budget = _exponential_tilt_kl(q_centered, -q_centered)
 
     def correction_kl(beta):
         return _exponential_tilt_kl(q_centered, beta[..., None] * density_centered)

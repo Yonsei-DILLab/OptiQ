@@ -45,6 +45,9 @@ anything. The new protocol evaluates every 10K steps and computes detailed
 training diagnostics every 1K steps.
 See [the runtime and 72-hour Vast budget plan](docs/SWEEP_BUDGET.md) for measured
 baseline timings, provisional GPU counts and a read-only market-price snapshot.
+On `adaptive-beta-improvement`, KL-adaptive density correction uses an
+[improvement-preserving candidate KL budget](docs/ADAPTIVE_BETA_IMPROVEMENT.md).
+This changes the KL-mode budget direction; fixed-beta and ESS modes are unchanged.
 
 `run_optiq_dime.py` keeps DIME's distributional CrossQ critic, replay buffer,
 batch renormalization, and UTD=2 update loop, while replacing the 16-step

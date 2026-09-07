@@ -15,15 +15,16 @@ _spec.loader.exec_module(_transport)
 select_density_beta_for_kl = _transport.select_density_beta_for_kl
 
 
-def reference_solution(q, y):
+def reference_solution(q, y, *, budget=None):
     q, y = np.asarray(q, np.float64), np.asarray(y, np.float64)
     q -= q.max()
     y -= y.max()
     log_r = q - np.log(np.exp(q).sum())
-    r = np.exp(log_r)
-    # Computing entropy by summing signed terms is safe here in float64 for
-    # the tested float32 scores (std >= 1e-5), unlike in float32.
-    budget = max(float(np.sum(r * (log_r + np.log(len(r))))), 0.)
+    # KL(uniform || r), independently evaluated in float64. Summing these
+    # signed terms is accurate enough for the tested score scales (>= 1e-5),
+    # unlike the same calculation in float32.
+    if budget is None:
+        budget = max(float(np.mean(-np.log(len(q)) - log_r)), 0.)
 
     def kl(beta):
         logits = q + beta*y
@@ -74,6 +75,76 @@ def test_full_correction_when_budget_sufficient():
     beta, selected, budget = select_density_beta_for_kl(q, y)
     assert float(beta[0]) == 1.
     assert float(selected[0]) <= float(budget[0])
+
+
+def test_budget_is_uniform_to_q_kl_for_both_asymmetry_directions():
+    # A single high-Q candidate makes KL(r || u) larger; a single low-Q
+    # candidate makes it smaller. Neither orientation dominates the other.
+    q = np.zeros((2, 8), dtype=np.float32)
+    q[:, 0] = [2., -2.]
+    y = -2. * q
+    beta, selected, budget = jax.jit(select_density_beta_for_kl)(q, y)
+
+    q64 = q.astype(np.float64)
+    log_r = q64 - np.log(np.exp(q64).sum(axis=-1, keepdims=True))
+    reverse_budget = np.mean(-np.log(q.shape[-1]) - log_r, axis=-1)
+    forward_budget = np.sum(np.exp(log_r) * (log_r + np.log(q.shape[-1])), axis=-1)
+    assert forward_budget[0] > reverse_budget[0] + .05
+    assert forward_budget[1] < reverse_budget[1] - .05
+    np.testing.assert_allclose(budget, reverse_budget, rtol=3e-6, atol=1e-7)
+    # At beta=1/2 these opposing corrections give exactly uniform weights,
+    # which is the KL boundary for the required orientation.
+    np.testing.assert_allclose(beta, [.5, .5], rtol=0., atol=1e-6)
+    np.testing.assert_allclose(selected, reverse_budget, rtol=3e-6, atol=1e-7)
+
+
+@pytest.mark.parametrize("tau", [.25, 1., 4.])
+def test_selected_candidates_satisfy_expected_q_improvement_bound(tau):
+    rng = np.random.default_rng(20260908)
+    q_values = (rng.normal(size=(12, 32)) * np.tile([.1, 1., 3.], 4)[:, None]).astype(np.float32)
+    q_values[0] = 0.
+    q_score = q_values / np.float32(tau)
+    density_score = (rng.normal(size=q_values.shape) * 5.).astype(np.float32)
+    density_score[1] = 2.  # Full correction with constant density.
+    density_score[2] = 2. * q_score[2]  # Correction aligned with Q.
+    density_score[3] = -2. * q_score[3]  # Correction opposing Q.
+
+    beta, selected, budget = jax.jit(select_density_beta_for_kl)(q_score, density_score)
+    # Evaluate the actual float32 candidate weights, then accumulate the
+    # expected-Q gain and entropy independently in float64.
+    weights = np.asarray(jax.nn.softmax(q_score + beta[:, None] * density_score)).astype(np.float64)
+    uniform = 1. / q_values.shape[-1]
+    expected_q_gain = np.sum((weights - uniform) * q_values.astype(np.float64), axis=-1)
+    # Sharply aligned corrections can underflow some float32 weights to zero;
+    # their entropy contribution is exactly zero by continuity.
+    log_w_over_u = np.log(np.where(weights > 0., weights / uniform, 1.))
+    kl_w_uniform = np.sum(weights * log_w_over_u, axis=-1)
+    tolerance = 32. * np.finfo(np.float32).eps * np.maximum(
+        tau, np.max(np.abs(q_values), axis=-1)
+    )
+    assert np.all(expected_q_gain >= tau * kl_w_uniform - tolerance)
+    assert np.all(np.asarray(selected) <= np.asarray(budget) * (1. + 2e-6))
+    assert np.any((np.asarray(beta) > 0.) & (np.asarray(beta) < 1.))
+    assert float(beta[0]) == 0.
+    assert float(beta[1]) == 1.
+
+
+def test_old_forward_budget_can_lower_expected_q_below_uniform():
+    q = np.array([2., 0., 0., 0., 0., 0., 0., 0.], dtype=np.float32)
+    y = -2. * q
+    q64 = q.astype(np.float64)
+    log_r = q64 - np.log(np.exp(q64).sum())
+    old_budget = float(np.sum(np.exp(log_r) * (log_r + np.log(len(q)))))
+    old_beta, _, _ = reference_solution(q.copy(), y.copy(), budget=old_budget)
+    old_logits = q64 + old_beta * y.astype(np.float64)
+    old_weights = np.exp(old_logits - old_logits.max())
+    old_weights /= old_weights.sum()
+    assert old_beta > .6
+    assert float(np.dot(old_weights, q64) - q64.mean()) < -.05
+
+    beta, _, _ = select_density_beta_for_kl(q, y)
+    weights = np.asarray(jax.nn.softmax(q + beta * y)).astype(np.float64)
+    assert float(np.dot(weights, q64) - q64.mean()) >= -1e-6
 
 
 @pytest.mark.parametrize("density_scale", [1e-10, 1e-20])
