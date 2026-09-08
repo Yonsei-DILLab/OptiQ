@@ -14,7 +14,7 @@ from common.type_aliases import ReplayBufferSamplesNp, RLTrainState
 from diffusion.dime import DIME
 
 from .policy import OptiQPolicy
-from .schedules import proposal_parameters
+from .schedules import proposal_parameters, target_temperature
 from .transport import (
     TruncatedGaussianKDE,
     clip_action,
@@ -70,6 +70,7 @@ class OptiQDIME(DIME):
         proposal_std, proposal_clip, proposal_temperature = proposal_parameters(
             actor, self.num_timesteps
         )
+        temperature = target_temperature(actor, self.num_timesteps)
         (
             self.policy.qf_state,
             self.policy.actor_state,
@@ -107,7 +108,7 @@ class OptiQDIME(DIME):
             actor.adaptive_density_beta,
             actor.minimum_source_ess,
             actor.density_beta_grid_size,
-            actor.temperature,
+            temperature,
             actor.sinkhorn_epsilon,
             actor.sinkhorn_iterations,
             actor.source_q_eval,
@@ -116,13 +117,13 @@ class OptiQDIME(DIME):
             actor.td_noise_clip,
         )
         self._n_updates += gradient_steps
-        if actor.get("proposal_schedule") is not None:
+        if actor.get("proposal_schedule") is not None or actor.get("temperature_schedule") is not None:
             log_metrics = dict(log_metrics)
             log_metrics.update(
                 proposal_temperature=proposal_temperature,
                 proposal_std=proposal_std,
                 proposal_clip=proposal_clip,
-                temperature=actor.temperature,
+                temperature=temperature,
             )
 
         checkpoint_due = self.model_save_path is not None and (

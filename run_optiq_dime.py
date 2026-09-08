@@ -21,7 +21,7 @@ from models.actor_critic_evaluation_callback import EvalCallback
 from optiq_dime import OptiQDIME
 from optiq_dime.evaluation import MujocoEvalCallback
 from optiq_dime.runtime import ROOT, WandbWriter, load_environment, provenance
-from optiq_dime.schedules import validate_proposal_schedule
+from optiq_dime.schedules import validate_proposal_schedule, validate_temperature_schedule
 
 DOG_TASKS = {"run", "trot", "walk", "stand"}
 MUJOCO_ENVS = {"Ant-v4", "Humanoid-v4"}
@@ -44,6 +44,7 @@ def validate_config(cfg):
         raise ValueError(f"Invalid Dog task: {cfg.task}")
     actor = cfg.alg.actor
     validate_proposal_schedule(actor, cfg.total_steps)
+    validate_temperature_schedule(actor, cfg.total_steps)
     if actor.get("distillation_loss", "pointwise_mse") != "pointwise_mse":
         raise ValueError("Only pointwise_mse distillation is implemented")
     if "density_correction_beta" in actor and actor.density_correction_beta != actor.density_beta:

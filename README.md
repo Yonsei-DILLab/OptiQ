@@ -14,8 +14,11 @@ to **seeds 0, 1, 2**.
 Use the separate environment and [baseline setup and protocol](docs/NO_ANCHOR_BASELINE.md).
 Credentials belong in an ignored `.env`; a template is provided in [.env.example](.env.example).
 
-The isolated Reach comparison broadens the candidate KDE early in training
-while keeping Q/OT temperature at 0.25; see the [proposal annealing protocol](docs/REACH_PROPOSAL_ANNEAL.md).
+The current Reach comparison exponentially anneals the Q/OT target temperature
+from **10 to 0.25 over 400,000 environment steps**, with the baseline KDE width
+fixed; see the [target temperature protocol](docs/REACH_TARGET_ANNEAL.md).
+The earlier [candidate KDE annealing protocol](docs/REACH_PROPOSAL_ANNEAL.md)
+is retained as a separate configuration.
 
 ```bash
 bash scripts/setup_no_anchor_env.sh

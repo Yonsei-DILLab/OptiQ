@@ -1,6 +1,33 @@
-"""Environment-step schedules for candidate generation only."""
+"""Separate environment-step schedules for KDE width and Q target temperature."""
 
 import math
+
+
+def validate_temperature_schedule(actor, total_steps):
+    schedule = actor.get("temperature_schedule")
+    if schedule is None:
+        return
+    initial = float(schedule.initial_temperature)
+    final = float(actor.temperature)
+    end = schedule.end_steps
+    if not math.isfinite(initial) or not math.isfinite(final) or not 0 < final <= initial:
+        raise ValueError("temperature_schedule requires finite initial_temperature >= temperature > 0")
+    if isinstance(end, bool) or not isinstance(end, int) or not 0 < end <= total_steps:
+        raise ValueError("temperature_schedule.end_steps must be an integer in (0, total_steps]")
+
+
+def target_temperature(actor, env_steps):
+    """Exponentially decay Q temperature to actor.temperature, then hold it.
+
+    The clock starts at environment step zero, including random-action warmup.
+    This changes Q / T in candidate weights; it does not scale KDE or TD noise.
+    """
+    schedule = actor.get("temperature_schedule")
+    if schedule is None or env_steps >= schedule.end_steps:
+        return actor.temperature
+    initial = float(schedule.initial_temperature)
+    fraction = max(0.0, env_steps / schedule.end_steps)
+    return initial * math.exp(math.log(float(actor.temperature) / initial) * fraction)
 
 
 def validate_proposal_schedule(actor, total_steps):

@@ -1,0 +1,18 @@
+# @package _global_
+defaults:
+  - optiq_dime_no_anchor
+  - override benchmark: reach_hard
+  - _self_
+
+# Anneal Q / T directly. The inherited temperature (0.25) is the endpoint.
+# The KDE remains at std 0.2 / clip 0.5; no proposal_schedule is enabled.
+alg:
+  actor:
+    temperature_schedule:
+      initial_temperature: 10.0
+      end_steps: 400000
+
+output_root: outputs/optiq_dime_reach_target_anneal
+run_name: ${env_name}_targetT${alg.actor.temperature_schedule.initial_temperature}to${alg.actor.temperature}_exp${alg.actor.temperature_schedule.end_steps}_beta${alg.actor.density_beta}_seed${seed}
+wandb:
+  group: ${env_name}_targetT${alg.actor.temperature_schedule.initial_temperature}to${alg.actor.temperature}_exp${alg.actor.temperature_schedule.end_steps}_beta${alg.actor.density_beta}
