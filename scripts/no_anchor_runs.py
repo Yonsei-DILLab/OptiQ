@@ -40,7 +40,8 @@ def main():
     parser.add_argument("--seeds", default=",".join(map(str, DEFAULT_SEEDS)))
     parser.add_argument("--config-name", default="optiq_dime_no_anchor",
                         choices=("optiq_dime_no_anchor", "optiq_dime_reach_proposal_anneal",
-                                 "optiq_dime_reach_target_anneal", "optiq_dime_mujoco_target_anneal"))
+                                 "optiq_dime_reach_target_anneal", "optiq_dime_mujoco_target_anneal",
+                                 "optiq_scalar_mujoco_target_anneal"))
     args, overrides = parser.parse_known_args()
     benchmarks = args.benchmarks.split(",")
     if len(set(benchmarks)) != len(benchmarks) or any(b not in BENCHMARKS for b in benchmarks):

@@ -1,0 +1,19 @@
+# @package _global_
+defaults:
+  - optiq_dime_mujoco_target_anneal
+  - override /alg: optiq_scalar_no_anchor
+  - _self_
+
+# Scalar critic configuration from mujoco-setting. Retain this experiment's
+# beta=0.1 and target-temperature schedule rather than the reference's beta=1.
+alg:
+  critic:
+    v_min: null
+    v_max: null
+  actor:
+    density_correction_beta: 0.1
+
+output_root: outputs/optiq_scalar_mujoco_target_anneal
+run_name: ${env_name}_scalar_targetT${alg.actor.temperature_schedule.initial_temperature}to${alg.actor.temperature}_exp${alg.actor.temperature_schedule.end_steps}_beta${alg.actor.density_beta}_seed${seed}
+wandb:
+  group: ${env_name}_scalar_targetT${alg.actor.temperature_schedule.initial_temperature}to${alg.actor.temperature}_exp${alg.actor.temperature_schedule.end_steps}_beta${alg.actor.density_beta}

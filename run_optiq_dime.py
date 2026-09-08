@@ -19,6 +19,7 @@ from wandb.integration.sb3 import WandbCallback
 from common.buffers import DMCCompatibleDictReplayBuffer
 from models.actor_critic_evaluation_callback import EvalCallback
 from optiq_dime import OptiQDIME
+from optiq_dime.critic_utils import validate_critic_config
 from optiq_dime.evaluation import MujocoEvalCallback
 from optiq_dime.runtime import ROOT, WandbWriter, load_environment, provenance
 from optiq_dime.schedules import validate_proposal_schedule, validate_temperature_schedule
@@ -69,8 +70,7 @@ def validate_config(cfg):
         raise ValueError("total_steps must exceed learning_starts to exercise training")
     if cfg.checkpoint_interval < 0 or cfg.num_eval_episodes < 1:
         raise ValueError("Invalid checkpoint/evaluation configuration")
-    if cfg.alg.critic.v_min >= cfg.alg.critic.v_max:
-        raise ValueError("critic.v_min must be below critic.v_max")
+    validate_critic_config(cfg.alg.critic)
     if is_mujoco:
         if cfg.log_interval < 1:
             raise ValueError("log_interval must be positive")
@@ -181,7 +181,8 @@ def initialize_and_run(cfg: DictConfig):
             entity=os.environ.get("WANDB_ENTITY") or cfg.wandb.entity,
             mode=cfg.wandb.mode,
             sync_tensorboard=not is_mujoco,
-            tags=["optiq", "dime-critic", cfg.env_name, cfg.alg.actor.proposal_sampling_mode],
+            tags=["optiq", "dime-backbone", cfg.env_name, cfg.alg.actor.proposal_sampling_mode,
+                  "critic-" + cfg.alg.critic.get("type", "distributional")],
             dir=cfg.output_root if is_mujoco else None,
             save_code=False,
         )

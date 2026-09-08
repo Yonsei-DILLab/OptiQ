@@ -1,0 +1,24 @@
+# @package alg
+defaults:
+  - optiq_dime_no_anchor
+  - _self_
+
+# Conventional twin scalar critic; keep OptiQ's actor and proposal unchanged.
+tau: 0.005  # Critic Polyak coefficient, NOT the actor's Q-weight temperature.
+utd: 1
+optimizer:
+  bn: false
+  critic_b1: 0.9
+
+critic:
+  type: scalar
+  activation: gelu
+  crossq_style: false  # Bootstrap from target_params, not the live critic.
+  hs: [256, 256, 256]
+  n_atoms: 1  # Raw, unbounded Q output; never a one-atom softmax distribution.
+  v_min: null  # No categorical support applies to raw scalar Q.
+  v_max: null
+  entr_coeff: 0.0  # No categorical distribution entropy for a scalar critic.
+
+actor:
+  density_correction_beta: 1.0  # Fixed full correction; density_beta is the inherited alias.

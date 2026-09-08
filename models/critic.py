@@ -195,7 +195,7 @@ class Critic(nn.Module):
 
         if self.use_batch_norm:
             x = BN(bn_warmup=self.bn_warmup, use_running_average=not train, momentum=self.batch_norm_momentum)(x)
-        else:
+        elif self.n_atoms > 1:
             # Hack to make flax return state_updates. Is only necessary such that the downstream
             # functions have the same function signature.
             x_dummy = BN(bn_warmup=self.bn_warmup, use_running_average=not train, momentum=self.batch_norm_momentum)(x)
@@ -213,7 +213,7 @@ class Critic(nn.Module):
 
             if self.use_batch_norm:
                 x = BN(bn_warmup=self.bn_warmup,use_running_average=not train, momentum=self.batch_norm_momentum)(x)
-            else:
+            elif self.n_atoms > 1:
                 x_dummy = BN(bn_warmup=self.bn_warmup, use_running_average=not train, momentum=self.batch_norm_momentum)(x)
         x = nn.Dense(self.n_atoms)(x)
         # x = nn.Dense(1, kernel_init=nn.initializers.constant(1e-6),
@@ -259,4 +259,3 @@ class VectorCritic(nn.Module):
             n_atoms=self.n_atoms
         )(obs, action, train)
         return q_values
-

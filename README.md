@@ -20,6 +20,9 @@ from **10 to 0.25 over 400,000 environment steps**, with the baseline KDE width
 fixed; see the [target temperature protocol](docs/REACH_TARGET_ANNEAL.md).
 Ant and HalfCheetah seed 0 reuse exactly the same temperature schedule with
 Gym critic support; see the [MuJoCo target temperature protocol](docs/MUJOCO_TARGET_ANNEAL.md).
+The [scalar MuJoCo protocol](docs/SCALAR_MUJOCO_TARGET_ANNEAL.md) carries over
+`mujoco-setting`'s 256x3 GELU twin-min target critic (no BN, UTD=1), retaining
+the same Ant/HalfCheetah seed 0, beta 0.1 and 10-to-0.25 temperature schedule.
 The earlier [candidate KDE annealing protocol](docs/REACH_PROPOSAL_ANNEAL.md)
 is retained as a separate configuration.
 

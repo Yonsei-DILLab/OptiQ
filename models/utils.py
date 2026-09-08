@@ -14,6 +14,11 @@ class ReLU(nn.Module):
         return nn.relu(x)
 
 
+class GELU(nn.Module):
+    def __call__(self, x):
+        return nn.gelu(x)
+
+
 class ReLU6(nn.Module):
     def __call__(self, x):
         return nn.relu6(x)
@@ -54,6 +59,7 @@ class ReLUOverMax(nn.Module):
 activation_fn = {
     # unbounded
     "relu": ReLU,
+    "gelu": GELU,
     "elu": Elu,
     "glu": GLU,
     # bounded

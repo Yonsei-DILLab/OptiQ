@@ -14,6 +14,7 @@ from common.type_aliases import ReplayBufferSamplesNp, RLTrainState
 from diffusion.dime import DIME
 
 from .policy import OptiQPolicy
+from .critic_utils import critic_support, critic_expectation, scalar_td_loss
 from .schedules import proposal_parameters, target_temperature
 from .transport import (
     TruncatedGaussianKDE,
@@ -26,13 +27,17 @@ from .transport import (
 
 
 class OptiQDIME(DIME):
-    """One-step OptiQ actor with DIME's distributional CrossQ critic."""
+    """One-step OptiQ actor with categorical CrossQ or scalar target critics."""
 
     policy_aliases: ClassVar[dict[str, type[OptiQPolicy]]] = {
         "MlpPolicy": OptiQPolicy,
         "MultiInputPolicy": OptiQPolicy,
     }
     policy: OptiQPolicy
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.crossq_style = bool(self.cfg.alg.critic.get("crossq_style", True))
 
     def train(self, batch_size, gradient_steps):
         data = self.replay_buffer.sample(
@@ -154,7 +159,7 @@ class OptiQDIME(DIME):
         diagnostic_due = diagnostic_interval > 0 and self.num_timesteps % diagnostic_interval == 0
         core_metrics = {"actor_loss", "critic_loss", "current_q_values", "next_q_values",
                         "entrQ_1", "entrQ_2", "ent_coef", "proposal_temperature",
-                        "proposal_std", "proposal_clip", "temperature"}
+                        "proposal_std", "proposal_clip", "temperature", "critic_td_rmse"}
         anchor_metrics = {"local_best_q_gain_over_anchor", "local_improvement_fraction",
                           "local_anchor_argmax_fraction", "twin_local_delta_correlation",
                           "twin_local_improvement_sign_agreement"}
@@ -271,6 +276,15 @@ class OptiQDIME(DIME):
                     axis=0,
                 )
 
+            if num_atoms == 1:
+                current_q = critic_expectation(current_q_values, z_atoms)
+                next_q = critic_expectation(next_q_values, z_atoms)
+                loss, targets = scalar_td_loss(current_q, next_q, rewards, dones, gamma)
+                return loss, (
+                    state_updates, current_q.min(axis=0).mean(), targets.mean(),
+                    jnp.asarray(0.0), jnp.asarray(0.0), current_q.shape[0],
+                )
+
             def projection(next_dist):
                 delta_z = (v_max - v_min) / (num_atoms - 1)
                 target_z = jnp.clip(
@@ -334,22 +348,26 @@ class OptiQDIME(DIME):
                 target_q.mean(),
                 entropy_1,
                 entropy_2,
+                current_q_values.shape[0],
             )
 
         (loss, aux), grads = jax.value_and_grad(critic_loss, has_aux=True)(
             qf_state.params, qf_state.batch_stats, dropout_key_current
         )
-        state_updates, current_q, target_q, entropy_1, entropy_2 = aux
+        state_updates, current_q, target_q, entropy_1, entropy_2, critic_count = aux
         qf_state = qf_state.apply_gradients(grads=grads)
-        qf_state = qf_state.replace(batch_stats=state_updates["batch_stats"])
+        qf_state = qf_state.replace(batch_stats=state_updates.get("batch_stats", qf_state.batch_stats))
         metrics = {
             "critic_loss": loss,
             "current_q_values": current_q,
             "next_q_values": target_q,
-            "entrQ_1": entropy_1,
-            "entrQ_2": entropy_2,
             "ent_coef": jnp.asarray(0.0),
         }
+        if num_atoms == 1:
+            # Loss sums per-head MSE; RMSE averages over heads and batch.
+            metrics["critic_td_rmse"] = jnp.sqrt(loss / critic_count)
+        else:
+            metrics.update(entrQ_1=entropy_1, entrQ_2=entropy_2)
         return qf_state, metrics, key
 
     @staticmethod
@@ -456,7 +474,7 @@ class OptiQDIME(DIME):
                 rngs={"dropout": dropout_key},
                 train=False,
             ).reshape(2, batch_size, num_proposals, -1)
-            source_qs = jnp.sum(source_distributions * z_atoms, axis=-1)
+            source_qs = critic_expectation(source_distributions, z_atoms)
             if source_q_eval == "mean":
                 source_q = source_qs.mean(axis=0)
             elif source_q_eval == "min":
@@ -880,7 +898,7 @@ class OptiQDIME(DIME):
                 batch_size = array.shape[0] // gradient_steps
                 return array[batch_size * step : batch_size * (step + 1)]
 
-            z_atoms = jnp.linspace(v_min, v_max, num_atoms)
+            z_atoms = critic_support(num_atoms, v_min, v_max)
             qf_state, critic_metrics, key = cls.update_critic(
                 crossq_style,
                 use_bnstats_from_live_net,
