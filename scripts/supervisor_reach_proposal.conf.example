@@ -1,0 +1,31 @@
+# Exactly two runs on GPUs 2 and 3; no automatic restart/replay of completed runs.
+[group:optiq-reach-proposal]
+programs=optiq-reach-proposal-seed0,optiq-reach-proposal-seed2
+
+[program:optiq-reach-proposal-seed0]
+directory=/workspace/OptiQ-critic-dime-no-anchor-temperature
+command=/workspace/OptiQ-critic-dime-no-anchor-temperature/scripts/supervisor_no_anchor_worker.sh --config-name=optiq_dime_reach_proposal_anneal --benchmarks reach_hard --seeds 0,2 --task 0
+environment=CUDA_VISIBLE_DEVICES="2",OPTIQ_PYTHON="/workspace/.venv-optiq-no-anchor/bin/python",PROC_NAME="optiq-reach-proposal-seed0"
+autostart=false
+autorestart=false
+stopsignal=INT
+stopasgroup=true
+killasgroup=true
+stopwaitsecs=60
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+redirect_stderr=true
+
+[program:optiq-reach-proposal-seed2]
+directory=/workspace/OptiQ-critic-dime-no-anchor-temperature
+command=/workspace/OptiQ-critic-dime-no-anchor-temperature/scripts/supervisor_no_anchor_worker.sh --config-name=optiq_dime_reach_proposal_anneal --benchmarks reach_hard --seeds 0,2 --task 1
+environment=CUDA_VISIBLE_DEVICES="3",OPTIQ_PYTHON="/workspace/.venv-optiq-no-anchor/bin/python",PROC_NAME="optiq-reach-proposal-seed2"
+autostart=false
+autorestart=false
+stopsignal=INT
+stopasgroup=true
+killasgroup=true
+stopwaitsecs=60
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+redirect_stderr=true

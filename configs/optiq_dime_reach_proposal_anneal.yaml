@@ -1,0 +1,19 @@
+# @package _global_
+defaults:
+  - optiq_dime_no_anchor
+  - override benchmark: reach_hard
+  - _self_
+
+# Only the KDE candidate distribution changes. Q temperature stays at 0.25;
+# beta, TD noise, networks, training/evaluation protocol and seeds are matched.
+alg:
+  actor:
+    proposal_schedule:
+      initial_temperature: 20.0
+      hold_steps: 50000
+      end_steps: 200000
+
+output_root: outputs/optiq_dime_reach_proposal_anneal
+run_name: ${env_name}_proposalT${alg.actor.proposal_schedule.initial_temperature}to1_hold${alg.actor.proposal_schedule.hold_steps}_end${alg.actor.proposal_schedule.end_steps}_beta${alg.actor.density_beta}_seed${seed}
+wandb:
+  group: ${env_name}_proposalT${alg.actor.proposal_schedule.initial_temperature}to1_hold${alg.actor.proposal_schedule.hold_steps}_end${alg.actor.proposal_schedule.end_steps}_beta${alg.actor.density_beta}

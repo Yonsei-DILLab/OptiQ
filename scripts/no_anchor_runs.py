@@ -24,9 +24,9 @@ def tasks(benchmarks=("pen_twirl_hard",), seeds=DEFAULT_SEEDS):
     return [Task(benchmark, seed) for benchmark in benchmarks for seed in seeds]
 
 
-def command(task, overrides=()):
+def command(task, overrides=(), config_name="optiq_dime_no_anchor"):
     return [sys.executable, str(ROOT / "run_optiq_dime.py"),
-            "--config-name=optiq_dime_no_anchor", f"benchmark={task.benchmark}",
+            f"--config-name={config_name}", f"benchmark={task.benchmark}",
             f"seed={task.seed}", *overrides]
 
 
@@ -38,6 +38,8 @@ def main():
     selection.add_argument("--worker", type=int, nargs=2, metavar=("INDEX", "COUNT"))
     parser.add_argument("--benchmarks", default="pen_twirl_hard", help="Comma-separated benchmark names")
     parser.add_argument("--seeds", default=",".join(map(str, DEFAULT_SEEDS)))
+    parser.add_argument("--config-name", default="optiq_dime_no_anchor",
+                        choices=("optiq_dime_no_anchor", "optiq_dime_reach_proposal_anneal"))
     args, overrides = parser.parse_known_args()
     benchmarks = args.benchmarks.split(",")
     if len(set(benchmarks)) != len(benchmarks) or any(b not in BENCHMARKS for b in benchmarks):
@@ -65,11 +67,11 @@ def main():
     print(f"tasks={len(table)} selected={len(indices)} seeds={list(seeds)}", flush=True)
     if args.list:
         for i in indices:
-            print(f"{i}: {shlex.join(command(table[i], overrides))}")
+            print(f"{i}: {shlex.join(command(table[i], overrides, args.config_name))}")
         return
     with worker_lock():
         for i in indices:
-            cmd = command(table[i], overrides)
+            cmd = command(table[i], overrides, args.config_name)
             print(f"task={i} {shlex.join(cmd)}", flush=True)
             subprocess.run(cmd, cwd=ROOT, check=True)
 

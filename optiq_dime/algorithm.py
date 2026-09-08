@@ -14,6 +14,7 @@ from common.type_aliases import ReplayBufferSamplesNp, RLTrainState
 from diffusion.dime import DIME
 
 from .policy import OptiQPolicy
+from .schedules import proposal_parameters
 from .transport import (
     TruncatedGaussianKDE,
     clip_action,
@@ -66,6 +67,9 @@ class OptiQDIME(DIME):
             data.rewards.numpy().flatten(),
         )
         actor = self.cfg.alg.actor
+        proposal_std, proposal_clip, proposal_temperature = proposal_parameters(
+            actor, self.num_timesteps
+        )
         (
             self.policy.qf_state,
             self.policy.actor_state,
@@ -95,8 +99,8 @@ class OptiQDIME(DIME):
             actor.num_policy_samples,
             actor.proposals_per_policy_sample,
             actor.proposal_sampling_mode,
-            actor.proposal_std,
-            actor.proposal_clip,
+            proposal_std,
+            proposal_clip,
             actor.include_anchor,
             actor.density_correction,
             actor.density_beta,
@@ -112,6 +116,14 @@ class OptiQDIME(DIME):
             actor.td_noise_clip,
         )
         self._n_updates += gradient_steps
+        if actor.get("proposal_schedule") is not None:
+            log_metrics = dict(log_metrics)
+            log_metrics.update(
+                proposal_temperature=proposal_temperature,
+                proposal_std=proposal_std,
+                proposal_clip=proposal_clip,
+                temperature=actor.temperature,
+            )
 
         checkpoint_due = self.model_save_path is not None and (
             self.num_timesteps % self.save_every_n_steps == 0
@@ -140,7 +152,8 @@ class OptiQDIME(DIME):
         diagnostic_interval = int(self.cfg.get("diagnostic_interval", 0))
         diagnostic_due = diagnostic_interval > 0 and self.num_timesteps % diagnostic_interval == 0
         core_metrics = {"actor_loss", "critic_loss", "current_q_values", "next_q_values",
-                        "entrQ_1", "entrQ_2", "ent_coef"}
+                        "entrQ_1", "entrQ_2", "ent_coef", "proposal_temperature",
+                        "proposal_std", "proposal_clip", "temperature"}
         anchor_metrics = {"local_best_q_gain_over_anchor", "local_improvement_fraction",
                           "local_anchor_argmax_fraction", "twin_local_delta_correlation",
                           "twin_local_improvement_sign_agreement"}
