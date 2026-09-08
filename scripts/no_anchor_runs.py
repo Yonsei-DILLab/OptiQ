@@ -11,7 +11,7 @@ from scripts.mujoco_beta_sweep import worker_lock
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SEEDS = (0, 1, 2)
-BENCHMARKS = ("pen_twirl_hard", "ant", "humanoid", "reach_hard", "obj_hold_hard")
+BENCHMARKS = ("pen_twirl_hard", "ant", "humanoid", "reach_hard", "obj_hold_hard", "half_cheetah")
 
 
 @dataclass(frozen=True)
@@ -40,7 +40,7 @@ def main():
     parser.add_argument("--seeds", default=",".join(map(str, DEFAULT_SEEDS)))
     parser.add_argument("--config-name", default="optiq_dime_no_anchor",
                         choices=("optiq_dime_no_anchor", "optiq_dime_reach_proposal_anneal",
-                                 "optiq_dime_reach_target_anneal"))
+                                 "optiq_dime_reach_target_anneal", "optiq_dime_mujoco_target_anneal"))
     args, overrides = parser.parse_known_args()
     benchmarks = args.benchmarks.split(",")
     if len(set(benchmarks)) != len(benchmarks) or any(b not in BENCHMARKS for b in benchmarks):

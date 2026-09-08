@@ -68,13 +68,14 @@ def test_no_schedule_preserves_configured_temperature_at_all_steps():
         assert target_temperature(actor, step) == 0.25
 
 
-def test_actual_training_anneals_q_temperature_with_fixed_kde_td_and_beta():
+@pytest.mark.parametrize("benchmark,env_id", [("ant", "Ant-v4"), ("half_cheetah", "HalfCheetah-v4")])
+def test_actual_training_anneals_q_temperature_with_fixed_kde_td_and_beta(benchmark, env_id):
     cfg = config(overrides=[
-        "benchmark=ant", "alg.critic.hs=[32,32]", "alg.actor.hidden_dims=[32,32]",
+        f"benchmark={benchmark}", "alg.critic.hs=[32,32]", "alg.actor.hidden_dims=[32,32]",
         "alg.buffer_size=32", "alg.batch_size=4", "alg.learning_starts=2",
         "alg.actor.learning_starts=2", "alg.actor.temperature_schedule.end_steps=6",
     ])
-    model = OptiQDIME("MlpPolicy", gym.make("Ant-v4"), None, 1, cfg)
+    model = OptiQDIME("MlpPolicy", gym.make(env_id), None, 1, cfg)
     model.set_logger(configure(None, []))
     captured = []
     original = model._train
@@ -104,3 +105,22 @@ def test_actual_training_anneals_q_temperature_with_fixed_kde_td_and_beta():
         assert np.isfinite(model.logger.name_to_value["train/actor_loss"])
     finally:
         model.get_env().close()
+
+
+@pytest.mark.parametrize("benchmark", ["ant", "half_cheetah"])
+def test_mujoco_target_preserves_reach_protocol_except_environment_support_and_output(benchmark):
+    reach = OmegaConf.to_container(config(), resolve=True)
+    cfg = config("optiq_dime_mujoco_target_anneal", [f"benchmark={benchmark}"])
+    assert validate_config(cfg)
+    actual = OmegaConf.to_container(cfg, resolve=True)
+    assert actual["alg"]["critic"]["v_min"] == -1600
+    assert actual["alg"]["critic"]["v_max"] == 1600
+    assert actual["seed"] == 0
+    assert actual["successful_steps"] is None
+    for value in (reach, actual):
+        for key in ("env_name", "task", "successful_steps", "output_root", "run_name"):
+            value.pop(key)
+        value["wandb"].pop("group")
+        for key in ("v_min", "v_max"):
+            value["alg"]["critic"].pop(key)
+    assert actual == reach

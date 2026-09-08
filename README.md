@@ -3,7 +3,8 @@ The Code for the DIME paper submission at ICML2025.
 ## No-anchor OptiQ with the DIME critic (`critic-dime-no-anchor`)
 
 The default OptiQ experiment is now `myoHandPenTwirlRandom-v0` (pen-twirl-hard),
-with Ant-v4 and Humanoid-v4 selectable through `benchmark=ant` / `benchmark=humanoid`.
+with Ant-v4, Humanoid-v4 and HalfCheetah-v4 selectable through
+`benchmark=ant` / `benchmark=humanoid` / `benchmark=half_cheetah`.
 MyoHand reach-hard and object-hold-hard are also available as
 `benchmark=reach_hard` / `benchmark=obj_hold_hard`.
 The actor defines a truncated Gaussian KDE from 16 policy samples, draws four
@@ -17,6 +18,8 @@ Credentials belong in an ignored `.env`; a template is provided in [.env.example
 The current Reach comparison exponentially anneals the Q/OT target temperature
 from **10 to 0.25 over 400,000 environment steps**, with the baseline KDE width
 fixed; see the [target temperature protocol](docs/REACH_TARGET_ANNEAL.md).
+Ant and HalfCheetah seed 0 reuse exactly the same temperature schedule with
+Gym critic support; see the [MuJoCo target temperature protocol](docs/MUJOCO_TARGET_ANNEAL.md).
 The earlier [candidate KDE annealing protocol](docs/REACH_PROPOSAL_ANNEAL.md)
 is retained as a separate configuration.
 

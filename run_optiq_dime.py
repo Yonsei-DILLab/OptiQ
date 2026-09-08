@@ -24,7 +24,7 @@ from optiq_dime.runtime import ROOT, WandbWriter, load_environment, provenance
 from optiq_dime.schedules import validate_proposal_schedule, validate_temperature_schedule
 
 DOG_TASKS = {"run", "trot", "walk", "stand"}
-MUJOCO_ENVS = {"Ant-v4", "Humanoid-v4"}
+MUJOCO_ENVS = {"Ant-v4", "Humanoid-v4", "HalfCheetah-v4"}
 MYOSUITE_ENVS = {
     "myoHandPenTwirlRandom-v0",
     "myoHandReachRandom-v0",

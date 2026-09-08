@@ -1,0 +1,31 @@
+# Ant and HalfCheetah seed 0 on GPUs 0 and 1. Reach jobs on 2 and 3 are separate.
+[group:optiq-mujoco-target]
+programs=optiq-mujoco-target-ant-seed0,optiq-mujoco-target-half-cheetah-seed0
+
+[program:optiq-mujoco-target-ant-seed0]
+directory=/workspace/OptiQ-heechan-no-anchor
+command=/workspace/OptiQ-heechan-no-anchor/scripts/supervisor_no_anchor_worker.sh --config-name=optiq_dime_mujoco_target_anneal --benchmarks ant,half_cheetah --seeds 0 --task 0
+environment=CUDA_VISIBLE_DEVICES="0",OPTIQ_PYTHON="/workspace/.venv-optiq-no-anchor/bin/python",PROC_NAME="optiq-mujoco-target-ant-seed0"
+autostart=false
+autorestart=false
+stopsignal=INT
+stopasgroup=true
+killasgroup=true
+stopwaitsecs=60
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+redirect_stderr=true
+
+[program:optiq-mujoco-target-half-cheetah-seed0]
+directory=/workspace/OptiQ-heechan-no-anchor
+command=/workspace/OptiQ-heechan-no-anchor/scripts/supervisor_no_anchor_worker.sh --config-name=optiq_dime_mujoco_target_anneal --benchmarks ant,half_cheetah --seeds 0 --task 1
+environment=CUDA_VISIBLE_DEVICES="1",OPTIQ_PYTHON="/workspace/.venv-optiq-no-anchor/bin/python",PROC_NAME="optiq-mujoco-target-half-cheetah-seed0"
+autostart=false
+autorestart=false
+stopsignal=INT
+stopasgroup=true
+killasgroup=true
+stopwaitsecs=60
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+redirect_stderr=true

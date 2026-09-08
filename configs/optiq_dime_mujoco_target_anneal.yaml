@@ -1,0 +1,15 @@
+# @package _global_
+defaults:
+  - optiq_dime_reach_target_anneal
+  - override benchmark: ant
+  - _self_
+
+# Reuse the Reach target schedule exactly: 10 -> 0.25 over 400k environment
+# steps, including warmup, then hold 0.25. KDE and density beta are unchanged.
+# Use the previously approved Gym critic support instead of the Myo support.
+alg:
+  critic:
+    v_min: -1600
+    v_max: 1600
+
+output_root: outputs/optiq_dime_mujoco_target_anneal
