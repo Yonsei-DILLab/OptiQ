@@ -1,0 +1,82 @@
+{
+  "phase": "hp17",
+  "description": "Short fresh20k high-learning-rate start (Adamlr1e-3) for a candidate recipe with lower cumulative time. Existing Dense/GELU actor and OptiQupdate unchanged. K2048/R1,width512x3,T1,beta1,sigma8to1/epsilon.01to1e-4 over15k,300iterations,grid,noanchor,nativeunbounded. Random original initialization vs existing near-identity std8 with largerinitialization-noise .1 toactivateothertrainableunitsmorestrongly. No addedcomponent/gradientobjective/precisionchange. Subsequentlower-lrcontinuationonlyafterevaluating20kcheckpoints. StartsafterHP16GPU0/1complete. Stagebudgetsandallancestrytimearecounted;notanallmetricswin.",
+  "jobs": [
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.001,
+      "updates": 20000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "label": "fast-lr1e3-K2048-random-20k",
+      "anneal_updates": 15000,
+      "temperature_start": -1.0,
+      "proposal_std_start": 8.0,
+      "sinkhorn_epsilon_start": 0.01,
+      "latent_sampling": "grid",
+      "initialization": "random",
+      "initial_output_std": 0.0,
+      "initialization_noise": 0.01
+    },
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.001,
+      "updates": 20000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "label": "fast-lr1e3-K2048-init8-noise01-20k",
+      "anneal_updates": 15000,
+      "temperature_start": -1.0,
+      "proposal_std_start": 8.0,
+      "sinkhorn_epsilon_start": 0.01,
+      "latent_sampling": "grid",
+      "initialization": "identity",
+      "initial_output_std": 8.0,
+      "initialization_noise": 0.1
+    },
+    {
+      "enabled": false,
+      "label": "reserved"
+    },
+    {
+      "enabled": false,
+      "label": "reserved"
+    }
+  ]
+}

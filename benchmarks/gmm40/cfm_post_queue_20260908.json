@@ -1,0 +1,42 @@
+{
+  "description": "Evaluation queue only. Wait for each full100k CFM fit to exit with summary/history/best checkpoint, then run the already validated fixed-checkpoint post-evaluator. Primary tolerance1e-3 and secondary1e-4, ESS1000 plus8 independent ESS16 batches. No OptiQ or CFM training, favorable tolerance/seed selection or output replacement.",
+  "status_root": "outputs/gmm40_tuning/cfm_post_queue_20260908",
+  "jobs": [
+    {
+      "gpu": 0,
+      "parent_program": "optiq-gmm40-cfm-hp10-best-200k",
+      "cfm_run": "outputs/gmm40_tuning/cfm_hp10_best_200k",
+      "output": "outputs/gmm40_tuning/post_cfm_hp10_best_200k_ess16"
+    },
+    {
+      "gpu": 1,
+      "parent_program": "optiq-gmm40-cfm-hp9-T11-175k",
+      "cfm_run": "outputs/gmm40_tuning/cfm_hp9_T11_175k",
+      "output": "outputs/gmm40_tuning/post_cfm_hp9_T11_175k_ess16"
+    },
+    {
+      "gpu": 2,
+      "parent_program": "optiq-gmm40-cfm-hp13-width512-75k",
+      "cfm_run": "outputs/gmm40_tuning/cfm_hp13_K2048_width512_75k",
+      "output": "outputs/gmm40_tuning/post_cfm_hp13_K2048_width512_75k_ess16"
+    },
+    {
+      "gpu": 3,
+      "parent_program": "optiq-gmm40-cfm-hp13-width1024-75k",
+      "cfm_run": "outputs/gmm40_tuning/cfm_hp13_K2048_width1024_75k",
+      "output": "outputs/gmm40_tuning/post_cfm_hp13_K2048_width1024_75k_ess16"
+    },
+    {
+      "gpu": 0,
+      "parent_program": "optiq-gmm40-cfm-hp14-K4096-210k",
+      "cfm_run": "outputs/gmm40_tuning/cfm_hp14_K4096_lr1e4_210k",
+      "output": "outputs/gmm40_tuning/post_cfm_hp14_K4096_lr1e4_210k_ess16"
+    },
+    {
+      "gpu": 2,
+      "parent_program": "optiq-gmm40-cfm-hp14-K8192-205k",
+      "cfm_run": "outputs/gmm40_tuning/cfm_hp14_K8192_lr1e4_205k",
+      "output": "outputs/gmm40_tuning/post_cfm_hp14_K8192_lr1e4_205k_ess16"
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+{
+  "phase": "hp22",
+  "description": "Target-free full-width near-linear initial weights in the unchanged ImplicitActor: existing Dense/GELU units all participate through paired features. No new layer, activation, runtime transform, frozen weights, target data, energy-gradient objective, Jacobian penalty, transport or optimizer change. Compare initialization noise0/.01 crossed with Adam lr3e-4/1e-3, fixed initial std8, width512x3, K2048/R1, T1 beta1, grid latent sampling, native unbounded x=g(z), sigma8to1 and epsilon.01to1e-4 first15k,300iterations,20k updates, seed42 tuning. Hypothesis: spreading the initial linear map across all existing units may improve learning efficiency and mode-local density relative to four-channel identity initialization. This is not an established performance improvement. Each job starts only after its listed current main training programs exit with successful completion; CFM evaluations continue.",
+  "launch_dependencies": {
+    "0": [
+      {
+        "program": "optiq-gmm40-tuning-hp20-0",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp20/000-fast-start-random-20to50k-lr3e4/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T230549Z-e40936/completed.json"
+      },
+      {
+        "program": "optiq-gmm40-tuning-hp21-0",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp21/000-fresh75k-K2048-R2-85k/gmm40-K2048-M4096-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T231157Z-5a1ea8/completed.json"
+      }
+    ],
+    "1": [
+      {
+        "program": "optiq-gmm40-tuning-hp20-1",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp20/001-fast-start-identity-20to50k-lr3e4/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T230822Z-2b215e/completed.json"
+      },
+      {
+        "program": "optiq-gmm40-tuning-hp21-1",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp21/001-fresh75k-K2048-R4-80k/gmm40-K2048-M8192-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T231200Z-67a432/completed.json"
+      }
+    ],
+    "2": [
+      {
+        "program": "optiq-gmm40-tuning-hp19-2",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp19/002-fresh-depth5-width512-50k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T230432Z-8951e9/completed.json"
+      }
+    ],
+    "3": [
+      {
+        "program": "optiq-gmm40-tuning-hp19-3",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp19/003-fresh-depth6-width256-50k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T230435Z-1099db/completed.json"
+      }
+    ]
+  },
+  "jobs": [
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0003,
+      "updates": 20000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "label": "wide-identity-init8-noise0.0-lr0.0003-20k",
+      "anneal_updates": 15000,
+      "temperature_start": -1.0,
+      "proposal_std_start": 8.0,
+      "sinkhorn_epsilon_start": 0.01,
+      "latent_sampling": "grid",
+      "initialization": "identity_wide",
+      "initial_output_std": 8.0,
+      "initialization_noise": 0.0
+    },
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.001,
+      "updates": 20000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "label": "wide-identity-init8-noise0.0-lr0.001-20k",
+      "anneal_updates": 15000,
+      "temperature_start": -1.0,
+      "proposal_std_start": 8.0,
+      "sinkhorn_epsilon_start": 0.01,
+      "latent_sampling": "grid",
+      "initialization": "identity_wide",
+      "initial_output_std": 8.0,
+      "initialization_noise": 0.0
+    },
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0003,
+      "updates": 20000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "label": "wide-identity-init8-noise0.01-lr0.0003-20k",
+      "anneal_updates": 15000,
+      "temperature_start": -1.0,
+      "proposal_std_start": 8.0,
+      "sinkhorn_epsilon_start": 0.01,
+      "latent_sampling": "grid",
+      "initialization": "identity_wide",
+      "initial_output_std": 8.0,
+      "initialization_noise": 0.01
+    },
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.001,
+      "updates": 20000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "label": "wide-identity-init8-noise0.01-lr0.001-20k",
+      "anneal_updates": 15000,
+      "temperature_start": -1.0,
+      "proposal_std_start": 8.0,
+      "sinkhorn_epsilon_start": 0.01,
+      "latent_sampling": "grid",
+      "initialization": "identity_wide",
+      "initial_output_std": 8.0,
+      "initialization_noise": 0.01
+    }
+  ]
+}

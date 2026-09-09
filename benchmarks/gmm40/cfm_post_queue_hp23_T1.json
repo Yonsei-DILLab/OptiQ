@@ -1,0 +1,12 @@
+{
+  "description": "Paired HP23 depth5 T1 fixed-checkpoint CFM post evaluation; same fixed100k fit and primary protocol as T.9.",
+  "status_root": "outputs/gmm40_tuning/cfm_post_queue_hp23_T1",
+  "jobs": [
+    {
+      "gpu": 0,
+      "parent_program": "optiq-gmm40-cfm-hp23-depth5-T1-75k",
+      "cfm_run": "outputs/gmm40_tuning/cfm_hp23_depth5_T1_75k",
+      "output": "outputs/gmm40_tuning/post_cfm_hp23_depth5_T1_75k_ess16"
+    }
+  ]
+}

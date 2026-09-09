@@ -1,0 +1,189 @@
+{
+  "description": "Fixed N4096,T1 recipe selected before independent final continuation. All three seeds0/1/2 retained and evaluated. Verify serialized85000 checkpoint and exact frozen config, export100k directg samples; same sample/KDE/timing definitions, full100k auxiliaryCFM, original-reference primary1e-3 plus strict1e-4 ESS16/1000; then every prospectively fixed final reference0/20261101/20261102/20261103 at the preselected paper tolerance1e-3 with8 ESS16 batches. Report all references, GTNLL and excessNLL; no favorable reference selection. No OptiQ component or output transformation changes.",
+  "recorded_utc": "2026-09-09T01:34:10.303082+00:00",
+  "frozen_recipe": "benchmarks/gmm40/confirmation_T1_N4096.json",
+  "frozen_recipe_sha256": "bbded4614a1eddc56db4b7b1039c0331023de7bd7f795a05dbbb4e667f548860",
+  "status_root": "outputs/gmm40_tuning/checkpoint_evaluations_confirmation_T1_N4096",
+  "jobs": [
+    {
+      "label": "confirmation-T1-N4096-seed0-85k",
+      "gpu": 0,
+      "parent_program": "optiq-gmm40-confirmation-T1-N4096-0",
+      "checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/confirmation_T1_N4096/000-fixed-T1-N4096-seed0-85k/gmm40-K4096-M4096-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed0-20260909T013045Z-3aee42/actor_state_final.msgpack",
+      "update": 85000,
+      "require_completed": true,
+      "confirmation": true,
+      "expected_config": {
+        "seed": 0,
+        "hidden_dims": [
+          512,
+          512,
+          512,
+          512,
+          512
+        ],
+        "batch_size": 1,
+        "num_policy_samples": 4096,
+        "proposals_per_policy_sample": 1,
+        "include_anchor": false,
+        "unbounded_actions": true,
+        "coordinate_scale": 1.0,
+        "proposal_std": 1.0,
+        "temperature": 1.0,
+        "density_beta": 1.0,
+        "sinkhorn_epsilon": 0.0001,
+        "sinkhorn_iterations": 300,
+        "learning_rate": 0.0001,
+        "updates": 85000,
+        "latent_sampling": "grid",
+        "initialization": "random",
+        "initial_output_std": 0.0,
+        "anneal_updates": 0
+      },
+      "export": "outputs/gmm40_tuning/exports/confirmation-T1-N4096-seed0-85k",
+      "paper": "outputs/gmm40_tuning/paper_eval_confirmation_T1_N4096_seed0_85k",
+      "kde": "outputs/gmm40_tuning/kde_validation_confirmation_T1_N4096_seed0_85k",
+      "timing": "outputs/gmm40_tuning/timing_audit_confirmation_T1_N4096_seed0_85k",
+      "cfm": "outputs/gmm40_tuning/cfm_confirmation_T1_N4096_seed0_85k",
+      "post": "outputs/gmm40_tuning/post_cfm_confirmation_T1_N4096_seed0_85k_ess16",
+      "reference_posts": [
+        {
+          "seed": 0,
+          "output": "outputs/gmm40_tuning/post_cfm_confirmation_T1_N4096_seed0_85k_reference0"
+        },
+        {
+          "seed": 20261101,
+          "output": "outputs/gmm40_tuning/post_cfm_confirmation_T1_N4096_seed0_85k_reference20261101"
+        },
+        {
+          "seed": 20261102,
+          "output": "outputs/gmm40_tuning/post_cfm_confirmation_T1_N4096_seed0_85k_reference20261102"
+        },
+        {
+          "seed": 20261103,
+          "output": "outputs/gmm40_tuning/post_cfm_confirmation_T1_N4096_seed0_85k_reference20261103"
+        }
+      ]
+    },
+    {
+      "label": "confirmation-T1-N4096-seed1-85k",
+      "gpu": 1,
+      "parent_program": "optiq-gmm40-confirmation-T1-N4096-1",
+      "checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/confirmation_T1_N4096/001-fixed-T1-N4096-seed1-85k/gmm40-K4096-M4096-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed1-20260909T013048Z-249af2/actor_state_final.msgpack",
+      "update": 85000,
+      "require_completed": true,
+      "confirmation": true,
+      "expected_config": {
+        "seed": 1,
+        "hidden_dims": [
+          512,
+          512,
+          512,
+          512,
+          512
+        ],
+        "batch_size": 1,
+        "num_policy_samples": 4096,
+        "proposals_per_policy_sample": 1,
+        "include_anchor": false,
+        "unbounded_actions": true,
+        "coordinate_scale": 1.0,
+        "proposal_std": 1.0,
+        "temperature": 1.0,
+        "density_beta": 1.0,
+        "sinkhorn_epsilon": 0.0001,
+        "sinkhorn_iterations": 300,
+        "learning_rate": 0.0001,
+        "updates": 85000,
+        "latent_sampling": "grid",
+        "initialization": "random",
+        "initial_output_std": 0.0,
+        "anneal_updates": 0
+      },
+      "export": "outputs/gmm40_tuning/exports/confirmation-T1-N4096-seed1-85k",
+      "paper": "outputs/gmm40_tuning/paper_eval_confirmation_T1_N4096_seed1_85k",
+      "kde": "outputs/gmm40_tuning/kde_validation_confirmation_T1_N4096_seed1_85k",
+      "timing": "outputs/gmm40_tuning/timing_audit_confirmation_T1_N4096_seed1_85k",
+      "cfm": "outputs/gmm40_tuning/cfm_confirmation_T1_N4096_seed1_85k",
+      "post": "outputs/gmm40_tuning/post_cfm_confirmation_T1_N4096_seed1_85k_ess16",
+      "reference_posts": [
+        {
+          "seed": 0,
+          "output": "outputs/gmm40_tuning/post_cfm_confirmation_T1_N4096_seed1_85k_reference0"
+        },
+        {
+          "seed": 20261101,
+          "output": "outputs/gmm40_tuning/post_cfm_confirmation_T1_N4096_seed1_85k_reference20261101"
+        },
+        {
+          "seed": 20261102,
+          "output": "outputs/gmm40_tuning/post_cfm_confirmation_T1_N4096_seed1_85k_reference20261102"
+        },
+        {
+          "seed": 20261103,
+          "output": "outputs/gmm40_tuning/post_cfm_confirmation_T1_N4096_seed1_85k_reference20261103"
+        }
+      ]
+    },
+    {
+      "label": "confirmation-T1-N4096-seed2-85k",
+      "gpu": 2,
+      "parent_program": "optiq-gmm40-confirmation-T1-N4096-2",
+      "checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/confirmation_T1_N4096/002-fixed-T1-N4096-seed2-85k/gmm40-K4096-M4096-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed2-20260909T013051Z-a9e215/actor_state_final.msgpack",
+      "update": 85000,
+      "require_completed": true,
+      "confirmation": true,
+      "expected_config": {
+        "seed": 2,
+        "hidden_dims": [
+          512,
+          512,
+          512,
+          512,
+          512
+        ],
+        "batch_size": 1,
+        "num_policy_samples": 4096,
+        "proposals_per_policy_sample": 1,
+        "include_anchor": false,
+        "unbounded_actions": true,
+        "coordinate_scale": 1.0,
+        "proposal_std": 1.0,
+        "temperature": 1.0,
+        "density_beta": 1.0,
+        "sinkhorn_epsilon": 0.0001,
+        "sinkhorn_iterations": 300,
+        "learning_rate": 0.0001,
+        "updates": 85000,
+        "latent_sampling": "grid",
+        "initialization": "random",
+        "initial_output_std": 0.0,
+        "anneal_updates": 0
+      },
+      "export": "outputs/gmm40_tuning/exports/confirmation-T1-N4096-seed2-85k",
+      "paper": "outputs/gmm40_tuning/paper_eval_confirmation_T1_N4096_seed2_85k",
+      "kde": "outputs/gmm40_tuning/kde_validation_confirmation_T1_N4096_seed2_85k",
+      "timing": "outputs/gmm40_tuning/timing_audit_confirmation_T1_N4096_seed2_85k",
+      "cfm": "outputs/gmm40_tuning/cfm_confirmation_T1_N4096_seed2_85k",
+      "post": "outputs/gmm40_tuning/post_cfm_confirmation_T1_N4096_seed2_85k_ess16",
+      "reference_posts": [
+        {
+          "seed": 0,
+          "output": "outputs/gmm40_tuning/post_cfm_confirmation_T1_N4096_seed2_85k_reference0"
+        },
+        {
+          "seed": 20261101,
+          "output": "outputs/gmm40_tuning/post_cfm_confirmation_T1_N4096_seed2_85k_reference20261101"
+        },
+        {
+          "seed": 20261102,
+          "output": "outputs/gmm40_tuning/post_cfm_confirmation_T1_N4096_seed2_85k_reference20261102"
+        },
+        {
+          "seed": 20261103,
+          "output": "outputs/gmm40_tuning/post_cfm_confirmation_T1_N4096_seed2_85k_reference20261103"
+        }
+      ]
+    }
+  ]
+}

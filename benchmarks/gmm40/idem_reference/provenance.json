@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/jarridrb/DEM",
+  "commit": "8e9531987b0bfe4e770d5009c10a56b8434c0f0a",
+  "source_sha256": {
+    "dem/models/components/mlp.py": "6dcc5f37e7f9b5584b2fb04ef3e4c74f5d7390512c2914f71cca0fa933c88115",
+    "dem/models/components/cnf.py": "d7828cba4fc54ccd7c982f6dcfc07d49ed4db780a17d7758fedffc2205241814"
+  }
+}

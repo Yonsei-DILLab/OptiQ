@@ -1,0 +1,12 @@
+{
+  "description": "Full100kCFM fit and fixed-checkpoint post evaluation for the HP24K4096T.9 final87500 sampler with improveddirectTV and KDEdiagnostics. Same original primary tolerance,model and100krawg pipeline. No OptiQ training or generator postprocessing.",
+  "status_root": "outputs/gmm40_tuning/cfm_post_queue_hp24",
+  "jobs": [
+    {
+      "gpu": 2,
+      "parent_program": "optiq-gmm40-cfm-hp24-K4096-T09-87500",
+      "cfm_run": "outputs/gmm40_tuning/cfm_hp24_K4096_T09_87500",
+      "output": "outputs/gmm40_tuning/post_cfm_hp24_K4096_T09_87500_ess16"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/Yonsei-DILLab/OptiC",
+  "local_source": "/workspace/OptiC",
+  "source_commit": "12232f010a4a6b01097141e485d3647c9968e44c",
+  "upstream": "https://github.com/jiajunhe98/DiKL",
+  "paper": "https://arxiv.org/html/2410.12456v2",
+  "source_sha256": {
+    "DiKL/energy/mog40.py": "68321f4ec095c75686ec876931b5fe739050030c8f13ca54168019ab04469268",
+    "DiKL/benchmark_eval.py": "ad2dbc8658fe3c314df5153e61fb3be68e46ad7e3d6c84500c2d4239f5c1c11c",
+    "DiKL/evaluation/metric.py": "f824a645ca03e444a90d73484741198fa38a2c0b39d45f51637c5e8ac60145d1",
+    "DiKL/evaluation/optimal_transport.py": "9899d0942fbadb904926cc7eb3652607cd4b6890aa5a440b949fbdeeb9ab0814"
+  },
+  "changes": [
+    "target_torch.py copied verbatim",
+    "metrics.py copied from benchmark_eval.py; nearest_mode inlined to avoid importing the unrelated OptiC training algorithm",
+    "Extra exact W2 uses scipy linear assignment for equal-size uniform samples; energy TVD follows reference-histogram convention, with overflow also reported"
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "phase": "hp18",
+  "description": "Short5k continuation fromsamefreshHP13width512/K2048/75kparent. Only densitybeta andtemperature change:beta.75/T1.2 andbeta.5/T1.5. ExistingOptiQweights p^(1/T)/q_KDE^beta,GaussianKDE,OT/argmax/MSE/Adam unchanged. Hypothesis fromGaussian localapproximation:partialdensitycorrection+warmerT mayreduceempiricaldensityfeedbackwithoutstronglychanginglocaltargetvariance;finitebandwidth/modeoverlap/OTmeanthisisNOTanexactp fixedpointclaim. EvaluateagainstoriginalcanonicalGMM,nottemperedreference. Eachadds10.24millionqueries;seed42tuningonly. RunsbrieflyalongsidecurrentGPU0/1training;recordobservedtimeandstandaloneconfirmationlater. No newcomponent/gradientobjective/coordinateconversion.",
+  "jobs": [
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.2,
+      "density_beta": 0.75,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0001,
+      "updates": 80000,
+      "eval_interval": 1000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 1000,
+      "reference_seed": 20260909,
+      "label": "fresh75k-beta075-T12-80k",
+      "anneal_updates": 0,
+      "temperature_start": -1.0,
+      "proposal_std_start": -1.0,
+      "sinkhorn_epsilon_start": -1.0,
+      "latent_sampling": "grid",
+      "resume_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp13/002-continue-fresh-K2048-width512-lr1e4/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T213557Z-bf95b9/actor_state_final.msgpack"
+    },
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.5,
+      "density_beta": 0.5,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0001,
+      "updates": 80000,
+      "eval_interval": 1000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 1000,
+      "reference_seed": 20260909,
+      "label": "fresh75k-beta05-T15-80k",
+      "anneal_updates": 0,
+      "temperature_start": -1.0,
+      "proposal_std_start": -1.0,
+      "sinkhorn_epsilon_start": -1.0,
+      "latent_sampling": "grid",
+      "resume_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp13/002-continue-fresh-K2048-width512-lr1e4/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T213557Z-bf95b9/actor_state_final.msgpack"
+    },
+    {
+      "enabled": false,
+      "label": "reserved"
+    },
+    {
+      "enabled": false,
+      "label": "reserved"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "description": "Fixed intermediate and final checkpoints from the single matched-parent T1 N8192 trial. Export100k independent directg points, unchanged paper sample/KDE/timing protocols. Only final80000 gets full100k auxiliary CFM and primary/strict ESS post. Intermediate77500 supports equal20.48Mquery comparison; final80000 supports equal5000update/equal40.96Mquery comparison. No sampler mutation. Serialized checkpoint identity verified before evaluating, incomplete outputs retained without overwrite.",
+  "status_root": "outputs/gmm40_tuning/checkpoint_evaluations_hp25",
+  "jobs": [
+    {
+      "label": "hp25-T1-K8192-77500",
+      "gpu": 3,
+      "parent_program": "optiq-gmm40-T1-N8192-3",
+      "checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp25_T1_N8192/003-depth5-T1-K8192-matched-parent-5k/gmm40-K8192-M8192-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260909T004633Z-f282a6/actor_state_77500.msgpack",
+      "update": 77500,
+      "require_completed": false,
+      "export": "outputs/gmm40_tuning/exports/hp25-T1-K8192-77500",
+      "paper": "outputs/gmm40_tuning/paper_eval_hp25_T1_K8192_77500",
+      "kde": "outputs/gmm40_tuning/kde_validation_hp25_T1_K8192_77500",
+      "timing": "outputs/gmm40_tuning/timing_audit_hp25_T1_K8192_77500"
+    },
+    {
+      "label": "hp25-T1-K8192-80k",
+      "gpu": 3,
+      "parent_program": "optiq-gmm40-T1-N8192-3",
+      "checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp25_T1_N8192/003-depth5-T1-K8192-matched-parent-5k/gmm40-K8192-M8192-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260909T004633Z-f282a6/actor_state_final.msgpack",
+      "update": 80000,
+      "require_completed": true,
+      "export": "outputs/gmm40_tuning/exports/hp25-T1-K8192-80k",
+      "paper": "outputs/gmm40_tuning/paper_eval_hp25_T1_K8192_80k",
+      "kde": "outputs/gmm40_tuning/kde_validation_hp25_T1_K8192_80k",
+      "timing": "outputs/gmm40_tuning/timing_audit_hp25_T1_K8192_80k",
+      "cfm": "outputs/gmm40_tuning/cfm_hp25_T1_K8192_80k",
+      "post": "outputs/gmm40_tuning/post_cfm_hp25_T1_K8192_80k_ess16"
+    }
+  ]
+}

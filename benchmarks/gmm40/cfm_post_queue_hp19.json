@@ -1,0 +1,12 @@
+{
+  "description": "Existing fixed-checkpoint CFM post-evaluation for HP19 depth5 final50k after its100k auxiliary fit completes. Same original paper-tolerance and ESS16/1000 protocol, no training changes.",
+  "status_root": "outputs/gmm40_tuning/cfm_post_queue_hp19",
+  "jobs": [
+    {
+      "gpu": 3,
+      "parent_program": "optiq-gmm40-cfm-hp19-depth5-50k",
+      "cfm_run": "outputs/gmm40_tuning/cfm_hp19_depth5_width512_50k",
+      "output": "outputs/gmm40_tuning/post_cfm_hp19_depth5_width512_50k_ess16"
+    }
+  ]
+}

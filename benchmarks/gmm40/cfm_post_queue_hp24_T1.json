@@ -1,0 +1,12 @@
+{
+  "description": "Same fixed100k rawg auxiliary CFM protocol for the T1 K4096 87500 candidate, prioritized after user requested T1 and removed the all-metric winning requirement. Preserve primary and strict post metrics.",
+  "status_root": "outputs/gmm40_tuning/cfm_post_queue_hp24_T1",
+  "jobs": [
+    {
+      "gpu": 0,
+      "parent_program": "optiq-gmm40-cfm-hp24-K4096-T1-87500",
+      "cfm_run": "outputs/gmm40_tuning/cfm_hp24_K4096_T1_87500",
+      "output": "outputs/gmm40_tuning/post_cfm_hp24_K4096_T1_87500_ess16"
+    }
+  ]
+}

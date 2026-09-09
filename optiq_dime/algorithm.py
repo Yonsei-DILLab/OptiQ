@@ -17,6 +17,7 @@ from .policy import OptiQPolicy
 from .critic_utils import critic_support, critic_expectation, scalar_td_loss
 from .schedules import proposal_parameters, target_temperature
 from .transport import (
+    GaussianKDE,
     TruncatedGaussianKDE,
     clip_action,
     sample_truncated_gaussian,
@@ -384,6 +385,7 @@ class OptiQDIME(DIME):
             "sinkhorn_iterations",
             "source_q_eval",
             "transport_target_mode",
+            "unbounded_actions",
         ],
     )
     def update_actor(
@@ -408,18 +410,31 @@ class OptiQDIME(DIME):
         sinkhorn_iterations: int,
         source_q_eval: str,
         transport_target_mode: str,
+        unbounded_actions: bool = False,
+        policy_latents: jax.Array | None = None,
     ):
+        # GMM-style density benchmarks can opt out of action/proposal bounds.
+        # RL callers retain their bounded path through the default False value.
+        if unbounded_actions and proposal_sampling_mode != "stratified":
+            raise ValueError("Unbounded proposals currently require stratified sampling")
         key, latent_key, proposal_key, dropout_key = jax.random.split(key, 4)
         batch_size, observation_dim = observations.shape
 
         def actor_loss(actor_params):
             output_layer = f"Dense_{len(actor_params) - 1}"
             action_dim = actor_params[output_layer]["bias"].shape[0]
-            latents = jax.random.normal(
-                latent_key,
-                (batch_size, num_policy_samples, action_dim),
-                dtype=observations.dtype,
-            )
+            if policy_latents is None:
+                latents = jax.random.normal(
+                    latent_key,
+                    (batch_size, num_policy_samples, action_dim),
+                    dtype=observations.dtype,
+                )
+            else:
+                # Optional externally sampled prior draws (e.g. randomized
+                # Gaussian strata in unconditional density benchmarks).
+                if policy_latents.shape != (batch_size, num_policy_samples, action_dim):
+                    raise ValueError('Unexpected policy_latents shape')
+                latents = policy_latents.astype(observations.dtype)
             repeated_observations = jnp.broadcast_to(
                 observations[:, None, :],
                 (batch_size, num_policy_samples, observation_dim),
@@ -429,13 +444,16 @@ class OptiQDIME(DIME):
                 repeated_observations.reshape(batch_size * num_policy_samples, -1),
                 latents.reshape(batch_size * num_policy_samples, action_dim),
             ).reshape(batch_size, num_policy_samples, action_dim)
-            policy_samples = clip_action(raw_actions)
+            policy_samples = raw_actions if unbounded_actions else clip_action(raw_actions)
             # Define the KDE from actor centers BEFORE drawing its random candidates.
             # Density evaluation below uses this very same distribution, never a
             # KDE fitted to the newly drawn candidate cloud.
-            proposal_kde = TruncatedGaussianKDE.from_centers(
-                jax.lax.stop_gradient(policy_samples), proposal_std, proposal_clip
-            )
+            if unbounded_actions:
+                proposal_kde = GaussianKDE(jax.lax.stop_gradient(policy_samples), proposal_std)
+            else:
+                proposal_kde = TruncatedGaussianKDE.from_centers(
+                    jax.lax.stop_gradient(policy_samples), proposal_std, proposal_clip
+                )
             if proposal_sampling_mode == "stratified":
                 sampled = proposal_kde.sample_stratified(
                     proposal_key, proposals_per_policy_sample, include_anchor

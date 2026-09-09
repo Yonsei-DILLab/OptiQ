@@ -1,0 +1,84 @@
+{
+  "phase": "hp20",
+  "description": "Continue each fixed HP17 20k high-lr checkpoint to cumulative50k with Adamlr3e-4. Only learning-rate and end-budget change; actor and Adam moments/RNG resume, native/unbounded raw g(z), T1 beta1 K2048/R1 sigma1 epsilon1e-4/300 Gaussian latent grid unchanged. Each stage adds61.44M target evaluations, cumulative102.4M. Start only after verified parent completion. No new model component or objective. This tests whether the faster start can retain density quality within the reported training-time budget; actual whole-ancestry time is audited separately. Seed42 tuning only.",
+  "jobs": [
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0003,
+      "updates": 50000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "label": "fast-start-random-20to50k-lr3e4",
+      "anneal_updates": 0,
+      "temperature_start": -1.0,
+      "proposal_std_start": -1.0,
+      "sinkhorn_epsilon_start": -1.0,
+      "latent_sampling": "grid",
+      "initialization": "random",
+      "initial_output_std": 0.0,
+      "initialization_noise": 0.01,
+      "resume_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp17/000-fast-lr1e3-K2048-random-20k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T225006Z-0759d9/actor_state_final.msgpack"
+    },
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0003,
+      "updates": 50000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "label": "fast-start-identity-20to50k-lr3e4",
+      "anneal_updates": 0,
+      "temperature_start": -1.0,
+      "proposal_std_start": -1.0,
+      "sinkhorn_epsilon_start": -1.0,
+      "latent_sampling": "grid",
+      "initialization": "identity",
+      "initial_output_std": 8.0,
+      "initialization_noise": 0.1,
+      "resume_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp17/001-fast-lr1e3-K2048-init8-noise01-20k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T225658Z-e44d8d/actor_state_final.msgpack"
+    },
+    {
+      "enabled": false,
+      "label": "reserved"
+    },
+    {
+      "enabled": false,
+      "label": "reserved"
+    }
+  ]
+}

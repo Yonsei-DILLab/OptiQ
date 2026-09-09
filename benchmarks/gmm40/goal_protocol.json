@@ -1,0 +1,348 @@
+{
+  "objective": "User revised priority: preserve OptiQ and native coordinates; assess T=1 with larger training sample counts for faithful GMM40 sampling. It is NOT required to beat every DiKL/iDEM metric.",
+  "status": "in_progress",
+  "core_sha256": {
+    "optiq_dime/algorithm.py": "5ac2994eace1fea17960d4585d1234c85f9eda53bb87fd732eba9a791e6ee89b",
+    "optiq_dime/policy.py": "cd5c14c4f8076e4c0baeeca83eff40823862f2adf2d983cc9fb60f20a7be7ee8",
+    "optiq_dime/transport.py": "66c00f59b9e27aab7505f7ffb0cfc0572c7047c5d45fb3540bbac8fe3de33af2"
+  },
+  "allowed_changes": "hyperparameters, widths, schedules, sample counts; existing shared actor update and generator; evaluation only OT-CFM follows iDEM paper",
+  "forbidden": "SMC, replacement sampler, energy-gradient training, training on target samples, hidden postprocessing of evaluation outputs",
+  "tuning_seeds": [
+    42
+  ],
+  "confirmation_seeds": [
+    0,
+    1,
+    2
+  ],
+  "dikl": {
+    "url": "https://arxiv.org/html/2410.12456v2#S5.T1",
+    "mean_log_p": -7.21,
+    "true_mean_log_p": -6.85,
+    "requires_all_modes": 40
+  },
+  "idem": {
+    "url": "https://arxiv.org/html/2402.06121v2",
+    "nll": 6.96,
+    "normalized_ess": 0.734,
+    "wasserstein_2": 7.42,
+    "total_variation_2d_200_bins": 0.82,
+    "log_z_lower_bound": -0.34,
+    "training_hours": 0.87,
+    "cfm_train_samples": 100000,
+    "test_samples": 1000,
+    "cfm_likelihood_solver": "dopri5, exact divergence, atol=rtol=1e-3",
+    "original_paper_ess_sample_count": 16,
+    "authors_updated_recommended_ess_sample_count": 1000,
+    "ess_count_source": "https://github.com/jarridrb/DEM#ess-computation-considerations"
+  },
+  "protocol_notes": [
+    "iDEM NLL is held-out target likelihood under a separate OT-CFM fit, not negative mean target log p of generated points.",
+    "iDEM ESS is generated-model importance ESS, not OptiQ candidate ESS.",
+    "Paper covariance text differs from public code; released DEM uses FAB log_var_scaling=1, giving sigma=softplus(1), identical to canonical target here.",
+    "Published GMM TV is 2D 200x200 histogram. Current public DEM code exposes generic 1D interatomic histogram, which cannot silently substitute for this metric.",
+    "Use new validation samples during tuning, fresh independent confirmation evaluation; count all search compute separately from final training.",
+    "Author README January2025 update discloses original paper ESS used16 samples, not1000. Compare publishedESS.734 with independent16-sample estimates; also preserve1000-sample ESS and stricter-tolerance checks. This corrects an earlier comparison-condition assumption; no numerical target or OptiQ sampler is changed."
+  ],
+  "dem_reference_commit": "8e9531987b0bfe4e770d5009c10a56b8434c0f0a",
+  "fab_reference_commit": "febeeaa521eb5793f65b246a82e9dbd1c745c00e",
+  "previous_goal_turn_classification": "progress: completed HP23 and firstHP24 independent sample evaluations; best finalCFM NLL improved7.000954 atHP14K8192, stillfails6.96; HP14K4096 ESS final; timing26tests+GPUsmoke; read-onlygeometry audit; HP24 remainder and pairedHP23CFM live; seed0 commonbase started, seed1/2 queued. No external blocker; finalrecipe and completeconfirmation still outstanding.",
+  "minor_sampling_variant": {
+    "authorization": "Within the user-authorized minor sampling changes; no objective, transport, gradient or model component replacement",
+    "description": "GMM-only randomized equal-probability Gaussian latent strata, passed through optional policy_latents to the same actor update; default None uses the identical original IID draw",
+    "evaluation": "All final samples remain unmodified g(z) with IID standard Gaussian z",
+    "new_algorithm_sha256": "26ed43e6d5768b72d34c1d20b4dd01fb4c2df48357689aa170700dce4161f61b",
+    "sampling_helper_sha256": "26bf1e86bc19945110472c8d0bddaab34592996f4f4a626fd166da27cffcfc49",
+    "fidelity_evidence": "16 GMM tests passed plus 2 frozen-source full-update comparisons passed; bounded and unbounded default updates bitwise equal to original goal source; supplied IID draws also bitwise identical",
+    "original_core_hashes_preserved_in": "core_sha256",
+    "changed_core_lines": "Only an optional latent argument and a branch selecting original random normals versus supplied latent array; all other update code unchanged"
+  },
+  "cfm_numerical_audit": {
+    "status": "completed on GT-only control; not OptiQ performance",
+    "raw_control_run": "3attuvst",
+    "tolerance_audit_run": "8s5jfpwq",
+    "batched_control_run": "5aey7oi8",
+    "raw_1e3": {
+      "nll": 6.96328592300415,
+      "ess": 0.6246161460876465
+    },
+    "batched_256_1e3": {
+      "nll": 6.96328592300415,
+      "ess": 0.5473338961601257
+    },
+    "batched_256_1e4": {
+      "nll": 6.9634904861450195,
+      "ess": 0.8054344654083252
+    },
+    "full_batch_1e5": {
+      "nll": 6.960212230682373,
+      "ess": 0.8198349475860596
+    },
+    "interpretation": "Strong ESS sensitivity to ODE tolerance and generation batch size. Preserve raw paper-tolerance results and report stricter checks together; never select the favorable tolerance as a performance win.",
+    "future_evaluation": "Auxiliary CFM generation batches256, likelihood batches256, paper tolerance1e-3 primary and stricter1e-4 secondary; final checks additionally include1e-5 and reference seed0. Running older fits retain their original full-batch generation and receive fixed-checkpoint post-evaluation afterward.",
+    "sampler_unchanged": true,
+    "performance_gates_unchanged": true
+  },
+  "cfm_training_budget_evidence": {
+    "updates": 100000,
+    "train_samples": 100000,
+    "note": "Paper F.2 specifies100k training samples; public default trainer1000epochs times dummy100batches/epoch supplies100k updates. Best validationcheckpoint is recommended in authorREADME. Exact unpublished paper checkpoint/testfile is unavailable."
+  },
+  "initialization_hyperparameter": {
+    "authorization": "User allows hyperparameter tuning; this only sets the initial values of existing trainable weights. No model/objective/sampling component added.",
+    "default": "random, original initialization unchanged",
+    "option": "identity with small random weights in remaining units; desired initial output std1 or8",
+    "construction": "GELU(x)-GELU(-x)=x carried by four channels of each existing Dense layer; all kernels/biases fully trainable with unchanged OptiQ Adam update. No target locations/samples/density/gradients used.",
+    "coordinate_scale": 1,
+    "fidelity": "All19 GMM tests passed, including bounded/unbounded original-update fidelity, exact zero-noise initial linear map, RNG/oracle isolation, unchanged parameter shapes, small perturbed map and actual unchanged OptiQ update.",
+    "sampler_sha256": "4f33371b22ebe7bc4a0e36b7aa3f5f019401d6a120df42e87dd7865120d5f539",
+    "train_sha256": "49ad93b2c700337207737930f87208a145fe569eeec9ba30bcdced8b15973ef2"
+  },
+  "resumed_density_accounting": {
+    "description": "Only logging changed: sum actual parent checkpoint steps times per-stage candidate counts. New runs record start_update and target_density_evaluations_at_start. Existing models, keys, optimizer and losses are unchanged. All previous tuning continuations used2048 candidates/update and their old counts remain valid.",
+    "tests": "3 tests passed: actual intermediate checkpoint vs requested end; recursively changed K/R/batch; preserved cached count without parent files; unchanged-count parity. Actual two-update resumed smoke separately recorded.",
+    "source_sha256": {
+      "benchmarks/gmm40/accounting.py": "b18905c804a5d72a8aa87e708ff43ea837f46d49c8af03e83b7cd5fbf80b53dd",
+      "benchmarks/gmm40/train.py": "d2aa3b56e95ccf9d8cc0e15956773fb21ed68b9453776dad241ceff36786caa0"
+    }
+  },
+  "sampler_time_audit": {
+    "status": "completed on tuning checkpoint ancestry; standalone confirmation still required",
+    "wandb_run": "0d1stdhe",
+    "report": "outputs/gmm40_tuning/timing_audit_20260908/summary.json",
+    "method": "Sum actualcheckpointancestry, estimateper-update time frommediansteadytrainlogintervals excludinginitialblocksandintervalscrossingevaluation; observedstagewallspansseparatelyreported. Oraclecounts independentlymatch density_evaluations().",
+    "hardware_caveat": "3090runswithconcurrentwork versusreportedA100. Thisisnotamatched-hardwarewinclaim. SearchandCFMcostsmustbereportedseparately.",
+    "tests": "2timingtests passed (7l9ytnot):long evaluationpauseexcludedandfuturestepsafteranintermediatecheckpointignored;insufficienthistoryrejected.",
+    "source_sha256": "8a92a9139d1b99bdb82a5a246d3194ab9a74871ba82d062493cb32ef06fd2a31"
+  },
+  "depth_width_hyperparameter_trials": {
+    "description": "Existing ImplicitActor hidden_dims list varied, using the same Dense/GELU implementation. No skip, activation, objective, optimizer or transport component is added or replaced. Native x=g(z), scale1 and unbounded output remain mandatory.",
+    "manifest": "benchmarks/gmm40/tuning_hp19.json",
+    "manifest_sha256": "759631a6f433838aa2521cd0d0a18c3143b8ee326c195439a6de2a1db916ef5b",
+    "policy_source_sha256": "cd5c14c4f8076e4c0baeeca83eff40823862f2adf2d983cc9fb60f20a7be7ee8",
+    "tuning_seed": 42,
+    "not_a_performance_claim": true
+  },
+  "cfm_post_evaluation_queue": {
+    "manifest": "benchmarks/gmm40/cfm_post_queue_20260908.json",
+    "worker": "scripts/gmm40_cfm_post_worker.py",
+    "worker_sha256": "bef759b15ae009a8ff5e8d6e4482e5aeda6ee35f82fb9d5087067926bcb80503",
+    "purpose": "Run the existing fixed-checkpoint post-evaluator after each supervised CFM fit completes100k updates and exits with summary and best checkpoint. Six current fits are queued on four supervised workers.",
+    "primary_tolerance": 0.001,
+    "secondary_tolerance": 0.0001,
+    "ess_counts": [
+      1000,
+      16
+    ],
+    "independent_ess16_repeats": 8,
+    "verification": "Compile and all four dry-runs passed; six still-running parents were rejected as not ready and the completed HP9 full100k parent was recognized as ready. Existing partial outputs are retained, not overwritten.",
+    "training_changed": false,
+    "additional_manifests": [
+      "benchmarks/gmm40/cfm_post_queue_hp19.json",
+      "benchmarks/gmm40/cfm_post_queue_hp23.json",
+      "benchmarks/gmm40/cfm_post_queue_hp23_T1.json",
+      "benchmarks/gmm40/cfm_post_queue_hp24.json",
+      "benchmarks/gmm40/cfm_post_queue_hp24_T1.json"
+    ]
+  },
+  "wide_initialization_hyperparameter": {
+    "description": "Only sets initial values of existing trainable Dense/GELU weights. Signed features span every hidden unit and decode an approximately std*z initial map; optional seeded random perturbation. No runtime transform/frame, new layer, frozen weights, target data, gradient objective or loss component.",
+    "option": "identity_wide",
+    "manifest": "benchmarks/gmm40/tuning_hp22.json",
+    "coordinate_scale": 1,
+    "fidelity": "All22 GMM tests passed, including two immutable-source full-update comparisons for default bounded/unbounded paths, wide initial-map checks at two width/depth configurations, target-independence, same parameter shapes/RNG and actual unchanged OptiQ training update.",
+    "test_run": "run-20260908_232915-k2mqzg1w",
+    "sampler_sha256": "751fab5cda1cc7597a5b999224f8f9c4e610f2879637568f72fb496b1239a92a",
+    "train_sha256": "9feaa3f0ceb70fcdf70f782aafdab3c0deb1042cc8b24c9309e0807defed10d6",
+    "tests_sha256": "1bb2835a206b26bd8ba8ec85aa12b4d0d86ea4cf89ab6a1ba73179d46adc3e4c",
+    "created_utc": "2026-09-08T23:30:44.306073+00:00",
+    "performance_improvement_unproven": true
+  },
+  "measured_training_time_instrumentation": {
+    "description": "Reporting only: start stage clock after setup and initial evaluation; synchronize queued training before each timed evaluation; store actual checkpoint-step wall time minus explicitly measured evaluation duration. Includes update compilation, logging and checkpoint I/O; setup+initial evaluation reported separately. No per-update synchronization and no RNG/model/loss/optimizer changes. Parent stages without measurements retain estimates; never relabel mixed ancestry as fully measured.",
+    "source_sha256": {
+      "benchmarks/gmm40/train.py": "06926eb2821395823620c098aaf260aedeb525c527d554ddf0faed6366c3a869",
+      "benchmarks/gmm40/training_clock.py": "581cf9cb1f8adc8eb1cd6b07417a6fab31adff4e25c3623241fe6578b4ed2e84",
+      "benchmarks/gmm40/timing_audit.py": "2bca60968cfcbe85c900ee6833f3c2d132ae7c8437a0eb531a361a9ae1445568",
+      "tests/test_gmm40_timing.py": "2a235538edec429061a33a20e74ae3a30c98d916e606fbe75ae98909c56c4c38"
+    },
+    "tests": "26 passed: tests/test_gmm40.py and tests/test_gmm40_timing.py; fake-clock evaluation pauses and changing training rates checked; both frozen-source default update parity tests passed.",
+    "smoke_wandb": "https://wandb.ai/sae_project/optiq_dime_no_anchor/runs/gvoh13xv",
+    "gpu_smoke": "200 real updates,6400 target queries;5 timing snapshots;5 evaluation intervals excluded; exact100 and200 checkpoint lineage verified.",
+    "not_a_performance_result": true
+  },
+  "matched_refinement_trials": {
+    "manifest": "benchmarks/gmm40/tuning_hp24.json",
+    "parent_export": "outputs/gmm40_tuning/exports/hp23-depth5-T1-75k",
+    "training_seed": 42,
+    "stage_target_queries": 51200000,
+    "cumulative_target_queries": 204800000,
+    "core_update_changed": false,
+    "coordinate_scale": 1,
+    "interpretation": "Existing center count and temperature only; the candidate set follows the HP23 observed TV-versus-local-density tradeoff. Same lr1e-4 and original exact-logp evaluation target; not independent training seeds."
+  },
+  "independent_seed_base_preparation": {
+    "manifest": "benchmarks/gmm40/replication_base.json",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "updates": 50000,
+    "not_final_confirmation": true,
+    "recipe_selection": "Continuation recipe selected from tuningseed42 only; do not drop/choose replication seeds by results.",
+    "initialization": "fresh random, independent actor/Adam/RNG per seed",
+    "resource_only_dependencies": "corresponding HP24 completion",
+    "worker_sha256": "eccc8d1ffe2730b92b1a431283c4dad9e4c89136bd31aa1b4779789ba66e4026",
+    "launch_guard_verification": "Completed parent accepted; EXITED+finished=false rejected; RUNNING parent waited and SIGINT cancellation exited without training. No inference from timeout."
+  },
+  "prospective_final_reference_evaluation": {
+    "recorded_utc": "2026-09-09T00:27:47.446665+00:00",
+    "status": "specified before generating or evaluating these final reference sets",
+    "training_seeds": [
+      0,
+      1,
+      2
+    ],
+    "explicit_paper_reference_seed": 0,
+    "additional_independent_reference_seeds": [
+      20261101,
+      20261102,
+      20261103
+    ],
+    "samples_per_reference": 1000,
+    "existing_tuning_reference_unchanged": true,
+    "source": "https://arxiv.org/html/2402.06121v2#A6.SS4.SSS1",
+    "rationale": "Earlier research log already required explicitseed0 plus fresh independent references because the original unpublishedtest file is unavailable. This now fixes the supplemental seeds before looking at their results. Use post_evaluate_cfm --reference-seed literally; idem_evaluate uses reference_seed+1 for its heldout test, so --reference-seed0 on the fitter is not the same test set.",
+    "reporting": "Retain the existing tuning-reference results; report final explicitseed0 and every additionalreference, groundtruthNLL and model-minus-groundtruth NLL, plus independent-training-seed mean/SD. Never select the favorable reference or replace a failed tuning test with an unlabelled new test. If conclusions depend on test-set choice, disclose this rather than claim an unqualified all-metric win.",
+    "sampler_changed": false
+  },
+  "original_objective": "Beat DiKL and iDEM GMM40 paper metrics using OptiQ without component changes; hyperparameter tuning/minor sampling allowed",
+  "user_revision": {
+    "recorded_utc": "2026-09-09T00:39:42.154366+00:00",
+    "messages": [
+      "t=1 \uc5d0\uc11c \uc0d8\ud50c\uc218\ub97c \ucda9\ubd84\ud788 \ub298\ub9ac\ub294\uac74?",
+      "\ubaa8\ub4e0 \uc9c0\ud45c\ub97c \uc774\uae38 \ud544\uc694\ub294 \uc5c6\uc5b4"
+    ],
+    "all_paper_metrics_required": false,
+    "current_priority": "T1 sample-count adequacy, raw distribution quality and compute cost. Explain measured evidence; do not use missed paper thresholds as a reason for endless tuning.",
+    "evidence": "T1 depth5: K2048 at75k KDE h.35=6.985195; K4096 at80k=6.951031 and87500=6.941509. All40modes. Additionaltraining is a confound, so this is supporting evidence rather than a pure sample-count ablation.",
+    "next_8192_trial_started": true,
+    "current_training": "Seed42 matched-parent T1/N8192 comparison is running; independent seeds0/1/2 common75k prefix is running/queued. No new objective/model components.",
+    "next_8192_trial_url": "https://wandb.ai/sae_project/optiq_dime_no_anchor/runs/1od7e84v"
+  },
+  "T1_sample_count_comparison": {
+    "recorded_utc": "2026-09-09T00:47:23.311684+00:00",
+    "manifest": "benchmarks/gmm40/tuning_hp25_T1_N8192.json",
+    "common_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp23/002-polish-depth5-T1.0-75k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T234641Z-1c9d88/actor_state_final.msgpack",
+    "equal_updates": {
+      "additional_updates": 5000,
+      "N4096_update": 80000,
+      "N8192_update": 80000
+    },
+    "equal_target_queries": {
+      "additional_queries": 40960000,
+      "N4096_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp24/003-depth5-K4096-T1.0-equalquery-polish/gmm40-K4096-M4096-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260909T000816Z-07a7f6/actor_state_85000.msgpack",
+      "N8192_update": 80000
+    },
+    "smaller_equal_query_comparison": {
+      "additional_queries": 20480000,
+      "N4096_update": 80000,
+      "N8192_update": 77500
+    },
+    "scope": "One bounded extra sample-count trial; no all-metric threshold requirement and no changes to metric definitions or the OptiQ objective. Select using tuning seed42 only; no replication seed selection.",
+    "wandb_url": "https://wandb.ai/sae_project/optiq_dime_no_anchor/runs/1od7e84v",
+    "intermediate_evidence": {
+      "recorded_utc": "2026-09-09T01:13:20.221015+00:00",
+      "N8192_checkpoint_update": 77500,
+      "equal_additional_queries": 20480000,
+      "N4096_checkpoint_update": 80000,
+      "N4096_kde_h035": 6.951030955242339,
+      "N8192_kde_h035": 6.934380946931342,
+      "N4096_W2": 4.4924,
+      "N8192_W2": 4.413451330153824,
+      "N4096_added_training_seconds": 558.2394030230353,
+      "N8192_added_training_seconds": 1198.6372550399974,
+      "report": "docs/GMM40_T1_SAMPLE_COUNT.md",
+      "full_trial_pending": true,
+      "default_not_selected": true
+    },
+    "full_sampler_comparison_finished": true,
+    "selected_default_N": 4096
+  },
+  "independent_common75k_continuation": {
+    "recorded_utc": "2026-09-09T00:48:07.598148+00:00",
+    "manifest": "benchmarks/gmm40/replication_polish75k.json",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "final_sample_count_selection_pending": false
+  },
+  "checkpoint_evaluation_automation": {
+    "recorded_utc": "2026-09-09T01:00:54.200119+00:00",
+    "manifest": "benchmarks/gmm40/checkpoint_evaluations_hp25.json",
+    "worker": "scripts/gmm40_checkpoint_evaluation_worker.py",
+    "worker_sha256": "2c4ef0cdf22e6de157cc63bea0fac8564c28a2044539647a98b32ed3cd316b76",
+    "program": "optiq-gmm40-checkpoint-eval-hp25-3",
+    "verification": "Four passing tests cover partial serialization records, final-budget completion, missing terminal parent and tampered/wrong-update exports. Real200-update-checkpoint export/paper/KDE/timing pipeline passed, status completed, isolated from benchmark-candidate exports. Existing full CFM and post modules are called unchanged for the actual final80000 candidate; no short CFM substituted.",
+    "smoke": "outputs/gmm40_tuning/checkpoint_worker_smoke_20260909",
+    "core_changed": false
+  },
+  "independent_confirmation_evaluation_preparation": {
+    "recorded_utc": "2026-09-09T01:28:22.902418+00:00",
+    "changes": "Add explicit confirmation metadata, frozen-config export checks, and previously planned fresh-reference post evaluations; original sample metric calculations and OptiQ update unchanged. Audit includes cfm_confirmation runs and labels declaration per candidate.",
+    "source_sha256": {
+      "scripts/gmm40_checkpoint_evaluation_worker.py": "bff52ef1e87661ef8ba6da2a068b3f39e06191e798cd47cd03d76c0bfb87f2b0",
+      "benchmarks/gmm40/paper_sample_evaluate.py": "765672940bdcac3a3d2398147a0a56628249cd7a9fb3c3607c7bbb14f257dad3",
+      "benchmarks/gmm40/audit_results.py": "b050d9893de8b7dc8c1848a333626e24b0d0f9b6e1130656d5441e2df22bdc73"
+    },
+    "verification": "Four worker concurrency/identity tests pass, now including wrong-seed/frozen-config rejection. A real repeated-sample evaluation under plain and confirmation metadata gives identical metric records.",
+    "metadata_equivalence": "outputs/gmm40_tuning/confirmation_metadata_equivalence_20260909_v2/verification.json",
+    "prefix_audit": "outputs/gmm40_tuning/confirmation_prefix_audit_20260909.json",
+    "live_hp25_worker": "Already running worker keeps its launch-loaded source, archived at outputs/gmm40_tuning/checkpoint_worker_before_confirmation_flags. Its jobs remain tuning-only and unchanged.",
+    "fresh_reference_tolerances": [
+      0.001
+    ],
+    "fresh_reference_ess16_repeats": 8,
+    "strict_check": "Existing tuning-reference post retains both .001 and .0001; every prospective final reference uses preselected paper tolerance .001. No fresh final reference set has been generated or evaluated yet."
+  },
+  "frozen_final_recipe": {
+    "recorded_utc": "2026-09-09T01:30:40.772771+00:00",
+    "manifest": "benchmarks/gmm40/confirmation_T1_N4096.json",
+    "manifest_sha256": "bbded4614a1eddc56db4b7b1039c0331023de7bd7f795a05dbbb4e667f548860",
+    "training_seeds": [
+      0,
+      1,
+      2
+    ],
+    "selection_training_seed": 42,
+    "N": 4096,
+    "final_update": 85000,
+    "T": 1.0,
+    "beta": 1.0,
+    "kde_sigma": 1.0,
+    "no_anchor": true,
+    "native_unbounded": true,
+    "parent_stage_updates": [
+      50000,
+      75000
+    ],
+    "parent_N": 2048,
+    "candidate_queries": 194560000,
+    "basis": "Final same40.96M-query comparison: essentially tied h.35 KDE, only small/mixed other changes, but8192 costs2.186x extra training time. Select4096 for cost; no all-metric threshold gate. This is fixed before any seed0/1/2 final continuation result. Existing8192 fullCFM remains scheduled and will be reported separately without combining its metrics with4096.",
+    "selection_inputs": [
+      "outputs/gmm40_tuning/exports/hp24-K4096-T1-85k/summary.json",
+      "outputs/gmm40_tuning/paper_eval_hp24_K4096_T1_85k/summary.json",
+      "outputs/gmm40_tuning/kde_validation_hp24_K4096_T1_85k/summary.json",
+      "outputs/gmm40_tuning/paper_eval_hp25_T1_K8192_80k/summary.json",
+      "outputs/gmm40_tuning/kde_validation_hp25_T1_K8192_80k/summary.json",
+      "outputs/gmm40_tuning/mode_diagnostic_T1_equal40M_20260909/summary.json"
+    ],
+    "new_sweep_planned": false,
+    "evaluation_manifest": "benchmarks/gmm40/checkpoint_evaluations_confirmation_T1_N4096.json",
+    "evaluation_manifest_sha256": "1be4c5cadb31112e0ed702291843e130c00413d65f23b9d2c2adb8205a82c1f5"
+  }
+}

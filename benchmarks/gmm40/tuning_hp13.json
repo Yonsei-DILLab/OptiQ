@@ -1,0 +1,78 @@
+{
+  "phase": "hp13",
+  "description": "Continue fresh HP11 K2048/R1 models50k->75k atlr1e-4 (versus initial3e-4); width1024/512 onGPUs0/2 as theirHP12 trialsfinish. T1,beta1,sigma1,epsilon1e-4,300iterations,gridlatents,native/noanchor unchanged. Same2048targetdensity evaluations/update andfullAdam/RNGcontinuation. OtherGPUsrunHP12.",
+  "jobs": [
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        1024,
+        1024,
+        1024
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0001,
+      "updates": 75000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "label": "continue-fresh-K2048-width1024-lr1e4",
+      "anneal_updates": 0,
+      "temperature_start": -1.0,
+      "proposal_std_start": -1.0,
+      "sinkhorn_epsilon_start": -1.0,
+      "latent_sampling": "grid",
+      "resume_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp11/003-from-scratch-grid-K2048-width1024-std8to1/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T210144Z-8de726/actor_state_final.msgpack"
+    },
+    {
+      "enabled": false,
+      "label": "reserved"
+    },
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0001,
+      "updates": 75000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "label": "continue-fresh-K2048-width512-lr1e4",
+      "anneal_updates": 0,
+      "temperature_start": -1.0,
+      "proposal_std_start": -1.0,
+      "sinkhorn_epsilon_start": -1.0,
+      "latent_sampling": "grid",
+      "resume_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp11/001-from-scratch-grid-K2048-width512-std8to1/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T210135Z-e86239/actor_state_final.msgpack"
+    },
+    {
+      "enabled": false,
+      "label": "reserved"
+    }
+  ]
+}

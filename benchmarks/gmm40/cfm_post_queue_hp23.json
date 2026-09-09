@@ -1,0 +1,12 @@
+{
+  "description": "Fixed-checkpoint evaluation for HP23 depth5 T.9 after the full100k auxiliary CFM fit, preserving both primary and stricter tolerance and ESS counts.",
+  "status_root": "outputs/gmm40_tuning/cfm_post_queue_hp23",
+  "jobs": [
+    {
+      "gpu": 1,
+      "parent_program": "optiq-gmm40-cfm-hp23-depth5-T09-75k",
+      "cfm_run": "outputs/gmm40_tuning/cfm_hp23_depth5_T09_75k",
+      "output": "outputs/gmm40_tuning/post_cfm_hp23_depth5_T09_75k_ess16"
+    }
+  ]
+}

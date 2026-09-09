@@ -12,6 +12,34 @@ def clip_action(actions: jax.Array) -> jax.Array:
     return jnp.clip(actions, -1.0, 1.0)
 
 
+class GaussianKDE(NamedTuple):
+    """Unbounded Gaussian mixture for density benchmarks with real-valued outputs."""
+
+    centers: jax.Array
+    std: float
+
+    def sample_stratified(self, rng, repeats, include_anchor=False):
+        random_repeats = repeats - int(include_anchor)
+        if random_repeats < 1:
+            raise ValueError("At least one random draw per KDE component is required")
+        shape = self.centers.shape[:-1] + (random_repeats, self.centers.shape[-1])
+        noise = self.std * jax.random.normal(rng, shape, dtype=self.centers.dtype)
+        if include_anchor:
+            anchor = jnp.zeros(self.centers.shape[:-1] + (1, self.centers.shape[-1]),
+                               dtype=self.centers.dtype)
+            noise = jnp.concatenate((anchor, noise), axis=-2)
+        return self.centers[..., None, :] + noise
+
+    def log_prob(self, samples):
+        differences = samples[:, :, None, :] - self.centers[:, None, :, :]
+        dimension = samples.shape[-1]
+        component_log_density = (
+            -0.5 * jnp.sum(jnp.square(differences / self.std), axis=-1)
+            - dimension * (jnp.log(self.std) + 0.5 * jnp.log(2.0 * jnp.pi))
+        )
+        return jsp.special.logsumexp(component_log_density, axis=-1) - jnp.log(self.centers.shape[1])
+
+
 class TruncatedGaussianKDE(NamedTuple):
     """Uniform KDE defined by actor centers, before drawing any candidates.
 

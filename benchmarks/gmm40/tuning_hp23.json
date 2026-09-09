@@ -1,0 +1,176 @@
+{
+  "phase": "hp23",
+  "description": "Matched continuation of two promising completed50k parents: HP19 depth5 width512 and HP20 fast-start random width512x3. Cross each parent with T1 versusT.9, lower Adam lr1e-4, cumulative75k. Each adds51.2M target evaluations; cumulative153.6M. Motivation: slight target-score sharpening may reduce excess mode variance/spatialTV while the control isolates ordinary lower-lr improvement. Original canonical GMM remains the evaluation target; T.9 is disclosed as tempered scoring, not an exact-p assertion. Same OptiQ GaussianKDE, beta1, K2048/R1, sigma1, epsilon1e-4/300, grid, noanchor, native unbounded rawg output. No model/objective component replacement. Final actor/Adam/RNG restored from its own parent. All four starts guarded by current HP22 completion, never by observation timeouts. Seed42 tuning only.",
+  "launch_dependencies": {
+    "0": [
+      {
+        "program": "optiq-gmm40-tuning-hp22-0",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp22/000-wide-identity-init8-noise0.0-lr0.0003-20k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T233330Z-f75eb2/completed.json"
+      }
+    ],
+    "1": [
+      {
+        "program": "optiq-gmm40-tuning-hp22-1",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp22/001-wide-identity-init8-noise0.0-lr0.001-20k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T233614Z-6ae5fe/completed.json"
+      }
+    ],
+    "2": [
+      {
+        "program": "optiq-gmm40-tuning-hp22-2",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp22/002-wide-identity-init8-noise0.01-lr0.0003-20k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T233226Z-5a49cc/completed.json"
+      }
+    ],
+    "3": [
+      {
+        "program": "optiq-gmm40-tuning-hp22-3",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp22/003-wide-identity-init8-noise0.01-lr0.001-20k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T233120Z-b1450a/completed.json"
+      }
+    ]
+  },
+  "jobs": [
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 0.9,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0001,
+      "updates": 75000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "anneal_updates": 0,
+      "temperature_start": -1.0,
+      "proposal_std_start": -1.0,
+      "sinkhorn_epsilon_start": -1.0,
+      "latent_sampling": "grid",
+      "initialization": "random",
+      "initial_output_std": 0.0,
+      "initialization_noise": 0.01,
+      "label": "polish-depth5-T0.9-75k",
+      "resume_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp19/002-fresh-depth5-width512-50k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T230432Z-8951e9/actor_state_final.msgpack"
+    },
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 0.9,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0001,
+      "updates": 75000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "anneal_updates": 0,
+      "temperature_start": -1.0,
+      "proposal_std_start": -1.0,
+      "sinkhorn_epsilon_start": -1.0,
+      "latent_sampling": "grid",
+      "initialization": "random",
+      "initial_output_std": 0.0,
+      "initialization_noise": 0.01,
+      "label": "polish-fast-random-T0.9-75k",
+      "resume_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp20/000-fast-start-random-20to50k-lr3e4/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T230549Z-e40936/actor_state_final.msgpack"
+    },
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0001,
+      "updates": 75000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "anneal_updates": 0,
+      "temperature_start": -1.0,
+      "proposal_std_start": -1.0,
+      "sinkhorn_epsilon_start": -1.0,
+      "latent_sampling": "grid",
+      "initialization": "random",
+      "initial_output_std": 0.0,
+      "initialization_noise": 0.01,
+      "label": "polish-depth5-T1.0-75k",
+      "resume_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp19/002-fresh-depth5-width512-50k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T230432Z-8951e9/actor_state_final.msgpack"
+    },
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0001,
+      "updates": 75000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "anneal_updates": 0,
+      "temperature_start": -1.0,
+      "proposal_std_start": -1.0,
+      "sinkhorn_epsilon_start": -1.0,
+      "latent_sampling": "grid",
+      "initialization": "random",
+      "initial_output_std": 0.0,
+      "initialization_noise": 0.01,
+      "label": "polish-fast-random-T1.0-75k",
+      "resume_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp20/000-fast-start-random-20to50k-lr3e4/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T230549Z-e40936/actor_state_final.msgpack"
+    }
+  ]
+}

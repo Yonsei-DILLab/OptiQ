@@ -1,0 +1,81 @@
+{
+  "phase": "hp19",
+  "description": "Fresh seed42 hyperparameter comparison using the unchanged ImplicitActor class with different existing hidden_dims lists: width512 depth5 and width256 depth6. K2048/R1, T1 beta1, lr3e-4, sigma8 to1 and epsilon.01 to1e-4 over15k, 300 Sinkhorn iterations, Gaussian latent grid, no anchors, native unbounded x=g(z). No new activation, skip, objective, transport rule, optimizer or sampler component. Hypothesis: additional existing Dense/GELU layers may represent sharp mode boundaries with less output leakage. This is unproven; compare direct-sample metrics and fixed protocol CFM. All outputs and unsuccessful runs retained. Starts after stopping the slower broad-initialization HP16 GPU2/3 with saved checkpoints.",
+  "jobs": [
+    {
+      "enabled": false,
+      "label": "reserved"
+    },
+    {
+      "enabled": false,
+      "label": "reserved"
+    },
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0003,
+      "updates": 50000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "label": "fresh-depth5-width512-50k",
+      "anneal_updates": 15000,
+      "temperature_start": -1.0,
+      "proposal_std_start": 8.0,
+      "sinkhorn_epsilon_start": 0.01,
+      "latent_sampling": "grid"
+    },
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        256,
+        256,
+        256,
+        256,
+        256,
+        256
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0003,
+      "updates": 50000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "label": "fresh-depth6-width256-50k",
+      "anneal_updates": 15000,
+      "temperature_start": -1.0,
+      "proposal_std_start": 8.0,
+      "sinkhorn_epsilon_start": 0.01,
+      "latent_sampling": "grid"
+    }
+  ]
+}

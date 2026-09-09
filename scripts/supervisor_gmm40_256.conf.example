@@ -1,0 +1,30 @@
+[group:optiq-gmm40-256]
+programs=optiq-gmm40-256-0,optiq-gmm40-256-1
+
+[program:optiq-gmm40-256-0]
+command=/workspace/OptiQ-heechan-no-anchor/scripts/supervisor_gmm40_256_worker.sh 0
+directory=/workspace/OptiQ-heechan-no-anchor
+autostart=false
+autorestart=false
+startsecs=3
+stopsignal=INT
+stopasgroup=true
+killasgroup=true
+stopwaitsecs=120
+stdout_logfile=/var/log/portal/optiq-gmm40-256-0.log
+stdout_logfile_maxbytes=0
+redirect_stderr=true
+
+[program:optiq-gmm40-256-1]
+command=/workspace/OptiQ-heechan-no-anchor/scripts/supervisor_gmm40_256_worker.sh 1
+directory=/workspace/OptiQ-heechan-no-anchor
+autostart=false
+autorestart=false
+startsecs=3
+stopsignal=INT
+stopasgroup=true
+killasgroup=true
+stopwaitsecs=120
+stdout_logfile=/var/log/portal/optiq-gmm40-256-1.log
+stdout_logfile_maxbytes=0
+redirect_stderr=true

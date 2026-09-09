@@ -1,0 +1,140 @@
+{
+  "phase": "confirmation_T1_N4096",
+  "group": "gmm40-confirmation-T1-N4096-seeds0-1-2",
+  "job_type": "confirmation-train",
+  "description": "Frozen final recipe selected using only seed42 matched-parent T1 sample-count comparison, after user removed the all-metric winning requirement. N4096/85000 and N8192/80000 use equal40.96M additional queries: KDE h.35 6.9367616 versus6.9363844, while stage time1110.35 versus2427.67seconds. Other metrics/mode moments do not consistently improve at8192, so choose4096 for cost. All three independent seeds0/1/2 retained. Each own75k actor/Adam/RNG continues10000updates atT1,beta1,sigma1,lr1e-4,N4096/R1,epsilon1e-4/300,grid,native/unbounded,noanchor,unchangedOptiQ. Final85000 gives194.56M cumulative target calls. No further hyperparameter sweep is planned merely to beat every threshold.",
+  "recorded_utc": "2026-09-09T01:30:40.772771+00:00",
+  "launch_dependencies": {
+    "0": [
+      {
+        "program": "optiq-gmm40-replication-polish75k-0",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/replication_polish75k/000-depth5-T1-seed0-polish75k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed0-20260909T004842Z-f39e03/completed.json"
+      }
+    ],
+    "1": [
+      {
+        "program": "optiq-gmm40-replication-polish75k-1",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/replication_polish75k/001-depth5-T1-seed1-polish75k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed1-20260909T005849Z-87fd21/completed.json"
+      }
+    ],
+    "2": [
+      {
+        "program": "optiq-gmm40-replication-polish75k-2",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/replication_polish75k/002-depth5-T1-seed2-polish75k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed2-20260909T005952Z-4422ec/completed.json"
+      }
+    ]
+  },
+  "jobs": [
+    {
+      "seed": 0,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 4096,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0001,
+      "updates": 85000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "anneal_updates": 0,
+      "temperature_start": -1.0,
+      "proposal_std_start": -1.0,
+      "sinkhorn_epsilon_start": -1.0,
+      "latent_sampling": "grid",
+      "initialization": "random",
+      "initial_output_std": 0.0,
+      "initialization_noise": 0.01,
+      "label": "fixed-T1-N4096-seed0-85k",
+      "resume_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/replication_polish75k/000-depth5-T1-seed0-polish75k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed0-20260909T004842Z-f39e03/actor_state_final.msgpack"
+    },
+    {
+      "seed": 1,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 4096,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0001,
+      "updates": 85000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "anneal_updates": 0,
+      "temperature_start": -1.0,
+      "proposal_std_start": -1.0,
+      "sinkhorn_epsilon_start": -1.0,
+      "latent_sampling": "grid",
+      "initialization": "random",
+      "initial_output_std": 0.0,
+      "initialization_noise": 0.01,
+      "label": "fixed-T1-N4096-seed1-85k",
+      "resume_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/replication_polish75k/001-depth5-T1-seed1-polish75k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed1-20260909T005849Z-87fd21/actor_state_final.msgpack"
+    },
+    {
+      "seed": 2,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 4096,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0001,
+      "updates": 85000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "anneal_updates": 0,
+      "temperature_start": -1.0,
+      "proposal_std_start": -1.0,
+      "sinkhorn_epsilon_start": -1.0,
+      "latent_sampling": "grid",
+      "initialization": "random",
+      "initial_output_std": 0.0,
+      "initialization_noise": 0.01,
+      "label": "fixed-T1-N4096-seed2-85k",
+      "resume_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/replication_polish75k/002-depth5-T1-seed2-polish75k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed2-20260909T005952Z-4422ec/actor_state_final.msgpack"
+    }
+  ]
+}

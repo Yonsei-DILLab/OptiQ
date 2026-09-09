@@ -1,0 +1,57 @@
+{
+  "phase": "hp25_T1_N8192",
+  "group": "gmm40-T1-sample-count-comparison",
+  "job_type": "sample-count-comparison",
+  "description": "Bounded T1 sample-count comparison requested by the user, who removed the all-paper-metrics requirement. Same HP23 depth5 T1 75k actor/Adam/RNG parent and all hyperparameters as HP24 K4096 T1, with only N changed to8192. Five thousand additional updates, checkpoint77500 and80000. Compare N8192/80000 versus existing N4096/80000 at equal5000 additional updates, and N4096/85000 at equal40.96M additional target-density calls. N8192/77500 versus N4096/80000 is a second equal20.48M query checkpoint comparison. No new algorithm, objective, output transform or postprocessing. Native unbounded directg; T1,beta1,sigma1,epsilon1e-4/300,lr1e-4. This is tuning seed42 only. Do not start further open-ended sweeps solely to beat every metric.",
+  "jobs": [
+    {
+      "label": "reserved",
+      "enabled": false
+    },
+    {
+      "label": "reserved",
+      "enabled": false
+    },
+    {
+      "label": "reserved",
+      "enabled": false
+    },
+    {
+      "seed": 42,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 8192,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0001,
+      "updates": 80000,
+      "eval_interval": 2500,
+      "eval_samples": 10000,
+      "checkpoint_interval": 2500,
+      "reference_seed": 20260909,
+      "anneal_updates": 0,
+      "temperature_start": -1.0,
+      "proposal_std_start": -1.0,
+      "sinkhorn_epsilon_start": -1.0,
+      "latent_sampling": "grid",
+      "initialization": "random",
+      "initial_output_std": 0.0,
+      "initialization_noise": 0.01,
+      "label": "depth5-T1-K8192-matched-parent-5k",
+      "resume_checkpoint": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp23/002-polish-depth5-T1.0-75k/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T1.0-beta1.0-seed42-20260908T234641Z-1c9d88/actor_state_final.msgpack"
+    }
+  ]
+}
