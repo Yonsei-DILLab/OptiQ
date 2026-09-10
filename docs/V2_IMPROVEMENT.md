@@ -1104,3 +1104,41 @@ pass (five tests), including the still-running-final-files case and missing
 checkpoint/seed cases. Logs: `/var/log/portal/optiq-v2-finisher.log` and
 `outputs/v2_improvement/confirmation_finisher_tests.log`. The service uses CPU
 and has autostart/autorestart disabled. No push occurred.
+
+### Paired confirmation review: 900k
+
+The common 890k/895k/900k evaluation averages are:
+
+| Training seed | Checked K64 v2 | Current OptiQ, behavior 0 | Historical OptiQ, behavior .1 |
+|---|---:|---:|---:|
+| 0 | 5323.82 | 5196.18 | 5742.74 |
+| 1 | 5285.79 | 5077.00 | 5513.82 |
+| 2 | 5231.45 | 4947.84 | 5770.60 |
+| 3 | 5570.97 | 4729.63 | 5560.22 |
+| Mean ± seed SD | 5353.01 ± 150.17 | 4987.66 ± 199.69 | 5646.84 ± 128.73 |
+
+All four matched current pairs favor v2. The mean is 7.3% above that control
+but 5.2% below the stronger historical reference; only seed 3 slightly exceeds
+its historical counterpart in this window. Normalized return AUC through the
+same 900k horizon is 3997.97 for v2, 3136.53 for the matched control, and
+4077.51 for the historical reference. Historical provenance/collection
+differences remain a limitation; the comparison is not an isolated exploration
+ablation. The full predefined 900k–1M window is still unavailable.
+
+At 900k, ESS is 5.24–7.19/64, cumulative acceptance 58.0–59.9%, and the
+pre-discount entropy term +.224 to +.400. All inspected 800k–900k actor/critic
+losses and Q values are finite. All sixteen actor/critic checkpoints are
+present and nonempty. Current rolling drawdowns are 2.3%, .5%, 3.1%, and .1%;
+this recent recovery does not erase the independently confirmed seed-1
+instability at earlier checkpoints. The sampled diagnostics do not provide a
+statewise improvement certificate.
+
+Continue the four unchanged v2 runs for the remaining final window; the four
+completed controls remain in the comparison. No early-stop criterion is met.
+The already-running `optiq-v2-finisher` owns final processing and independent
+evaluation, so a duplicate evaluator must not be launched. Evidence:
+`outputs/v2_improvement/confirmation_review_0900000.json`,
+`confirmation_assessment/step_0900000.json`, `confirmation_report/step_0900000.*`,
+and `confirmation_historical_comparison/step_0900000.*`. All three reporters
+agree on the fixed cutoff and current paired scores. Core training/config
+source remains unchanged from launch. No push occurred.
