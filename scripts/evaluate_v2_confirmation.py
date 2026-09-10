@@ -15,6 +15,21 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+ENVIRONMENT_METRICS = ("reward_linvel", "reward_alive", "reward_quadctrl", "x_velocity")
+
+
+def pool_environment_metrics(episodes):
+    """Pool by recorded environment steps; short episodes get no extra weight."""
+    pooled = {}
+    for key in ENVIRONMENT_METRICS:
+        values = [e["environment_metrics"][key] for e in episodes
+                  if key in e.get("environment_metrics", {})]
+        if values:
+            total = sum(v["sum"] for v in values)
+            count = sum(v["count"] for v in values)
+            pooled[key] = {"sum": total, "count": count, "mean": total/count}
+    return pooled
+
 
 def evaluate_episodes(model, environment, count, seed_base):
     import jax
@@ -24,15 +39,27 @@ def evaluate_episodes(model, environment, count, seed_base):
         obs, _ = environment.reset(seed=env_seed)
         model.policy.key = jax.random.PRNGKey(policy_seed)
         total, length, done = 0., 0, False
+        metric_sums, metric_counts = {}, {}
         while not done:
             action, _ = model.predict(obs, deterministic=False)
-            obs, reward, terminated, truncated, _ = environment.step(action)
+            obs, reward, terminated, truncated, info = environment.step(action)
             total += float(reward)
             length += 1
+            for key in ENVIRONMENT_METRICS:
+                if key in info:
+                    value = float(info[key])
+                    if not np.isfinite(value):
+                        raise ValueError(f"Nonfinite evaluation environment metric: {key}")
+                    metric_sums[key] = metric_sums.get(key, 0.) + value
+                    metric_counts[key] = metric_counts.get(key, 0) + 1
             done = terminated or truncated
         episodes.append({"env_seed": env_seed, "policy_seed": policy_seed,
                          "return": total, "length": length,
-                         "terminated": bool(terminated), "truncated": bool(truncated)})
+                         "terminated": bool(terminated), "truncated": bool(truncated),
+                         "environment_metrics": {
+                             key: {"sum": value, "count": metric_counts[key],
+                                   "mean": value/metric_counts[key]}
+                             for key, value in metric_sums.items()}})
     return episodes
 
 
@@ -101,6 +128,7 @@ def main():
                       "checkpoint_sha256": hashlib.sha256(payload).hexdigest(), "episodes": episodes,
                       "mean_return": float(returns.mean()), "episode_return_sd": float(returns.std(ddof=1)),
                       "mean_length": float(np.mean([e["length"] for e in episodes])),
+                      "environment_metrics": pool_environment_metrics(episodes),
                       "time_limit_episodes": sum(e["truncated"] and not e["terminated"] for e in episodes)}
             record["results"].append(result)
             record["summary"] = paired_summary(record["results"], args.seed_base)
