@@ -893,3 +893,37 @@ evaluation horizon while live runs continue. A CLI regression verifies that
 future checkpoints cannot enter a frozen report or make its incomplete final
 window appear complete. The assessment/alignment checks pass (five tests);
 see `outputs/v2_improvement/confirmation_assessment_cutoff_tests.log`.
+
+### Matched reference completion and historical comparison plot
+
+All four current zero-uniform OptiQ references completed 1M normally. Each has
+an EXITED supervisor state, a completion marker, all 21 predefined 900k–1M
+evaluation checkpoints, and nonempty final actor/critic checkpoints.
+
+| Training seed | OptiQ 900k–1M mean | OptiQ single 1M evaluation |
+|---|---:|---:|
+| 0 | 4939.75 | 5293.89 |
+| 1 | 5107.03 | 5175.79 |
+| 2 | 5045.76 | 4866.23 |
+| 3 | 5114.08 | 5437.90 |
+
+The reference's primary-window mean is 5051.65, with seed SD 80.67. These are
+completed reference results, not a final v2 comparison: v2 is still running
+around 760k. The seed-1 single-checkpoint return fell to 3478.87 at 750k
+(mean episode length 655), then recovered to 5272.09 at 755k and 5240.39 at
+760k (both mean lengths 1000). Continue the frozen runs; this observed recovery
+does not establish the cause of the dip or monotonic stability.
+
+`scripts/compare_v2_historical.py --through-step 700000` now plots the current
+paired methods and the stronger historical 10% behavior reference together.
+All twelve runs use the same intersected evaluation horizon; individual seeds
+remain visible and historical evaluation file hashes are checked. The 700k
+scores reproduce the existing current and historical reviews to 1e-9. The
+plot uses seed SD, not a confidence interval, and labels historical provenance
+differences. No final-window score is available until all required checkpoints
+exist within the selected horizon.
+
+Evidence: `outputs/v2_improvement/confirmation_all_reference_completions.json`,
+`confirmation_historical_comparison/step_0700000.*`, and
+`confirmation_historical_comparison_validation.json`. Training code/configs
+remain unchanged from the confirmation launch. No push occurred.
