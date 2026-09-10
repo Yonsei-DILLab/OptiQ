@@ -65,6 +65,24 @@ def test_flat_q_collapse_rejected_and_critic_error_is_not_ignored():
         conservative_soft_margin(.1,1.,1.,.5)  # Learned-Q error cannot silently default to zero.
 
 
+def test_exact_wasserstein_projection_can_reduce_soft_value_in_restricted_class():
+    old = np.array([[.5, .5, 0.]])
+    candidate = np.array([[2/3, 0., 1/3]])
+    # Exact increasing 1D transport to uniform mass on locations [0,.01,1].
+    old_w2_squared = (1/6) * .01**2 + (1/3) * .99**2
+    candidate_w2_squared = (1/3) * .01**2
+    assert candidate_w2_squared < old_w2_squared
+    assert entropy(candidate)[0] < entropy(old)[0]
+    transitions = np.ones((1, 3, 1))
+    rewards = np.zeros((1, 3)); temperature = 1.; gamma = .9
+    old_value = exact_value(old, rewards, transitions, temperature, gamma)
+    new_value = exact_value(candidate, rewards, transitions, temperature, gamma)
+    assert new_value[0] < old_value[0]
+    epsilon = float(entropy(old)[0] - entropy(candidate)[0])
+    # For this one-state example, the generic degradation bound is tight.
+    np.testing.assert_allclose(new_value, old_value - epsilon/(1-gamma))
+
+
 def test_paired_candidate_check_detects_entropy_improvement_without_q_gradient():
     from common.type_aliases import RLTrainState
     def gaussian(variables,observations,latents):

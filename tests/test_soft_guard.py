@@ -57,7 +57,8 @@ def test_invalid_guard_config_rejected(override):
         validate_config(cfg)
 
 
-def test_guard_in_common_humanoid_loop(tmp_path):
+@pytest.mark.parametrize("standard_error_multiplier", [0.0, 2.0])
+def test_guard_in_common_humanoid_loop(tmp_path, standard_error_multiplier):
     import csv
     import gymnasium as gym
     from hydra import compose, initialize_config_dir
@@ -71,6 +72,7 @@ def test_guard_in_common_humanoid_loop(tmp_path):
             "alg.actor.learning_starts=2", "diagnostic_interval=1",
             "alg.actor.soft_guard.batch_size=4", "alg.actor.soft_guard.draws=4",
             "alg.actor.soft_guard.components=4", "alg.actor.hidden_dims=[32,32]",
+            f"alg.actor.soft_guard.standard_error_multiplier={standard_error_multiplier}",
             "alg.critic.hs=[32,32]"])
     assert validate_config(cfg)
     model = OptiQDIME("MlpPolicy", gym.make("Humanoid-v4", max_episode_steps=2), str(tmp_path), 4, cfg)

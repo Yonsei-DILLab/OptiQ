@@ -1,0 +1,24 @@
+# @package _global_
+defaults:
+  - mujoco_v2_conditional
+  - _self_
+
+# Keep the promising 16x64, mean-Q teacher configuration. Check candidate
+# soft-score gains without the additional two-standard-error margin. This
+# finite replay-average check is an empirical surrogate, not a certificate.
+alg:
+  actor:
+    temperature: 0.1
+    soft_guard:
+      enabled: true
+      batch_size: 32
+      components: 16
+      draws: 8
+      standard_error_multiplier: 0.0
+
+run_name: ${task}-v2-checked-T${alg.actor.temperature}-s${seed}
+output_root: outputs/v2_confirmation
+wandb:
+  project: optiq_mujoco_v2_confirmation
+  group: ${env_name}_v2_checked_T${alg.actor.temperature}
+  job_type: confirmation

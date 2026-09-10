@@ -264,7 +264,7 @@ Evidence: `outputs/v2_improvement/guarded_25k_soft_critic.json`.
 ## Prepared confirmation protocol
 
 `scripts/supervisor_v2_confirmation.sh` prepares fresh, paired training seeds
-0/1 followed by 2/3 for a selected v2 candidate and the original OptiQ reference.
+0/1/2/3 for a selected v2 candidate and the original OptiQ reference.
 The variant must be explicitly selected with `OPTIQ_CONFIRMATION_VARIANT`;
 preparing this script does not start the queue or select a winner. Each run has
 a 1M cap, ten stochastic evaluation episodes every 5k, and 50k checkpoints.
@@ -274,10 +274,38 @@ discount, target update coefficients and evaluation settings are matched.
 Resolved configuration checks are saved in
 `outputs/v2_improvement/confirmation_common_protocol.json`.
 
-Any failure or explicit stop ends that worker before it starts the next seed.
+Each supervisor process owns one run; a failure or explicit stop does not launch
+another seed. The intended allocation is one v2/reference pair per GPU. The
+preceding single-process GPU load was about 46-50% and memory use below 1.5 GiB
+per process. This allocation seeks shorter total wall time; shared-GPU elapsed
+times must not be used as an isolated algorithm-throughput benchmark.
 Long runs remain subject to early-stop review against the matched reference;
 the queue is not permission to spend the full cap on a clearly poor candidate.
 Final claims must use all prescribed training seeds, fixed-step/tail performance
 and variability, not only a selected best checkpoint or episode confidence
 intervals. Exact soft-improvement assumptions and practical learned-critic
 limitations must remain separate from the empirical return comparison.
+
+### Selected next candidate
+
+The K256/minimum-Q experiments did not outperform the earlier conditional K64
+screen. At 100k, seed-0 last-three-evaluation returns were 446.43 with the
+two-standard-error filter and 595.98 without it, versus 794.65 for the earlier
+K64/mean-Q teacher. K and teacher Q aggregation changed together, so this is not
+an isolated sample-count ablation. The strong filter accepted only about 2% of
+proposed updates late in training.
+
+After the user clarified that the requested guarantee is the idealized SAC-style
+theoretical guarantee plus empirical validation, the next candidate is
+`mujoco_v2_checked`: the promising K64 conditional/NLL configuration, T=.1, with
+a positive estimated soft-gain check and no extra standard-error margin. The
+teacher still uses mean Q; the acceptance score uses the same frozen minimum Q
+for old and new policies. This is a new candidate, not a relabeling of any
+completed result. It is validated in the common Humanoid loop, but its long-run
+performance is not yet established. The four paired comparisons have 1M caps
+and remain subject to early termination.
+
+See [the precise soft-improvement theorem and limitations](V2_SOFT_POLICY_IMPROVEMENT.md).
+Exact policy evaluation alone is insufficient for arbitrary OT projections;
+the exact extraction/distillation or statewise acceptance assumptions must also
+be stated. The note includes a tested counterexample to a W2-only guarantee.
