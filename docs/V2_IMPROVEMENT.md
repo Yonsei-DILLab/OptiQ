@@ -594,3 +594,35 @@ The hypothetical hard-argmax projection TV diagnostic averaged .056--.083.
 The active loss uses full-row NLL, so this diagnostic is not its actual target
 mass error. Evidence: `outputs/v2_improvement/confirmation_algorithm_semantics_audit.json`
 and `confirmation_ot_numerics_0300000_0350000.json`.
+
+### Paired confirmation review: 400k
+
+The common 390k/395k/400k evaluations give:
+
+| Training seed | Checked K64 v2 | OptiQ reference | v2 / OptiQ |
+|---|---:|---:|---:|
+| 0 | 5080.31 | 4516.47 | 1.12 |
+| 1 | 4823.84 | 1614.96 | 2.99 |
+| 2 | 4973.05 | 2136.66 | 2.33 |
+| 3 | 5267.71 | 3728.41 | 1.41 |
+
+The four-seed means are 5036.23 versus 2999.12 (+67.9%), with seed SDs 186.75
+and 1353.26. All pairs are positive at this checkpoint. This is not an
+uninterrupted lead: reference seed 0 briefly exceeded v2 at 350k--360k. The
+candidate subsequently recovered. Current v2 drawdowns from rolling-mean peaks
+are 0.9%, 7.2%, 1.5% and 0%; the largest historical drops since 100k remain
+26.1%, 23.7%, 25.2% and 33.0%. These observations support continuing the runs,
+while leaving the final 900k--1M comparison and later stability unresolved.
+
+At exactly 400k, v2 ESS is 2.45--3.10/64, cumulative acceptance 56.9--58.3%,
+and the pre-discount entropy term -0.105 to +0.086. A negative differential
+entropy is possible and this magnitude is much smaller than the original
+v2's approximately -5 entropy contribution. The mean evaluation episode lengths
+are 957 versus 590 steps. Observed time to 400k is about 123.4 versus 82.4
+minutes under paired GPU sharing; this is not an isolated throughput benchmark.
+
+All sixteen 400k actor/critic checkpoints are present and nonempty. Continue
+all eight runs without a training change, review again at 500k, and inspect
+sooner if sustained deterioration or a runtime failure occurs. Evidence:
+`outputs/v2_improvement/confirmation_review_0400000.json` and
+`confirmation_report/step_0400000.*`. No push occurred.

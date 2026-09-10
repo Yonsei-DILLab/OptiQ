@@ -33,8 +33,9 @@ were stopped for poor performance; see [original design](docs/V2_IDAC.md) and
 ## Scalar-critic ablation (`mujoco-setting`)
 
 This branch starts from `critic-dime-no-anchor` and makes the default entry
-Humanoid-v4 with **256x3 scalar twin critics and TD MSE**. No-anchor sampling,
-actor learning are preserved. Critics use GELU, standard Adam betas (0.9,0.999),
+Humanoid-v4 with **256x3 scalar twin critics and TD MSE**. The `mujoco_setting`
+configuration includes candidate anchors and retains pointwise-MSE actor
+distillation. Critics use GELU, standard Adam betas (0.9,0.999),
 target-network min-Q backup and Polyak=0.005. Batch renorm is removed;
 there is one update per environment step (UTD=1).
 All five MuJoCo tasks use fixed beta=1 and seeds0,1,2 (15 runs). See
