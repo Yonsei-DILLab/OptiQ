@@ -626,3 +626,47 @@ all eight runs without a training change, review again at 500k, and inspect
 sooner if sustained deterioration or a runtime failure occurs. Evidence:
 `outputs/v2_improvement/confirmation_review_0400000.json` and
 `confirmation_report/step_0400000.*`. No push occurred.
+
+### Survival and locomotion check at 400k
+
+The independent CPU evaluator now records environment-reported forward reward,
+alive reward, negative control cost and x velocity. Per-model velocity is pooled
+over recorded environment steps, avoiding extra weight for short episodes.
+Episode records retain component sums and counts. Tests verify terminal-step
+inclusion and step-weighted pooling; no training code or random stream changes.
+
+All eight 400k checkpoints were evaluated on ten fresh episodes each, using seed
+base 1010000. This is a descriptive reward-composition check, not a replacement
+for the predefined final window or the larger fixed-checkpoint evaluation.
+
+| Training seed | v2 return | OptiQ return | v2 x velocity | OptiQ x velocity |
+|---|---:|---:|---:|---:|
+| 0 | 4992.9 | 4739.4 | 0.407 | 0.132 |
+| 1 | 5195.0 | 1864.7 | 0.262 | 0.088 |
+| 2 | 4777.7 | 2983.9 | 0.369 | 0.035 |
+| 3 | 4929.5 | 4371.2 | 0.343 | 0.176 |
+
+Velocity is in m/s. All v2 checkpoints move forward faster in this sample;
+longer survival is also a substantial source of the return advantage, especially
+for seeds 1 and 2. Both methods receive the same alive reward of 5 per step.
+v2's mean control cost is about .132--.140 per step, versus .084--.102 for
+OptiQ. Thus the gain is not a reduction of action cost or an altered reward.
+For all 80 episodes, the reported reward components reconstruct total return
+within 1e-7, and forward reward equals 1.25 times x velocity. These checks use
+the installed Humanoid-v4 implementation and actual environment outputs.
+
+Artifacts: `outputs/v2_improvement/confirmation_independent_0400000.json`,
+its `_validation.json` companion, and `confirmation_evaluation_metrics_tests.log`.
+
+### Transient seed-0 event at 430k
+
+v2 seed 0's single ten-episode evaluation mean fell from 4180 at 425k to 2389
+at 430k, then rose to 5055 at 435k. The three-checkpoint mean recovered to 5005
+at 445k. The logged Q, ESS and entropy term show no comparably large excursion,
+but do not identify the cause or rule out policy/critic errors. Different
+checkpoints use different policies and episodes. The ordinary 50k checkpoint
+series does not retain the 430k actor for independent re-evaluation. Preserve
+this event as evidence against a monotonic-stability claim and monitor recurrence;
+do not tune or restart the promising confirmation runs around it.
+
+Evidence: `outputs/v2_improvement/confirmation_seed0_event_0430000.json`.
