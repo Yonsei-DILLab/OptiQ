@@ -927,3 +927,42 @@ Evidence: `outputs/v2_improvement/confirmation_all_reference_completions.json`,
 `confirmation_historical_comparison/step_0700000.*`, and
 `confirmation_historical_comparison_validation.json`. Training code/configs
 remain unchanged from the confirmation launch. No push occurred.
+
+### Seed-1 750k dip: independent checkpoint reevaluation
+
+The saved 700k and 750k v2 actors were evaluated on 50 shared new episodes
+each, with environment seeds 1200000–1200049 and policy seeds
+1210000–1210049. This is a post-hoc diagnostic of one training seed, separate
+from the final comparison protocol. CPU evaluation uses the unchanged common
+stochastic prediction/unscale helper; all episodes, including time limits, count.
+
+| Frozen checkpoint | Original 10-episode return | New 50-episode return | Episode SD | Mean length | Time limits / 50 |
+|---|---:|---:|---:|---:|---:|
+| 700k | 5282.29 | 5280.62 | 29.69 | 1000.0 | 50 |
+| 750k | 3478.87 | 4350.38 | 1459.81 | 817.5 | 29 |
+
+The paired return difference is −930.23, with a conditional episode-bootstrap
+95% interval of [−1351.02, −547.45]. This interval concerns these two fixed
+models and shared test episodes, not uncertainty across training seeds. The
+original ten episodes exaggerated the observed loss, but a performance loss
+and higher early-termination frequency remain on fresh episodes. It must not
+be dismissed as evaluation noise alone. Later training evaluations recovered;
+these results do not identify the learning mechanism causing the temporary dip.
+
+Step-pooled forward velocity increases from .323 to .362 m/s. Net reward per
+recorded environment step also rises slightly, while mean episode length falls.
+This associates the return loss with reduced survival, not simply slower
+locomotion. Exact-step sampled diagnostics at 750k show Q 451.22, ESS 5.55/64,
+policy standard deviation .900, and finite actor/critic losses, with no comparably
+large change from nearby logged batches. Those sparse diagnostics cannot rule
+out localized Q errors or identify a causal mechanism. The raw-return change
+also is not a direct test of discounted entropy-regularized policy improvement.
+
+Reproduce with `scripts/evaluate_v2_checkpoint_event.py --seed 1 --steps
+700000 750000 --episodes 50 --seed-base 1200000 --output <new-output.json>`.
+The actor checkpoint hashes, all 100 episodes, evaluator source hashes, and
+reward-component reconstruction validation are retained in
+`outputs/v2_improvement/confirmation_seed1_event_0750000_independent.json`
+and its `_validation.json` companion; logged metrics are in
+`confirmation_seed1_event_0750000_diagnostics.json`. The maximum reward
+reconstruction error is 1.1e-11. Training code and settings were not changed.
