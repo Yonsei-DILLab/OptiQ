@@ -7,7 +7,6 @@ import flax.linen as nn
 import jax
 import jax.numpy as jnp
 import numpy as np
-import optax
 from flax.training.train_state import TrainState
 from gymnasium import spaces
 
@@ -17,6 +16,7 @@ from models.critic import VectorCritic
 from models.utils import activation_fn
 
 from .transport import clip_action
+from .optimizers import adam_with_grad_clip
 
 
 def kernel_init(scale: float = 1.0):
@@ -98,10 +98,11 @@ class OptiQPolicy(BaseJaxPolicy):
             batch_stats=qf_variables.get("batch_stats", {}),
             target_params=qf_variables["params"],
             target_batch_stats=qf_variables.get("batch_stats", {}),
-            tx=optax.adam(
+            tx=adam_with_grad_clip(
                 learning_rate=qf_learning_rate,
                 b1=self.cfg.alg.optimizer.critic_b1,
                 b2=self.cfg.alg.optimizer.critic_b2,
+                max_grad_norm=self.cfg.alg.optimizer.get("ac_grad_norm", None),
             ),
         )
         self.qf.apply = jax.jit(
@@ -120,10 +121,11 @@ class OptiQPolicy(BaseJaxPolicy):
             hidden_dims=tuple(self.cfg.alg.actor.hidden_dims),
         )
         actor_params = self.actor_model.init(actor_key, obs, latent)["params"]
-        actor_tx = optax.adam(
+        actor_tx = adam_with_grad_clip(
             learning_rate=self.cfg.alg.optimizer.lr_actor,
             b1=self.cfg.alg.optimizer.actor_b1,
             b2=self.cfg.alg.optimizer.actor_b2,
+            max_grad_norm=self.cfg.alg.optimizer.get("ac_grad_norm", None),
         )
         self.actor_state = TrainState.create(
             apply_fn=self.actor_model.apply,

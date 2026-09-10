@@ -31,6 +31,7 @@
 | TD backup | `min(Q1_target, Q2_target)` |
 | BN / batch renorm / layer norm / dropout | 모두 없음 |
 | Optimizer | Actor·critic 모두 Adam 기본 계수 (0.9, 0.999) |
+| Gradient clipping | Actor·critic 각각 global L2 norm ≤ 2, Adam 적용 전 (`alg.optimizer.ac_grad_norm=2.0`) |
 | Learning rate | Actor·critic 모두 0.0003 |
 | Discount γ | 0.99 |
 | Warmup | Actor·critic 모두 5,000 steps |
@@ -63,6 +64,12 @@
 이는 후보 위에서 β=1 density correction을 적용한다는 의미이며,
 유한 후보·OT argmax·actor fitting 이후의 정확한 Boltzmann 복원을 보장하는 주장은 아니다.
 Q-weight temperature=0.25와 critic target update τ=0.005는 서로 다른 값이다.
+
+Gradient clipping은 DIPO의 `ac_grad_norm` 방식으로, actor 파라미터 전체와
+twin critic 파라미터 전체에 각각 적용한다. Action gradient나 Adam 이후의
+parameter update를 clipping하는 것이 아니다. DIPO 기본 상한 2를 모든 환경에
+통일하며, DIPO 환경별 예외(Hopper=1, Ant=0.8)는 가져오지 않는다.
+`alg.optimizer.ac_grad_norm=null`로 비활성화할 수 있다.
 
 ## 4. 평가·로깅·체크포인트
 

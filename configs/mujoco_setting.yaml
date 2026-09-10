@@ -6,6 +6,9 @@ defaults:
   - _self_
 
 alg:
+  optimizer:
+    # DIPO-style actor/critic parameter-gradient L2 clipping, before Adam.
+    ac_grad_norm: 2.0
   actor:
     # 16 centers x (4 random candidates + 1 anchor) = 80 OT targets.
     num_policy_samples: 16

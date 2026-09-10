@@ -51,6 +51,7 @@ def test_only_requested_scalar_and_anchor_defaults_change(benchmark, seed):
     b['optimizer']['critic_b1'] = a['optimizer']['critic_b1']
     b['utd'] = a['utd']
     b['tau'] = a['tau']
+    assert b['optimizer'].pop('ac_grad_norm') == 2.0
     assert b['actor']['density_correction_beta'] == b['actor']['density_beta'] == 1.0
     for key in ['density_correction_beta', 'density_beta']:
         b['actor'][key] = a['actor'][key]
