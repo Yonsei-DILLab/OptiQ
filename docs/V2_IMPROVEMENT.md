@@ -739,3 +739,42 @@ source/checkpoint hashes, seeds, selected state indices and per-state results
 are preserved in `outputs/v2_improvement/entropy_diagnostic_0500000.json`;
 its `_validation.json` companion checks all four models and state averaging.
 No training parameter or running model was changed.
+
+### Paired confirmation review: 600k
+
+The common 590k/595k/600k evaluations give:
+
+| Training seed | Checked K64 v2 | OptiQ reference | v2 / OptiQ |
+|---|---:|---:|---:|
+| 0 | 5282.82 | 5115.14 | 1.033 |
+| 1 | 5263.29 | 4712.82 | 1.117 |
+| 2 | 4772.39 | 4919.84 | 0.970 |
+| 3 | 5377.46 | 4959.57 | 1.084 |
+
+The four-seed means are 5173.99 versus 4926.84 (+5.0%), with seed SDs 272.34
+and 165.71. Three pairs favor v2; seed 2 is 3.0% behind. The narrower overall
+gap and the negative seed-2 pair reinforce the need for the final fixed window.
+Current v2 drawdowns from rolling-mean peaks are 1.6%, 0%, 9.9% and .7%.
+Its largest rolling drawdowns since 100k remain unchanged and have observed
+recoveries; this does not exclude single-checkpoint dips or prove monotonicity.
+
+Normalized evaluation AUC through 600k is 3365.19 versus 2254.81 (+49.2%),
+with seed SDs 145.05 and 500.65. The earlier sample-efficiency advantage remains
+larger than the current return gap. Mean episode length in the recent three
+evaluations is 969 versus 975 steps: the current aggregate return advantage is
+associated with higher reward per environment step, rather than longer average
+survival in this particular window. Aggregate return per step is approximately
+5.337 versus 5.054; these are descriptive ratios, not additional success labels.
+
+At 600k, v2 ESS is 3.96--4.79/64, cumulative acceptance 57.6--59.1%, and the
+pre-discount entropy term +.089--+.212. Logged actor/critic losses and current/
+next Q values in 500k--600k are finite for all eight runs. All sixteen 600k
+actor/critic checkpoints are present and nonempty. Observed time to 600k is
+191.3 versus 132.4 minutes under paired GPU sharing.
+
+Continue all eight runs with the frozen training code/configuration, reviewing
+again at 700k or sooner for a sustained decline or runtime failure. The primary
+900k--1M window is still unavailable; final superiority and stability remain
+unverified. Evidence: `outputs/v2_improvement/confirmation_review_0600000.json`,
+`confirmation_assessment/step_0600000.json` and
+`confirmation_report/step_0600000.*`. No push occurred.
