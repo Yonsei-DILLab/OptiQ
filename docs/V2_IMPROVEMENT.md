@@ -1173,3 +1173,27 @@ The predeclared final window, checkpoint selection, and independent episode
 seeds are unchanged. All sixteen 950k actor/critic checkpoints were verified
 and recorded in `confirmation_checkpoints_0950000.json`. Training continues;
 the final evaluation service remains responsible for the full 1M comparison.
+
+### Full confirmation and independent evaluation completed
+
+All eight training runs and the final-processing service exited normally.
+All 21 primary-window checkpoints and sixteen final actor/critic files were
+verified. The primary 900k–1M means are 5362.67 for v2, 5051.65 for the matched
+zero-uniform control, and 5676.49 for the historical 10% behavior reference.
+Fresh 50-episode final-model means are 5397.09, 5224.07 and 5633.18, respectively.
+All 200 v2 final-model episodes reached the 1000-step horizon, but this does
+not erase the earlier independently verified checkpoint instability.
+
+The full result, uncertainty scope, timing caveat, stability comparisons and
+theory limitations are in [the Korean final report](V2_CONFIRMATION_RESULTS_KO.md).
+All 600 current/historical evaluation episodes, model hashes, shared seeds,
+reported means, and reward-component reconstructions were checked in
+`outputs/v2_improvement/confirmation_final_independent_validation.json`.
+The full training audit is in `confirmation_final_training_audit.json`.
+
+This candidate's confirmation is finished, but the overall goal is not met:
+the stronger historical reference remains ahead, and finite sampled checks
+do not establish true statewise improvement. Further changes must retain
+those unresolved requirements. No new training variant has been launched yet;
+the next read-only diagnostic examines the final actors' use of latent z
+relative to conditional Gaussian noise. No push occurred.

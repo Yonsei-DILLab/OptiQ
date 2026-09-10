@@ -8,8 +8,11 @@ candidate is **`mujoco_v2_checked`**: fixed T=0.1, a learned conditional-Gaussia
 mixture teacher with standard-deviation floor 0.05, full-OT conditional NLL,
 and a sampled soft-value update check. It uses scalar 256x3 twin critics,
 16x64 OT, beta=1, M=16 entropy components, no teacher anchors and no extra uniform
-behavior exploration. Four paired training seeds (0/1/2/3) are being compared to
-OptiQ; final superiority and stability are still under evaluation.
+behavior exploration. All four paired seeds (0/1/2/3) completed 1M. The fixed
+900k–1M mean is 5363 versus 5052 for the matched OptiQ control, but below the
+stronger historical 10%-exploration reference (5676). Fresh final-policy
+evaluations also favor the matched control comparison, while leaving the
+historical performance gap unresolved. See the [full results](docs/V2_CONFIRMATION_RESULTS_KO.md).
 
 See the [investigation and confirmation protocol](docs/V2_IMPROVEMENT.md),
 [current algorithm explanation in Korean](docs/V2_CURRENT_ALGORITHM_KO.md),
@@ -26,7 +29,8 @@ OPTIQ_CONFIG=mujoco_v2_checked scripts/run_v2.sh 0
 
 The original `mujoco_v2` config remains reproducible with T=0.5, realized-action
 pre-tanh KDE bandwidth 0.8 and pointwise MSE. It is still the bare launcher's
-default while the confirmation candidate is being evaluated. Its original runs
+default for historical reproduction; explicitly select the checked candidate
+with `OPTIQ_CONFIG=mujoco_v2_checked`. Its original runs
 were stopped for poor performance; see [original design](docs/V2_IDAC.md) and
 [initial calibration](docs/V2_CALIBRATION_RESULTS.md) for historical details.
 
