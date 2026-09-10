@@ -851,3 +851,39 @@ are preserved in `outputs/v2_improvement/historical_behavior010_independent_1000
 and its `_validation.json` companion. Evaluation seeds and the common evaluator
 hash are fixed in `confirmation_final_independent_protocol.json`. No training
 run was changed and no push occurred.
+
+### Paired confirmation review: 700k
+
+The common 690k/695k/700k evaluations give:
+
+| Training seed | Checked K64 v2 | Current OptiQ, behavior 0 | Historical OptiQ, behavior .1 |
+|---|---:|---:|---:|
+| 0 | 5387.37 | 5094.55 | 5715.31 |
+| 1 | 5147.60 | 4971.31 | 5154.76 |
+| 2 | 4936.84 | 4667.26 | 5127.33 |
+| 3 | 5437.64 | 4605.71 | 5522.40 |
+
+The current four-seed means are 5227.36 versus 4834.71 (+8.1%), with seed SDs
+231.36 and 235.70. All four matched zero-uniform pairs favor v2. However, the
+historical 10% behavior reference averages 5379.95 (seed SD 287.11) at these
+same steps, placing current v2 2.8% below that stronger historical setting.
+The earlier reference is retained as a separate comparison; no causal effect
+of exploration alone is inferred from runs with different recorded source
+revisions and collection histories. General superiority over the prior stronger
+OptiQ result has not been established.
+
+Current v2 drawdowns from rolling-mean peaks are .8%, 2.4%, 6.8% and 1.7%.
+There is no early-stop condition. At 700k, ESS is 4.22--5.90/64, cumulative
+acceptance 57.8--59.4%, and the pre-discount entropy term +.191--+.334. All
+inspected actor/critic losses and current/next Q values in 600k--700k are finite.
+Mean evaluation episode lengths are 974 versus 942 steps for the current
+paired methods. Observed time to 700k is 225.6 versus 158.4 minutes under paired
+GPU sharing, not an isolated speed benchmark.
+
+All sixteen 700k actor/critic checkpoints are present and nonempty. Continue
+the frozen confirmation through the primary 900k--1M window; review again at
+800k or sooner if a sustained decline or runtime failure warrants it. Final
+performance and stability remain unverified. Evidence:
+`outputs/v2_improvement/confirmation_review_0700000.json`,
+`confirmation_assessment/step_0700000.json` and
+`confirmation_report/step_0700000.*`. No push occurred.
