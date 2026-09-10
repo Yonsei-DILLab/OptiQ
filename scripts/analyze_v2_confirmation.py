@@ -69,6 +69,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, default=ROOT / "outputs/v2_improvement/confirmation_manifest.json")
     parser.add_argument("--output", type=Path, default=ROOT / "outputs/v2_improvement/confirmation_report")
+    parser.add_argument("--through-step", type=int,
+                        help="Limit evaluation comparisons to this environment step; runtime diagnostics remain current.")
     args = parser.parse_args()
     manifest = json.loads(args.manifest.read_text())
     assert len(manifest["runs"]) == 8
@@ -79,6 +81,13 @@ def main():
                                    text=True, capture_output=True)
     statuses = {line.split()[0]: line.split()[1] for line in status_result.stdout.splitlines() if len(line.split()) >= 2}
     runs = {key: read_run(item, manifest["eval_episodes"]) for key, item in items.items()}
+    if args.through_step is not None:
+        if args.through_step < 1:
+            parser.error("--through-step must be positive")
+        for run in runs.values():
+            selected = run["steps"] <= args.through_step
+            run["steps"] = run["steps"][selected]
+            run["returns"] = run["returns"][selected]
     pairs = {}
     for seed in range(4):
         a, b = runs[seed, "v2"], runs[seed, "optiq"]
@@ -91,6 +100,7 @@ def main():
     scores = {method: values[:, -3:].mean(axis=1) for method, values in curves.items()}
     gap = scores["v2"] - scores["optiq"]
     report = {"generated_utc": datetime.now(timezone.utc).isoformat(),
+              "requested_evaluation_cutoff": args.through_step,
               "common_step_all_four_seeds": int(common[-1]),
               "aggregate": {method: {"mean": float(values.mean()), "seed_sd": float(values.std(ddof=1)),
                                       "seed_scores": values.tolist()} for method, values in scores.items()},
@@ -140,7 +150,9 @@ def main():
         axes[0].plot(common/1000, mean, color=colors[method], label=method)
         axes[0].fill_between(common/1000, mean-sd, mean+sd, color=colors[method], alpha=.15)
     for seed, pair in pairs.items():
-        axes[1].plot(pair["steps"]/1000, pair["v2"] / np.maximum(pair["optiq"], 1e-8), label=f"seed {seed}")
+        selected = pair["steps"] <= common[-1]
+        axes[1].plot(pair["steps"][selected]/1000,
+                     pair["v2"][selected] / np.maximum(pair["optiq"][selected], 1e-8), label=f"seed {seed}")
     axes[1].axhline(1., color="black", linestyle="--", linewidth=1)
     axes[0].set_ylabel("Evaluation return"); axes[1].set_ylabel("v2 / OptiQ at matching steps")
     axes[0].set_title("Four-seed mean and SD"); axes[1].set_title("Individual paired seeds")

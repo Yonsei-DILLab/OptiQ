@@ -380,3 +380,96 @@ Decision and exact diagnostics:
 `outputs/v2_improvement/confirmation_review_0150000.json`.
 The report and figure are under `confirmation_report/step_0150000.*` in the same
 directory. No training algorithm or configuration changed, and no push occurred.
+
+### Frozen-policy critic check after the 150k drawdown
+
+The existing read-only CPU diagnostic evaluated the saved 150k actors and
+critics for seeds 0 and 2 on 20 fresh shared environment/policy seeds each.
+Seed 0 was selected because of its recent return drawdown; seed 2 was rising.
+This is a diagnostic of frozen critics, not an additional benchmark comparison.
+
+| Quantity | Seed 0 | Seed 2 |
+|---|---:|---:|
+| True-terminal episodes included | 17 | 20 |
+| Time-limit episodes excluded | 3 | 0 |
+| Mean initial minimum Q prediction | 319.35 | 306.46 |
+| Mean initial Monte Carlo soft Q, lower estimator | 479.85 | 480.51 |
+| Mean prediction minus Monte Carlo estimate | -160.50 | -174.05 |
+| Episodes with positive initial prediction error | 1/17 | 0/20 |
+| Mean upper-minus-lower Monte Carlo entropy contribution | .000504 | .000224 |
+
+The observed initial Q values underestimate these true-terminal trajectory
+returns on average in both policies. Neither systematic initial-state Q
+overestimation nor a large finite-mixture entropy bracket gap explains this
+specific probe. It does not rule out inaccurate action rankings, overestimation
+on replay states, or other critic feedback problems. The means condition on
+true-terminal episodes, especially for seed 0; they are not unconditional
+policy-return estimates or uniform critic-error bounds. Each policy visits its
+own states, so cross-policy error differences are not causally identified.
+
+During continued training, seed 0's recent evaluation average recovered to
+2016.56 at 165k. The 150k dip therefore did not immediately develop into a
+sustained collapse. No algorithm or configuration changes were made in response
+to this short fluctuation. Raw evidence and limitations are saved in
+`outputs/v2_improvement/confirmation_150k_soft_critic{,_summary}.json`.
+
+### Final confirmation assessment, fixed before 200k
+
+The primary completed-run comparison will use the mean evaluation return over
+900k through 1M inclusive, first averaged within each training seed and then
+across the four prescribed seeds. This fixes the final 100k window before the
+outcome is available. Also report the 1M checkpoint, each paired seed difference,
+seed SD, the weakest seed, and the full common-step learning curves. Individual
+evaluation episodes are not additional independent training seeds.
+
+Stability assessment will include drawdowns of the three-evaluation rolling
+mean after 100k, their duration and recovery, and comparisons to the same
+baseline measurements. A peak or a favorable short interval is insufficient.
+Training failures or early-stopped seeds remain in the record; they cannot be
+silently excluded to manufacture a successful four-seed result. The current
+interim gains do not complete the goal of stable final superiority.
+
+Observed wall time is reported separately from environment-step efficiency,
+with the paired-GPU resource-sharing qualification. The ideal soft-improvement
+theorem retains its exact extraction/distillation or exact statewise acceptance
+conditions; empirical return gains do not remove those assumptions or certify
+the sampled replay-average acceptance filter.
+
+### Paired confirmation review: 200k
+
+The common 190k/195k/200k evaluations give:
+
+| Training seed | Checked K64 v2 | OptiQ reference | v2 / OptiQ |
+|---|---:|---:|---:|
+| 0 | 3491.13 | 832.37 | 4.19 |
+| 1 | 3041.00 | 786.60 | 3.87 |
+| 2 | 2352.62 | 1011.01 | 2.33 |
+| 3 | 2109.94 | 874.36 | 2.41 |
+
+Across seeds, the means are 2748.67 versus 876.09 (3.14x), with SDs 632.86 and
+96.83. The mean paired difference is +1872.59. All prescribed seeds remain in
+the comparison. Seed 0 recovered from the 150k drawdown; the slowest v2 seed
+also improved. This still establishes only interim performance, not stable
+final superiority. Continue all eight runs, with the next principal review
+at 300k and earlier review if a sustained deterioration or runtime failure
+appears.
+
+At 200k, v2 ESS is 2.01-2.27/64 and cumulative update acceptance is 54.2-55.9%.
+The pre-discount entropy contribution remains positive, +0.15 to +0.24. The
+mean evaluation episode length is approximately 545 steps versus 173 for OptiQ;
+return per step is near 5.0 in both. Observed mean time to 200k is about 57.6
+minutes for v2 and 39.4 minutes for OptiQ under the existing paired-GPU allocation.
+
+All sixteen 200k actor/critic checkpoints are present and nonempty. The decision
+record is `outputs/v2_improvement/confirmation_review_0200000.json`, with fixed
+figures and the report in `confirmation_report/step_0200000.*`. The CPU diagnostic
+is finished, all eight training processes remain live, and no training algorithm,
+configuration or remote branch was changed during this review.
+
+The read-only reporter now accepts `--through-step 200000` to reproduce a
+fixed milestone from later logs. Both plotted panels end at the shared horizon,
+so faster seeds' later checkpoints do not leak into a milestone figure. Runtime
+health diagnostics remain current and are distinct from the evaluation cutoff.
+Rebuilding the 100k and 200k comparisons reproduced every preserved seed score
+within 1e-9; all pair comparisons ended at the requested step. Validation:
+`outputs/v2_improvement/confirmation_cutoff_validation.json`.
