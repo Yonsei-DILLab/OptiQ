@@ -1,6 +1,7 @@
-"""Train OptiQ; default: no-anchor Humanoid-v4 with 256x3 scalar twin critics."""
+"""Train OptiQ; default: v2 semi-implicit Humanoid with scalar twin critics."""
 
 import json
+import math
 import os
 from pathlib import Path
 from datetime import datetime, timezone
@@ -37,11 +38,40 @@ def is_tracked_environment(cfg):
 
 def validate_config(cfg):
     is_mujoco = is_tracked_environment(cfg)
+    if not 0.0 <= float(cfg.alg.get("behavior_uniform_probability", 0.0)) <= 1.0:
+        raise ValueError("behavior_uniform_probability must be between 0 and 1")
     if not is_mujoco and not cfg.env_name.startswith("dm_control/"):
         raise ValueError(f"Unsupported environment: {cfg.env_name}")
     if cfg.env_name.startswith("dm_control/dog-") and cfg.task not in DOG_TASKS:
         raise ValueError(f"Invalid Dog task: {cfg.task}")
     actor = cfg.alg.actor
+    if actor.get("type", "implicit") not in {"implicit", "semi_implicit"}:
+        raise ValueError("actor.type must be implicit or semi_implicit")
+    if actor.get("type", "implicit") == "semi_implicit":
+        if actor.include_anchor or not actor.density_correction or actor.density_beta != 1.0:
+            raise ValueError("v2 requires no teacher anchors and full beta=1 density correction")
+        if actor.adaptive_density_beta:
+            raise ValueError("v2 requires fixed density beta")
+        if actor.entropy_samples < 1 or int(actor.entropy_samples) != actor.entropy_samples:
+            raise ValueError("entropy_samples must be a positive integer")
+        if not all(math.isfinite(float(actor[k])) for k in
+                   ("log_std_min", "log_std_max", "initial_log_std", "proposal_std_pretanh", "temperature")):
+            raise ValueError("v2 scales and log-std limits must be finite")
+        if not actor.log_std_min <= actor.initial_log_std <= actor.log_std_max or actor.log_std_min >= actor.log_std_max:
+            raise ValueError("initial_log_std must lie within ordered log_std limits")
+        if any(not math.isfinite(float(actor[k])) or actor[k] < 0 for k in
+               ("mean_output_init_scale", "log_std_output_init_scale")):
+            raise ValueError("Output initialization scales must be finite and nonnegative")
+        if actor.proposal_std_pretanh <= 0 or actor.proposal_std != actor.proposal_std_pretanh:
+            raise ValueError("proposal_std must equal the positive pre-tanh KDE bandwidth")
+        if actor.td_noise_std != 0 or actor.td_noise_clip != 0:
+            raise ValueError("v2 policy entropy backup must not add TD smoothing")
+        if cfg.alg.ent_coef.type != "const" or cfg.alg.ent_coef.init != actor.temperature:
+            raise ValueError("v2 backup entropy coefficient must equal the Boltzmann temperature")
+        if cfg.alg.critic.get("crossq_style", True):
+            raise ValueError("v2 uses target critics; crossq_style must be false")
+    if actor.sinkhorn_iterations < 1 or not math.isfinite(float(actor.sinkhorn_epsilon)) or actor.sinkhorn_epsilon <= 0:
+        raise ValueError("Sinkhorn epsilon and iteration count must be positive")
     if actor.get("distillation_loss", "pointwise_mse") != "pointwise_mse":
         raise ValueError("Only pointwise_mse distillation is implemented")
     if "density_correction_beta" in actor and actor.density_correction_beta != actor.density_beta:
@@ -188,7 +218,9 @@ def initialize_and_run(cfg: DictConfig):
             entity=os.environ.get("WANDB_ENTITY") or cfg.wandb.entity,
             mode=cfg.wandb.mode,
             sync_tensorboard=not is_mujoco,
-            tags=["optiq", "dime-critic", cfg.env_name, cfg.alg.actor.proposal_sampling_mode],
+            tags=["optiq", "scalar-critic" if cfg.alg.critic.n_atoms == 1 else "dime-critic",
+                  cfg.env_name, cfg.alg.actor.proposal_sampling_mode,
+                  cfg.alg.actor.get("type", "implicit")],
             dir=cfg.output_root if is_mujoco else None,
             save_code=False,
         )
@@ -215,6 +247,16 @@ def initialize_and_run(cfg: DictConfig):
             }
             if cfg.env_name in MYOSUITE_ENVS:
                 environment_metadata["success_criterion"] = f"sum(solved) > {cfg.successful_steps} per episode"
+            if cfg.alg.actor.get("type", "implicit") == "semi_implicit":
+                environment_metadata.update(
+                    policy="tanh(mu(s,z)+sigma(s,z)*eps)",
+                    entropy_estimator="IDAC self-inclusive conditional mixture in normalized action coordinates",
+                    entropy_components=int(cfg.alg.actor.entropy_samples),
+                    teacher="separate Gaussian KDE centered on realized student pre-tanh samples",
+                    teacher_bandwidth_space="pre-tanh", teacher_hard_cutoff=False,
+                    backup_policy="current actor", td_smoothing=False,
+                    ot_cost="mean-normalized squared action distance" if cfg.alg.actor.normalize_ot_cost else "squared action distance",
+                )
             run.config.update({"environment": environment_metadata})
             wandb_config["environment"] = environment_metadata
             (Path(cfg.output_root) / "config.json").write_text(json.dumps(wandb_config, indent=2))
@@ -256,7 +298,7 @@ def initialize_and_run(cfg: DictConfig):
                     callback.eval_env.close()
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="mujoco_setting")
+@hydra.main(version_base=None, config_path="configs", config_name="mujoco_v2")
 def main(cfg: DictConfig) -> None:
     try:
         if cfg.use_jit:

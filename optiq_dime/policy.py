@@ -39,6 +39,30 @@ class ImplicitActor(nn.Module):
         )(x)
 
 
+class SemiImplicitActor(nn.Module):
+    """One forward pass supplies a conditional Gaussian, followed by tanh."""
+
+    action_dim: int
+    hidden_dims: Sequence[int]
+    log_std_min: float
+    log_std_max: float
+    initial_log_std: float
+    mean_output_init_scale: float = 1.0e-4
+    log_std_output_init_scale: float = 0.0
+
+    @nn.compact
+    def __call__(self, observations, latents):
+        x = jnp.concatenate((observations, latents), axis=-1)
+        for width in self.hidden_dims:
+            x = nn.gelu(nn.Dense(width, kernel_init=kernel_init())(x))
+        mu = nn.Dense(self.action_dim, kernel_init=kernel_init(self.mean_output_init_scale), name="mu")(x)
+        raw_log_std = nn.Dense(
+            self.action_dim, kernel_init=kernel_init(self.log_std_output_init_scale),
+            bias_init=nn.initializers.constant(self.initial_log_std), name="log_std",
+        )(x)
+        return mu, jnp.clip(raw_log_std, self.log_std_min, self.log_std_max)
+
+
 class OptiQPolicy(BaseJaxPolicy):
     """SB3-compatible normalized policy with one network evaluation per action."""
 
@@ -116,10 +140,19 @@ class OptiQPolicy(BaseJaxPolicy):
             ),
         )
 
-        self.actor_model = ImplicitActor(
-            action_dim=action_dim,
-            hidden_dims=tuple(self.cfg.alg.actor.hidden_dims),
-        )
+        actor_cfg = self.cfg.alg.actor
+        if actor_cfg.get("type", "implicit") == "semi_implicit":
+            self.actor_model = SemiImplicitActor(
+                action_dim=action_dim, hidden_dims=tuple(actor_cfg.hidden_dims),
+                log_std_min=actor_cfg.log_std_min, log_std_max=actor_cfg.log_std_max,
+                initial_log_std=actor_cfg.initial_log_std,
+                mean_output_init_scale=actor_cfg.mean_output_init_scale,
+                log_std_output_init_scale=actor_cfg.log_std_output_init_scale,
+            )
+        else:
+            self.actor_model = ImplicitActor(
+                action_dim=action_dim, hidden_dims=tuple(actor_cfg.hidden_dims),
+            )
         actor_params = self.actor_model.init(actor_key, obs, latent)["params"]
         actor_tx = adam_with_grad_clip(
             learning_rate=self.cfg.alg.optimizer.lr_actor,
@@ -142,6 +175,15 @@ class OptiQPolicy(BaseJaxPolicy):
     @staticmethod
     @partial(jax.jit, static_argnames=["deterministic"])
     def sample_action(actor_state, observations, key, deterministic=False):
+        if "mu" in actor_state.params:
+            latent_key, noise_key = jax.random.split(key)
+            shape = (observations.shape[0], actor_state.params["mu"]["bias"].shape[0])
+            z = (jnp.zeros(shape, dtype=observations.dtype) if deterministic else
+                 jax.random.normal(latent_key, shape, dtype=observations.dtype))
+            mu, log_std = actor_state.apply_fn({"params": actor_state.params}, observations, z)
+            eps = (jnp.zeros_like(mu) if deterministic else
+                   jax.random.normal(noise_key, shape, dtype=observations.dtype))
+            return jnp.tanh(mu + jnp.exp(log_std) * eps)
         output_layer = f"Dense_{len(actor_state.params) - 1}"
         latent_shape = (observations.shape[0],) + (
             actor_state.params[output_layer]["bias"].shape[0],

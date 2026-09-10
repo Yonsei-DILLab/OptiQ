@@ -1,5 +1,21 @@
 The Code for the DIME paper submission at ICML2025.
 
+## OptiQ v2: IDAC entropy with an OT actor
+
+Branch `v2` adds a one-step tanh-Gaussian semi-implicit actor, self-inclusive
+IDAC entropy estimates for soft TD targets, and a separate pre-tanh KDE teacher.
+It reuses the common MuJoCo training path with scalar twin critics, 16x64 OT,
+beta=1, and no teacher anchors. The calibrated Humanoid default is fixed T=0.5,
+M=16 entropy components, pre-tanh teacher bandwidth h=0.8, and no extra uniform
+exploration after warmup. See [v2 design and launch](docs/V2_IDAC.md) and the
+[calibration evidence](docs/V2_CALIBRATION_RESULTS.md).
+
+```bash
+scripts/run_v2.sh --list
+scripts/run_v2.sh 0 --check
+scripts/run_v2.sh 0
+```
+
 ## Scalar-critic ablation (`mujoco-setting`)
 
 This branch starts from `critic-dime-no-anchor` and makes the default entry

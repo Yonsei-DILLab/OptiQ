@@ -15,6 +15,9 @@ from diffusion.dime import DIME
 
 from .policy import OptiQPolicy
 from .critic_utils import critic_expectation
+from .semi_implicit import (
+    PretanhTeacherKDE, conditional_mixture_log_prob, idac_action_and_log_density,
+)
 from .transport import (
     TruncatedGaussianKDE,
     clip_action,
@@ -39,6 +42,46 @@ class OptiQDIME(DIME):
         # DIME defaults to live-network CrossQ; scalar defaults select a
         # conventional target critic explicitly without changing legacy runs.
         self.crossq_style = bool(self.cfg.alg.critic.get("crossq_style", True))
+        self.behavior_uniform_probability = float(
+            self.cfg.alg.get("behavior_uniform_probability", 0.0)
+        )
+        if not 0.0 <= self.behavior_uniform_probability <= 1.0:
+            raise ValueError("behavior_uniform_probability must be between 0 and 1")
+        self.behavior_rng = np.random.default_rng(
+            np.random.SeedSequence([int(self.seed or 0), 510010])
+        )
+        self.behavior_uniform_count = 0
+        self.behavior_action_count = 0
+
+    def _sample_action(self, learning_starts, action_noise=None, n_envs=1):
+        # Always consume the original actor/warmup RNG sequence first. This hook
+        # changes collection only; evaluation and TD targets use predict/sample_action.
+        action, buffer_action = super()._sample_action(
+            learning_starts, action_noise, n_envs
+        )
+        probability = self.behavior_uniform_probability
+        if self.num_timesteps < learning_starts or probability == 0.0:
+            return action, buffer_action
+
+        # One Bernoulli decision per environment, replacing the entire action.
+        selected = self.behavior_rng.random(n_envs) < probability
+        uniform = self.behavior_rng.uniform(
+            -1.0, 1.0, size=buffer_action.shape
+        ).astype(buffer_action.dtype)
+        mask = selected.reshape((n_envs,) + (1,) * (buffer_action.ndim - 1))
+        buffer_action = np.where(mask, uniform, buffer_action)
+        action = self.policy.unscale_action(buffer_action)
+
+        self.behavior_uniform_count += int(selected.sum())
+        self.behavior_action_count += n_envs
+        self.logger.record("rollout/behavior_uniform_probability", probability)
+        self.logger.record("rollout/behavior_uniform_count", self.behavior_uniform_count)
+        self.logger.record("rollout/behavior_action_count", self.behavior_action_count)
+        self.logger.record(
+            "rollout/behavior_uniform_fraction",
+            self.behavior_uniform_count / self.behavior_action_count,
+        )
+        return action, buffer_action
 
     def train(self, batch_size, gradient_steps):
         data = self.replay_buffer.sample(
@@ -117,6 +160,9 @@ class OptiQDIME(DIME):
             actor.transport_target_mode,
             actor.td_noise_std,
             actor.td_noise_clip,
+            actor.get("type", "implicit") == "semi_implicit",
+            int(actor.get("entropy_samples", 16)),
+            bool(actor.get("normalize_ot_cost", True)),
         )
         self._n_updates += gradient_steps
 
@@ -147,7 +193,8 @@ class OptiQDIME(DIME):
         diagnostic_interval = int(self.cfg.get("diagnostic_interval", 0))
         diagnostic_due = diagnostic_interval > 0 and self.num_timesteps % diagnostic_interval == 0
         core_metrics = {"actor_loss", "critic_loss", "current_q_values", "next_q_values",
-                        "entrQ_1", "entrQ_2", "ent_coef"}
+                        "entrQ_1", "entrQ_2", "ent_coef", "backup_entropy_lower",
+                        "backup_entropy_term", "policy_entropy_lower", "actor_std_mean"}
         anchor_metrics = {"local_best_q_gain_over_anchor", "local_improvement_fraction",
                           "local_anchor_argmax_fraction", "twin_local_delta_correlation",
                           "twin_local_improvement_sign_agreement"}
@@ -175,6 +222,8 @@ class OptiQDIME(DIME):
             "v_min",
             "v_max",
             "entr_coeff",
+            "semi_implicit",
+            "entropy_samples",
         ],
     )
     def update_critic(
@@ -196,6 +245,9 @@ class OptiQDIME(DIME):
         td_noise_std: float,
         td_noise_clip: float,
         key,
+        semi_implicit: bool = False,
+        entropy_samples: int = 16,
+        temperature: float = 0.25,
     ):
         (
             key,
@@ -205,17 +257,22 @@ class OptiQDIME(DIME):
             dropout_key_current,
             redq_key,
         ) = jax.random.split(key, 6)
-        next_actions = OptiQPolicy.sample_action(
-            target_actor_state, next_observations, actor_key, deterministic=False
-        )
-        next_actions = sample_truncated_gaussian(
-            noise_key,
-            next_actions,
-            repeats=1,
-            std=td_noise_std,
-            perturb_clip=td_noise_clip,
-            include_anchor=False,
-        )[:, 0]
+        if semi_implicit:
+            # _train passes the CURRENT actor here. All M components, including
+            # the action's generating component, come from that same actor.
+            next_actions, next_log_density = idac_action_and_log_density(
+                target_actor_state, next_observations, actor_key, entropy_samples
+            )
+            entropy_adjustment = jax.lax.stop_gradient(-temperature * next_log_density)
+        else:
+            next_actions = OptiQPolicy.sample_action(
+                target_actor_state, next_observations, actor_key, deterministic=False
+            )
+            next_actions = sample_truncated_gaussian(
+                noise_key, next_actions, repeats=1, std=td_noise_std,
+                perturb_clip=td_noise_clip, include_anchor=False,
+            )[:, 0]
+            entropy_adjustment = jnp.zeros_like(rewards)
         next_actions = jax.lax.stop_gradient(next_actions)
 
         def critic_loss(params, batch_stats, dropout_key):
@@ -266,10 +323,11 @@ class OptiQDIME(DIME):
 
             if num_atoms == 1:
                 # Conventional clipped double-Q backup for scalar critics.
-                # Scalar Q has no categorical support clipping or entropy loss.
+                # Scalar Q has no categorical support clipping or categorical
+                # entropy regularizer; v2 policy entropy enters its TD target.
                 next_q = next_q_values[..., 0].min(axis=0)
                 target_q = jax.lax.stop_gradient(
-                    rewards + (1.0 - dones) * gamma * next_q
+                    rewards + (1.0 - dones) * gamma * (next_q + entropy_adjustment)
                 )
                 current_q = current_q_values[..., 0]
                 loss = jnp.square(current_q - target_q[None, :]).mean(axis=1).sum()
@@ -282,7 +340,8 @@ class OptiQDIME(DIME):
             def projection(next_dist):
                 delta_z = (v_max - v_min) / (num_atoms - 1)
                 target_z = jnp.clip(
-                    rewards[:, None] + (1.0 - dones[:, None]) * gamma * z_atoms,
+                    rewards[:, None] + (1.0 - dones[:, None]) * gamma
+                    * (z_atoms + entropy_adjustment[:, None]),
                     a_min=v_min,
                     a_max=v_max,
                 )
@@ -356,8 +415,18 @@ class OptiQDIME(DIME):
             "next_q_values": target_q,
             "entrQ_1": entropy_1,
             "entrQ_2": entropy_2,
-            "ent_coef": jnp.asarray(0.0),
+            "ent_coef": jnp.asarray(temperature if semi_implicit else 0.0),
         }
+        if semi_implicit:
+            metrics.update(
+                backup_entropy_lower=-next_log_density.mean(),
+                backup_entropy_term=entropy_adjustment.mean(),
+                backup_discounted_entropy_term=((1.0 - dones) * gamma * entropy_adjustment).mean(),
+                backup_entropy_std=next_log_density.std(),
+                reward_mean=rewards.mean(),
+                reward_abs_mean=jnp.abs(rewards).mean(),
+                backup_action_saturation_fraction=jnp.mean(jnp.abs(next_actions) > 0.99),
+            )
         return qf_state, metrics, key
 
     @staticmethod
@@ -374,6 +443,8 @@ class OptiQDIME(DIME):
             "sinkhorn_iterations",
             "source_q_eval",
             "transport_target_mode",
+            "semi_implicit",
+            "normalize_ot_cost",
         ],
     )
     def update_actor(
@@ -398,15 +469,18 @@ class OptiQDIME(DIME):
         sinkhorn_iterations: int,
         source_q_eval: str,
         transport_target_mode: str,
+        semi_implicit: bool = False,
+        normalize_ot_cost: bool = True,
     ):
         key, latent_key, proposal_key, dropout_key = jax.random.split(key, 4)
         batch_size, observation_dim = observations.shape
 
         def actor_loss(actor_params):
-            output_layer = f"Dense_{len(actor_params) - 1}"
+            output_layer = "mu" if semi_implicit else f"Dense_{len(actor_params) - 1}"
             action_dim = actor_params[output_layer]["bias"].shape[0]
+            z_key, eps_key = jax.random.split(latent_key) if semi_implicit else (latent_key, latent_key)
             latents = jax.random.normal(
-                latent_key,
+                z_key,
                 (batch_size, num_policy_samples, action_dim),
                 dtype=observations.dtype,
             )
@@ -414,32 +488,53 @@ class OptiQDIME(DIME):
                 observations[:, None, :],
                 (batch_size, num_policy_samples, observation_dim),
             )
-            raw_actions = actor_state.apply_fn(
+            actor_output = actor_state.apply_fn(
                 {"params": actor_params},
                 repeated_observations.reshape(batch_size * num_policy_samples, -1),
                 latents.reshape(batch_size * num_policy_samples, action_dim),
-            ).reshape(batch_size, num_policy_samples, action_dim)
-            policy_samples = clip_action(raw_actions)
+            )
+            if semi_implicit:
+                mu, log_std = [x.reshape(batch_size, num_policy_samples, action_dim) for x in actor_output]
+                # Same latent/noise realization is used for the student forward
+                # value and its gradient; teacher construction is stopped below.
+                student_noise = jax.random.normal(
+                    eps_key, mu.shape, dtype=mu.dtype
+                )
+                student_u = mu + jnp.exp(log_std) * student_noise
+                raw_actions = policy_samples = jnp.tanh(student_u)
+            else:
+                raw_actions = actor_output.reshape(batch_size, num_policy_samples, action_dim)
+                policy_samples = clip_action(raw_actions)
             # Define the KDE from actor centers BEFORE drawing its random candidates.
             # Density evaluation below uses this very same distribution, never a
             # KDE fitted to the newly drawn candidate cloud.
-            proposal_kde = TruncatedGaussianKDE.from_centers(
-                jax.lax.stop_gradient(policy_samples), proposal_std, proposal_clip
-            )
-            if proposal_sampling_mode == "stratified":
+            if semi_implicit:
+                if include_anchor:
+                    raise ValueError("Semi-implicit teacher candidates must not contain anchors")
+                proposal_kde = PretanhTeacherKDE(jax.lax.stop_gradient(student_u), proposal_std)
+                proposals, proposal_u, proposal_component_indices = proposal_kde.sample(
+                    proposal_key, proposals_per_policy_sample, proposal_sampling_mode
+                )
+            else:
+                proposal_kde = TruncatedGaussianKDE.from_centers(
+                    jax.lax.stop_gradient(policy_samples), proposal_std, proposal_clip
+                )
+            if not semi_implicit and proposal_sampling_mode == "stratified":
                 sampled = proposal_kde.sample_stratified(
                     proposal_key, proposals_per_policy_sample, include_anchor
                 )
-            elif proposal_sampling_mode == "exact":
+            elif not semi_implicit and proposal_sampling_mode == "exact":
                 sampled = sample_truncated_gaussian_mixture(
                     proposal_key, proposal_kde.centers, proposals_per_policy_sample,
                     proposal_std, proposal_clip, include_anchor, return_component_indices=True,
                 )
-            else:
+            elif not semi_implicit:
                 raise ValueError(
                     f"Unknown proposal_sampling_mode: {proposal_sampling_mode}"
                 )
-            if proposal_sampling_mode == "exact":
+            if semi_implicit:
+                proposals = jax.lax.stop_gradient(proposals)
+            elif proposal_sampling_mode == "exact":
                 proposals, proposal_component_indices = sampled
             else:
                 proposals = sampled
@@ -475,7 +570,9 @@ class OptiQDIME(DIME):
 
             proposal_log_density = jnp.zeros_like(source_q)
             if density_correction:
-                proposal_log_density = proposal_kde.log_prob(jax.lax.stop_gradient(proposals))
+                proposal_log_density = proposal_kde.log_prob(
+                    jax.lax.stop_gradient(proposal_u if semi_implicit else proposals)
+                )
             q_score = source_q / temperature
             density_score = -proposal_log_density
             if adaptive_density_beta and density_correction:
@@ -509,7 +606,7 @@ class OptiQDIME(DIME):
             )
             costs = squared_costs / (
                 squared_costs.mean(axis=(-2, -1), keepdims=True) + 1.0e-8
-            )
+            ) if normalize_ot_cost else squared_costs
             transport = jax.lax.stop_gradient(
                 sinkhorn(
                     costs,
@@ -765,6 +862,23 @@ class OptiQDIME(DIME):
                 metrics[f"counterfactual_ess_T{label}"] = (
                     counterfactual_ess / num_proposals
                 ).mean()
+            if semi_implicit:
+                policy_log_g = conditional_mixture_log_prob(student_u, mu, log_std)
+                std = jnp.exp(log_std)
+                metrics.update(
+                    policy_entropy_lower=-policy_log_g.mean(),
+                    policy_entropy_lower_std=policy_log_g.std(),
+                    actor_std_mean=std.mean(), actor_std_min=std.min(), actor_std_max=std.max(),
+                    actor_log_std_mean=log_std.mean(), actor_log_std_min=log_std.min(),
+                    actor_log_std_max=log_std.max(),
+                    student_action_saturation_fraction=jnp.mean(jnp.abs(policy_samples) > 0.99),
+                    teacher_action_saturation_fraction=jnp.mean(jnp.abs(proposals) > 0.99),
+                    teacher_log_density_mean=proposal_log_density.mean(),
+                    proposal_std_pretanh=jnp.asarray(proposal_std),
+                    temperature=jnp.asarray(temperature), ot_cost_mean=squared_costs.mean(),
+                    ot_row_marginal_error=jnp.abs(transport.sum(axis=-1) - 1.0 / num_policy_samples).mean(),
+                    ot_col_marginal_error=jnp.abs(transport.sum(axis=-2) - source_weights).mean(),
+                )
             return loss, metrics
 
         (loss, metrics), grads = jax.value_and_grad(actor_loss, has_aux=True)(
@@ -795,6 +909,9 @@ class OptiQDIME(DIME):
             "transport_target_mode",
             "adaptive_density_beta",
             "density_beta_grid_size",
+            "semi_implicit",
+            "entropy_samples",
+            "normalize_ot_cost",
         ],
     )
     def _train(
@@ -835,6 +952,9 @@ class OptiQDIME(DIME):
         transport_target_mode,
         td_noise_std,
         td_noise_clip,
+        semi_implicit=False,
+        entropy_samples=16,
+        normalize_ot_cost=True,
     ):
         del n_env_interacts
         actor_metrics = {
@@ -882,6 +1002,14 @@ class OptiQDIME(DIME):
         }
         for label in ("0p05", "0p1", "0p2", "0p25", "0p5", "1p0"):
             actor_metrics[f"counterfactual_ess_T{label}"] = jnp.asarray(0.0)
+        if semi_implicit:
+            for name in ("policy_entropy_lower", "policy_entropy_lower_std", "actor_std_mean",
+                         "actor_std_min", "actor_std_max", "actor_log_std_mean", "actor_log_std_min",
+                         "actor_log_std_max", "student_action_saturation_fraction",
+                         "teacher_action_saturation_fraction", "teacher_log_density_mean",
+                         "proposal_std_pretanh", "temperature", "ot_cost_mean",
+                         "ot_row_marginal_error", "ot_col_marginal_error"):
+                actor_metrics[name] = jnp.asarray(0.0)
         for i in range(gradient_steps):
 
             def slice_batch(array, step=i):
@@ -893,7 +1021,7 @@ class OptiQDIME(DIME):
                 crossq_style,
                 use_bnstats_from_live_net,
                 gamma,
-                target_actor_state,
+                actor_state if semi_implicit else target_actor_state,
                 qf_state,
                 slice_batch(data.observations),
                 slice_batch(data.actions),
@@ -908,6 +1036,9 @@ class OptiQDIME(DIME):
                 td_noise_std,
                 td_noise_clip,
                 key,
+                semi_implicit,
+                entropy_samples,
+                temperature,
             )
             qf_state = cls.soft_update(tau, qf_state)
             if i in policy_delay_indices:
@@ -933,6 +1064,8 @@ class OptiQDIME(DIME):
                     sinkhorn_iterations,
                     source_q_eval,
                     transport_target_mode,
+                    semi_implicit,
+                    normalize_ot_cost,
                 )
                 target_actor_state = cls.soft_update_target_actor(
                     policy_tau, actor_state, target_actor_state
