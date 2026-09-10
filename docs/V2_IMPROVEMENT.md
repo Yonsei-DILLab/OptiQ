@@ -61,6 +61,41 @@ four-seed, ten-episode evaluation protocol.
 W&B: `OptiQ/optiq_mujoco_v2_screen`. Supervisor definition:
 `deploy/supervisor/optiq-v2-screen.conf`. No git push is performed.
 
+### Follow-up: learned conditional proposals
+
+At the 50k review, mean returns over the 40k/45k/50k checkpoints were 412.6 for
+the matched OptiQ reference, 418.1 for MSE T=.1, 466.4 for NLL T=.1, and 474.5
+for NLL T=.5. None met the early-stop criterion. This is still a single-seed
+screen, not evidence of stable final superiority.
+
+Saved 25k NLL actors exposed a second issue: their realized-action KDEs had
+low importance ESS even after correcting the projection. At T=.5, using the
+explicit mixture of learned conditional Gaussians gave ESS 15.04/64 versus
+2.84/64 for the KDE; at 256 candidates these were 48.62 and 4.71. These are
+fixed-model proposal diagnostics, not comparisons of trained returns.
+
+`ConditionalGaussianProposal` samples from a full mixture of the actor's saved
+conditional means and diagonal standard deviations. The teacher-only standard
+deviation is `max(actor_sigma, teacher_std_floor)` coordinatewise. Its density
+uses those same values, includes the tanh Jacobian, and retains full support.
+The entropy estimator remains distinct and uses the actual actor scales. The
+actor rollout is unchanged. No realized-action anchors are added. This proposal
+is an explicit alternative to the supplied realized-u KDE, not a relabeling of it.
+
+A further 17D known-target test compared flat Q and a quadratic Q whose exact
+Boltzmann action distribution is a box-truncated N(0,.15^2 I). With NLL, the
+realized KDE with h=.8 converged to mean sigma .696 on the narrow target; a
+conditional mixture with floor .8 reached .510, while floor .05 reached .154.
+With flat Q, floor .05 reached entropy 11.585 and ESS 39.99/64. Thus a large
+fixed teacher floor would recreate the inability to contract the policy.
+Evidence: `outputs/v2_improvement/conditional_projection_diagnosis.json`.
+
+`mujoco_v2_conditional` selects the NLL projection and this learned proposal with
+floor .05. A separate bounded 100k screen is prepared for T=.1/.5 and seeds 0/1,
+using the same no-extra-uniform protocol. It starts only as GPUs become free
+from the first screen. It is not the default `mujoco_v2` configuration. Sampling,
+matching density, common Humanoid training and checkpoint restoration are tested.
+
 ## Policy-improvement requirement
 
 Neither the original argmax-MSE nor the new conditional NLL alone provides a
@@ -89,6 +124,30 @@ The appropriate next step is to evaluate candidate updates using these soft
 value conditions and explicitly distinguish a practical sampled acceptance
 check from a theorem under exact evaluation/error-bound assumptions. There is
 currently no claim that practical Humanoid improvement is guaranteed.
+
+`optiq_dime/soft_improvement.py` supplies the paired sampled candidate check and
+the explicit error-margin calculation. These are currently diagnostics, not
+enabled actor-update gates in the four screening runs. Its entropy bracket uses
+the generating component for the new-policy lower estimate and an independent
+mixture for the old-policy upper estimate. The latter follows Jensen's inequality:
+`E_F[-log g_F(a)] >= -log pi(a)` for an action independent of F. The lower side
+follows entropy concavity and exchangeability of the generating component.
+
+For completeness, the exact sufficient-condition proof assumes gamma<1 and
+bounded rewards/entropy values so the Bellman fixed points exist. Let V_old be
+the exact old-policy soft value. The gap condition gives
+`T_new V_old >= V_old`. Monotonicity gives `T_new^k V_old >= V_old` for every k;
+contraction gives `V_new >= V_old` in the limit, and hence `Q_new >= Q_old`.
+The 2*epsilon margin accounts for the two expectations of an approximate Q.
+This proof is independent of how the candidate was proposed, so OT proposals
+can be used without differentiating Q. It is also a statement about the soft
+objective; it does not imply that unregularized environment return beats OptiQ.
+
+Tests compare entropy-bracket sampling to an exactly known two-component
+mixture, verify a paired Gaussian candidate check, and solve a finite MDP's
+Bellman equations exactly. They reject a flat-Q entropy-collapse proposal and
+show why an unknown critic error cannot be replaced by zero. They do not certify
+the learned Humanoid critic or turn sample standard errors into rigorous bounds.
 
 References: [SAC soft policy iteration, Appendix B](https://proceedings.mlr.press/v80/haarnoja18b/haarnoja18b.pdf)
 and [IDAC entropy estimation](https://arxiv.org/html/2007.06159). The proposed OT

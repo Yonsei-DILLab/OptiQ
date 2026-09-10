@@ -45,6 +45,10 @@ def validate_config(cfg):
     if cfg.env_name.startswith("dm_control/dog-") and cfg.task not in DOG_TASKS:
         raise ValueError(f"Invalid Dog task: {cfg.task}")
     actor = cfg.alg.actor
+    if actor.get("teacher_distribution", "realized_kde") not in {"realized_kde", "conditional_mixture"}:
+        raise ValueError("Unknown teacher distribution")
+    if actor.get("teacher_distribution") == "conditional_mixture" and actor.get("type") != "semi_implicit":
+        raise ValueError("Conditional mixture teacher requires a semi-implicit actor")
     if actor.get("type", "implicit") not in {"implicit", "semi_implicit"}:
         raise ValueError("actor.type must be implicit or semi_implicit")
     if actor.get("type", "implicit") == "semi_implicit":
@@ -254,7 +258,9 @@ def initialize_and_run(cfg: DictConfig):
                     policy="tanh(mu(s,z)+sigma(s,z)*eps)",
                     entropy_estimator="IDAC self-inclusive conditional mixture in normalized action coordinates",
                     entropy_components=int(cfg.alg.actor.entropy_samples),
-                    teacher="separate Gaussian KDE centered on realized student pre-tanh samples",
+                    teacher=("conditional Gaussian mixture with teacher-only minimum std" if
+                        cfg.alg.actor.get("teacher_distribution") == "conditional_mixture" else
+                        "separate Gaussian KDE centered on realized student pre-tanh samples"),
                     teacher_bandwidth_space="pre-tanh", teacher_hard_cutoff=False,
                     backup_policy="current actor", td_smoothing=False,
                     ot_cost="mean-normalized squared action distance" if cfg.alg.actor.normalize_ot_cost else "squared action distance",

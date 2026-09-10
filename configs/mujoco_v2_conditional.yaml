@@ -1,0 +1,22 @@
+# @package _global_
+defaults:
+  - mujoco_v2
+  - _self_
+
+# Experimental candidate. The original mujoco_v2 config remains reproducible.
+alg:
+  actor:
+    distillation_loss: conditional_ot_nll
+    teacher_distribution: conditional_mixture
+    # The teacher follows each learned diagonal sigma, with this small floor.
+    # This floor changes the teacher only, never rollout/backup actor sigma.
+    teacher_std_floor: 0.05
+    proposal_std_pretanh: ${alg.actor.teacher_std_floor}
+    proposal_std: ${alg.actor.proposal_std_pretanh}
+
+run_name: ${task}-v2-conditional-T${alg.actor.temperature}-s${seed}
+output_root: outputs/v2_conditional_screen
+wandb:
+  project: optiq_mujoco_v2_conditional_screen
+  group: ${env_name}_v2_conditional_T${alg.actor.temperature}_floor${alg.actor.teacher_std_floor}
+  job_type: screen

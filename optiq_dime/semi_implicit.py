@@ -74,3 +74,35 @@ class PretanhTeacherKDE(NamedTuple):
     def log_prob(self, v):
         log_std = jnp.full_like(self.centers, jnp.log(self.bandwidth))
         return conditional_mixture_log_prob(v, self.centers, log_std)
+
+
+class ConditionalGaussianProposal(NamedTuple):
+    """Explicit mixture of actor conditionals, with a teacher-only std floor.
+
+    This is a distinct proposal option, not a KDE on realized student actions.
+    The density uses exactly the same scales as sampling, including the floor.
+    """
+    means: jax.Array
+    log_std: jax.Array
+    minimum_std: float
+
+    def effective_log_std(self):
+        return jnp.maximum(self.log_std, jnp.log(self.minimum_std))
+
+    def sample(self, key, repeats, mode):
+        batch,components,dim=self.means.shape
+        count=components*repeats
+        component_key,noise_key=jax.random.split(key)
+        if mode=='exact':
+            indices=jax.random.randint(component_key,(batch,count),0,components)
+        elif mode=='stratified':
+            indices=jnp.broadcast_to(jnp.repeat(jnp.arange(components),repeats),(batch,count))
+        else:
+            raise ValueError('Teacher sampling must be exact or stratified')
+        mu=jnp.take_along_axis(self.means,indices[:,:,None],axis=1)
+        ls=jnp.take_along_axis(self.effective_log_std(),indices[:,:,None],axis=1)
+        v=mu+jnp.exp(ls)*jax.random.normal(noise_key,(batch,count,dim),dtype=mu.dtype)
+        return jnp.tanh(v),v,indices
+
+    def log_prob(self,v):
+        return conditional_mixture_log_prob(v,self.means,self.effective_log_std())

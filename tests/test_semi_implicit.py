@@ -205,11 +205,15 @@ def test_invalid_v2_config_rejected(override):
         validate_config(config([override]))
 
 
-@pytest.mark.parametrize("distillation_loss", ["pointwise_mse", "conditional_ot_nll"])
-def test_common_humanoid_loop_timeout_replay_heads_and_checkpoint(tmp_path, distillation_loss):
+@pytest.mark.parametrize("distillation_loss,teacher_distribution", [
+    ("pointwise_mse","realized_kde"), ("conditional_ot_nll","realized_kde"),
+    ("conditional_ot_nll","conditional_mixture"),
+])
+def test_common_humanoid_loop_timeout_replay_heads_and_checkpoint(tmp_path, distillation_loss, teacher_distribution):
     cfg = config(["alg.batch_size=4", "alg.buffer_size=32", "alg.learning_starts=2",
                   "alg.actor.learning_starts=2", "diagnostic_interval=1",
-                  f"alg.actor.distillation_loss={distillation_loss}"])
+                  f"alg.actor.distillation_loss={distillation_loss}",
+                  f"+alg.actor.teacher_distribution={teacher_distribution}"])
     assert validate_config(cfg)
     env = gym.make("Humanoid-v4", max_episode_steps=2)
     model = OptiQDIME("MlpPolicy", env, str(tmp_path), 4, cfg)

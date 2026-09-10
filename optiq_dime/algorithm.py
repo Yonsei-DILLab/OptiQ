@@ -17,7 +17,8 @@ from .policy import OptiQPolicy
 from .critic_utils import critic_expectation
 from .distillation import conditional_ot_nll, hard_projection_mass_error
 from .semi_implicit import (
-    PretanhTeacherKDE, conditional_mixture_log_prob, idac_action_and_log_density,
+    ConditionalGaussianProposal, PretanhTeacherKDE,
+    conditional_mixture_log_prob, idac_action_and_log_density,
 )
 from .transport import (
     TruncatedGaussianKDE,
@@ -165,6 +166,7 @@ class OptiQDIME(DIME):
             int(actor.get("entropy_samples", 16)),
             bool(actor.get("normalize_ot_cost", True)),
             actor.get("distillation_loss", "pointwise_mse"),
+            actor.get("teacher_distribution", "realized_kde"),
         )
         self._n_updates += gradient_steps
 
@@ -448,6 +450,7 @@ class OptiQDIME(DIME):
             "semi_implicit",
             "normalize_ot_cost",
             "distillation_loss",
+            "teacher_distribution",
         ],
     )
     def update_actor(
@@ -475,6 +478,7 @@ class OptiQDIME(DIME):
         semi_implicit: bool = False,
         normalize_ot_cost: bool = True,
         distillation_loss: str = "pointwise_mse",
+        teacher_distribution: str = "realized_kde",
     ):
         key, latent_key, proposal_key, dropout_key = jax.random.split(key, 4)
         batch_size, observation_dim = observations.shape
@@ -515,7 +519,11 @@ class OptiQDIME(DIME):
             if semi_implicit:
                 if include_anchor:
                     raise ValueError("Semi-implicit teacher candidates must not contain anchors")
-                proposal_kde = PretanhTeacherKDE(jax.lax.stop_gradient(student_u), proposal_std)
+                if teacher_distribution == "conditional_mixture":
+                    proposal_kde = ConditionalGaussianProposal(
+                        jax.lax.stop_gradient(mu),jax.lax.stop_gradient(log_std),proposal_std)
+                else:
+                    proposal_kde = PretanhTeacherKDE(jax.lax.stop_gradient(student_u), proposal_std)
                 proposals, proposal_u, proposal_component_indices = proposal_kde.sample(
                     proposal_key, proposals_per_policy_sample, proposal_sampling_mode
                 )
@@ -923,6 +931,7 @@ class OptiQDIME(DIME):
             "entropy_samples",
             "normalize_ot_cost",
             "distillation_loss",
+            "teacher_distribution",
         ],
     )
     def _train(
@@ -967,6 +976,7 @@ class OptiQDIME(DIME):
         entropy_samples=16,
         normalize_ot_cost=True,
         distillation_loss="pointwise_mse",
+        teacher_distribution="realized_kde",
     ):
         del n_env_interacts
         actor_metrics = {
@@ -1080,6 +1090,7 @@ class OptiQDIME(DIME):
                     semi_implicit,
                     normalize_ot_cost,
                     distillation_loss,
+                    teacher_distribution,
                 )
                 target_actor_state = cls.soft_update_target_actor(
                     policy_tau, actor_state, target_actor_state
