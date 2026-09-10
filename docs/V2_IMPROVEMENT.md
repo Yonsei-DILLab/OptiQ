@@ -966,3 +966,63 @@ reward-component reconstruction validation are retained in
 and its `_validation.json` companion; logged metrics are in
 `confirmation_seed1_event_0750000_diagnostics.json`. The maximum reward
 reconstruction error is 1.1e-11. Training code and settings were not changed.
+
+### Paired confirmation review: 800k
+
+The common 790k/795k/800k evaluation averages are:
+
+| Training seed | Checked K64 v2 | Current OptiQ, behavior 0 | Historical OptiQ, behavior .1 |
+|---|---:|---:|---:|
+| 0 | 5362.30 | 4807.19 | 5710.21 |
+| 1 | 4845.16 | 5109.82 | 4824.84 |
+| 2 | 4944.72 | 3857.76 | 5651.12 |
+| 3 | 5478.76 | 4857.48 | 5522.30 |
+| Mean ± seed SD | 5157.74 ± 309.83 | 4658.06 ± 549.72 | 5427.12 ± 409.11 |
+
+Three current matched pairs favor v2; seed 1 trails. The aggregate is 10.7%
+above the current control but 5.0% below the stronger historical setting.
+Normalized return AUC through the same 800k horizon is 3833.24 for v2,
+2921.45 for the current control, and 3891.91 for the historical reference.
+The latter has different collection/source provenance; these comparisons
+do not isolate the causal effect of additional uniform collection.
+
+At 800k, v2 ESS is 5.39–6.49/64, cumulative sampled-guard acceptance is
+57.9–59.7%, and the pre-discount entropy term is +.115 to +.394. All inspected
+700k–800k actor/critic losses and Q values are finite. All sixteen actor/critic
+800k checkpoints are present and nonempty. Current three-checkpoint drawdowns
+are 1.6%, 8.1%, 8.4%, and 1.0%. These aggregate diagnostics do not negate the
+seed-1 checkpoint instability identified below. The matched controls have
+completed normally; all four v2 runs continue unchanged toward the predefined
+900k–1M window, with the next ordinary review at 900k. No early-stop rule is
+currently met, and no final performance/stability claim is warranted.
+
+Evidence: `outputs/v2_improvement/confirmation_review_0800000.json`,
+`confirmation_assessment/step_0800000.json`, `confirmation_report/step_0800000.*`,
+and `confirmation_historical_comparison/step_0800000.*`. The three reporters
+agree on the same cutoff and paired scores. Core training/config files remain
+identical to the confirmation launch; no push occurred.
+
+### Seed-1 800k recheck: instability remains on fresh episodes
+
+The saved 800k actor was evaluated on the same 50 new environment/policy seed
+pairs used for the 700k/750k diagnostic. Its mean return is 3387.73 (episode SD
+1547.41), mean episode length 639.04, with only 13/50 episodes reaching the
+time limit. This is below the 4192.88 return from the original ten episodes.
+The shared-episode mean differences are −1892.88 versus the 700k model and
+−962.65 versus the 750k model. Their conditional episode-bootstrap 95% intervals
+are [−2314.88, −1473.06] and [−1539.23, −345.65]. As above, these are post-hoc
+comparisons of fixed models from a single training seed, not training-seed
+confidence intervals or causal explanations.
+
+The 755k/760k training evaluations recovered after the 750k dip, but this
+later checkpoint is unstable again. The completed fresh-episode checks prevent
+interpreting the recent smoothed scores as proof that stability is solved.
+Step-pooled velocity is .345 m/s; early termination remains the conspicuous
+performance difference. The mechanism is unproven, and lower raw return alone
+does not disprove the ideal discounted soft-policy-improvement theorem.
+
+All fifty new episodes are included. Source/helper and checkpoint hashes match
+the recorded protocol; reward-component reconstruction error is below 1.2e-11.
+Evidence: `outputs/v2_improvement/confirmation_seed1_recheck_0800000_independent.json`
+and its `_validation.json` companion. Training remains unchanged pending the
+frozen full confirmation result, as requested.
