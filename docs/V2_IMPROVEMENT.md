@@ -120,14 +120,14 @@ critic error. Those are unresolved for the actual Humanoid runs. Finite-M IDAC
 entropy is a lower bound in expectation; comparing two lower bounds does not
 certify that the true entropies improved.
 
-The appropriate next step is to evaluate candidate updates using these soft
-value conditions and explicitly distinguish a practical sampled acceptance
-check from a theorem under exact evaluation/error-bound assumptions. There is
-currently no claim that practical Humanoid improvement is guaranteed.
+Candidate updates can now be evaluated using these soft value conditions. The
+practical sampled acceptance check remains distinct from the theorem under
+exact evaluation/error-bound assumptions. There is currently no claim that
+practical Humanoid improvement is guaranteed.
 
 `optiq_dime/soft_improvement.py` supplies the paired sampled candidate check and
-the explicit error-margin calculation. These are currently diagnostics, not
-enabled actor-update gates in the four screening runs. Its entropy bracket uses
+the explicit error-margin calculation. The original and conditional-proposal
+screening runs do not enable this check. Its entropy bracket uses
 the generating component for the new-policy lower estimate and an independent
 mixture for the old-policy upper estimate. The latter follows Jensen's inequality:
 `E_F[-log g_F(a)] >= -log pi(a)` for an action independent of F. The lower side
@@ -153,3 +153,47 @@ References: [SAC soft policy iteration, Appendix B](https://proceedings.mlr.pres
 and [IDAC entropy estimation](https://arxiv.org/html/2007.06159). The proposed OT
 projection and the approximate-critic acceptance margin above are our analysis,
 not claims attributed to the original IDAC algorithm.
+
+## Optional sampled acceptance filter
+
+`mujoco_v2_guarded` enables the experimental filter in the common training path.
+An independent replay draw supplies 32 validation states. Eight paired action
+draws per state compare the candidate's lower soft score with the old policy's
+upper score, using the same frozen minimum of the two current critics. The
+candidate is accepted only when the mean gap minus twice its estimated standard
+error is positive and all score samples are finite. The error is computed over
+state means, since action draws at one state form a cluster. This is an empirical
+resource/stability heuristic, not a statistical confidence certificate or a
+uniform statewise test. The teacher also uses minimum Q in this configuration.
+
+On rejection, actor parameters, optimizer moments, and optimizer step all return
+to their old values. The target actor is updated only from the selected actor;
+critic training continues. The disabled path takes no validation replay draw
+or additional JAX key. Neither path adds Q gradients, an actor entropy-gradient
+loss, or additional uniform behavior exploration. Logs contain acceptance,
+estimated gain/error, negative-state fraction, and cumulative acceptance.
+
+The 50k saved T=.1 actor had positive independent 64-draw mean gaps in all 16
+probe trials, but only 1/16 passed the 32-state, 8-draw, two-standard-error filter.
+Using 96 states and 32 draws still accepted only 1/16 at that same checkpoint.
+This reveals a real risk of over-rejection; increasing sample count alone did
+not remove it. The T=.5 actor passed 0/16 with either setting. These probes used
+fixed saved states, a fixed critic and one proposed update each; they are not
+online returns. Evidence: `outputs/v2_improvement/soft_guard_probe.json` and
+`soft_guard_probe_96x32_50k.json`. An exploratory probe at 75k gave a different
+result and must not be compared as a sample-count ablation against 50k.
+
+A separate bounded screen compares filter on/off at T=.1 with 256 teacher
+candidates (OT 16x256), minimum-Q teachers, and seeds 0/1. Increasing candidate
+count addresses the approximately 3-4/64 ESS seen during the conditional T=.1
+screen; it is applied to both sides of this comparison. Each run is capped at
+100k environment steps, with the same 3-episode/5k evaluation and 25k checkpoint
+protocol. This is an experiment on the filter, not an announced improvement.
+Review poor return and sustained near-zero acceptance before any longer run.
+Launcher: `scripts/supervisor_v2_guarded_screen.sh`; W&B project:
+`OptiQ/optiq_mujoco_v2_guarded_screen`. No push is performed.
+
+Validation: 13 soft-filter/theory tests (including an actual Humanoid loop and
+complete optimizer rollback), plus 51 common-path, critic, mixture, and
+distillation regression tests passed. Local logs are under
+`outputs/v2_improvement/{soft_guard_tests,guard_regression_tests}.log`.

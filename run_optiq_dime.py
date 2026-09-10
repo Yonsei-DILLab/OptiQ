@@ -45,6 +45,17 @@ def validate_config(cfg):
     if cfg.env_name.startswith("dm_control/dog-") and cfg.task not in DOG_TASKS:
         raise ValueError(f"Invalid Dog task: {cfg.task}")
     actor = cfg.alg.actor
+    guard = actor.get("soft_guard", {})
+    if guard.get("enabled", False):
+        if actor.get("type") != "semi_implicit":
+            raise ValueError("Sampled soft guard requires a semi-implicit actor")
+        for name, minimum, default in (("batch_size", 2, 32), ("components", 1, 16), ("draws", 2, 8)):
+            value = float(guard.get(name, default))
+            if not math.isfinite(value) or value < minimum or int(value) != value:
+                raise ValueError(f"soft_guard.{name} must be an integer >= {minimum}")
+        multiplier = float(guard.get("standard_error_multiplier", 2.0))
+        if not math.isfinite(multiplier) or multiplier < 0:
+            raise ValueError("soft_guard.standard_error_multiplier must be finite and nonnegative")
     if actor.get("teacher_distribution", "realized_kde") not in {"realized_kde", "conditional_mixture"}:
         raise ValueError("Unknown teacher distribution")
     if actor.get("teacher_distribution") == "conditional_mixture" and actor.get("type") != "semi_implicit":
@@ -267,6 +278,8 @@ def initialize_and_run(cfg: DictConfig):
                     actor_projection=("full OT conditional Gaussian likelihood" if
                         cfg.alg.actor.distillation_loss == "conditional_ot_nll" else
                         f"{cfg.alg.actor.transport_target_mode} pointwise MSE"),
+                    update_acceptance=("sampled soft-value filter; not a global certificate" if
+                        cfg.alg.actor.get("soft_guard", {}).get("enabled", False) else "unfiltered"),
                 )
             run.config.update({"environment": environment_metadata})
             wandb_config["environment"] = environment_metadata

@@ -16,6 +16,7 @@ from diffusion.dime import DIME
 from .policy import OptiQPolicy
 from .critic_utils import critic_expectation
 from .distillation import conditional_ot_nll, hard_projection_mass_error
+from .soft_improvement import sampled_soft_update
 from .semi_implicit import (
     ConditionalGaussianProposal, PretanhTeacherKDE,
     conditional_mixture_log_prob, idac_action_and_log_density,
@@ -54,6 +55,8 @@ class OptiQDIME(DIME):
         )
         self.behavior_uniform_count = 0
         self.behavior_action_count = 0
+        self.soft_guard_attempts = 0
+        self.soft_guard_accepts = 0
 
     def _sample_action(self, learning_starts, action_noise=None, n_envs=1):
         # Always consume the original actor/warmup RNG sequence first. This hook
@@ -118,6 +121,23 @@ class OptiQDIME(DIME):
             data.rewards.numpy().flatten(),
         )
         actor = self.cfg.alg.actor
+        guard = actor.get("soft_guard", {})
+        guard_enabled = bool(guard.get("enabled", False))
+        validation_observations = None
+        if guard_enabled:
+            # Separate replay draw: these states do not select the OT teacher
+            # or its supervised gradient. The disabled path consumes no RNG.
+            validation_data = self.replay_buffer.sample(
+                int(guard.get("batch_size", 32)) * gradient_steps,
+                env=self._vec_normalize_env,
+            )
+            if isinstance(validation_data.observations, dict):
+                validation_observations = np.concatenate(
+                    [validation_data.observations[k].numpy()
+                     for k in self.observation_space.keys()], axis=1,
+                )
+            else:
+                validation_observations = validation_data.observations.numpy()
         (
             self.policy.qf_state,
             self.policy.actor_state,
@@ -167,8 +187,19 @@ class OptiQDIME(DIME):
             bool(actor.get("normalize_ot_cost", True)),
             actor.get("distillation_loss", "pointwise_mse"),
             actor.get("teacher_distribution", "realized_kde"),
+            guard_enabled,
+            validation_observations,
+            int(guard.get("components", 16)),
+            int(guard.get("draws", 8)),
+            float(guard.get("standard_error_multiplier", 2.0)),
         )
         self._n_updates += gradient_steps
+        if guard_enabled:
+            self.soft_guard_attempts += int(log_metrics["soft_guard_attempts"])
+            self.soft_guard_accepts += int(log_metrics["soft_guard_accepts"])
+            self.logger.record("train/soft_guard_acceptance_cumulative",
+                self.soft_guard_accepts / max(self.soft_guard_attempts, 1))
+            self.logger.record("train/soft_guard_attempts_cumulative", self.soft_guard_attempts)
 
         checkpoint_due = self.model_save_path is not None and (
             self.num_timesteps % self.save_every_n_steps == 0
@@ -932,6 +963,9 @@ class OptiQDIME(DIME):
             "normalize_ot_cost",
             "distillation_loss",
             "teacher_distribution",
+            "soft_guard_enabled",
+            "soft_guard_components",
+            "soft_guard_draws",
         ],
     )
     def _train(
@@ -977,6 +1011,11 @@ class OptiQDIME(DIME):
         normalize_ot_cost=True,
         distillation_loss="pointwise_mse",
         teacher_distribution="realized_kde",
+        soft_guard_enabled=False,
+        validation_observations=None,
+        soft_guard_components=16,
+        soft_guard_draws=8,
+        soft_guard_standard_error_multiplier=2.0,
     ):
         del n_env_interacts
         actor_metrics = {
@@ -1033,6 +1072,9 @@ class OptiQDIME(DIME):
                          "ot_row_marginal_error", "ot_col_marginal_error"):
                 actor_metrics[name] = jnp.asarray(0.0)
             actor_metrics["hard_projection_mass_tv"] = jnp.asarray(0.0)
+        guard_metrics = {}
+        guard_attempts = jnp.asarray(0.0)
+        guard_accepts = jnp.asarray(0.0)
         for i in range(gradient_steps):
 
             def slice_batch(array, step=i):
@@ -1065,6 +1107,7 @@ class OptiQDIME(DIME):
             )
             qf_state = cls.soft_update(tau, qf_state)
             if i in policy_delay_indices:
+                old_actor_state = actor_state
                 actor_state, _, key, actor_metrics = cls.update_actor(
                     actor_state,
                     qf_state,
@@ -1092,10 +1135,22 @@ class OptiQDIME(DIME):
                     distillation_loss,
                     teacher_distribution,
                 )
+                if soft_guard_enabled:
+                    key, guard_key = jax.random.split(key)
+                    actor_state, guard_metrics = sampled_soft_update(
+                        old_actor_state, actor_state, qf_state,
+                        slice_batch(validation_observations), guard_key,
+                        temperature, z_atoms, soft_guard_components,
+                        soft_guard_draws, soft_guard_standard_error_multiplier,
+                    )
+                    guard_attempts += 1
+                    guard_accepts += guard_metrics["soft_guard_accepted"]
                 target_actor_state = cls.soft_update_target_actor(
                     policy_tau, actor_state, target_actor_state
                 )
-        log_metrics = {**actor_metrics, **critic_metrics}
+        log_metrics = {**actor_metrics, **critic_metrics, **guard_metrics}
+        if soft_guard_enabled:
+            log_metrics.update(soft_guard_attempts=guard_attempts, soft_guard_accepts=guard_accepts)
         return (
             qf_state,
             actor_state,

@@ -59,6 +59,38 @@ def candidate_gap_samples(old_actor, candidate_actor, critic_state, observations
     return jax.lax.stop_gradient(new_lower-old_upper)
 
 
+def sampled_soft_update(old_actor, candidate_actor, critic_state, observations,
+                        key, temperature, z_atoms, components=16, draws=8,
+                        standard_error_multiplier=2.0):
+    """Accept an OT candidate using a held-out replay *estimate* of soft gain.
+
+    This is an empirical filter, not a certified policy-improvement test. The
+    standard error treats each replay state as a cluster, since its multiple
+    action draws share that state. Neither this error estimate nor the entropy
+    bracket supplies a uniform learned-critic error or global state coverage.
+    Rejection restores the entire old TrainState, including Adam and step.
+    """
+    samples = candidate_gap_samples(
+        old_actor, candidate_actor, critic_state, observations, key,
+        temperature, z_atoms, components, draws,
+    )
+    state_gaps = samples.mean(axis=0)
+    mean = state_gaps.mean()
+    standard_error = state_gaps.std(ddof=1) / jnp.sqrt(state_gaps.size)
+    margin = mean - standard_error_multiplier * standard_error
+    accepted = jnp.all(jnp.isfinite(samples)) & jnp.isfinite(margin) & (margin > 0.0)
+    selected = jax.lax.cond(accepted, lambda: candidate_actor, lambda: old_actor)
+    metrics = {
+        "soft_guard_accepted": accepted.astype(jnp.float32),
+        "soft_guard_gap_mean": mean,
+        "soft_guard_gap_standard_error": standard_error,
+        "soft_guard_estimated_margin": margin,
+        "soft_guard_min_state_gap": state_gaps.min(),
+        "soft_guard_negative_state_fraction": (state_gaps < 0.0).mean(),
+    }
+    return selected, metrics
+
+
 def conservative_soft_margin(q_gain, entropy_lower_new, entropy_upper_old,
                              temperature, *, critic_error_bound, sampling_error_bound):
     """Per-state sufficient margin under externally verified error bounds.
