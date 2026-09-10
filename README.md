@@ -11,8 +11,8 @@ and a sampled soft-value update check. It uses scalar 256x3 twin critics,
 behavior exploration. All four paired seeds (0/1/2/3) completed 1M. The fixed
 900k–1M mean is 5363 versus 5052 for the matched OptiQ control, but below the
 stronger historical 10%-exploration reference (5676). Fresh final-policy
-evaluations also favor the matched control comparison, while leaving the
-historical performance gap unresolved. See the [full results](docs/V2_CONFIRMATION_RESULTS_KO.md).
+evaluations average 5397 for v2, 5224 for the matched control and 5633 for the
+historical reference. See the [full results](docs/V2_CONFIRMATION_RESULTS_KO.md).
 
 See the [investigation and confirmation protocol](docs/V2_IMPROVEMENT.md),
 [current algorithm explanation in Korean](docs/V2_CURRENT_ALGORITHM_KO.md),
