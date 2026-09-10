@@ -778,3 +778,38 @@ again at 700k or sooner for a sustained decline or runtime failure. The primary
 unverified. Evidence: `outputs/v2_improvement/confirmation_review_0600000.json`,
 `confirmation_assessment/step_0600000.json` and
 `confirmation_report/step_0600000.*`. No push occurred.
+
+### Historical 10% exploration reference: retain the stronger result
+
+The current primary comparison deliberately uses zero extra uniform behavior
+for both methods. The earlier completed OptiQ runs with 10% uniform behavior
+are a distinct, stronger historical reference and must also appear in the final
+report. Their local configurations, all 21 evaluation checkpoints from 900k
+through 1M, and completion markers were verified for seeds 0--3.
+
+| Seed | Historical OptiQ: 900k--1M mean | Historical OptiQ: 1M checkpoint |
+|---|---:|---:|
+| 0 | 5724.90 | 5762.03 |
+| 1 | 5590.78 | 5659.10 |
+| 2 | 5790.25 | 5898.97 |
+| 3 | 5600.04 | 5653.96 |
+
+The historical final-window mean is **5676.49 with seed SD 97.43**. At the common
+590k/595k/600k window it averages 5310.65, versus the current v2's 5173.99 and
+the current zero-uniform reference's 4926.84. Thus current v2 has not exceeded
+the historical result at that matched training horizon. An advantage over the
+zero-uniform control alone does not establish superiority over the earlier
+10% exploration setting.
+
+The saved algorithm configurations differ between the historical and current
+OptiQ controls only in `behavior_uniform_probability` (.1 versus 0). The checked
+evaluation/task protocols match, but the recorded source revisions and actual
+collection runs differ. This retrospective comparison cannot causally attribute
+the score difference solely to uniform exploration. The primary zero-uniform
+confirmation protocol remains unchanged; the historical result is an additional
+required reference for interpreting the broader performance claim. No extra
+uniform behavior is added to v2.
+
+Evidence: `outputs/v2_improvement/historical_behavior010_reference.json`, including
+evaluation-file hashes and exact configuration differences. Project:
+`OptiQ/optiq_mujoco_scalar_h256x3_anchor_gradnorm2_behavior010_4seed_1m`.
