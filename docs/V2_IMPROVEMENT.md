@@ -499,3 +499,38 @@ currently supported, while the latter still requires further observation.
 
 Artifacts: `outputs/v2_improvement/confirmation_assessment/step_0225000.json`
 and `outputs/v2_improvement/confirmation_assessment_tests.log`.
+
+### Independent 250k checkpoint evaluation
+
+`scripts/evaluate_v2_confirmation.py` restores the exact actor checkpoints and
+uses the common stochastic predict/unscale path on CPU. It evaluated all eight
+250k models on 50 fresh shared environment/policy seed pairs, 400 episodes in
+total. Every episode is included, including time-limit truncations. Checkpoint
+hashes and individual episode records are preserved. A dedicated test verifies
+that a high-return truncated episode cannot be dropped from the evaluation.
+
+| Training seed | v2 mean return | OptiQ mean return | Paired gap |
+|---|---:|---:|---:|
+| 0 | 3049.66 | 1532.79 | +1516.87 |
+| 1 | 4587.69 | 915.16 | +3672.53 |
+| 2 | 3741.93 | 1289.98 | +2451.95 |
+| 3 | 2295.75 | 869.64 | +1426.11 |
+
+The four-seed means are 3418.76 versus 1151.89, with seed SDs 977.79 and 316.15.
+Episode-bootstrap 95% intervals for the paired gaps were [983, 2035],
+[3312, 3995], [2043, 2844] and [1024, 1853]. These intervals describe episode
+uncertainty conditional on each frozen model pair, not uncertainty across new
+training seeds. The observed checkpoint advantage persists on new evaluation
+seeds; it does not establish final 1M superiority or monotonic training.
+
+v2 episode-return SDs range from 1236 to 1542, so ten-episode checkpoint means
+can fluctuate substantially. Time-limit episodes for v2 seeds 0--3 numbered
+8, 38, 17 and 4 out of 50; all four reference counts were zero. Independent
+means should be compared to the original **single 250k checkpoint**, not the
+earlier three-checkpoint tail average. The stored validation records make that
+comparison explicitly and include all 400 episodes.
+
+Evidence: `outputs/v2_improvement/confirmation_independent_0250000.json`,
+`confirmation_independent_0250000_validation.json` and
+`confirmation_evaluation_tests.log`. This is a secondary fixed-checkpoint
+evaluation; the predefined 900k--1M primary window remains unchanged.
