@@ -1230,3 +1230,16 @@ shapes and reductions were verified. Evidence:
 `outputs/v2_improvement/entropy_latent_diagnostic_1000000.json` and its
 `_validation.json` companion. Existing 500k artifacts are preserved, with
 their original source hashes. Training and final comparison inputs are unchanged.
+
+### Exact-target projection and entropy-overlap diagnosis
+
+The bounded projection/entropy diagnostics are complete; see
+[V2_PROJECTION_DIAGNOSIS_KO.md](V2_PROJECTION_DIAGNOSIS_KO.md).
+A conditional-noise cap alone collapsed to one mode. A latent mean residual
+plus the cap preserved two modes but did not recover their full density.
+An analytic 17D latent-marginal test exposed very large finite-M entropy
+bracket gaps for separated conditionals, even at M=256. These are synthetic
+checks, not evidence that they cause the observed Humanoid return gap.
+No new Humanoid run was started. The next candidate will investigate a finite
+16-component actual policy with directly evaluable mixture density, retaining
+one-pass rollout and sampling/OT actor improvement without Q-action gradients.
