@@ -473,3 +473,29 @@ health diagnostics remain current and are distinct from the evaluation cutoff.
 Rebuilding the 100k and 200k comparisons reproduced every preserved seed score
 within 1e-9; all pair comparisons ended at the requested step. Validation:
 `outputs/v2_improvement/confirmation_cutoff_validation.json`.
+
+### Fixed-window and stability assessment tool
+
+`scripts/assess_v2_confirmation.py` reads the same frozen eight-run manifest.
+It reports the final 900k--1M comparison only when every prescribed evaluation
+checkpoint exists for all four training seeds of both methods. Missing seeds
+or evaluations cannot be replaced by a favorable partial tail. Completion
+markers and supervisor states are checked separately, and even a complete
+dataset is marked ready for scientific review rather than automatically declared
+a successful algorithm. This tool never controls training processes.
+
+For intermediate data, it computes normalized learning-curve area and maximum
+drawdowns of three-evaluation rolling means from 100k onward, always using the
+horizon shared by all eight runs. Drawdown recovery times distinguish observed
+recovery from an unfinished interval. Four assessment/alignment tests passed,
+including a missing final checkpoint and a collapse with censored recovery.
+
+At the 225k shared horizon, v2's largest rolling-mean drawdowns for seeds 0--3
+were 26.1%, 11.2%, 11.1%, and 33.0%; the matched reference values were 8.3%,
+17.3%, 15.4%, and 11.5%. The large seed-0 drop recovered by 165k. Seed 3's
+205k-to-215k drop had not fully recovered at 225k. This makes the distinction
+between higher return and demonstrated stability concrete: the former is
+currently supported, while the latter still requires further observation.
+
+Artifacts: `outputs/v2_improvement/confirmation_assessment/step_0225000.json`
+and `outputs/v2_improvement/confirmation_assessment_tests.log`.
