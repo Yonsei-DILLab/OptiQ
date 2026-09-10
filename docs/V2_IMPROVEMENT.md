@@ -344,3 +344,39 @@ read-only decision record is
 is `scripts/analyze_v2_confirmation.py`. Training configuration and algorithms
 were not changed for this review. W&B:
 `OptiQ/optiq_mujoco_v2_confirmation`.
+
+### Paired confirmation review: 150k
+
+At the next common milestone, the 140k/145k/150k evaluations give:
+
+| Training seed | Checked K64 v2 | OptiQ reference | Relative difference |
+|---|---:|---:|---:|
+| 0 | 1241.71 | 750.93 | +65.4% |
+| 1 | 870.68 | 717.46 | +21.4% |
+| 2 | 1265.33 | 664.96 | +90.3% |
+| 3 | 1014.75 | 861.04 | +17.9% |
+
+The seed means are 1098.12 versus 748.59 (+46.7%), with seed SDs 189.08 and
+82.89. Every pair remains positive, but v2 has more seed variation at this
+milestone. Seed 0's three-evaluation average fell from 1680.03 at 135k to
+1241.71 at 150k, and its recent seven-checkpoint slope is negative. Thus the
+evidence supports continued investigation, not a claim of stable monotonic
+learning. No run meets the inferior-and-flat early-stop rule. Continue the
+same eight runs and review at 200k, including seed 0's drawdown.
+
+At 150k, v2 ESS is 2.08-2.40/64, cumulative candidate acceptance is 52.6-54.6%,
+and the last logged pre-discount backup entropy term is +0.20 to +0.29. All
+sixteen 150k actor/critic checkpoint files are present and nonempty. W&B also
+confirmed all eight runs were actively logging during this review period.
+
+The mean episode lengths in these evaluations are approximately 215 steps for
+v2 and 148 for OptiQ; return per step remains near 5.1. Longer episodes account
+for much of the return advantage. Neighboring collection-time logs estimate
+150k completion at approximately 42.4 minutes for v2 versus 29.4 minutes for
+OptiQ. These times include evaluation/compilation and paired GPU sharing; they
+are observed experiment costs, not isolated algorithm-throughput benchmarks.
+
+Decision and exact diagnostics:
+`outputs/v2_improvement/confirmation_review_0150000.json`.
+The report and figure are under `confirmation_report/step_0150000.*` in the same
+directory. No training algorithm or configuration changed, and no push occurred.
