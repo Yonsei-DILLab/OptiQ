@@ -813,3 +813,41 @@ uniform behavior is added to v2.
 Evidence: `outputs/v2_improvement/historical_behavior010_reference.json`, including
 evaluation-file hashes and exact configuration differences. Project:
 `OptiQ/optiq_mujoco_scalar_h256x3_anchor_gradnorm2_behavior010_4seed_1m`.
+
+### Historical 1M checkpoints on the final independent episode seeds
+
+The secondary final-checkpoint protocol is now explicit: 50 stochastic episodes
+per model, environment seeds 1100000--1100049 and policy seeds 1110000--1110049.
+All time-limit and true-terminal episodes count. These are evaluation seeds;
+the four training seeds remain 0--3. The primary 900k--1M window is unchanged.
+
+`scripts/evaluate_v2_historical.py` has completed this CPU evaluation for the
+four historical 1M actors using the shared predict/unscale and episode evaluator.
+The current confirmation models will use the same seeds after reaching 1M:
+
+```bash
+CUDA_VISIBLE_DEVICES='' JAX_PLATFORMS=cpu OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+  /workspace/.venv-optiq-mujoco/bin/python scripts/evaluate_v2_confirmation.py \
+  --step 1000000 --episodes 50 --seed-base 1100000
+```
+
+| Historical training seed | New-episode mean return | Episode SD | Mean length | Time-limit episodes / 50 |
+|---|---:|---:|---:|---:|
+| 0 | 5304.03 | 1515.11 | 865.46 | 37 |
+| 1 | 5670.61 | 48.64 | 1000.00 | 50 |
+| 2 | 5901.61 | 17.85 | 1000.00 | 50 |
+| 3 | 5656.48 | 16.11 | 1000.00 | 50 |
+
+The mean across four model scores is 5633.18, with training-seed SD 246.53.
+The seed-0 actor moves faster (step-weighted mean x velocity .988 m/s) but
+terminates before the horizon on 13 of these 50 episodes. The other actors'
+velocities are .603, .790 and .587 m/s, and all their episodes reach the horizon.
+This is a frozen-1M-model comparison on new episodes, distinct from the
+historical 900k--1M score averaged over changing policies.
+
+All 200 episode reward sums match the recorded reward components within 1e-7;
+all four actor checkpoints loaded successfully. Hashes and individual episodes
+are preserved in `outputs/v2_improvement/historical_behavior010_independent_1000000.json`
+and its `_validation.json` companion. Evaluation seeds and the common evaluator
+hash are fixed in `confirmation_final_independent_protocol.json`. No training
+run was changed and no push occurred.
