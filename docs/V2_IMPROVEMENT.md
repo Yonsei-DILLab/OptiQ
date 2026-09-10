@@ -1070,3 +1070,37 @@ with `scripts/diagnose_v2_checkpoint_ranking.py --seed 1 --old-step 700000
 `outputs/v2_improvement/confirmation_seed1_ranking_0700000_0800000.json`,
 its `_states.npz` and `_validation.json` companions. No gradient, parameter,
 training process, or experiment configuration was changed by this diagnostic.
+
+### Automatic final processing of the frozen confirmation
+
+Supervisor service `optiq-v2-finisher` waits for all eight prescribed runs to
+exit normally, preserving the four already-completed controls. It requires
+completion markers, every 900k–1M evaluation checkpoint, and nonempty final
+actor/critic files. A final file written by a still-running process does not
+trigger evaluation. Missing seeds, stopped runs, and incomplete exits prevent
+automatic final processing; the service never starts/stops or restarts training.
+
+After completion it runs all three existing reporters at the fixed 1M cutoff,
+then the common CPU stochastic evaluator for all eight final actors: 50 new
+episodes per actor, environment seeds 1100000–1100049 and policy seeds
+1110000–1110049. These are the previously recorded comparison seeds, also used
+by the completed historical evaluation. Core source compatibility and the
+common evaluator hash are checked again after waiting. Existing complete
+evaluations are verified and reused; partial results are preserved for manual
+review rather than overwritten. Do not launch a second final evaluator while
+this service is active.
+
+Final window results for all three methods and the matched/historical fresh
+episode scores are collected in
+`outputs/v2_improvement/confirmation_final_review_inputs.json`. Completing this
+pipeline only makes results ready for review; it cannot declare the goal met,
+empirical superiority, stability, or a policy-improvement guarantee.
+
+Implementation: `scripts/finish_v2_confirmation.py` and
+`scripts/supervisor_v2_finisher.sh`; installed supervisor configuration:
+`/etc/supervisor/conf.d/optiq-v2-finisher.conf`. Readiness was checked on the
+live runs before activation. The finisher and existing fixed-window checks
+pass (five tests), including the still-running-final-files case and missing
+checkpoint/seed cases. Logs: `/var/log/portal/optiq-v2-finisher.log` and
+`outputs/v2_improvement/confirmation_finisher_tests.log`. The service uses CPU
+and has autostart/autorestart disabled. No push occurred.
