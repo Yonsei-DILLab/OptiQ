@@ -260,3 +260,24 @@ Each policy induces different visited states and episode lengths: the respective
 critic errors are not a controlled comparison on a common state distribution.
 The rollout errors cannot be promoted to a verified uniform critic-error bound.
 Evidence: `outputs/v2_improvement/guarded_25k_soft_critic.json`.
+
+## Prepared confirmation protocol
+
+`scripts/supervisor_v2_confirmation.sh` prepares fresh, paired training seeds
+0/1 followed by 2/3 for a selected v2 candidate and the original OptiQ reference.
+The variant must be explicitly selected with `OPTIQ_CONFIRMATION_VARIANT`;
+preparing this script does not start the queue or select a winner. Each run has
+a 1M cap, ten stochastic evaluation episodes every 5k, and 50k checkpoints.
+Both methods have zero extra uniform behavior exploration. Network sizes,
+critic setup, optimizers, gradient clipping, replay/batch sizes, UTD, warmup,
+discount, target update coefficients and evaluation settings are matched.
+Resolved configuration checks are saved in
+`outputs/v2_improvement/confirmation_common_protocol.json`.
+
+Any failure or explicit stop ends that worker before it starts the next seed.
+Long runs remain subject to early-stop review against the matched reference;
+the queue is not permission to spend the full cap on a clearly poor candidate.
+Final claims must use all prescribed training seeds, fixed-step/tail performance
+and variability, not only a selected best checkpoint or episode confidence
+intervals. Exact soft-improvement assumptions and practical learned-critic
+limitations must remain separate from the empirical return comparison.
