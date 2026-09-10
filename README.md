@@ -2,19 +2,32 @@ The Code for the DIME paper submission at ICML2025.
 
 ## OptiQ v2: IDAC entropy with an OT actor
 
-Branch `v2` adds a one-step tanh-Gaussian semi-implicit actor, self-inclusive
-IDAC entropy estimates for soft TD targets, and a separate pre-tanh KDE teacher.
-It reuses the common MuJoCo training path with scalar twin critics, 16x64 OT,
-beta=1, and no teacher anchors. The calibrated Humanoid default is fixed T=0.5,
-M=16 entropy components, pre-tanh teacher bandwidth h=0.8, and no extra uniform
-exploration after warmup. See [v2 design and launch](docs/V2_IDAC.md) and the
-[calibration evidence](docs/V2_CALIBRATION_RESULTS.md).
+Branch `v2` adds a one-step tanh-Gaussian semi-implicit actor and self-inclusive
+IDAC entropy estimates for soft TD targets. The current Humanoid confirmation
+candidate is **`mujoco_v2_checked`**: fixed T=0.1, a learned conditional-Gaussian
+mixture teacher with standard-deviation floor 0.05, full-OT conditional NLL,
+and a sampled soft-value update check. It uses scalar 256x3 twin critics,
+16x64 OT, beta=1, M=16 entropy components, no teacher anchors and no extra uniform
+behavior exploration. Four paired training seeds (0/1/2/3) are being compared to
+OptiQ; final superiority and stability are still under evaluation.
+
+See the [investigation and confirmation protocol](docs/V2_IMPROVEMENT.md),
+[precise theorem assumptions](docs/V2_SOFT_POLICY_IMPROVEMENT.md), and
+[W&B confirmation project](https://wandb.ai/OptiQ/optiq_mujoco_v2_confirmation).
+Neither OT NLL nor the sampled replay-average check alone certifies policy
+improvement. To explicitly inspect or run this candidate:
 
 ```bash
 scripts/run_v2.sh --list
-scripts/run_v2.sh 0 --check
-scripts/run_v2.sh 0
+OPTIQ_CONFIG=mujoco_v2_checked scripts/run_v2.sh 0 --check
+OPTIQ_CONFIG=mujoco_v2_checked scripts/run_v2.sh 0
 ```
+
+The original `mujoco_v2` config remains reproducible with T=0.5, realized-action
+pre-tanh KDE bandwidth 0.8 and pointwise MSE. It is still the bare launcher's
+default while the confirmation candidate is being evaluated. Its original runs
+were stopped for poor performance; see [original design](docs/V2_IDAC.md) and
+[initial calibration](docs/V2_CALIBRATION_RESULTS.md) for historical details.
 
 ## Scalar-critic ablation (`mujoco-setting`)
 
