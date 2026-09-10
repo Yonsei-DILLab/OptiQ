@@ -309,3 +309,38 @@ See [the precise soft-improvement theorem and limitations](V2_SOFT_POLICY_IMPROV
 Exact policy evaluation alone is insufficient for arbitrary OT projections;
 the exact extraction/distillation or statewise acceptance assumptions must also
 be stated. The note includes a tested counterexample to a W2-only guarantee.
+
+### First paired confirmation review: 100k
+
+All eight confirmation runs launched from `8cb4f23` remain running. The
+100k comparison averages the 90k, 95k and 100k evaluations, with ten stochastic
+episodes at each checkpoint. Slower runs are retained, and both methods are
+compared at these same environment steps.
+
+| Training seed | Checked K64 v2 | OptiQ reference | Relative difference |
+|---|---:|---:|---:|
+| 0 | 746.89 | 571.99 | +30.6% |
+| 1 | 703.17 | 534.11 | +31.7% |
+| 2 | 679.94 | 524.34 | +29.7% |
+| 3 | 731.47 | 629.37 | +16.2% |
+
+Across four training seeds, the means are 715.37 and 564.95, with seed SDs
+29.76 and 47.61 respectively. The mean difference is +150.41 (+26.6%). This is
+an early milestone, not final superiority or evidence of monotonic improvement.
+All four recent v2 trends are nonnegative. Continue all eight runs and review
+again at 150k; no run currently warrants termination for poor relative return.
+
+At 100k, v2 importance ESS is only 2.49-2.98 out of 64. The sampled filter has
+accepted approximately 50-53% of proposed updates cumulatively. The last logged
+backup entropy lower estimates at this step are 2.95-3.96 nat, contributing
++0.30 to +0.40 before discount at T=.1. The old large negative entropy
+contribution is absent at this milestone,
+but sparse importance weights remain a limitation to monitor. Neither ESS nor
+the acceptance fraction is a policy-improvement certificate.
+
+All sixteen 100k actor/critic checkpoint files exist and are nonempty. The
+read-only decision record is
+`outputs/v2_improvement/confirmation_review_0100000.json`; the paired reporter
+is `scripts/analyze_v2_confirmation.py`. Training configuration and algorithms
+were not changed for this review. W&B:
+`OptiQ/optiq_mujoco_v2_confirmation`.
