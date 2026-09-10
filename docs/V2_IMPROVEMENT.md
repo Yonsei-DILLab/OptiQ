@@ -96,6 +96,39 @@ using the same no-extra-uniform protocol. It starts only as GPUs become free
 from the first screen. It is not the default `mujoco_v2` configuration. Sampling,
 matching density, common Humanoid training and checkpoint restoration are tested.
 
+### Completed 100k conditional-proposal screen
+
+All four conditional-proposal runs completed their 100k cap without meeting the
+half-reference early-stop rule. Last-three-evaluation mean returns were:
+
+| Setting | Seed 0 | Seed 1 |
+|---|---:|---:|
+| T=.1, conditional proposal | 794.65 | 916.75 |
+| T=.5, conditional proposal | 583.20 | 647.54 |
+| Matched OptiQ protocol, reference | 721.67 | not run |
+
+These evaluations have only three episodes per checkpoint. An independent
+read-only evaluation of each final 100k checkpoint with 30 stochastic episodes
+and shared fresh environment seeds gave:
+
+| Fixed checkpoint | Mean return | Episode SD | Mean episode length |
+|---|---:|---:|---:|
+| OptiQ seed 0 | 697.60 | 139.26 | 138.23 |
+| Conditional T=.1 seed 0 | 726.11 | 188.03 | 139.83 |
+| Conditional T=.1 seed 1 | 798.09 | 298.48 | 156.87 |
+
+For seed 0, the paired mean gap is +28.51 with an episode-bootstrap 95% interval
+[-59.21, 119.33]. This does not establish superiority. The seed-1 comparison uses
+the seed-0 reference and does not substitute for a matched training seed. The
+intervals quantify episode noise of these fixed checkpoints, not training-seed
+variation. T=.1 is promising relative to original v2, but neither stable OptiQ
+superiority nor final 1M performance has been established.
+
+`scripts/report_v2_screens.py` generates PNG/PDF curves and a JSON summary;
+`scripts/evaluate_v2_screen_checkpoints.py` reproduces the independent evaluation.
+Evidence is under `outputs/v2_improvement/`, particularly
+`conditional_screen_results.json` and `independent_100k_evaluation.json`.
+
 ## Policy-improvement requirement
 
 Neither the original argmax-MSE nor the new conditional NLL alone provides a
