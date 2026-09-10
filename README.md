@@ -12,6 +12,7 @@ behavior exploration. Four paired training seeds (0/1/2/3) are being compared to
 OptiQ; final superiority and stability are still under evaluation.
 
 See the [investigation and confirmation protocol](docs/V2_IMPROVEMENT.md),
+[current algorithm explanation in Korean](docs/V2_CURRENT_ALGORITHM_KO.md),
 [precise theorem assumptions](docs/V2_SOFT_POLICY_IMPROVEMENT.md), and
 [W&B confirmation project](https://wandb.ai/OptiQ/optiq_mujoco_v2_confirmation).
 Neither OT NLL nor the sampled replay-average check alone certifies policy
