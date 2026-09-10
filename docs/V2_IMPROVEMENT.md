@@ -708,3 +708,34 @@ results remain unavailable, so the full objective is not yet achieved.
 Evidence: `outputs/v2_improvement/confirmation_review_0500000.json`,
 `confirmation_assessment/step_0500000.json` and
 `confirmation_report/step_0500000.*`. No push occurred.
+
+### Finite-M entropy check on the 500k actors
+
+`scripts/diagnose_v2_entropy.py` restored each frozen v2 actor on CPU, collected
+four fresh stochastic trajectories per actor, and selected 64 evenly spaced
+visited states from each pooled trajectory sequence. It used 128 independent
+action/component draws per state with the common M=16 entropy-bracket function,
+32,768 lower/upper pairs in total. Time-limit and true-terminal trajectories
+are both retained for this state-sampling diagnostic.
+
+| Seed | Mean lower entropy | Mean upper-minus-lower | Conditional MC SE of gap |
+|---|---:|---:|---:|
+| 0 | 3.26065 | 0.00001583 | 0.00001753 |
+| 1 | 4.18770 | 0.00002037 | 0.00001716 |
+| 2 | 3.48131 | 0.00005056 | 0.00001625 |
+| 3 | 3.34978 | 0.00001237 | 0.00001734 |
+
+Multiplying these mean gaps by T=.1 gives 1.2e-6--5.1e-6 per step. The selected
+states show no indication of a large finite-M entropy gap. Several point
+estimates are comparable to their Monte Carlo error, so their precise small
+values should not be overinterpreted. The largest observed state-mean gap is
+about .00051; this is not a bound on other states or on the true expectation.
+These on-policy entropy values should not be directly equated with replay-batch
+training metrics, which use a different state distribution.
+
+This diagnostic does not furnish the uniform epsilon_H required by the
+theoretical error bound and does not certify soft policy improvement. The
+source/checkpoint hashes, seeds, selected state indices and per-state results
+are preserved in `outputs/v2_improvement/entropy_diagnostic_0500000.json`;
+its `_validation.json` companion checks all four models and state averaging.
+No training parameter or running model was changed.
