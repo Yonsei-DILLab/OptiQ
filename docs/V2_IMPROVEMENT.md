@@ -230,3 +230,33 @@ Validation: 13 soft-filter/theory tests (including an actual Humanoid loop and
 complete optimizer rollback), plus 51 common-path, critic, mixture, and
 distillation regression tests passed. Local logs are under
 `outputs/v2_improvement/{soft_guard_tests,guard_regression_tests}.log`.
+
+### Frozen-policy soft-return check at 25k
+
+`scripts/diagnose_v2_soft_critic.py` rolls out frozen saved policies on fresh
+environment seeds. Actions follow the actual semi-implicit marginal; generating
+and independent mixture components provide lower/upper entropy estimates. The
+backward return excludes current-action entropy and includes entropy starting
+at the next state, matching the implemented soft Q convention. A dedicated test
+checks this indexing and true-terminal treatment. Time-limit episodes would be
+excluded and reported; none occurred in this probe.
+
+For K256, T=.1, seed 0, 20 complete episodes at the 25k checkpoint gave:
+
+| Quantity, mean over episodes | Filter on | Filter off |
+|---|---:|---:|
+| Undiscounted environment return | 316.29 | 412.58 |
+| Episode length | 59.55 | 80.30 |
+| Initial predicted minimum Q | 231.10 | 251.67 |
+| Initial Monte Carlo soft return, lower estimator | 260.75 | 297.46 |
+| Mean entropy lower estimate | 5.84443 | 3.42464 |
+| Mean entropy upper estimate | 5.84444 | 3.42466 |
+
+The initial Q predictions are low on average in both cases. The finite-mixture
+entropy bracket gap is tiny here, so a large entropy-estimator gap does not
+explain the filter's frequent rejections at this checkpoint. This does not prove
+that action rankings are accurate or that overestimation cannot occur elsewhere.
+Each policy induces different visited states and episode lengths: the respective
+critic errors are not a controlled comparison on a common state distribution.
+The rollout errors cannot be promoted to a verified uniform critic-error bound.
+Evidence: `outputs/v2_improvement/guarded_25k_soft_critic.json`.
