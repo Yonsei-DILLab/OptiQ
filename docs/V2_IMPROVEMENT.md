@@ -944,9 +944,11 @@ stochastic prediction/unscale helper; all episodes, including time limits, count
 The paired return difference is −930.23, with a conditional episode-bootstrap
 95% interval of [−1351.02, −547.45]. This interval concerns these two fixed
 models and shared test episodes, not uncertainty across training seeds. The
-original ten episodes exaggerated the observed loss, but a performance loss
-and higher early-termination frequency remain on fresh episodes. It must not
-be dismissed as evaluation noise alone. Later training evaluations recovered;
+original ten-episode score was lower than the fresh checkpoint score, but these
+measurements differ in both episodes and potentially one actor update (see the
+timing audit below); the entire difference cannot be assigned to sampling noise.
+A performance loss and higher early-termination frequency remain in the fresh
+comparisons of the saved actors. Later training evaluations recovered;
 these results do not identify the learning mechanism causing the temporary dip.
 
 Step-pooled forward velocity increases from .323 to .362 m/s. Net reward per
@@ -1142,3 +1144,32 @@ evaluation, so a duplicate evaluator must not be launched. Evidence:
 and `confirmation_historical_comparison/step_0900000.*`. All three reporters
 agree on the fixed cutoff and current paired scores. Core training/config
 source remains unchanged from launch. No push occurred.
+
+### Evaluation/checkpoint timing audit before final interpretation
+
+The inherited SB3 loop calls the evaluation callback during rollout collection,
+after incrementing `num_timesteps` but before the following training update.
+`OptiQDIME.train` saves actor/critic TrainStates after that update using the
+same step label. All eight confirmation configs use UTD=1 and policy delay=1;
+the common runner retains DIME's train frequency of one environment step.
+Thus an original 10-episode evaluation at step N and the saved N checkpoint
+are not necessarily the exact same actor. Fresh-checkpoint evaluation remains
+a distinct secondary protocol, as planned.
+
+For the seed-1 diagnostic checkpoints, exact-step logs show one accepted actor
+update at 700k and 750k. Their saved policies may differ from the policies in
+the original ten-episode evaluations. At 800k the proposal was rejected and
+the actor TrainState rolled back, so that update did not change its inference
+parameters. The independent 700k/750k/800k comparisons are still valid
+comparisons of the explicitly hashed saved actors. However, the difference
+between an original score and its fresh-checkpoint score must not generally
+be attributed entirely to evaluation sampling; the earlier 750k wording has
+been qualified accordingly.
+
+Source order, source hashes, all eight update settings, and the three logged
+acceptance decisions are recorded in
+`outputs/v2_improvement/confirmation_evaluation_checkpoint_timing.json`.
+The predeclared final window, checkpoint selection, and independent episode
+seeds are unchanged. All sixteen 950k actor/critic checkpoints were verified
+and recorded in `confirmation_checkpoints_0950000.json`. Training continues;
+the final evaluation service remains responsible for the full 1M comparison.
