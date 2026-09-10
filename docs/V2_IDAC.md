@@ -88,8 +88,8 @@ Final production settings and the selection evidence are recorded in
 
 ```bash
 scripts/run_v2.sh --list
-scripts/run_v2.sh 0 --check
-scripts/run_v2.sh 0
+OPTIQ_CONFIG=mujoco_v2 scripts/run_v2.sh 0 --check
+OPTIQ_CONFIG=mujoco_v2 scripts/run_v2.sh 0
 # The same script accepts seeds 1,2,3 and explicit Hydra overrides.
 ```
 

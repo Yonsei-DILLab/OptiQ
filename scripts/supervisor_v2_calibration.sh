@@ -7,6 +7,8 @@ set -u
 temperatures=(0.1 0.25 0.5 1.0)
 index="$1"
 temperature="${temperatures[$index]}"
+# Preserve the original MSE/KDE calibration independently of launcher defaults.
+export OPTIQ_CONFIG=mujoco_v2
 exec /workspace/OptiQ-v2/scripts/run_v2.sh 0 \
   "alg.actor.temperature=$temperature" alg.behavior_uniform_probability=0.0 total_steps=20000 \
   num_eval_episodes=3 diagnostic_interval=1000 checkpoint_interval=20000 \
