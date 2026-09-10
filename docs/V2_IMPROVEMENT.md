@@ -670,3 +670,41 @@ this event as evidence against a monotonic-stability claim and monitor recurrenc
 do not tune or restart the promising confirmation runs around it.
 
 Evidence: `outputs/v2_improvement/confirmation_seed0_event_0430000.json`.
+
+### Paired confirmation review: 500k
+
+The common 490k/495k/500k evaluations give:
+
+| Training seed | Checked K64 v2 | OptiQ reference | v2 / OptiQ |
+|---|---:|---:|---:|
+| 0 | 5266.82 | 4881.67 | 1.079 |
+| 1 | 4701.59 | 4440.52 | 1.059 |
+| 2 | 5249.42 | 4413.64 | 1.189 |
+| 3 | 5338.38 | 5099.55 | 1.047 |
+
+The four-seed means are 5139.05 versus 4708.85 (+9.1%), with seed SDs 294.17
+and 337.47. All pairs are positive, but the reference has substantially closed
+the gap seen at 400k. Current v2 drawdowns from rolling-mean peaks are 1.9%,
+10.5%, .4% and 1.4%. Its largest historical rolling drawdowns since 100k remain
+26.1%, 23.7%, 25.2% and 33.0%, each with an observed recovery. Single-checkpoint
+dips such as the 430k event remain relevant and should not be hidden by averaging.
+
+Normalized area under the evaluation curve from the first evaluation through
+500k is 3016.83 for v2 versus 1769.25 for OptiQ, with seed SDs 168.87 and 539.52.
+This supports better sample efficiency over the observed horizon; it does not
+replace the fixed 900k--1M primary comparison. Both panels of the preserved
+figure stop at the common 500k horizon, and the shaded bands are seed SDs.
+
+At 500k, v2 ESS is 2.76--4.48/64, cumulative acceptance 57.3--58.6%, and the
+pre-discount entropy term +.070--+.172. Logged actor/critic losses and current/
+next Q values in 400k--500k are finite for all eight runs. Mean evaluation
+episode length is approximately 963 versus 930 steps. Observed time to 500k is
+157.4 versus 106.8 minutes under paired GPU sharing, not an isolated speed test.
+
+All sixteen 500k actor/critic checkpoints are present and nonempty. Continue
+all eight runs with the frozen training code and configuration; next major
+review is 600k, sooner if a failure or sustained decline occurs. Final-window
+results remain unavailable, so the full objective is not yet achieved.
+Evidence: `outputs/v2_improvement/confirmation_review_0500000.json`,
+`confirmation_assessment/step_0500000.json` and
+`confirmation_report/step_0500000.*`. No push occurred.
