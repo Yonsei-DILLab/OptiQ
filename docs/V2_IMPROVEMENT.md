@@ -534,3 +534,38 @@ Evidence: `outputs/v2_improvement/confirmation_independent_0250000.json`,
 `confirmation_independent_0250000_validation.json` and
 `confirmation_evaluation_tests.log`. This is a secondary fixed-checkpoint
 evaluation; the predefined 900k--1M primary window remains unchanged.
+
+### Paired confirmation review: 300k
+
+The common 290k/295k/300k evaluations give:
+
+| Training seed | Checked K64 v2 | OptiQ reference | v2 / OptiQ |
+|---|---:|---:|---:|
+| 0 | 4338.76 | 2716.69 | 1.60 |
+| 1 | 4506.99 | 955.60 | 4.72 |
+| 2 | 3691.09 | 1060.74 | 3.48 |
+| 3 | 3759.92 | 1545.03 | 2.43 |
+
+The four-seed means are 4074.19 versus 1569.51 (2.60x), with seed SDs 409.41
+and 806.71. All pairs are positive. OptiQ seed 0 is improving rapidly, so the
+earlier gap cannot be assumed to persist to 1M. The v2 largest rolling-mean
+drawdowns after 100k are 26.1%, 23.7%, 25.2% and 33.0%; each of these episodes
+has recovered, with peak-to-recovery durations of 30k, 40k, 25k and 30k steps.
+Current v2 drawdowns from running peaks are 5.0%, 3.2%, 10.6% and 0.0%.
+Thus recovery is supported, while monotonic or final stable superiority remains
+unproven. Continue all eight runs and review at 400k, sooner if deterioration
+or a runtime failure warrants it.
+
+At 300k, v2 ESS is 1.92-2.49/64 and cumulative acceptance is 56.0-57.5%.
+The pre-discount entropy term ranges from -0.008 to +0.134; the small negative
+value in seed 0 is unlike the original v2's approximately -5 contribution.
+Average evaluation episode length is approximately 779 steps versus 308 for
+OptiQ. Observed time to 300k is about 89.6 minutes versus 59.9 minutes under
+paired GPU sharing, including evaluation and the concurrent bounded CPU probe.
+
+All sixteen 300k actor/critic checkpoints are present and nonempty. The
+independent CPU evaluation is finished and all eight training processes remain
+live. Evidence: `outputs/v2_improvement/confirmation_review_0300000.json`,
+`confirmation_assessment/step_0300000.json` and
+`confirmation_report/step_0300000.*`. No training algorithm or configuration
+was changed and no push occurred. The final fixed window is not yet available.
