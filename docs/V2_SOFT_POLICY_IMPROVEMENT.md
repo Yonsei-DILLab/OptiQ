@@ -89,6 +89,31 @@ T epsilon_KL/(1-gamma). Observed NLL, ESS or small W2 error is not epsilon_KL.
 These are theoretical error bounds; they have not been numerically certified
 for the Humanoid neural critics or actors.
 
+## Finite-M entropy in policy evaluation
+
+The exact theorem uses the true marginal policy entropy, not merely convergence
+of the implemented finite-M TD backup. For a frozen policy, let L_M(s) be the
+expectation of the self-inclusive IDAC entropy estimator. In general
+L_M(s)<=H(pi(.|s)); its bias is not removed by averaging more TD batches with
+the same M. The lower-bound gap tends to zero as M grows under the estimator's
+convergence and integrability assumptions.
+
+If 0<=H(pi(.|s))-L_M(s)<=epsilon_H uniformly and the lower-entropy Bellman
+equation is solved exactly, the discounted series gives
+
+    0 <= V_true - V_lower <= T epsilon_H / (1-gamma),
+    0 <= Q_true - Q_lower <= gamma T epsilon_H / (1-gamma).
+
+The extra gamma in the Q bound follows because Q's entropy contribution starts
+at the next state. Thus the critic-error budget in the sufficient acceptance
+margin above must include finite-M entropy bias as well as critic approximation
+error. A small observed entropy-bracket gap at sampled states is useful
+diagnostically, but is not a verified uniform epsilon_H. The current M=16
+implementation remains an approximation to true-entropy soft policy iteration;
+exact policy evaluation in the theorem assumes this error is absent or
+explicitly bounded. This derivation is our application of the discounted
+Bellman equations, not an additional claim attributed to IDAC.
+
 ## Counterexample to a W2-only guarantee
 
 Consider one state, zero reward, and three actions at coordinates 0, .01, 1.
