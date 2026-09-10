@@ -57,6 +57,8 @@ OT의 행은 student 16개에 각각 질량 1/16, 열은 teacher 후보 64개에
 비용 행렬을 평균으로 나누는 추가 정규화는 꺼져 있다.
 Sinkhorn epsilon은 **0.25**, 반복 횟수는 **100**이다.
 이 epsilon은 OT 결합의 regularization이며, Boltzmann 목표 온도 T=0.1과 다르다.
+비용 정규화 여부가 다르므로 기준선과 epsilon 숫자만 비교할 수는 없다.
+상태별 비용 평균을 c로 나눈다면 동등한 epsilon도 0.25/c로 나눠야 한다.
 
 Actor는 각 OT 행의 전체 분포에 대한 조건부 Gaussian negative log likelihood를
 최소화한다. Teacher u의 가중 평균뿐 아니라 분산도 반영하여 mu와 sigma를

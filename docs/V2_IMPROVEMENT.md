@@ -569,3 +569,28 @@ live. Evidence: `outputs/v2_improvement/confirmation_review_0300000.json`,
 `confirmation_assessment/step_0300000.json` and
 `confirmation_report/step_0300000.*`. No training algorithm or configuration
 was changed and no push occurred. The final fixed window is not yet available.
+
+### Active-configuration and OT numerical audit at 350k
+
+The saved configurations for all eight runs confirm that checked v2 uses
+un-normalized squared action costs with Sinkhorn epsilon .25 and 100 iterations.
+The reference uses mean-normalized costs with epsilon .05 and 30 iterations.
+Their epsilon values therefore cannot be compared without accounting for cost
+scale. These settings were already active at launch; this audit changes no
+training parameter. The Korean current-algorithm reference documents these
+settings and distinguishes retained legacy fields from active computations.
+The actor, critic, density, distillation and acceptance implementation files
+still match the launch commit `8cb4f23`.
+
+For 11 logged diagnostic batches per v2 seed from 300k through 350k, mean row
+marginal errors were 5.9e-6--9.9e-6 and mean column marginal errors about 4.2e-9.
+All inspected values were finite. The largest **logged batch-mean** row error
+was 2.2e-5; this does not bound every individual state or every unlogged update.
+Mean squared action costs were about 9.0. These observations give no indication
+of a gross mass-conservation failure in the inspected OT diagnostics, but do
+not certify OT optimality, NLL distribution fidelity or soft improvement.
+
+The hypothetical hard-argmax projection TV diagnostic averaged .056--.083.
+The active loss uses full-row NLL, so this diagnostic is not its actual target
+mass error. Evidence: `outputs/v2_improvement/confirmation_algorithm_semantics_audit.json`
+and `confirmation_ot_numerics_0300000_0350000.json`.
