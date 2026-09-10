@@ -1197,3 +1197,36 @@ do not establish true statewise improvement. Further changes must retain
 those unresolved requirements. No new training variant has been launched yet;
 the next read-only diagnostic examines the final actors' use of latent z
 relative to conditional Gaussian noise. No push occurred.
+
+### Final-policy latent-use diagnostic
+
+After the full confirmation finished, four fresh trajectories per final v2
+actor provided 64 visited states. At each state, 256 z components were sampled.
+The empirical pre-tanh variance decomposition is
+`Var(u | s) = Var_z(mu(s,z)) + E_z[sigma(s,z)^2]` per action dimension.
+Summing dimensions gives the fraction attributed to variation of conditional
+means. This is measured before tanh, not the action-space variance fraction.
+
+| Seed | Mean SD over z of mu | Mean conditional sigma | Mean SD over z of log sigma | Mean share from latent means |
+|---|---:|---:|---:|---:|
+| 0 | .002326 | .84869 | .000512 | .000938% |
+| 1 | .002687 | .83791 | .000586 | .001326% |
+| 2 | .002893 | .83950 | .000652 | .001462% |
+| 3 | .002616 | .84285 | .000660 | .001261% |
+
+On these states, z changes both conditional means and scales very little,
+while epsilon noise accounts for nearly all pre-tanh variance. The intended
+latent mixture capacity is barely used here. This is consistent with the
+very small M=16 entropy-bracket gaps; it does not prove global latent
+independence, unimodality everywhere, or that this causes the return gap.
+The next bounded diagnosis should test whether conditional-noise scale and
+initialization preserve latent structure on an exact multimodal target before
+choosing another expensive Humanoid training configuration. No further
+training experiment or actor-gradient variant has been launched.
+
+`scripts/diagnose_v2_entropy.py` now records this variance decomposition along
+with its existing entropy check. All four checkpoints, script hashes, moment
+shapes and reductions were verified. Evidence:
+`outputs/v2_improvement/entropy_latent_diagnostic_1000000.json` and its
+`_validation.json` companion. Existing 500k artifacts are preserved, with
+their original source hashes. Training and final comparison inputs are unchanged.

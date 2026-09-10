@@ -24,6 +24,7 @@ from omegaconf import OmegaConf
 
 from optiq_dime import OptiQDIME
 from optiq_dime.soft_improvement import entropy_bracket_sample
+from optiq_dime.semi_implicit import actor_components
 
 
 @partial(jax.jit, static_argnames=("components",))
@@ -32,6 +33,11 @@ def entropy_draws(actor, observations, keys, components):
         lambda key: entropy_bracket_sample(actor, observations, key, components)
     )(keys)
     return lower, upper
+
+
+@partial(jax.jit, static_argnames=("components",))
+def conditional_parameters(actor, observations, key, components):
+    return actor_components(actor, observations, key, components)
 
 
 def main():
@@ -97,6 +103,26 @@ def main():
             assert lower.shape == upper.shape == (args.draws, len(states))
             assert np.isfinite(lower).all() and np.isfinite(upper).all()
             gap = upper-lower
+            # Total pre-tanh variance = variance of conditional means + mean
+            # conditional variance. This describes the empirical z mixture;
+            # it is not the variance decomposition after the tanh transform.
+            mu, log_std = conditional_parameters(model.policy.actor_state,
+                jnp.asarray(states), jax.random.PRNGKey(args.seed_base+30000), 256)
+            mu, log_std = np.asarray(mu, dtype=np.float64), np.asarray(log_std, dtype=np.float64)
+            between = mu.var(axis=1)
+            within = np.exp(2*log_std).mean(axis=1)
+            share = between.sum(axis=1)/(between+within).sum(axis=1)
+            assert np.isfinite(share).all() and ((share >= 0) & (share <= 1)).all()
+            latent = {
+                "space": "pre-tanh u", "components_per_state": 256,
+                "mean_std_over_z_of_mu": float(np.sqrt(between).mean()),
+                "mean_conditional_sigma": float(np.exp(log_std).mean()),
+                "mean_std_over_z_of_log_sigma": float(log_std.std(axis=1).mean()),
+                "mean_variance_share_from_latent_means": float(share.mean()),
+                "state_variance_shares_from_latent_means": share.tolist(),
+                "between_mean_variance_per_action_dimension": between.mean(axis=0).tolist(),
+                "within_conditional_variance_per_action_dimension": within.mean(axis=0).tolist(),
+                "limitation": "Sampled z-mixture moments on visited states; low mean-variance share alone does not prove global latent independence or unimodality."}
             # Independent action/component draws; condition on the chosen states.
             draw_mean_gaps = gap.mean(axis=1)
             result = {"seed": item["seed"], "run": directory.name, "source_commit": item["commit"],
@@ -108,6 +134,7 @@ def main():
                       "mean_gap": float(gap.mean()),
                       "conditional_mc_standard_error_gap": float(draw_mean_gaps.std(ddof=1)/np.sqrt(args.draws)),
                       "temperature_times_mean_gap": float(cfg.alg.actor.temperature*gap.mean()),
+                      "latent_variance_diagnostic": latent,
                       "state_mean_gaps": gap.mean(axis=0).tolist(),
                       "state_mean_entropy_lower": lower.mean(axis=0).tolist()}
             record["results"].append(result)
