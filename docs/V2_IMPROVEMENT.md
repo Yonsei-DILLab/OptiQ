@@ -1026,3 +1026,47 @@ the recorded protocol; reward-component reconstruction error is below 1.2e-11.
 Evidence: `outputs/v2_improvement/confirmation_seed1_recheck_0800000_independent.json`
 and its `_validation.json` companion. Training remains unchanged pending the
 frozen full confirmation result, as requested.
+
+### Seed-1 policy ranking under the frozen 700k and 800k critics
+
+The two saved actors generated four new trajectories each. Thirty-two evenly
+spaced pre-action states per trajectory were retained, including states near
+early termination: 128 states per policy, 256 total. These are recent visited
+states, not the fixed landscape-probe replay batch saved at the first 50k
+checkpoint. Trajectory seeds are 1300000–1300003 and policy seeds
+1310000–1310003. The 700k actor reaches 1000 steps on all four trajectories;
+the 800k actor terminates at 327, 150 and 944 steps on three trajectories and
+reaches 1000 on the fourth.
+
+For each state bank, both critics score the same old/new actor pair with 256
+shared random action draws per state, M=16 entropy estimation and T=.1. The
+score is the same minimum-twin-Q plus entropy quantity used by the sampled
+guard: new-policy lower minus old-policy upper. It is a learned-Q score,
+not an estimate of actual full-episode return.
+
+| States visited by | Frozen critic | Mean new-minus-old soft score | Conditional MC SE | States with negative estimated mean |
+|---|---|---:|---:|---:|
+| 700k actor | 700k | −.16871 | .00226 | 79.7% |
+| 700k actor | 800k | +.08605 | .00201 | 31.2% |
+| 800k actor | 700k | −.36854 | .00799 | 74.2% |
+| 800k actor | 800k | −.07716 | .00799 | 43.8% |
+
+On exactly the same old-policy states, changing the critic reverses the
+average preference. Under the newer critic, the mean score is positive on
+old-policy states but negative on new-policy states. Thus a favorable average
+can depend on both critic revision and which states are evaluated; individual
+state losses can coexist with a positive average. This is consistent with
+critic-ranking changes and state-coverage limitations contributing to the
+observed instability, but does not establish causality or prove Q overestimation.
+The comparison spans 100k training steps, not one accepted update; the state
+banks are not the actual validation batches used during those updates. MC
+errors are conditional on these fixed states/models and are not uniform error
+bounds or training-seed confidence intervals.
+
+All four comparisons completed. Checkpoint/script/state hashes, per-trajectory
+state selection, finite scores, and score reductions were verified. Reproduce
+with `scripts/diagnose_v2_checkpoint_ranking.py --seed 1 --old-step 700000
+--new-step 800000 --seed-base 1300000 --output <new-output.json>`. Evidence:
+`outputs/v2_improvement/confirmation_seed1_ranking_0700000_0800000.json`,
+its `_states.npz` and `_validation.json` companions. No gradient, parameter,
+training process, or experiment configuration was changed by this diagnostic.
