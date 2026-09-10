@@ -5,6 +5,13 @@ defaults:
   - override /benchmark: humanoid
   - _self_
 
+alg:
+  actor:
+    # 16 centers x (4 random candidates + 1 anchor) = 80 OT targets.
+    num_policy_samples: 16
+    proposals_per_policy_sample: 5
+    include_anchor: true
+
 output_root: outputs/optiq_mujoco_scalar_no_anchor
 wandb:
   project: ${oc.env:WANDB_PROJECT,optiq_mujoco_scalar_no_anchor}

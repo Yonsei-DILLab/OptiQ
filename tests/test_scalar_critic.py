@@ -29,7 +29,7 @@ def config(name='mujoco_setting', overrides=()):
 
 @pytest.mark.parametrize('benchmark', BENCHMARKS)
 @pytest.mark.parametrize('seed', [0, 1, 2])
-def test_only_requested_critic_and_beta_settings_change(benchmark, seed):
+def test_only_requested_scalar_and_anchor_defaults_change(benchmark, seed):
     old = config('optiq_dime_no_anchor', [f'benchmark={benchmark}', f'seed={seed}'])
     new = config(overrides=[f'benchmark={benchmark}', f'seed={seed}'])
     assert validate_config(new)
@@ -54,11 +54,16 @@ def test_only_requested_critic_and_beta_settings_change(benchmark, seed):
     assert b['actor']['density_correction_beta'] == b['actor']['density_beta'] == 1.0
     for key in ['density_correction_beta', 'density_beta']:
         b['actor'][key] = a['actor'][key]
+    assert b['actor']['include_anchor'] is True
+    assert b['actor']['num_policy_samples'] == 16
+    assert b['actor']['proposals_per_policy_sample'] == 5
+    for key in ['include_anchor', 'proposals_per_policy_sample']:
+        b['actor'][key] = a['actor'][key]
     assert a == b  # All other actor and optimizer settings are unchanged.
     for key in ['env_name', 'seed', 'total_steps', 'eval_interval', 'num_eval_episodes',
                 'eval_at_start', 'stochastic_eval', 'diagnostic_interval', 'checkpoint_interval']:
         assert old[key] == new[key]
-    assert new.alg.actor.include_anchor is False
+    assert new.alg.actor.include_anchor is True
     assert new.alg.actor.density_beta == 1.0
     assert not new.alg.actor.adaptive_density_beta
 
@@ -159,7 +164,7 @@ def test_real_environment_scalar_actor_critic_training_and_checkpoint(benchmark)
             a.source_q_eval, a.transport_target_mode)
         assert np.isfinite(loss) and all(np.isfinite(v).all() for v in metrics.values())
         assert float(metrics['density_beta_mean']) == 1.0
-        assert 1 <= metrics['source_ess_absolute'] <= 64.001
+        assert 1 <= metrics['source_ess_absolute'] <= 80.001
         # Raw Q diagnostics must not silently multiply scalar outputs by v_min.
         _, loss2, _, metrics2 = OptiQDIME.update_actor(model.policy.actor_state,
             model.policy.qf_state, obs, jax.random.PRNGKey(9), jnp.array([1.]),

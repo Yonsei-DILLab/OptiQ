@@ -1,7 +1,7 @@
 # MuJoCo 5개 환경 — OptiQ scalar critic, fixed β=1
 
 브랜치: `mujoco-setting` (`critic-dime-no-anchor` 기반).
-**256×3 GELU scalar twin-Q, BN 없음, UTD=1, no-anchor, 고정 β=1**을 사용한다.
+**256×3 GELU scalar twin-Q, BN 없음, UTD=1, anchor 포함, 고정 β=1**을 사용한다.
 이 문서는 실행 프로토콜이며, 코드 준비만으로 실험이 자동 시작되지는 않는다.
 
 ## 1. 환경과 학습 예산
@@ -47,9 +47,10 @@
 |---|---|
 | KDE policy centers N | 16 |
 | 센터당 random 후보 | 4 |
-| 전체 후보 M / transport 크기 | 64 / 16×64 |
+| 센터당 전체 후보 | 5 = random 4 + anchor 1 |
+| 전체 후보 M / transport 크기 | 80 = random 64 + anchor 16 / 16×80 |
 | Sampling | `stratified` |
-| Anchor | **없음** |
+| Anchor | **포함 (`include_anchor=true`)** |
 | Perturbation σ / truncation | 0.2 / 2.5σ = 0.5, action box도 반영 |
 | Q-weight temperature | **0.25** |
 | Density correction β | **고정 1.0** |
@@ -70,6 +71,7 @@ Q-weight temperature=0.25와 critic target update τ=0.005는 서로 다른 값�
 - 체크포인트: 매 50K steps 및 기존 runner의 초기 학습 체크포인트.
 - W&B: online, 기본 프로젝트 `optiq_mujoco_scalar_no_anchor`.
 - 기본 출력: `outputs/optiq_mujoco_scalar_no_anchor`.
+- 프로젝트·출력 경로의 `no_anchor`는 기존 이름을 유지한 것이며, 현재 `mujoco_setting` 기본값은 anchor=True다.
 - 각 실행은 고유 run ID를 추가해 기존 결과를 덮어쓰지 않는다.
 - `WANDB_PROJECT` / `WANDB_ENTITY` 환경변수는 W&B 기본값보다 우선한다.
 
