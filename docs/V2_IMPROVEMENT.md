@@ -887,3 +887,9 @@ performance and stability remain unverified. Evidence:
 `outputs/v2_improvement/confirmation_review_0700000.json`,
 `confirmation_assessment/step_0700000.json` and
 `confirmation_report/step_0700000.*`. No push occurred.
+
+Both reporting scripts accept `--through-step 700000` to preserve the same
+evaluation horizon while live runs continue. A CLI regression verifies that
+future checkpoints cannot enter a frozen report or make its incomplete final
+window appear complete. The assessment/alignment checks pass (five tests);
+see `outputs/v2_improvement/confirmation_assessment_cutoff_tests.log`.

@@ -35,3 +35,38 @@ def test_drawdown_reports_recovery_and_censors_unfinished_recovery():
     partial = drawdown(steps[:-1], returns[:-1])
     assert partial["recovery_step"] is None and partial["peak_to_recovery_steps"] is None
     assert partial["unrecovered_elapsed_steps"] == 60000
+
+
+def test_cli_cutoff_keeps_future_evaluations_out_of_the_final_window(tmp_path, monkeypatch):
+    import json
+    from types import SimpleNamespace
+    from scripts import assess_v2_confirmation as module
+
+    full = complete_runs()
+    items = [{"seed": seed, "method": method, "supervisor": f"{method}-{seed}"}
+             for seed, method in full]
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps({"cap": 1000000, "eval_episodes": 10, "runs": items}))
+    monkeypatch.setattr(module, "read_run", lambda item, _: {
+        **full[item["seed"], item["method"]], "completed_marker": False})
+    statuses = "\n".join(f"{i['supervisor']} RUNNING" for i in items)
+    monkeypatch.setattr(module, "subprocess", SimpleNamespace(
+        run=lambda *a, **kw: SimpleNamespace(stdout=statuses)))
+    output = tmp_path / "report"
+    command = ["assess", "--manifest", str(manifest), "--output", str(output)]
+    monkeypatch.setattr(module.sys, "argv", command + ["--through-step", "950000"])
+    module.main()
+    cutoff = json.loads((output / "latest.json").read_text())
+    assert cutoff["requested_evaluation_cutoff"] == cutoff["common_evaluation_step"] == 950000
+    assert not cutoff["primary_final_window"]["available"]
+    assert len(cutoff["primary_final_window"]["missing_checkpoints"]) == 8
+    assert all(v == list(range(955000, 1000001, 5000))
+               for v in cutoff["primary_final_window"]["missing_checkpoints"].values())
+
+    monkeypatch.setattr(module.sys, "argv", command)
+    module.main()
+    uncut = json.loads((output / "latest.json").read_text())
+    assert uncut["requested_evaluation_cutoff"] is None
+    assert uncut["common_evaluation_step"] == 1000000
+    assert uncut["primary_final_window"]["available"]
+    assert not uncut["final_results_ready_for_review"]  # The mock processes are still running.

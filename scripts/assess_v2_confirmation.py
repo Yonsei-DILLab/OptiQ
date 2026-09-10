@@ -89,12 +89,20 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, default=ROOT / "outputs/v2_improvement/confirmation_manifest.json")
     parser.add_argument("--output", type=Path, default=ROOT / "outputs/v2_improvement/confirmation_assessment")
+    parser.add_argument("--through-step", type=int,
+                        help="Freeze evaluation metrics at this step; process states remain current.")
     args = parser.parse_args()
+    if args.through_step is not None and args.through_step < 1:
+        parser.error("--through-step must be positive")
     manifest = json.loads(args.manifest.read_text())
     assert manifest["cap"] == 1000000 and manifest["eval_episodes"] == 10
     items = {(r["seed"], r["method"]): r for r in manifest["runs"]}
     assert len(manifest["runs"]) == 8 and set(items) == EXPECTED_KEYS
     runs = {key: read_run(item, manifest["eval_episodes"]) for key, item in items.items()}
+    if args.through_step is not None:
+        for run in runs.values():
+            selected = run["steps"] <= args.through_step
+            run["steps"], run["returns"] = run["steps"][selected], run["returns"][selected]
     status = subprocess.run(["supervisorctl", "status", *[i["supervisor"] for i in items.values()]],
                             capture_output=True, text=True)
     states = {s.split()[0]: s.split()[1] for s in status.stdout.splitlines() if len(s.split()) >= 2}
@@ -113,6 +121,7 @@ def main():
     completed = all(run["completed_marker"] and states.get(items[key]["supervisor"]) == "EXITED"
                     for key, run in runs.items())
     report = {"generated_utc": datetime.now(timezone.utc).isoformat(),
+              "requested_evaluation_cutoff": args.through_step,
               "common_evaluation_step": int(common[-1]), "primary_final_window": primary,
               "all_runs_completed": completed, "final_results_ready_for_review": completed and primary["available"],
               "normalized_common_step_auc": {m: seed_statistics(v) for m, v in auc.items()},
