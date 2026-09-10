@@ -15,6 +15,7 @@ from diffusion.dime import DIME
 
 from .policy import OptiQPolicy
 from .critic_utils import critic_expectation
+from .distillation import conditional_ot_nll, hard_projection_mass_error
 from .semi_implicit import (
     PretanhTeacherKDE, conditional_mixture_log_prob, idac_action_and_log_density,
 )
@@ -163,6 +164,7 @@ class OptiQDIME(DIME):
             actor.get("type", "implicit") == "semi_implicit",
             int(actor.get("entropy_samples", 16)),
             bool(actor.get("normalize_ot_cost", True)),
+            actor.get("distillation_loss", "pointwise_mse"),
         )
         self._n_updates += gradient_steps
 
@@ -445,6 +447,7 @@ class OptiQDIME(DIME):
             "transport_target_mode",
             "semi_implicit",
             "normalize_ot_cost",
+            "distillation_loss",
         ],
     )
     def update_actor(
@@ -471,6 +474,7 @@ class OptiQDIME(DIME):
         transport_target_mode: str,
         semi_implicit: bool = False,
         normalize_ot_cost: bool = True,
+        distillation_loss: str = "pointwise_mse",
     ):
         key, latent_key, proposal_key, dropout_key = jax.random.split(key, 4)
         batch_size, observation_dim = observations.shape
@@ -632,9 +636,14 @@ class OptiQDIME(DIME):
                     f"Unknown transport_target_mode: {transport_target_mode}"
                 )
             selected_actions = jax.lax.stop_gradient(selected_actions)
-            loss = jnp.mean(
-                jnp.sum(jnp.square(raw_actions - selected_actions), axis=-1)
-            )
+            if distillation_loss == "conditional_ot_nll":
+                if not semi_implicit:
+                    raise ValueError("Conditional OT likelihood requires a semi-implicit actor")
+                loss = conditional_ot_nll(mu, log_std, proposal_u, row_distribution)
+            else:
+                loss = jnp.mean(
+                    jnp.sum(jnp.square(raw_actions - selected_actions), axis=-1)
+                )
             source_ess = 1.0 / jnp.sum(jnp.square(source_weights), axis=-1)
             q_only_weights = jax.nn.softmax(q_score, axis=-1)
             q_only_ess = 1.0 / jnp.sum(jnp.square(q_only_weights), axis=-1)
@@ -878,6 +887,7 @@ class OptiQDIME(DIME):
                     temperature=jnp.asarray(temperature), ot_cost_mean=squared_costs.mean(),
                     ot_row_marginal_error=jnp.abs(transport.sum(axis=-1) - 1.0 / num_policy_samples).mean(),
                     ot_col_marginal_error=jnp.abs(transport.sum(axis=-2) - source_weights).mean(),
+                    hard_projection_mass_tv=hard_projection_mass_error(row_distribution, source_weights),
                 )
             return loss, metrics
 
@@ -912,6 +922,7 @@ class OptiQDIME(DIME):
             "semi_implicit",
             "entropy_samples",
             "normalize_ot_cost",
+            "distillation_loss",
         ],
     )
     def _train(
@@ -955,6 +966,7 @@ class OptiQDIME(DIME):
         semi_implicit=False,
         entropy_samples=16,
         normalize_ot_cost=True,
+        distillation_loss="pointwise_mse",
     ):
         del n_env_interacts
         actor_metrics = {
@@ -1010,6 +1022,7 @@ class OptiQDIME(DIME):
                          "proposal_std_pretanh", "temperature", "ot_cost_mean",
                          "ot_row_marginal_error", "ot_col_marginal_error"):
                 actor_metrics[name] = jnp.asarray(0.0)
+            actor_metrics["hard_projection_mass_tv"] = jnp.asarray(0.0)
         for i in range(gradient_steps):
 
             def slice_batch(array, step=i):
@@ -1066,6 +1079,7 @@ class OptiQDIME(DIME):
                     transport_target_mode,
                     semi_implicit,
                     normalize_ot_cost,
+                    distillation_loss,
                 )
                 target_actor_state = cls.soft_update_target_actor(
                     policy_tau, actor_state, target_actor_state

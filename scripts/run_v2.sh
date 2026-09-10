@@ -20,9 +20,9 @@ export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-$seed}"
 export XLA_PYTHON_CLIENT_PREALLOCATE=false MUJOCO_GL=egl PYTHONUNBUFFERED=1
 export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 cd "$repo_root"
-command=("$python_bin" run_optiq_dime.py --config-name=mujoco_v2 benchmark=humanoid "seed=$seed")
+command=("$python_bin" run_optiq_dime.py "--config-name=${OPTIQ_CONFIG:-mujoco_v2}")
 if [[ "${1:-}" == --check ]]; then
   shift
   command+=(--cfg job --resolve)
 fi
-exec "${command[@]}" "$@"
+exec "${command[@]}" benchmark=humanoid "seed=$seed" "$@"
