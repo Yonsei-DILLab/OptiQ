@@ -1243,3 +1243,26 @@ checks, not evidence that they cause the observed Humanoid return gap.
 No new Humanoid run was started. The next candidate will investigate a finite
 16-component actual policy with directly evaluable mixture density, retaining
 one-pass rollout and sampling/OT actor improvement without Q-action gradients.
+
+### Finite actual-policy candidate launched
+
+The follow-up is implemented as explicit `mujoco_v2_finite`, preserving the
+continuous-latent configs. All 16 actual conditional densities are summed in
+backup/guard; rollout still uses one actor call. Selection evidence, limitations
+and early-stop criteria are in [V2_FINITE_MIXTURE.md](V2_FINITE_MIXTURE.md).
+The selected residual-.5 / sigma-cap-.2 candidate passed the common-loop and
+density checks; a three-seed exact-target probe gave final W2-squared
+.006432/.006765/.005717. This does not establish Humanoid improvement.
+
+Four fresh Humanoid seeds 0–3 launched at 2026-09-11 00:11:46 UTC from clean
+commit `584f948b443ffb5b9ee311954fce9da458e703c6`, with up to 1M steps.
+All passed warmup and performed updates. The finite monitor is active, applying
+the predeclared 100k/200k poor-performance checks against both completed
+continuous-v2 and matched-OptiQ references at the same seeds and steps.
+Full manifests/config differences are saved in `outputs/v2_improvement/` as
+`finite_screen_protocol.json`, `finite_screen_manifest.json`,
+`finite_candidate_validation.json` and `finite_screen_monitor.json`.
+W&B: https://wandb.ai/OptiQ/optiq_mujoco_v2_finite_screen .
+The goal is still unresolved; there is no completed finite-policy Humanoid
+comparison, and sampled learned-Q acceptance is not a statewise certificate.
+No push occurred.
