@@ -46,6 +46,14 @@ def validate_config(cfg):
         raise ValueError(f"Invalid Dog task: {cfg.task}")
     actor = cfg.alg.actor
     guard = actor.get("soft_guard", {})
+    proximal = float(actor.get("soft_proximal_ess_fraction", 0.0))
+    if not math.isfinite(proximal) or not 0 <= proximal <= 1:
+        raise ValueError("soft_proximal_ess_fraction must be finite and between 0 and 1")
+    if proximal > 0:
+        if actor.get("latent_prior") != "finite" or actor.get("teacher_distribution") != "conditional_mixture":
+            raise ValueError("Proximal extraction requires the actual finite conditional mixture")
+        if proximal*actor.num_policy_samples*actor.proposals_per_policy_sample < 1:
+            raise ValueError("Proximal minimum ESS must be at least one candidate")
     if actor.get("latent_prior", "normal") not in {"normal", "finite"}:
         raise ValueError("latent_prior must be normal or finite")
     if actor.get("latent_prior", "normal") == "finite":
@@ -299,6 +307,14 @@ def initialize_and_run(cfg: DictConfig):
                     update_acceptance=("sampled soft-value filter; not a global certificate" if
                         cfg.alg.actor.get("soft_guard", {}).get("enabled", False) else "unfiltered"),
                 )
+                if cfg.alg.actor.get("latent_prior") == "finite":
+                    environment_metadata["entropy_estimator"] = "all actual finite mixture components; exact density, sampled entropy expectation"
+                if cfg.alg.actor.get("soft_proximal_ess_fraction", 0.0) > 0:
+                    environment_metadata.update(
+                        teacher="actual finite policy conditional mixture; no teacher-only std floor",
+                        extraction="KL-proximal soft target; ESS selects eta multiplying Q/T and -log pi together",
+                        objective_temperature=float(cfg.alg.actor.temperature),
+                    )
             run.config.update({"environment": environment_metadata})
             wandb_config["environment"] = environment_metadata
             (Path(cfg.output_root) / "config.json").write_text(json.dumps(wandb_config, indent=2))

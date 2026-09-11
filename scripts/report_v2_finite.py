@@ -26,9 +26,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--through-step", type=int)
     parser.add_argument("--output", type=Path, default=ROOT/"outputs/v2_improvement/finite_report")
+    parser.add_argument("--manifest", type=Path, default=ROOT/"outputs/v2_improvement/finite_screen_manifest.json")
+    parser.add_argument("--candidate-label", default="Finite-policy candidate")
     args = parser.parse_args()
     base = ROOT/"outputs/v2_improvement"
-    finite = json.loads((base/"finite_screen_manifest.json").read_text())
+    finite = json.loads(args.manifest.read_text())
+    labels = {**LABELS, "finite": args.candidate_label}
     confirmation = json.loads((base/"confirmation_manifest.json").read_text())
     historical = json.loads((base/"historical_behavior010_reference.json").read_text())
     assert len(finite["runs"]) == 4 and {x["seed"] for x in finite["runs"]} == set(range(4))
@@ -72,6 +75,7 @@ def main():
             if run["training_rate"] and run["logged_steps"] < 100000 else None)
         runtime.append(row)
     record = {"generated_utc": datetime.now(timezone.utc).isoformat(),
+              "candidate_manifest": str(args.manifest), "candidate_label": args.candidate_label,
               "common_step_all_16_runs": int(common[-1]), "common_steps": common.tolist(),
               "curves": {m: v.tolist() for m, v in curves.items()},
               "tail_checkpoints": common[-5:].tolist(),
@@ -95,7 +99,7 @@ def main():
              "|---|---:|---:|---:|---:|---:|"]
     for method, values in record["tail5"].items():
         scores = " | ".join(f"{v:.1f}" for v in values["seed_scores"])
-        lines.append(f"| {LABELS[method]} | {scores} | {values['mean']:.1f} ± {values['seed_sd']:.1f} |")
+        lines.append(f"| {labels[method]} | {scores} | {values['mean']:.1f} ± {values['seed_sd']:.1f} |")
     lines += ["", f"Predeclared 900k–1M primary window available: {primary['available']}.",
               "", historical["scope"], ""]
     stem.with_suffix(".md").write_text("\n".join(lines))
@@ -107,7 +111,7 @@ def main():
     for method, values in curves.items():
         mean, sd = values.mean(axis=0), values.std(axis=0, ddof=1)
         style = "--" if method == "historical" else "-"
-        axes[0].plot(common/1000, mean, style, color=colors[method], label=LABELS[method], linewidth=1.4)
+        axes[0].plot(common/1000, mean, style, color=colors[method], label=labels[method], linewidth=1.4)
         axes[0].fill_between(common/1000, mean-sd, mean+sd, color=colors[method], alpha=.10)
         for seed in range(4):
             axes[seed+1].plot(common/1000, values[seed], style, color=colors[method], linewidth=1)

@@ -17,6 +17,7 @@ from .policy import OptiQPolicy
 from .critic_utils import critic_expectation
 from .distillation import conditional_ot_nll, hard_projection_mass_error
 from .soft_improvement import sampled_soft_update
+from .proximal import proximal_policy_weights
 from .latent import FiniteMixtureTrainState, stratified_finite_latents
 from .semi_implicit import (
     ConditionalGaussianProposal, PretanhTeacherKDE,
@@ -193,6 +194,7 @@ class OptiQDIME(DIME):
             int(guard.get("components", 16)),
             int(guard.get("draws", 8)),
             float(guard.get("standard_error_multiplier", 2.0)),
+            float(actor.get("soft_proximal_ess_fraction", 0.0)),
         )
         self._n_updates += gradient_steps
         if guard_enabled:
@@ -484,6 +486,7 @@ class OptiQDIME(DIME):
             "normalize_ot_cost",
             "distillation_loss",
             "teacher_distribution",
+            "soft_proximal_ess_fraction",
         ],
     )
     def update_actor(
@@ -512,7 +515,14 @@ class OptiQDIME(DIME):
         normalize_ot_cost: bool = True,
         distillation_loss: str = "pointwise_mse",
         teacher_distribution: str = "realized_kde",
+        soft_proximal_ess_fraction: float = 0.0,
     ):
+        if soft_proximal_ess_fraction > 0 and (
+            not isinstance(actor_state, FiniteMixtureTrainState)
+            or not semi_implicit or teacher_distribution != "conditional_mixture"
+            or not density_correction or include_anchor or adaptive_density_beta
+        ):
+            raise ValueError("Proximal extraction requires the full actual finite policy proposal")
         key, latent_key, proposal_key, dropout_key = jax.random.split(key, 4)
         batch_size, observation_dim = observations.shape
 
@@ -558,7 +568,9 @@ class OptiQDIME(DIME):
                     raise ValueError("Semi-implicit teacher candidates must not contain anchors")
                 if teacher_distribution == "conditional_mixture":
                     proposal_kde = ConditionalGaussianProposal(
-                        jax.lax.stop_gradient(mu),jax.lax.stop_gradient(log_std),proposal_std)
+                        jax.lax.stop_gradient(mu), jax.lax.stop_gradient(log_std),
+                        # Proximal IS requires q == pi_old, with no scale floor.
+                        0.0 if soft_proximal_ess_fraction > 0 else proposal_std)
                 else:
                     proposal_kde = PretanhTeacherKDE(jax.lax.stop_gradient(student_u), proposal_std)
                 proposals, proposal_u, proposal_component_indices = proposal_kde.sample(
@@ -648,6 +660,12 @@ class OptiQDIME(DIME):
             effective_density_score = selected_density_beta[:, None] * density_score
             logits = q_score + effective_density_score
             source_weights = jax.lax.stop_gradient(jax.nn.softmax(logits, axis=-1))
+            if soft_proximal_ess_fraction > 0:
+                full_step_ess = 1.0 / jnp.square(source_weights).sum(axis=-1)
+                source_weights, proximal_fraction = proximal_policy_weights(
+                    source_q, proposal_log_density, temperature,
+                    soft_proximal_ess_fraction * num_proposals,
+                )
 
             squared_costs = jnp.sum(
                 jnp.square(policy_samples[:, :, None, :] - proposals[:, None, :, :]),
@@ -932,11 +950,20 @@ class OptiQDIME(DIME):
                     student_action_saturation_fraction=jnp.mean(jnp.abs(policy_samples) > 0.99),
                     teacher_action_saturation_fraction=jnp.mean(jnp.abs(proposals) > 0.99),
                     teacher_log_density_mean=proposal_log_density.mean(),
-                    proposal_std_pretanh=jnp.asarray(proposal_std),
+                    proposal_std_pretanh=jnp.asarray(0.0 if soft_proximal_ess_fraction > 0 else proposal_std),
                     temperature=jnp.asarray(temperature), ot_cost_mean=squared_costs.mean(),
                     ot_row_marginal_error=jnp.abs(transport.sum(axis=-1) - 1.0 / num_policy_samples).mean(),
                     ot_col_marginal_error=jnp.abs(transport.sum(axis=-2) - source_weights).mean(),
                     hard_projection_mass_tv=hard_projection_mass_error(row_distribution, source_weights),
+                )
+            if soft_proximal_ess_fraction > 0:
+                metrics.update(
+                    proximal_fraction_mean=proximal_fraction.mean(),
+                    proximal_fraction_min=proximal_fraction.min(),
+                    proximal_fraction_max=proximal_fraction.max(),
+                    proximal_full_step_ess=full_step_ess.mean(),
+                    proximal_target_ess=jnp.asarray(soft_proximal_ess_fraction*num_proposals),
+                    proximal_actual_policy_proposal=jnp.asarray(1.0),
                 )
             return loss, metrics
 
@@ -976,6 +1003,7 @@ class OptiQDIME(DIME):
             "soft_guard_enabled",
             "soft_guard_components",
             "soft_guard_draws",
+            "soft_proximal_ess_fraction",
         ],
     )
     def _train(
@@ -1026,6 +1054,7 @@ class OptiQDIME(DIME):
         soft_guard_components=16,
         soft_guard_draws=8,
         soft_guard_standard_error_multiplier=2.0,
+        soft_proximal_ess_fraction=0.0,
     ):
         del n_env_interacts
         actor_metrics = {
@@ -1144,6 +1173,7 @@ class OptiQDIME(DIME):
                     normalize_ot_cost,
                     distillation_loss,
                     teacher_distribution,
+                    soft_proximal_ess_fraction,
                 )
                 if soft_guard_enabled:
                     key, guard_key = jax.random.split(key)
