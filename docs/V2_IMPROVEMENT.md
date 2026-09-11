@@ -1327,3 +1327,17 @@ return differences. Exact-density flags remain 1 for actor and TD backup.
 All eight 100k actor/critic checkpoints were hashed; training source hashes
 still match the launch validation. `finite_review_0100000.json` preserves
 these checks and the monitor decisions. No push or training change occurred.
+
+### Final finite-policy comparison protocol prepared
+
+`finite_final_evaluation_protocol.json` fixes the existing 900k–1M primary
+window and the same 50 independent episode seeds per final model as all
+three reference methods. `scripts/evaluate_v2_finite.py` reuses the unchanged
+common evaluation loop and verifies the cached 12 reference models/600
+episodes against their files and protocol. A dry run validated those
+references and correctly refused final readiness while all four candidate
+runs remain RUNNING. The candidate evaluation itself has not run yet.
+It requires four completed 1M runs, all primary-window evaluations and final
+actor/critic files; a stopped seed is not silently omitted or replaced.
+This prepares final evidence, without declaring that the candidate won or
+that a learned-Q sampled guard provides a true statewise certificate.
