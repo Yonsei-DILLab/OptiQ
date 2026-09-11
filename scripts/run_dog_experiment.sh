@@ -39,6 +39,7 @@ source /workspace/.venv-dime/bin/activate
 cd /workspace/DIME
 export XLA_PYTHON_CLIENT_PREALLOCATE=false
 exec python run_optiq_dime.py \
+  --config-name=optiq_dime_dog \
   task="$task" \
   seed="$seed" \
   total_steps="$total_steps" \

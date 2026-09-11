@@ -1,4 +1,53 @@
-The Code for the DIME paper submission at ICML2025.
+# OptiQ experiments (`heejoon`)
+
+This branch preserves the current Boltzmann-backup, frozen-Q and GMM40 experiment
+implementation and historical campaign source snapshots. See
+[CURRENT_EXPERIMENTS.md](CURRENT_EXPERIMENTS.md) for the exact source versions,
+protocols, verification and lab-storage locations. The original DIME and MuJoCo
+documentation follows below.
+
+## Scalar-critic ablation (`mujoco-setting`)
+
+This branch starts from `critic-dime-no-anchor` and makes the default entry
+Humanoid-v4 with **256x3 scalar twin critics and TD MSE**. No-anchor sampling,
+actor learning are preserved. Critics use GELU, standard Adam betas (0.9,0.999),
+target-network min-Q backup and Polyak=0.005. Batch renorm is removed;
+there is one update per environment step (UTD=1).
+All five MuJoCo tasks use fixed beta=1 and seeds0,1,2 (15 runs). See
+[MUJOCO-README.md](MUJOCO-README.md) for the protocol and launch commands,
+and [critic implementation details](docs/MUJOCO_SCALAR_SETTING.md).
+
+```bash
+python run_optiq_dime.py --config-name=mujoco_setting benchmark=humanoid
+python run_optiq_dime.py --config-name=mujoco_setting benchmark=ant
+```
+
+## No-anchor OptiQ with the DIME critic (`critic-dime-no-anchor`)
+
+The retained `optiq_dime_no_anchor` experiment is `myoHandPenTwirlRandom-v0` (pen-twirl-hard),
+with Ant-v4 and Humanoid-v4 selectable through `benchmark=ant` / `benchmark=humanoid`.
+MyoHand reach-hard and object-hold-hard are also available as
+`benchmark=reach_hard` / `benchmark=obj_hold_hard`.
+The actor defines a truncated Gaussian KDE from 16 policy samples, draws four
+random candidates per component, and distills a **16 × 64** transport plan.
+Candidate anchors are disabled; fixed density beta is 0.1. The launcher defaults
+to **seeds 0, 1, 2**.
+
+Use the separate environment and [baseline setup and protocol](docs/NO_ANCHOR_BASELINE.md).
+Credentials belong in an ignored `.env`; a template is provided in [.env.example](.env.example).
+
+```bash
+bash scripts/setup_no_anchor_env.sh
+bash scripts/run_no_anchor.sh --list
+```
+
+## Ant-v4 / Humanoid-v4 fixed-beta experiments (`heechan`)
+
+The retained `heechan` configuration provides a JAX OptiQ+DIME path for Ant-v4 and Humanoid-v4,
+comparing stratified and IID KDE-mixture proposals at fixed density beta
+0.1, 0.25, 0.5, 0.75 and 1.0. See [setup, protocol and launch commands](docs/MUJOCO_BETA_SWEEP.md).
+These legacy scripts select `--config-name=optiq_dime_mujoco` explicitly and keep
+their original four-seed sweep. The Dog configuration below is also retained.
 ## DIME: Diffusion-Based Maximum Entropy Reinforcement Learning 
 
 This repository accompanies the paper "[DIME: Diffusion-Based Maximum Entropy Reinforcement Learning](https://arxiv.org/pdf/2502.02316)" published at ICML 2025.
@@ -42,12 +91,12 @@ python run_dime.py env_name=Humanoid-v3  alg.critic.v_min=-1600 alg.critic.v_max
 `run_optiq_dime.py` keeps DIME's distributional CrossQ critic, replay buffer,
 batch renormalization, and UTD=2 update loop, while replacing the 16-step
 diffusion policy with OptiQ's one-step implicit actor and density-corrected OT
-distillation. The default experiment covers DMC Dog with the supplied OptiQ
+distillation. The legacy `optiq_dime_dog` configuration covers DMC Dog with the supplied OptiQ
 actor settings (N=16, R=5, anchor, temperature 0.25, argmax assignment):
 
 ```bash
 source /workspace/.venv-dime/bin/activate
-python run_optiq_dime.py task=run seed=0
+python run_optiq_dime.py --config-name=optiq_dime_dog task=run seed=0
 ```
 
 The supported tasks are `run`, `trot`, `walk`, and `stand`. The helper script

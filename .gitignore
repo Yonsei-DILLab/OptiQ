@@ -5,3 +5,11 @@ logs/
 wandb/
 eval_logs/
 outputs/
+.env
+.env.*
+!.env.example
+.venv*/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+._*

@@ -33,6 +33,7 @@ fi
 run_name="optiq_dime_dog_${task}_seed${seed}_N16R5_argmax_T0p25_sigma0p1_clip0p15_trunc1p5_landscape_rerun_1m"
 echo "Starting landscape rerun task=$task temperature=$temperature sigma=$proposal_std clip=$proposal_clip seed=$seed on CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES"
 python run_optiq_dime.py \
+  --config-name=optiq_dime_dog \
   task="$task" \
   seed="$seed" \
   total_steps=1000000 \

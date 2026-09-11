@@ -1,0 +1,10 @@
+# @package _global_
+defaults:
+  - optiq_dime_no_anchor
+  - override /alg: optiq_scalar_no_anchor
+  - override /benchmark: humanoid
+  - _self_
+
+output_root: outputs/optiq_mujoco_scalar_no_anchor
+wandb:
+  project: ${oc.env:WANDB_PROJECT,optiq_mujoco_scalar_no_anchor}

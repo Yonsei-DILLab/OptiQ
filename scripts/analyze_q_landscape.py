@@ -34,7 +34,8 @@ from hydra import compose, initialize_config_dir
 
 from diffusion.dime import load_state
 from optiq_dime.policy import OptiQPolicy
-from optiq_dime.proposals import PROPOSAL_FAMILIES, sample_proposals
+from optiq_dime.critic_utils import critic_expectation
+from optiq_dime.transport import sample_truncated_gaussian
 
 
 TASKS = ("run", "trot", "walk", "stand")
@@ -72,30 +73,6 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--proposal-std", type=float, default=0.1)
     parser.add_argument("--proposal-clip", type=float, default=0.15)
-    parser.add_argument(
-        "--proposal-family",
-        choices=PROPOSAL_FAMILIES,
-        default="isotropic_truncated",
-    )
-    parser.add_argument(
-        "--proposal-sampling-mode",
-        choices=("stratified", "exact"),
-        default="stratified",
-    )
-    parser.add_argument("--proposal-perpendicular-std-ratio", type=float, default=0.5)
-    parser.add_argument("--gamma-shape", type=float, default=2.0)
-    parser.add_argument("--gamma-scale", type=float, default=0.1)
-    parser.add_argument("--gamma-perpendicular-std", type=float, default=0.1)
-    parser.add_argument(
-        "--clip-untruncated-proposals",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-    )
-    parser.add_argument(
-        "--include-anchor",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-    )
     parser.add_argument("--seed", type=int, default=20260903)
     return parser.parse_args()
 
@@ -201,88 +178,12 @@ def pearson_rows(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 
 def summarize(values: np.ndarray) -> dict[str, float]:
-    values = np.asarray(values)
-    values = values[np.isfinite(values)]
-    if values.size == 0:
-        return {key: float("nan") for key in ("mean", "median", "p10", "p90")}
     return {
         "mean": float(np.mean(values)),
         "median": float(np.median(values)),
         "p10": float(np.quantile(values, 0.10)),
         "p90": float(np.quantile(values, 0.90)),
     }
-
-
-def summarize_proposals_by_component(
-    proposal_delta: np.ndarray,
-    component_indices: np.ndarray,
-    num_components: int,
-) -> dict[str, np.ndarray]:
-    """Summarize a possibly ragged IID-mixture draw by generating component."""
-    states = proposal_delta.shape[0]
-    flat_delta = proposal_delta.reshape(states, -1)
-    flat_components = component_indices.reshape(states, -1)
-    result = {
-        name: np.full((states, num_components), np.nan, dtype=proposal_delta.dtype)
-        for name in (
-            "max",
-            "p99",
-            "p95",
-            "range",
-            "improvement_fraction",
-            "high_region_halfmax_fraction",
-            "fraction_gt_0p005",
-            "fraction_gt_0p01",
-            "fraction_gt_0p02",
-        )
-    }
-    for state in range(states):
-        for component in range(num_components):
-            values = flat_delta[state, flat_components[state] == component]
-            if values.size == 0:
-                continue
-            maximum = np.max(values)
-            result["max"][state, component] = maximum
-            result["p99"][state, component] = np.quantile(values, 0.99)
-            result["p95"][state, component] = np.quantile(values, 0.95)
-            result["range"][state, component] = np.ptp(values)
-            result["improvement_fraction"][state, component] = np.mean(values > 0.0)
-            result["high_region_halfmax_fraction"][state, component] = np.mean(
-                values >= max(0.0, 0.5 * maximum)
-            )
-            result["fraction_gt_0p005"][state, component] = np.mean(values > 0.005)
-            result["fraction_gt_0p01"][state, component] = np.mean(values > 0.01)
-            result["fraction_gt_0p02"][state, component] = np.mean(values > 0.02)
-    return result
-
-
-def twin_statistics_by_component(
-    proposal_twins: np.ndarray,
-    component_indices: np.ndarray,
-    num_components: int,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Compute twin-Q correlation and top-tail overlap by generating component."""
-    states = proposal_twins.shape[1]
-    flat_components = component_indices.reshape(states, -1)
-    flat_q1 = proposal_twins[0].reshape(states, -1)
-    flat_q2 = proposal_twins[1].reshape(states, -1)
-    correlations = np.full((states, num_components), np.nan, dtype=np.float32)
-    top_overlaps = np.full_like(correlations, np.nan)
-    for state in range(states):
-        for component in range(num_components):
-            mask = flat_components[state] == component
-            q1 = flat_q1[state, mask]
-            q2 = flat_q2[state, mask]
-            if q1.size == 0:
-                continue
-            correlations[state, component] = pearson_rows(q1[None], q2[None])[0]
-            tail_count = max(1, int(round(0.05 * q1.size)))
-            top_first = set(np.argpartition(q1, -tail_count)[-tail_count:].tolist())
-            top_second = set(np.argpartition(q2, -tail_count)[-tail_count:].tolist())
-            top_overlaps[state, component] = len(top_first & top_second) / max(
-                1, len(top_first | top_second)
-            )
-    return correlations, top_overlaps
 
 
 def analyze_task(
@@ -323,7 +224,7 @@ def analyze_task(
             rngs={"dropout": jax.random.PRNGKey(0)},
             train=False,
         )
-        return jnp.sum(distributions * z_atoms, axis=-1)
+        return critic_expectation(distributions, z_atoms)
 
     def q_mean_one(action, observation):
         twins = evaluate_q(observation[None], action[None])[:, 0]
@@ -347,63 +248,31 @@ def analyze_task(
         np.linalg.norm(direction_2, axis=1, keepdims=True), 1.0e-10
     )
 
-    # Actual high-dimensional OptiQ proposal cloud.  Exact mode samples across
-    # the latent-policy centers belonging to the same physical state.
-    anchor_grid = jnp.asarray(anchors.reshape(n_states, n_latents, action_dim))
-    q_gradient_grid = jnp.asarray(
-        gradients.reshape(n_states, n_latents, action_dim)
+    # Actual high-dimensional OptiQ proposal cloud.
+    proposals = sample_truncated_gaussian(
+        jax.random.PRNGKey(args.seed + TASKS.index(task) * 17),
+        jnp.asarray(anchors),
+        repeats=args.proposals,
+        std=args.proposal_std,
+        perturb_clip=args.proposal_clip,
+        include_anchor=False,
     )
-    proposal_key = jax.random.PRNGKey(args.seed + TASKS.index(task) * 17)
-    family_gradients = (
-        None if args.proposal_family == "isotropic_truncated" else q_gradient_grid
-    )
-    proposals, component_indices, out_of_bounds_fraction = sample_proposals(
-        proposal_key,
-        anchor_grid,
-        family_gradients,
-        args.proposals,
-        args.proposal_sampling_mode,
-        args.proposal_family,
-        args.proposal_std,
-        args.proposal_clip,
-        args.include_anchor,
-        args.proposal_perpendicular_std_ratio,
-        args.gamma_shape,
-        args.gamma_scale,
-        args.gamma_perpendicular_std,
-        args.clip_untruncated_proposals,
-    )
-    component_indices = np.asarray(component_indices)
-    proposal_obs = np.broadcast_to(
-        observations[:, None, None, :],
-        (n_states, n_latents, args.proposals, observations.shape[-1]),
-    )
+    proposal_obs = np.repeat(repeated_obs[:, None, :], args.proposals, axis=1)
     proposal_twins = np.asarray(
         evaluate_q(
-            jnp.asarray(proposal_obs.reshape(-1, observations.shape[-1])),
+            jnp.asarray(proposal_obs.reshape(-1, repeated_obs.shape[-1])),
             proposals.reshape(-1, action_dim),
         )
-    ).reshape(2, n_states, n_latents, args.proposals)
-    anchor_twins_flat = np.asarray(
+    ).reshape(2, anchors.shape[0], args.proposals)
+    anchor_twins = np.asarray(
         evaluate_q(jnp.asarray(repeated_obs), jnp.asarray(anchors))
-    )
-    anchor_twins = anchor_twins_flat.reshape(2, n_states, n_latents)
-    generating_anchor_twins = np.stack(
-        [
-            anchor_twins[twin][
-                np.arange(n_states)[:, None, None], component_indices
-            ]
-            for twin in range(2)
-        ]
     )
     proposal_mean = proposal_twins.mean(axis=0)
     proposal_min = proposal_twins.min(axis=0)
-    generating_anchor_mean = generating_anchor_twins.mean(axis=0)
-    generating_anchor_min = generating_anchor_twins.min(axis=0)
-    proposal_delta = proposal_mean - generating_anchor_mean
-    proposal_min_delta = proposal_min - generating_anchor_min
-    anchor_mean = anchor_twins_flat.mean(axis=0)
-    anchor_min = anchor_twins_flat.min(axis=0)
+    anchor_mean = anchor_twins.mean(axis=0)
+    anchor_min = anchor_twins.min(axis=0)
+    proposal_delta = proposal_mean - anchor_mean[:, None]
+    proposal_min_delta = proposal_min - anchor_min[:, None]
 
     # Gradient-aligned 2-D slice.
     coordinates = np.linspace(
@@ -425,53 +294,57 @@ def analyze_task(
             jnp.asarray(grid_actions.reshape(-1, action_dim)),
         )
     ).reshape(2, anchors.shape[0], args.grid_size, args.grid_size)
-    grid_twin_delta = grid_twins - anchor_twins_flat[:, :, None, None]
+    grid_twin_delta = grid_twins - anchor_twins[:, :, None, None]
     grid_mean_delta = grid_twins.mean(axis=0) - anchor_mean[:, None, None]
     grid_min_delta = grid_twins.min(axis=0) - anchor_min[:, None, None]
 
-    proposal_statistics = summarize_proposals_by_component(
-        proposal_delta, component_indices, n_latents
-    )
-    twin_correlations, twin_top_overlap = twin_statistics_by_component(
-        proposal_twins, component_indices, n_latents
+    tail_count = max(1, int(round(0.05 * args.proposals)))
+    twin_top_overlap = []
+    for first, second in zip(proposal_twins[0], proposal_twins[1]):
+        top_first = set(np.argpartition(first, -tail_count)[-tail_count:].tolist())
+        top_second = set(np.argpartition(second, -tail_count)[-tail_count:].tolist())
+        twin_top_overlap.append(
+            len(top_first & top_second) / max(1, len(top_first | top_second))
+        )
+
+    per_anchor_max = proposal_delta.max(axis=1)
+    positive_halfmax_fraction = np.mean(
+        proposal_delta
+        >= np.maximum(0.0, 0.5 * per_anchor_max)[:, None],
+        axis=1,
     )
     metrics = {
         "task": task,
         "step": step,
         "probe": args.probe,
-        "proposal_family": args.proposal_family,
-        "proposal_sampling_mode": args.proposal_sampling_mode,
-        "proposal_out_of_bounds_fraction": float(out_of_bounds_fraction),
         "anchors": int(anchors.shape[0]),
         "action_dim": int(action_dim),
         "anchor_q_mean": summarize(anchor_mean),
         "anchor_q_min": summarize(anchor_min),
         "gradient_l2_norm": summarize(gradient_norms),
-        "proposal_delta_max": summarize(proposal_statistics["max"]),
-        "proposal_delta_p99": summarize(proposal_statistics["p99"]),
-        "proposal_delta_p95": summarize(proposal_statistics["p95"]),
-        "proposal_delta_range": summarize(proposal_statistics["range"]),
-        "proposal_min_delta_max": summarize(
-            summarize_proposals_by_component(
-                proposal_min_delta, component_indices, n_latents
-            )["max"]
-        ),
+        "proposal_delta_max": summarize(per_anchor_max),
+        "proposal_delta_p99": summarize(np.quantile(proposal_delta, 0.99, axis=1)),
+        "proposal_delta_p95": summarize(np.quantile(proposal_delta, 0.95, axis=1)),
+        "proposal_delta_range": summarize(np.ptp(proposal_delta, axis=1)),
+        "proposal_min_delta_max": summarize(proposal_min_delta.max(axis=1)),
         "proposal_improvement_fraction": summarize(
-            proposal_statistics["improvement_fraction"]
+            np.mean(proposal_delta > 0.0, axis=1)
         ),
         "proposal_high_region_halfmax_fraction": summarize(
-            proposal_statistics["high_region_halfmax_fraction"]
+            positive_halfmax_fraction
         ),
         "proposal_fraction_delta_gt_0p005": summarize(
-            proposal_statistics["fraction_gt_0p005"]
+            np.mean(proposal_delta > 0.005, axis=1)
         ),
         "proposal_fraction_delta_gt_0p01": summarize(
-            proposal_statistics["fraction_gt_0p01"]
+            np.mean(proposal_delta > 0.01, axis=1)
         ),
         "proposal_fraction_delta_gt_0p02": summarize(
-            proposal_statistics["fraction_gt_0p02"]
+            np.mean(proposal_delta > 0.02, axis=1)
         ),
-        "twin_proposal_correlation": summarize(twin_correlations),
+        "twin_proposal_correlation": summarize(
+            pearson_rows(proposal_twins[0], proposal_twins[1])
+        ),
         "twin_top5pct_jaccard": summarize(np.asarray(twin_top_overlap)),
         "grid_delta_range": summarize(
             np.ptp(grid_mean_delta.reshape(anchors.shape[0], -1), axis=1)
@@ -488,8 +361,6 @@ def analyze_task(
         "grid_twin_delta": grid_twin_delta,
         "proposal_delta": proposal_delta,
         "proposal_min_delta": proposal_min_delta,
-        "proposal_component_indices": component_indices,
-        "proposal_max_by_component": proposal_statistics["max"],
     }
     env.close()
     del policy
@@ -530,10 +401,7 @@ def plot_surfaces(results: dict[str, dict[str, Any]], args: argparse.Namespace):
     fig.suptitle(
         f"Gradient-aligned local Q landscape at step {args.step} ({args.probe} states)"
     )
-    path = args.output_dir / (
-        f"q_landscape_{args.proposal_family}_{args.proposal_sampling_mode}_step{args.step}_"
-        f"{args.probe}_surfaces.png"
-    )
+    path = args.output_dir / f"q_landscape_step{args.step}_{args.probe}_surfaces.png"
     fig.savefig(path, dpi=180)
     plt.close(fig)
     return path
@@ -551,8 +419,7 @@ def plot_proposals(results: dict[str, dict[str, Any]], args: argparse.Namespace)
             label=task,
             linewidth=2,
         )
-        per_anchor_max = results[task]["proposal_max_by_component"].reshape(-1)
-        per_anchor_max = per_anchor_max[np.isfinite(per_anchor_max)]
+        per_anchor_max = results[task]["proposal_delta"].max(axis=1)
         axes[1].plot(
             np.sort(per_anchor_max),
             np.linspace(0.0, 1.0, per_anchor_max.size),
@@ -574,10 +441,7 @@ def plot_proposals(results: dict[str, dict[str, Any]], args: argparse.Namespace)
     fig.suptitle(
         f"Q variation in the actual proposal cloud at step {args.step} ({args.probe} states)"
     )
-    path = args.output_dir / (
-        f"q_landscape_{args.proposal_family}_{args.proposal_sampling_mode}_step{args.step}_"
-        f"{args.probe}_proposals.png"
-    )
+    path = args.output_dir / f"q_landscape_step{args.step}_{args.probe}_proposals.png"
     fig.savefig(path, dpi=180)
     plt.close(fig)
     return path
@@ -626,10 +490,7 @@ def plot_twin_surfaces(results: dict[str, dict[str, Any]], args: argparse.Namesp
     fig.suptitle(
         f"Twin critic landscapes at step {args.step} ({args.probe} states)"
     )
-    path = args.output_dir / (
-        f"q_landscape_{args.proposal_family}_{args.proposal_sampling_mode}_step{args.step}_"
-        f"{args.probe}_twins.png"
-    )
+    path = args.output_dir / f"q_landscape_step{args.step}_{args.probe}_twins.png"
     fig.savefig(path, dpi=180)
     plt.close(fig)
     return path
@@ -678,21 +539,16 @@ def main():
     surface_path = plot_surfaces(results, args)
     proposal_path = plot_proposals(results, args)
     twin_path = plot_twin_surfaces(results, args)
-    metrics_filename = (
-        f"q_landscape_{args.proposal_family}_{args.proposal_sampling_mode}_step{args.step}_"
-        f"{args.probe}_metrics.json"
+    metrics_path = (
+        args.output_dir / f"q_landscape_step{args.step}_{args.probe}_metrics.json"
     )
-    metrics_path = args.output_dir / metrics_filename
     metrics_path.write_text(
         json.dumps(
             {task: results[task]["metrics"] for task in TASKS}, indent=2
         )
         + "\n"
     )
-    npz_path = args.output_dir / (
-        f"q_landscape_{args.proposal_family}_{args.proposal_sampling_mode}_step{args.step}_"
-        f"{args.probe}_raw.npz"
-    )
+    npz_path = args.output_dir / f"q_landscape_step{args.step}_{args.probe}_raw.npz"
     np.savez_compressed(
         npz_path,
         **{

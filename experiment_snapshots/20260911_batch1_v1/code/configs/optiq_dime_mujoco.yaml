@@ -1,0 +1,40 @@
+# @package _global_
+defaults:
+  - alg: optiq_dime
+  - mujoco_env: ant
+  - _self_
+
+seed: 1
+use_jit: true
+require_gpu: true
+eval_interval: 5000
+num_eval_episodes: 10
+eval_at_start: true
+stochastic_eval: true
+checkpoint_interval: 50000
+log_interval: 1  # Completed training episodes, as in DIME.learn's default.
+progress_bar: true
+output_root: outputs/optiq_dime_mujoco_v4
+# Each invocation adds a unique ID below this label; no previous run is overwritten.
+run_name: ${env_name}_${alg.actor.proposal_sampling_mode}_beta${alg.actor.density_beta}_anchor${alg.actor.include_anchor}_seed${seed}
+
+alg:
+  critic:
+    v_min: -1600
+    v_max: 1600
+  actor:
+    proposal_sampling_mode: stratified  # Reference default; sweep explicitly selects both.
+    proposal_std: 0.1
+    proposal_clip: 0.15
+    include_anchor: true
+    density_correction: true
+    density_beta: 1.0
+    adaptive_density_beta: false
+
+wandb:
+  activate: true
+  mode: ${oc.env:WANDB_MODE,online}
+  entity: ${oc.env:WANDB_ENTITY,null}
+  project: ${oc.env:WANDB_PROJECT,optiq_dime_mujoco_v4}
+  group: ${env_name}_${alg.actor.proposal_sampling_mode}_beta${alg.actor.density_beta}_anchor${alg.actor.include_anchor}
+  job_type: train

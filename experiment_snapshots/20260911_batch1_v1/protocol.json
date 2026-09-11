@@ -1,0 +1,103 @@
+{
+  "created_utc": "2026-09-11T04:25:23.258126+00:00",
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "tasks": 140,
+  "cases": [
+    "modes2d_8",
+    "gmm40",
+    "separable_8",
+    "modes2d_4",
+    "separable_4",
+    "unimodal",
+    "asymmetric_1.3_0.08",
+    "constant",
+    "symmetric_1.3_0.12",
+    "asymmetric_0.4_0.08",
+    "asymmetric_0.4_0.16",
+    "asymmetric_0.8_0.08",
+    "asymmetric_0.8_0.16",
+    "asymmetric_1.3_0.16"
+  ],
+  "initializations": [
+    "random"
+  ],
+  "common": {
+    "batch_size": 1,
+    "temperature": 1.0,
+    "proposal_std": 1.0,
+    "transport_target_mode": "argmax",
+    "density_beta": 1.0
+  },
+  "ver1": {
+    "actor_samples": 16,
+    "random_per_center": 4,
+    "anchor_per_center": 1,
+    "ot": [
+      16,
+      80
+    ]
+  },
+  "ver2": {
+    "actor_samples": 2048,
+    "random_per_center": 1,
+    "anchor_per_center": 0,
+    "ot": [
+      2048,
+      2048
+    ]
+  },
+  "user_correction": "Frozen-Q retains truncated KDE, perturbation limit .5 and action bounds [-1,1]. GMM alone unbounded.",
+  "frozen": {
+    "updates": 20000,
+    "hidden_dims": [
+      256,
+      256,
+      256
+    ],
+    "sinkhorn_epsilon": 0.05,
+    "sinkhorn_iterations": 30,
+    "learning_rate": 0.0003,
+    "latent_sampling": "iid",
+    "q_unchanged": true,
+    "reference_temperature": 1.0
+  },
+  "gmm": {
+    "updates": 85000,
+    "hidden_dims": [
+      512,
+      512,
+      512,
+      512,
+      512
+    ],
+    "sinkhorn_epsilon_start": 0.01,
+    "sinkhorn_epsilon_final": 0.0001,
+    "sinkhorn_anneal_updates": 15000,
+    "sinkhorn_iterations": 300,
+    "learning_rate": 0.0003,
+    "learning_rate_after_50k": 0.0001,
+    "latent_sampling": "grid",
+    "proposal_std_constant": 1.0,
+    "actor_sample_count_constant_within_each_version": true,
+    "coordinate_scale": 1.0
+  },
+  "independent_evaluation": true,
+  "initial_actor_and_optimizer_paired": true,
+  "reference_sampling_seed": 20260911,
+  "primary_backup_k": 50,
+  "final_eval_samples": 100000,
+  "intermediate_eval_samples": 20000,
+  "equal_updates_within_case": true,
+  "equal_compute_budget": false,
+  "max_concurrent_gpus": 2,
+  "prior_frozen_base_commit": "7e2da67d2f0988f6f211b635f7311d32a0c8e8c6",
+  "gmm_source_commit": "1d9394ad7e35d18856115f47983d19f81e4f136e",
+  "production_checkout_changed": false,
+  "previous_results_changed": false
+}

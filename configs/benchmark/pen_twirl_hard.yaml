@@ -1,0 +1,4 @@
+# @package _global_
+env_name: myoHandPenTwirlRandom-v0
+task: pen-twirl-hard
+successful_steps: 5

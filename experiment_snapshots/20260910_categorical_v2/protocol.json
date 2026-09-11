@@ -1,0 +1,61 @@
+{
+  "created": 1789015471.9801593,
+  "baseline": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1",
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "cases": [
+    "modes2d_8",
+    "separable_8",
+    "modes2d_4",
+    "separable_4",
+    "unimodal",
+    "asymmetric_1.3_0.08"
+  ],
+  "initializations": [
+    "default",
+    "coverage"
+  ],
+  "changed_parameter": "transport_target_mode: argmax -> categorical",
+  "sinkhorn_iterations": 30,
+  "temperature": 0.25,
+  "actor_updates": 20000,
+  "policy_samples": 16,
+  "proposals_per_policy_sample": 4,
+  "repetitions": 2000,
+  "ks": [
+    1,
+    8,
+    16,
+    50,
+    64,
+    256,
+    1024
+  ],
+  "early_distribution_checkpoints": [
+    1,
+    10,
+    50
+  ],
+  "full_checkpoints": [
+    0,
+    100,
+    1000,
+    5000,
+    20000
+  ],
+  "initial_checkpoint_reused": true,
+  "target_rng": "jax.random.fold_in(returned_actor_key, 0x434154); original key splitting unchanged",
+  "configuration_dispatch": "Both no-argument config() and positional config(seed) set explicitly; actual frozen wrapper validated",
+  "max_concurrent_gpus": 2,
+  "expansion_enabled": false,
+  "production_code_changed": false,
+  "original_algorithm_sha256": "8a8e35674c0066e5f7c4a8008764a6463224e6ff31bae92bf07dc07f30bf8204",
+  "categorical_algorithm_sha256": "9ef7eac91d5e4876f98910de2908e4ddce197af8c088f32a1da989fb9bc2c8b6",
+  "replaces_invalid_campaign": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v1",
+  "invalid_v1_reason": "config() versus config(0) cache dispatch; actual wrapper now validated"
+}
