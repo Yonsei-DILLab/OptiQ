@@ -9,6 +9,7 @@ from typing import NamedTuple
 import jax
 import jax.numpy as jnp
 import jax.scipy as jsp
+from .latent import FiniteMixtureTrainState, sample_latents, stratified_finite_latents
 
 
 def tanh_log_jacobian(u):
@@ -31,7 +32,7 @@ def actor_components(actor_state, observations, key, count):
     """Independent conditional components per replay state."""
     batch_size, obs_dim = observations.shape
     action_dim = actor_state.params["mu"]["bias"].shape[0]
-    z = jax.random.normal(key, (batch_size, count, action_dim), dtype=observations.dtype)
+    z = sample_latents(actor_state, key, (batch_size, count, action_dim), observations.dtype)
     obs = jnp.broadcast_to(observations[:, None, :], (batch_size, count, obs_dim))
     mu, log_std = actor_state.apply_fn(
         {"params": actor_state.params}, obs.reshape(batch_size * count, obs_dim),
@@ -40,8 +41,33 @@ def actor_components(actor_state, observations, key, count):
     return mu.reshape(batch_size, count, action_dim), log_std.reshape(batch_size, count, action_dim)
 
 
+def finite_policy_action_and_log_density(actor_state, observations, key, count):
+    """Sample the actual finite policy and sum ALL of its conditional densities.
+
+    Unlike an IDAC random-component estimate, this is the exact marginal density
+    at the sampled action (up to floating-point arithmetic). Entropy expectations
+    and soft Q gains still require sampling/integration.
+    """
+    batch_size, obs_dim = observations.shape
+    action_dim = actor_state.params["mu"]["bias"].shape[0]
+    z = stratified_finite_latents(actor_state, batch_size, count, action_dim, observations.dtype)
+    obs = jnp.broadcast_to(observations[:, None, :], (batch_size, count, obs_dim))
+    mu, ls = actor_state.apply_fn({"params": actor_state.params}, obs.reshape(-1, obs_dim),
+                                  z.reshape(-1, action_dim))
+    mu, ls = mu.reshape(batch_size, count, action_dim), ls.reshape(batch_size, count, action_dim)
+    component_key, noise_key = jax.random.split(key)
+    indices = jax.random.randint(component_key, (batch_size,), 0, count)
+    chosen_mu, chosen_ls = mu[jnp.arange(batch_size), indices], ls[jnp.arange(batch_size), indices]
+    u = chosen_mu + jnp.exp(chosen_ls)*jax.random.normal(noise_key, chosen_mu.shape, dtype=chosen_mu.dtype)
+    log_pi = conditional_mixture_log_prob(u[:, None], mu, ls)[:, 0]
+    return jnp.tanh(u), u, log_pi
+
+
 def idac_action_and_log_density(actor_state, observations, key, count):
     """One action per state; its generating component is included among count."""
+    if isinstance(actor_state, FiniteMixtureTrainState):
+        action, _, log_pi = finite_policy_action_and_log_density(actor_state, observations, key, count)
+        return action, log_pi
     latent_key, noise_key = jax.random.split(key)
     mu, log_std = actor_components(actor_state, observations, latent_key, count)
     eps = jax.random.normal(noise_key, mu[:, 0].shape, dtype=mu.dtype)

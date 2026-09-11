@@ -46,6 +46,24 @@ def validate_config(cfg):
         raise ValueError(f"Invalid Dog task: {cfg.task}")
     actor = cfg.alg.actor
     guard = actor.get("soft_guard", {})
+    if actor.get("latent_prior", "normal") not in {"normal", "finite"}:
+        raise ValueError("latent_prior must be normal or finite")
+    if actor.get("latent_prior", "normal") == "finite":
+        count = float(actor.get("latent_components", 0))
+        if not math.isfinite(count) or count < 2 or int(count) != count:
+            raise ValueError("latent_components must be an integer >=2")
+        if actor.get("type") != "semi_implicit":
+            raise ValueError("Finite latent policy requires a conditional Gaussian actor")
+        if actor.num_policy_samples != count or actor.entropy_samples != count:
+            raise ValueError("Finite policy requires all components in OT and entropy density")
+        if guard.get("enabled", False) and guard.get("components", 16) != count:
+            raise ValueError("Finite policy guard requires the entire actual mixture")
+        code_seed = float(actor.get("latent_codebook_seed", -1))
+        if not math.isfinite(code_seed) or int(code_seed) != code_seed or not 0 <= code_seed < 2**32:
+            raise ValueError("latent_codebook_seed must be a uint32 integer")
+    skip_scale = float(actor.get("mean_latent_skip_scale", 0.0))
+    if not math.isfinite(skip_scale) or skip_scale < 0:
+        raise ValueError("mean_latent_skip_scale must be finite and nonnegative")
     if guard.get("enabled", False):
         if actor.get("type") != "semi_implicit":
             raise ValueError("Sampled soft guard requires a semi-implicit actor")
@@ -88,7 +106,7 @@ def validate_config(cfg):
     if actor.sinkhorn_iterations < 1 or not math.isfinite(float(actor.sinkhorn_epsilon)) or actor.sinkhorn_epsilon <= 0:
         raise ValueError("Sinkhorn epsilon and iteration count must be positive")
     if actor.get("distillation_loss", "pointwise_mse") not in {"pointwise_mse", "conditional_ot_nll"}:
-        raise ValueError("Unknown distillation loss")
+        raise ValueError("distillation_loss must be pointwise_mse or conditional_ot_nll")
     if actor.get("distillation_loss") == "conditional_ot_nll" and actor.get("type") != "semi_implicit":
         raise ValueError("Conditional OT NLL requires a semi-implicit actor")
     if "density_correction_beta" in actor and actor.density_correction_beta != actor.density_beta:

@@ -8,7 +8,8 @@ No derivatives through Q or an entropy objective are used to propose updates.
 import jax
 import jax.numpy as jnp
 
-from .semi_implicit import actor_components, conditional_mixture_log_prob
+from .semi_implicit import actor_components, conditional_mixture_log_prob, finite_policy_action_and_log_density
+from .latent import FiniteMixtureTrainState
 from .critic_utils import critic_expectation
 
 
@@ -19,6 +20,9 @@ def entropy_bracket_sample(actor_state, observations, key, components):
     upper estimate uses M auxiliaries independent of the action. Their bounds
     hold after expectation over actions and components, not pointwise.
     """
+    if isinstance(actor_state, FiniteMixtureTrainState):
+        action, u, log_pi = finite_policy_action_and_log_density(actor_state, observations, key, components)
+        return action, u, -log_pi, -log_pi
     latent_key, noise_key = jax.random.split(key)
     mu, ls = actor_components(actor_state, observations, latent_key, components+1)
     u = mu[:,0] + jnp.exp(ls[:,0])*jax.random.normal(noise_key,mu[:,0].shape)

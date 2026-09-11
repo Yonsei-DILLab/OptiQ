@@ -17,6 +17,7 @@ from .policy import OptiQPolicy
 from .critic_utils import critic_expectation
 from .distillation import conditional_ot_nll, hard_projection_mass_error
 from .soft_improvement import sampled_soft_update
+from .latent import FiniteMixtureTrainState, stratified_finite_latents
 from .semi_implicit import (
     ConditionalGaussianProposal, PretanhTeacherKDE,
     conditional_mixture_log_prob, idac_action_and_log_density,
@@ -455,6 +456,7 @@ class OptiQDIME(DIME):
         if semi_implicit:
             metrics.update(
                 backup_entropy_lower=-next_log_density.mean(),
+                backup_policy_density_exact=jnp.asarray(isinstance(target_actor_state, FiniteMixtureTrainState), dtype=jnp.float32),
                 backup_entropy_term=entropy_adjustment.mean(),
                 backup_discounted_entropy_term=((1.0 - dones) * gamma * entropy_adjustment).mean(),
                 backup_entropy_std=next_log_density.std(),
@@ -518,11 +520,15 @@ class OptiQDIME(DIME):
             output_layer = "mu" if semi_implicit else f"Dense_{len(actor_params) - 1}"
             action_dim = actor_params[output_layer]["bias"].shape[0]
             z_key, eps_key = jax.random.split(latent_key) if semi_implicit else (latent_key, latent_key)
-            latents = jax.random.normal(
-                z_key,
-                (batch_size, num_policy_samples, action_dim),
-                dtype=observations.dtype,
-            )
+            if isinstance(actor_state, FiniteMixtureTrainState):
+                latents = stratified_finite_latents(actor_state, batch_size, num_policy_samples,
+                                                    action_dim, observations.dtype)
+            else:
+                latents = jax.random.normal(
+                    z_key,
+                    (batch_size, num_policy_samples, action_dim),
+                    dtype=observations.dtype,
+                )
             repeated_observations = jnp.broadcast_to(
                 observations[:, None, :],
                 (batch_size, num_policy_samples, observation_dim),
@@ -913,7 +919,11 @@ class OptiQDIME(DIME):
             if semi_implicit:
                 policy_log_g = conditional_mixture_log_prob(student_u, mu, log_std)
                 std = jnp.exp(log_std)
+                between = jnp.var(mu, axis=1).sum(axis=-1)
+                within = jnp.mean(std**2, axis=1).sum(axis=-1)
                 metrics.update(
+                    policy_density_exact=jnp.asarray(isinstance(actor_state, FiniteMixtureTrainState), dtype=jnp.float32),
+                    actor_latent_mean_variance_fraction=jnp.mean(between/jnp.maximum(between+within, 1.e-20)),
                     policy_entropy_lower=-policy_log_g.mean(),
                     policy_entropy_lower_std=policy_log_g.std(),
                     actor_std_mean=std.mean(), actor_std_min=std.min(), actor_std_max=std.max(),

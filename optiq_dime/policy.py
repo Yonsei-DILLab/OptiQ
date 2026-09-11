@@ -17,6 +17,7 @@ from models.utils import activation_fn
 
 from .transport import clip_action
 from .optimizers import adam_with_grad_clip
+from .latent import FiniteMixtureTrainState, finite_latent_codes, sample_latents
 
 
 def kernel_init(scale: float = 1.0):
@@ -49,6 +50,7 @@ class SemiImplicitActor(nn.Module):
     initial_log_std: float
     mean_output_init_scale: float = 1.0e-4
     log_std_output_init_scale: float = 0.0
+    mean_latent_skip_scale: float = 0.0
 
     @nn.compact
     def __call__(self, observations, latents):
@@ -56,6 +58,8 @@ class SemiImplicitActor(nn.Module):
         for width in self.hidden_dims:
             x = nn.gelu(nn.Dense(width, kernel_init=kernel_init())(x))
         mu = nn.Dense(self.action_dim, kernel_init=kernel_init(self.mean_output_init_scale), name="mu")(x)
+        if self.mean_latent_skip_scale != 0.0:
+            mu = mu + self.mean_latent_skip_scale*latents
         raw_log_std = nn.Dense(
             self.action_dim, kernel_init=kernel_init(self.log_std_output_init_scale),
             bias_init=nn.initializers.constant(self.initial_log_std), name="log_std",
@@ -148,6 +152,7 @@ class OptiQPolicy(BaseJaxPolicy):
                 initial_log_std=actor_cfg.initial_log_std,
                 mean_output_init_scale=actor_cfg.mean_output_init_scale,
                 log_std_output_init_scale=actor_cfg.log_std_output_init_scale,
+                mean_latent_skip_scale=actor_cfg.get("mean_latent_skip_scale", 0.0),
             )
         else:
             self.actor_model = ImplicitActor(
@@ -160,15 +165,22 @@ class OptiQPolicy(BaseJaxPolicy):
             b2=self.cfg.alg.optimizer.actor_b2,
             max_grad_norm=self.cfg.alg.optimizer.get("ac_grad_norm", None),
         )
-        self.actor_state = TrainState.create(
+        state_class, state_metadata = TrainState, {}
+        if actor_cfg.get("latent_prior", "normal") == "finite":
+            state_class = FiniteMixtureTrainState
+            state_metadata = dict(latent_components=int(actor_cfg.latent_components),
+                                  latent_codebook_seed=int(actor_cfg.latent_codebook_seed))
+        self.actor_state = state_class.create(
             apply_fn=self.actor_model.apply,
             params=actor_params,
             tx=actor_tx,
+            **state_metadata,
         )
-        self.target_actor_state = TrainState.create(
+        self.target_actor_state = state_class.create(
             apply_fn=self.actor_model.apply,
             params=actor_params,
             tx=actor_tx,
+            **state_metadata,
         )
         return key
 
@@ -178,8 +190,12 @@ class OptiQPolicy(BaseJaxPolicy):
         if "mu" in actor_state.params:
             latent_key, noise_key = jax.random.split(key)
             shape = (observations.shape[0], actor_state.params["mu"]["bias"].shape[0])
-            z = (jnp.zeros(shape, dtype=observations.dtype) if deterministic else
-                 jax.random.normal(latent_key, shape, dtype=observations.dtype))
+            if deterministic and isinstance(actor_state, FiniteMixtureTrainState):
+                # A reproducible component mean; stochastic evaluation is default.
+                z = jnp.broadcast_to(finite_latent_codes(actor_state, shape[-1], observations.dtype)[0], shape)
+            else:
+                z = (jnp.zeros(shape, dtype=observations.dtype) if deterministic else
+                     sample_latents(actor_state, latent_key, shape, observations.dtype))
             mu, log_std = actor_state.apply_fn({"params": actor_state.params}, observations, z)
             eps = (jnp.zeros_like(mu) if deterministic else
                    jax.random.normal(noise_key, shape, dtype=observations.dtype))

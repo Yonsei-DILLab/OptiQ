@@ -26,6 +26,7 @@ from scipy.stats import norm
 
 from optiq_dime import OptiQDIME
 from optiq_dime.policy import OptiQPolicy
+from optiq_dime.latent import FiniteMixtureTrainState, finite_latent_codes
 
 TEMPERATURE = .1
 TARGET_STD = .15
@@ -64,7 +65,11 @@ def target_density(a):
 def evaluate(actor, seed, samples):
     # Fixed independent evaluation randomness across snapshots/variants.
     rng = np.random.default_rng(1600000 + seed)
-    z = rng.normal(size=(samples, 1)).astype(np.float32)
+    if isinstance(actor, FiniteMixtureTrainState):
+        codes = np.asarray(finite_latent_codes(actor, 1))
+        z = codes[rng.integers(actor.latent_components, size=samples)]
+    else:
+        z = rng.normal(size=(samples, 1)).astype(np.float32)
     eps = rng.normal(size=(samples, 1)).astype(np.float32)
     mu, log_std = actor.apply_fn({"params": actor.params}, jnp.zeros_like(z), jnp.asarray(z))
     mu, std = np.asarray(mu, dtype=np.float64), np.exp(np.asarray(log_std, dtype=np.float64))
@@ -89,6 +94,7 @@ def evaluate(actor, seed, samples):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--updates", type=int, default=3000)
+    parser.add_argument("--config", default="mujoco_v2_checked")
     parser.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
     parser.add_argument("--samples", type=int, default=32768)
     parser.add_argument("--variants", nargs="+", choices=tuple(VARIANTS),
@@ -107,7 +113,7 @@ def main():
         "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "devices": [str(d) for d in jax.devices()], "updates": args.updates,
-        "seeds": args.seeds, "evaluation_samples": args.samples, "batch_size": 64,
+        "seeds": args.seeds, "evaluation_samples": args.samples, "batch_size": 64, "config": args.config,
         "target": {"pretanh_means": [-1., 1.], "pretanh_std": TARGET_STD,
                    "mixture_weights": [.5, .5], "density_integral": normalization,
                    "central_fraction": quad(target_density, -.5, .5, epsabs=1.e-12)[0]},
@@ -129,7 +135,7 @@ def main():
         overrides = VARIANTS[name]
         for seed in args.seeds:
             with initialize_config_dir(version_base=None, config_dir=str(ROOT/"configs")):
-                cfg = compose(config_name="mujoco_v2_checked")
+                cfg = compose(config_name=args.config)
             for key, value in overrides.items():
                 if key != "diagnostic_latent_skip_scale":
                     setattr(cfg.alg.actor, key, value)
