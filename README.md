@@ -1,95 +1,64 @@
-# OptiQ v2
+# OptiQ v3
 
-**Final version: continuous-latent checked K64**, selected on 2026-09-11.
-A one-forward semi-implicit tanh-Gaussian actor, scalar twin-Q soft backup with
-IDAC entropy estimates, conditional-mixture proposals, full OT Gaussian NLL,
-and a sampled soft-score acceptance filter. Training uses T=0.1, beta=1,
-16×64 OT, M16 entropy, 256×3 networks, no anchors or extra uniform exploration.
-The successful training source is `8cb4f237aacb61113f65e693e23236f17d77f978`.
-This is the checked-K64 baseline, not the previous local Gaussian-W2 variant.
-Its defaults include **LayerNorm=false, gradient clipping=2, no annealing and
-no ESS-based temperature control**.
+v3 uses a **plain twin-min TD backup**, a continuous-latent conditional Gaussian
+policy, beta=1 proposal density correction, and full 16×64 OT Gaussian NLL.
+There is no policy entropy bonus, IDAC entropy evaluation, soft-score acceptance
+check, or optimizer rollback in the default v3 update path.
 
-- **[Detailed implementation pseudocode](docs/v2/PSEUDOCODE.md)**
-- [Algorithm in Korean](docs/v2/ALGORITHM_KO.md)
-- [Installation, execution and independent replication](docs/v2/REPRODUCIBILITY.md)
-- [Review and validation](docs/v2/REVIEW.md)
-- [Completed Humanoid results](docs/v2/RESULTS_KO.md)
-- [Theoretical conditions and limits](docs/v2/THEORY.md)
-- [Archived variants and compatibility paths](docs/archive/v2/README.md)
-- [Canonical paths and launch procedure on this instance](docs/v2/INSTANCE.md)
+The teacher Boltzmann temperature (T=0.1), entropic OT regularizer (epsilon=0.25),
+and Gaussian likelihood normalization remain part of the actor construction.
+Teacher density is used for importance correction. These are distinct from
+adding policy entropy to the TD target or an actor objective.
 
-## Run the final version
+- **[v3 implementation pseudocode (Korean)](docs/v3/PSEUDOCODE.md)**
+- [Canonical configuration](configs/v3/final.yaml)
+- [Validation results and scope](docs/v3/VALIDATION.md)
+- [v2 baseline pseudocode](docs/v2/PSEUDOCODE.md)
 
-Install the pinned environment and configure W&B credentials using the
-[reproduction guide](docs/v2/REPRODUCIBILITY.md) first. On the current server,
-follow the [instance guide](docs/v2/INSTANCE.md); do not install historical
-deployment configs as the default workers.
+## Run or inspect
+
+The pinned environment is shared with v2; installation instructions are in
+[the reproduction guide](docs/v2/REPRODUCIBILITY.md). On this instance use
+`/root/.venv-optiq-mujoco/bin/python`. The v3 worktree is `/root/OptiQ-v3`;
+`/root/OptiQ` remains the baseline v2 checkout.
 
 ```bash
-scripts/run_v2.sh --list
-scripts/run_v2.sh 0 --check
-# Training on an allocated GPU, after setting credentials and Python:
-CUDA_VISIBLE_DEVICES=0 scripts/run_v2.sh 0 progress_bar=false
+scripts/run_v3.sh --list
+scripts/run_v3.sh 0 --check
+scripts/run_v3.sh 0 --check benchmark=ant
 ```
 
-`mujoco_v2`, `mujoco_v2_checked` and `v2/final` resolve to the same final
-configuration defined in [configs/v2/final.yaml](configs/v2/final.yaml).
-The direct runner `python run_optiq_dime.py` also defaults to final v2.
-Humanoid seeds 0/1/2/3 are the reference; `benchmark=ant`, `halfcheetah`,
-`walker2d` or `hopper` selects another supported MuJoCo environment.
-The launcher checks the frozen learning-source hashes and numerical defaults
-before running. Requested experiments use 1M steps without performance-based
-early stopping. The installed four-seed workers do not start automatically.
+Checks compose and validate the requested configuration without starting
+training or W&B. `python run_optiq_dime.py` defaults to `mujoco_v3` on this
+branch. `mujoco_v3` and `v3/final` resolve to the same self-contained config.
+The launcher enforces plain TD, zero policy entropy, no guard, conditional
+mixture, and full OT NLL. Use `OPTIQ_PYTHON` and `OPTIQ_ENV_FILE` to specify the
+Python interpreter and credential file when needed.
 
-W&B uses `OptiQ/optiq_mujoco_v2_confirmation`, the successful baseline project.
-Keep comparisons in that project and distinguish variants by run/group names.
-New results go outside the repository to
-`../optiq-experiments/v2_checked64/outputs/`; each run gets a fresh directory and
-W&B ID. Credentials, checkpoints, local archives and analysis are not committed.
+For a requested GPU experiment, run the wrapper under supervisor using the
+[service template](deploy/supervisor/optiq-v3.conf) and
+`scripts/supervisor_v3.sh`. The template has autostart disabled. No v3 service
+is installed or started by creating this branch or running validation.
 
-## Results and validation
+Baseline numerical settings remain: 256×3 networks, batch 256, warmup 5K,
+16 student latents, 64 teacher candidates, Sinkhorn epsilon=.25/100 iterations,
+conditional teacher std floor=.05, Adam LR=3e-4, global gradient clipping=2,
+no LayerNorm, and no extra uniform exploration. Default runs use 1M environment
+steps per seed without performance-based early stopping. Teacher uses live
+mean-Q; TD uses target min-Q. Every scheduled actor update is applied.
 
-The completed four-seed 900K–1M mean was **5362.67**, versus 5051.65 for the
-matched OptiQ control and 5676.49 for the historical 10%-exploration reference.
-Fresh final-policy means were **5397.09**, 5224.07 and 5633.18 respectively.
-These are whole-algorithm comparisons. OT NLL and the sampled replay-average
-filter do not by themselves certify policy improvement.
+Comparisons use `OptiQ/optiq_mujoco_v2_confirmation` with separate v3 group/run
+names and fresh IDs. Outputs go to `../optiq-experiments/v3_td/outputs/` under
+a fresh directory per run. Keep credentials and outputs outside tracked source.
 
-The local path migration passed 181 regression tests, a five-test path-module
-rerun, CPU/GPU historical-update parity checks, and a 5100-step Humanoid GPU
-smoke including checkpoint restoration. These are code/integration checks,
-not a new 1M reproduction. See the [review](docs/v2/REVIEW.md) for their scope.
+## Validation
 
-## Repository layout
+See [the validation record](docs/v3/VALIDATION.md) for exact checks. Short
+Humanoid/Ant loops exercise the real networks, TD, OT NLL, timeout handling and
+checkpoint restoration. They do not establish v3 performance. No full v3
+benchmark result is claimed.
 
-| Path | Purpose |
-|---|---|
-| `configs/v2/final.yaml` | Canonical final numerical configuration |
-| `docs/v2/` | Final pseudocode, NumPy reference, reproduction, review and provenance |
-| `optiq_dime/` | Shared policy, critic-update, density, OT, NLL and guard implementation |
-| `scripts/run_v2.sh` | Default final launcher |
-| `deploy/supervisor/README.md` | Canonical managed workers versus historical deployments |
-| `configs/archive/v2/` | Original, conditional, guarded, finite and proximal variants |
-| `docs/archive/v2/` | Original pseudocode and historical investigations |
-| `tests/test_v2_final.py` | Frozen-config, reference-math and common-loop checks |
-| `tests/test_v2_instance_paths.py` | Canonical launcher, output and deployment path checks |
-| `../optiq-experiments/v2_checked64/outputs/` | New checked-v2 results and checkpoints |
-| `outputs/` | Historical local results; preserved, not the new default |
-
-Historical config names remain small aliases for existing services and reports.
-To reproduce the supplied original v2, use the direct runner with
-`--config-name=archive/v2/original` explicitly. The default launcher accepts
-only the three checked-K64 config aliases; historical variants are not defaults.
-Legacy diagnostic/monitor scripts retain paths referenced by saved manifests.
-
-The original DIME, scalar MuJoCo and no-anchor experiment documentation remains
-in the [pre-final README archive](docs/archive/README_PRE_V2_FINAL.md).
-The upstream project is [DIME](https://arxiv.org/pdf/2502.02316).
-
-## Acknowledgements
-
-Portions are adapted from [UnderdampedDiffusionBridges](https://github.com/DenisBless/UnderdampedDiffusionBridges),
-[CrossQ](https://github.com/adityab/CrossQ) and [Stable Baselines Jax](https://github.com/araffin/sbx/).
-IDAC supplies the semi-implicit entropy estimator; the OT actor and sampled guard
-are this repository's combination. Preserve the repository's licenses and attribution.
+Existing explicit v2 configs retain their numerical behavior and regression
+coverage. The frozen v2 launcher also verifies original source hashes, so use
+that launcher from the original `/root/OptiQ` checkout, not this modified branch.
+The v2 docs and results under `docs/v2` describe the baseline, not v3.

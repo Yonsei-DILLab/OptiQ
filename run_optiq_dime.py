@@ -1,4 +1,4 @@
-"""Train OptiQ; default: v2 semi-implicit Humanoid with scalar twin critics."""
+"""Train OptiQ; default: v3 semi-implicit Humanoid with plain twin-min TD."""
 
 import json
 import math
@@ -46,6 +46,18 @@ def validate_config(cfg):
         raise ValueError(f"Invalid Dog task: {cfg.task}")
     actor = cfg.alg.actor
     guard = actor.get("soft_guard", {})
+    backup_mode = cfg.alg.critic.get(
+        "backup_mode", "soft_td" if actor.get("type") == "semi_implicit" else "td"
+    )
+    if backup_mode not in {"td", "soft_td"}:
+        raise ValueError("critic.backup_mode must be td or soft_td")
+    if backup_mode == "soft_td" and actor.get("type") != "semi_implicit":
+        raise ValueError("Soft TD requires a conditional Gaussian policy")
+    if backup_mode == "td":
+        if guard.get("enabled", False):
+            raise ValueError("Plain TD must not use the soft-value acceptance guard")
+        if cfg.alg.ent_coef.type != "const" or cfg.alg.ent_coef.init != 0.0:
+            raise ValueError("Plain TD requires a constant zero policy entropy coefficient")
     proximal = float(actor.get("soft_proximal_ess_fraction", 0.0))
     if not math.isfinite(proximal) or not 0 <= proximal <= 1:
         raise ValueError("soft_proximal_ess_fraction must be finite and between 0 and 1")
@@ -62,7 +74,7 @@ def validate_config(cfg):
             raise ValueError("latent_components must be an integer >=2")
         if actor.get("type") != "semi_implicit":
             raise ValueError("Finite latent policy requires a conditional Gaussian actor")
-        if actor.num_policy_samples != count or actor.entropy_samples != count:
+        if actor.num_policy_samples != count or (backup_mode == "soft_td" and actor.entropy_samples != count):
             raise ValueError("Finite policy requires all components in OT and entropy density")
         if guard.get("enabled", False) and guard.get("components", 16) != count:
             raise ValueError("Finite policy guard requires the entire actual mixture")
@@ -93,8 +105,10 @@ def validate_config(cfg):
             raise ValueError("v2 requires no teacher anchors and full beta=1 density correction")
         if actor.adaptive_density_beta:
             raise ValueError("v2 requires fixed density beta")
-        if actor.entropy_samples < 1 or int(actor.entropy_samples) != actor.entropy_samples:
+        if backup_mode == "soft_td" and (actor.entropy_samples < 1 or int(actor.entropy_samples) != actor.entropy_samples):
             raise ValueError("entropy_samples must be a positive integer")
+        if backup_mode == "td" and (actor.entropy_samples < 0 or int(actor.entropy_samples) != actor.entropy_samples):
+            raise ValueError("entropy_samples must be a nonnegative integer (unused by plain TD)")
         if not all(math.isfinite(float(actor[k])) for k in
                    ("log_std_min", "log_std_max", "initial_log_std", "proposal_std_pretanh", "temperature")):
             raise ValueError("v2 scales and log-std limits must be finite")
@@ -106,8 +120,8 @@ def validate_config(cfg):
         if actor.proposal_std_pretanh <= 0 or actor.proposal_std != actor.proposal_std_pretanh:
             raise ValueError("proposal_std must equal the positive pre-tanh KDE bandwidth")
         if actor.td_noise_std != 0 or actor.td_noise_clip != 0:
-            raise ValueError("v2 policy entropy backup must not add TD smoothing")
-        if cfg.alg.ent_coef.type != "const" or cfg.alg.ent_coef.init != actor.temperature:
+            raise ValueError("Conditional Gaussian backups must not add TD smoothing")
+        if backup_mode == "soft_td" and (cfg.alg.ent_coef.type != "const" or cfg.alg.ent_coef.init != actor.temperature):
             raise ValueError("v2 backup entropy coefficient must equal the Boltzmann temperature")
         if cfg.alg.critic.get("crossq_style", True):
             raise ValueError("v2 uses target critics; crossq_style must be false")
@@ -291,10 +305,16 @@ def initialize_and_run(cfg: DictConfig):
             if cfg.env_name in MYOSUITE_ENVS:
                 environment_metadata["success_criterion"] = f"sum(solved) > {cfg.successful_steps} per episode"
             if cfg.alg.actor.get("type", "implicit") == "semi_implicit":
+                soft_backup = model.backup_mode == "soft_td"
                 environment_metadata.update(
                     policy="tanh(mu(s,z)+sigma(s,z)*eps)",
-                    entropy_estimator="IDAC self-inclusive conditional mixture in normalized action coordinates",
-                    entropy_components=int(cfg.alg.actor.entropy_samples),
+                    critic_backup=model.backup_mode,
+                    backup_entropy_coefficient=float(cfg.alg.actor.temperature) if soft_backup else 0.0,
+                    teacher_temperature=float(cfg.alg.actor.temperature),
+                    entropy_estimator=("IDAC self-inclusive conditional mixture in normalized action coordinates"
+                                       if soft_backup else "disabled; action sampling only"),
+                    entropy_components=int(cfg.alg.actor.entropy_samples) if soft_backup else 0,
+                    policy_entropy_diagnostics=bool(cfg.alg.actor.get("entropy_diagnostics", True)),
                     teacher=("conditional Gaussian mixture with teacher-only minimum std" if
                         cfg.alg.actor.get("teacher_distribution") == "conditional_mixture" else
                         "separate Gaussian KDE centered on realized student pre-tanh samples"),
@@ -307,7 +327,7 @@ def initialize_and_run(cfg: DictConfig):
                     update_acceptance=("sampled soft-value filter; not a global certificate" if
                         cfg.alg.actor.get("soft_guard", {}).get("enabled", False) else "unfiltered"),
                 )
-                if cfg.alg.actor.get("latent_prior") == "finite":
+                if soft_backup and cfg.alg.actor.get("latent_prior") == "finite":
                     environment_metadata["entropy_estimator"] = "all actual finite mixture components; exact density, sampled entropy expectation"
                 if cfg.alg.actor.get("soft_proximal_ess_fraction", 0.0) > 0:
                     environment_metadata.update(
@@ -356,7 +376,7 @@ def initialize_and_run(cfg: DictConfig):
                     callback.eval_env.close()
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="mujoco_v2")
+@hydra.main(version_base=None, config_path="configs", config_name="mujoco_v3")
 def main(cfg: DictConfig) -> None:
     try:
         if cfg.use_jit:

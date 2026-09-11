@@ -59,6 +59,10 @@ class OptiQDIME(DIME):
         self.behavior_action_count = 0
         self.soft_guard_attempts = 0
         self.soft_guard_accepts = 0
+        self.backup_mode = self.cfg.alg.critic.get(
+            "backup_mode",
+            "soft_td" if self.cfg.alg.actor.get("type") == "semi_implicit" else "td",
+        )
 
     def _sample_action(self, learning_starts, action_noise=None, n_envs=1):
         # Always consume the original actor/warmup RNG sequence first. This hook
@@ -195,6 +199,8 @@ class OptiQDIME(DIME):
             int(guard.get("draws", 8)),
             float(guard.get("standard_error_multiplier", 2.0)),
             float(actor.get("soft_proximal_ess_fraction", 0.0)),
+            self.backup_mode,
+            bool(actor.get("entropy_diagnostics", True)),
         )
         self._n_updates += gradient_steps
         if guard_enabled:
@@ -228,6 +234,7 @@ class OptiQDIME(DIME):
                     )
 
         self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
+        self.logger.record("train/actor_updates", int(self.policy.actor_state.step))
         diagnostic_interval = int(self.cfg.get("diagnostic_interval", 0))
         diagnostic_due = diagnostic_interval > 0 and self.num_timesteps % diagnostic_interval == 0
         core_metrics = {"actor_loss", "critic_loss", "current_q_values", "next_q_values",
@@ -262,6 +269,7 @@ class OptiQDIME(DIME):
             "entr_coeff",
             "semi_implicit",
             "entropy_samples",
+            "backup_mode",
         ],
     )
     def update_critic(
@@ -286,7 +294,16 @@ class OptiQDIME(DIME):
         semi_implicit: bool = False,
         entropy_samples: int = 16,
         temperature: float = 0.25,
+        backup_mode: str | None = None,
     ):
+        # The policy family and Bellman objective are independent. None preserves
+        # the historical v2/implicit defaults for callers without an explicit mode.
+        backup_mode = backup_mode or ("soft_td" if semi_implicit else "td")
+        if backup_mode not in {"td", "soft_td"}:
+            raise ValueError("backup_mode must be td or soft_td")
+        if backup_mode == "soft_td" and not semi_implicit:
+            raise ValueError("Soft TD requires a conditional Gaussian policy")
+        soft_backup = backup_mode == "soft_td"
         (
             key,
             actor_key,
@@ -295,7 +312,7 @@ class OptiQDIME(DIME):
             dropout_key_current,
             redq_key,
         ) = jax.random.split(key, 6)
-        if semi_implicit:
+        if soft_backup:
             # _train passes the CURRENT actor here. All M components, including
             # the action's generating component, come from that same actor.
             next_actions, next_log_density = idac_action_and_log_density(
@@ -306,10 +323,11 @@ class OptiQDIME(DIME):
             next_actions = OptiQPolicy.sample_action(
                 target_actor_state, next_observations, actor_key, deterministic=False
             )
-            next_actions = sample_truncated_gaussian(
-                noise_key, next_actions, repeats=1, std=td_noise_std,
-                perturb_clip=td_noise_clip, include_anchor=False,
-            )[:, 0]
+            if not semi_implicit:
+                next_actions = sample_truncated_gaussian(
+                    noise_key, next_actions, repeats=1, std=td_noise_std,
+                    perturb_clip=td_noise_clip, include_anchor=False,
+                )[:, 0]
             entropy_adjustment = jnp.zeros_like(rewards)
         next_actions = jax.lax.stop_gradient(next_actions)
 
@@ -453,15 +471,23 @@ class OptiQDIME(DIME):
             "next_q_values": target_q,
             "entrQ_1": entropy_1,
             "entrQ_2": entropy_2,
-            "ent_coef": jnp.asarray(temperature if semi_implicit else 0.0),
+            "ent_coef": jnp.asarray(temperature if soft_backup else 0.0),
         }
-        if semi_implicit:
+        if soft_backup:
             metrics.update(
                 backup_entropy_lower=-next_log_density.mean(),
                 backup_policy_density_exact=jnp.asarray(isinstance(target_actor_state, FiniteMixtureTrainState), dtype=jnp.float32),
                 backup_entropy_term=entropy_adjustment.mean(),
                 backup_discounted_entropy_term=((1.0 - dones) * gamma * entropy_adjustment).mean(),
                 backup_entropy_std=next_log_density.std(),
+                reward_mean=rewards.mean(),
+                reward_abs_mean=jnp.abs(rewards).mean(),
+                backup_action_saturation_fraction=jnp.mean(jnp.abs(next_actions) > 0.99),
+            )
+        elif semi_implicit:
+            metrics.update(
+                backup_entropy_term=jnp.asarray(0.0),
+                backup_discounted_entropy_term=jnp.asarray(0.0),
                 reward_mean=rewards.mean(),
                 reward_abs_mean=jnp.abs(rewards).mean(),
                 backup_action_saturation_fraction=jnp.mean(jnp.abs(next_actions) > 0.99),
@@ -487,6 +513,7 @@ class OptiQDIME(DIME):
             "distillation_loss",
             "teacher_distribution",
             "soft_proximal_ess_fraction",
+            "entropy_diagnostics",
         ],
     )
     def update_actor(
@@ -516,6 +543,7 @@ class OptiQDIME(DIME):
         distillation_loss: str = "pointwise_mse",
         teacher_distribution: str = "realized_kde",
         soft_proximal_ess_fraction: float = 0.0,
+        entropy_diagnostics: bool = True,
     ):
         if soft_proximal_ess_fraction > 0 and (
             not isinstance(actor_state, FiniteMixtureTrainState)
@@ -935,15 +963,18 @@ class OptiQDIME(DIME):
                     counterfactual_ess / num_proposals
                 ).mean()
             if semi_implicit:
-                policy_log_g = conditional_mixture_log_prob(student_u, mu, log_std)
+                if entropy_diagnostics:
+                    policy_log_g = conditional_mixture_log_prob(student_u, mu, log_std)
+                    metrics.update(
+                        policy_entropy_lower=-policy_log_g.mean(),
+                        policy_entropy_lower_std=policy_log_g.std(),
+                    )
                 std = jnp.exp(log_std)
                 between = jnp.var(mu, axis=1).sum(axis=-1)
                 within = jnp.mean(std**2, axis=1).sum(axis=-1)
                 metrics.update(
                     policy_density_exact=jnp.asarray(isinstance(actor_state, FiniteMixtureTrainState), dtype=jnp.float32),
                     actor_latent_mean_variance_fraction=jnp.mean(between/jnp.maximum(between+within, 1.e-20)),
-                    policy_entropy_lower=-policy_log_g.mean(),
-                    policy_entropy_lower_std=policy_log_g.std(),
                     actor_std_mean=std.mean(), actor_std_min=std.min(), actor_std_max=std.max(),
                     actor_log_std_mean=log_std.mean(), actor_log_std_min=log_std.min(),
                     actor_log_std_max=log_std.max(),
@@ -1004,6 +1035,8 @@ class OptiQDIME(DIME):
             "soft_guard_components",
             "soft_guard_draws",
             "soft_proximal_ess_fraction",
+            "backup_mode",
+            "entropy_diagnostics",
         ],
     )
     def _train(
@@ -1055,8 +1088,13 @@ class OptiQDIME(DIME):
         soft_guard_draws=8,
         soft_guard_standard_error_multiplier=2.0,
         soft_proximal_ess_fraction=0.0,
+        backup_mode=None,
+        entropy_diagnostics=True,
     ):
         del n_env_interacts
+        backup_mode = backup_mode or ("soft_td" if semi_implicit else "td")
+        if backup_mode == "td" and soft_guard_enabled:
+            raise ValueError("Plain TD must not use the soft-value acceptance guard")
         actor_metrics = {
             "actor_loss": jnp.asarray(0.0),
             "source_ess_fraction": jnp.asarray(0.0),
@@ -1103,7 +1141,10 @@ class OptiQDIME(DIME):
         for label in ("0p05", "0p1", "0p2", "0p25", "0p5", "1p0"):
             actor_metrics[f"counterfactual_ess_T{label}"] = jnp.asarray(0.0)
         if semi_implicit:
-            for name in ("policy_entropy_lower", "policy_entropy_lower_std", "actor_std_mean",
+            if entropy_diagnostics:
+                actor_metrics["policy_entropy_lower"] = jnp.asarray(0.0)
+                actor_metrics["policy_entropy_lower_std"] = jnp.asarray(0.0)
+            for name in ("actor_std_mean",
                          "actor_std_min", "actor_std_max", "actor_log_std_mean", "actor_log_std_min",
                          "actor_log_std_max", "student_action_saturation_fraction",
                          "teacher_action_saturation_fraction", "teacher_log_density_mean",
@@ -1143,6 +1184,7 @@ class OptiQDIME(DIME):
                 semi_implicit,
                 entropy_samples,
                 temperature,
+                backup_mode,
             )
             qf_state = cls.soft_update(tau, qf_state)
             if i in policy_delay_indices:
@@ -1174,6 +1216,7 @@ class OptiQDIME(DIME):
                     distillation_loss,
                     teacher_distribution,
                     soft_proximal_ess_fraction,
+                    entropy_diagnostics,
                 )
                 if soft_guard_enabled:
                     key, guard_key = jax.random.split(key)
