@@ -1266,3 +1266,15 @@ W&B: https://wandb.ai/OptiQ/optiq_mujoco_v2_finite_screen .
 The goal is still unresolved; there is no completed finite-policy Humanoid
 comparison, and sampled learned-Q acceptance is not a statewise certificate.
 No push occurred.
+
+### Finite candidate at 50k
+
+All four runs and their monitor were confirmed RUNNING; all eight 50k
+actor/critic files were hashed in `finite_review_0050000.json`. The read-only
+`report_v2_finite.py` retains all four seeds and all three references at the
+same evaluation steps. At the 30k/35k/40k/45k/50k checkpoints, seed-averaged
+returns are 473.3 finite, 443.7 continuous v2, 459.0 matched OptiQ and 472.4
+historical OptiQ. This is an early near-tie with the strongest reference,
+not a final win or stability guarantee. Continue the frozen configuration
+to the predeclared 100k review. Aligned JSON/Markdown/PNG/PDF files are under
+`outputs/v2_improvement/finite_report/step_0050000.*`.
