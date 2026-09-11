@@ -1308,3 +1308,22 @@ Evidence: `finite_50k_soft_critic_protocol.json`, `finite_50k_soft_critic.json`,
 and `finite_50k_soft_critic_validation.json`. Checkpoint hashes, episode seeds,
 reported means and exact finite-density bracket equality were checked; raw
 trajectories were not retained for an independent discounted-sum reconstruction.
+
+### Finite candidate at the first 100k stopping review
+
+All four training processes and the monitor are RUNNING. The 80k–100k five-
+evaluation means are 622.3 finite, 673.7 continuous v2, 571.7 matched OptiQ,
+and 711.1 historical OptiQ. Finite seed means are [736.1, 629.1, 564.7, 559.3].
+It is still below the stronger reference; the objective is not achieved.
+All four seeds clear the predeclared early-stop heuristic and continue with
+the frozen launch configuration. The next fixed review is 200k; the monitor
+continues checking the 100k+ rule between reviews.
+
+At 100k the logged ESS is 2.67–3.21/64, cumulative acceptance 43.9–45.0%,
+and conditional sigma .2. The component-mean share of pre-tanh variance is
+only 1.05–1.46% on these replay batches. This indicates little component-mean
+diversity in the sampled states, not proof about all states or a cause of
+return differences. Exact-density flags remain 1 for actor and TD backup.
+All eight 100k actor/critic checkpoints were hashed; training source hashes
+still match the launch validation. `finite_review_0100000.json` preserves
+these checks and the monitor decisions. No push or training change occurred.
