@@ -6,7 +6,7 @@ utils=/opt/supervisor-scripts/utils
 set -u
 repo_root="${OPTIQ_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 index="$1"
-export OPTIQ_CONFIG=mujoco_v2
+export OPTIQ_CONFIG=archive/v2/original
 case "$index" in
   0) name=optiq-reference; export OPTIQ_CONFIG=mujoco_setting
      overrides=(+alg.behavior_uniform_probability=0.0) ;;

@@ -12,6 +12,11 @@ from optiq_dime.runtime import load_environment, provenance
 
 @pytest.fixture(scope="session", autouse=True)
 def validation_run(request):
+    # Portable local verification must not require credentials or create runs.
+    # Explicitly opt in to the historical online test reporting when needed.
+    if os.environ.get("OPTIQ_TEST_WANDB") != "1":
+        yield None
+        return
     load_environment()
     run = wandb.init(
         project=os.environ.get("WANDB_PROJECT", "optiq_dime_no_anchor"),

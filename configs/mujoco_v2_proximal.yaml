@@ -1,25 +1,5 @@
 # @package _global_
+# Historical compatibility name. Not the final v2.
 defaults:
-  - mujoco_v2_checked
+  - /archive/v2/proximal
   - _self_
-
-# Experimental KL-proximal soft target. The actual policy supplies candidates;
-# full beta=1 IS is retained, while eta scales Q/T AND -log pi together.
-# The finite actual prior makes this density exact, with all 16 components.
-alg:
-  actor:
-    latent_prior: finite
-    latent_components: 16
-    latent_codebook_seed: 20260911
-    mean_latent_skip_scale: 0.0
-    initial_log_std: -0.6931471805599453  # same .5 as completed continuous v2
-    log_std_max: 1.0  # allow learned variance; failed finite cap=.2 is not used
-    soft_proximal_ess_fraction: 0.25  # at least 16 of 64 weighted candidates
-    source_q_eval: min  # same twin-Q reduction as soft backup / candidate guard
-
-run_name: ${task}-v2-proximal-T${alg.actor.temperature}-s${seed}
-output_root: outputs/v2_proximal_screen
-wandb:
-  project: optiq_mujoco_v2_proximal_screen
-  group: ${env_name}_v2_proximal_T${alg.actor.temperature}_ess${alg.actor.soft_proximal_ess_fraction}
-  job_type: screen

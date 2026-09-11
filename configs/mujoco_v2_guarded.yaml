@@ -1,23 +1,5 @@
 # @package _global_
+# Historical compatibility name. Not the final v2.
 defaults:
-  - mujoco_v2_conditional
+  - /archive/v2/guarded
   - _self_
-
-# Experimental estimated soft-value filter. This does not certify global
-# improvement with a learned critic and finitely many replay states.
-alg:
-  actor:
-    source_q_eval: min
-    soft_guard:
-      enabled: true
-      batch_size: 32
-      components: 16
-      draws: 8
-      standard_error_multiplier: 2.0
-
-run_name: ${task}-v2-guarded-T${alg.actor.temperature}-s${seed}
-output_root: outputs/v2_guarded_screen
-wandb:
-  project: optiq_mujoco_v2_guarded_screen
-  group: ${env_name}_v2_guarded_T${alg.actor.temperature}_M${alg.actor.soft_guard.components}
-  job_type: screen

@@ -31,7 +31,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def config(overrides=()):
     with initialize_config_dir(version_base=None, config_dir=str(ROOT / "configs")):
-        return compose(config_name="mujoco_v2", overrides=list(overrides))
+        return compose(config_name="archive/v2/original", overrides=list(overrides))
 
 
 def actor_state(action_dim=2):

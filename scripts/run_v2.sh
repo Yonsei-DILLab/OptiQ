@@ -5,15 +5,22 @@ python_bin="${OPTIQ_PYTHON:-$(dirname "$repo_root")/.venv-optiq-mujoco/bin/pytho
 seed="${1:---list}"
 if [[ "$seed" == --list ]]; then
   for index in 0 1 2 3; do
-    printf 'GPU %s: Humanoid-v4 seed %s; v2 semi-implicit actor; 16x64 OT; 1M steps\n' "$index" "$index"
+    printf 'GPU %s: Humanoid-v4 seed %s; FINAL v2 checked; T=0.1 beta=1; 16x64 OT NLL + soft guard; 1M steps\n' "$index" "$index"
   done
   exit 0
 fi
 case "$seed" in 0|1|2|3) ;; *) printf 'Usage: %s {0|1|2|3} [--check] [Hydra overrides]\n' "$0" >&2; exit 2 ;; esac
 shift
-export OPTIQ_ENV_FILE="${OPTIQ_ENV_FILE:-/workspace/OptiQ-heechan-no-anchor/.env}"
-[[ -f "$OPTIQ_ENV_FILE" && -x "$python_bin" ]] || { printf 'Credential file or MuJoCo Python missing.\n' >&2; exit 1; }
-export WANDB_ENTITY=OptiQ WANDB_MODE=online
+[[ -x "$python_bin" ]] || { printf 'MuJoCo Python missing; set OPTIQ_PYTHON or run scripts/setup_mujoco_env.sh.\n' >&2; exit 1; }
+# Prefer this checkout on other machines; retain the existing local credential fallback.
+if [[ -z "${OPTIQ_ENV_FILE:-}" ]]; then
+  if [[ -f "$repo_root/.env" ]]; then
+    export OPTIQ_ENV_FILE="$repo_root/.env"
+  elif [[ -f /workspace/OptiQ-heechan-no-anchor/.env ]]; then
+    export OPTIQ_ENV_FILE=/workspace/OptiQ-heechan-no-anchor/.env
+  fi
+fi
+export WANDB_ENTITY="${WANDB_ENTITY:-OptiQ}" WANDB_MODE=online
 unset WANDB_RUN_ID WANDB_RESUME WANDB_RUN_GROUP WANDB_NAME WANDB_PROJECT JAX_PLATFORMS JAX_PLATFORM_NAME
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-$seed}"
 [[ "$CUDA_VISIBLE_DEVICES" != *,* ]] || { printf 'Allocate one GPU per worker.\n' >&2; exit 1; }

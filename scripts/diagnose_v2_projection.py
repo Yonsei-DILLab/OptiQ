@@ -28,7 +28,7 @@ def main():
     records=[]
     for loss in ('pointwise_mse','conditional_ot_nll'):
         with initialize_config_dir(version_base=None,config_dir=str(ROOT/'configs')):
-            cfg=compose(config_name='mujoco_v2')
+            cfg=compose(config_name='archive/v2/original')
         model=OptiQDIME('MlpPolicy',gym.make('Humanoid-v4'),None,1,cfg)
         actor=model.policy.actor_state
         critic=model.policy.qf_state.replace(apply_fn=flat_q)

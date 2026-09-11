@@ -107,13 +107,14 @@ def main():
     protocol = json.loads(protocol_path.read_text())
     assert digest(protocol["common_evaluator"]) == protocol["common_evaluator_sha256"]
     launch = json.loads(Path(protocol.get("launch_protocol", base/"finite_screen_protocol.json")).read_text())
-    for name, wanted in launch["core_sha256"].items():
-        assert digest(ROOT/name) == wanted
+    from scripts.verify_v2_final import verify_launch_sources
+    migrated_configs = verify_launch_sources(ROOT, launch["core_sha256"])
     manifest = json.loads(Path(protocol["candidate_manifest"]).read_text())
     references = load_references(protocol)
     pending = completion_gate(manifest, protocol)
     if args.check:
-        print(json.dumps({"ready": not pending, "pending": pending, "verified_reference_models": len(references)}))
+        print(json.dumps({"ready": not pending, "pending": pending, "verified_reference_models": len(references),
+                          "verified_config_migrations": migrated_configs}))
         return
     if pending:
         raise RuntimeError(f"Final evaluation requires all four completed runs: {pending}")
@@ -133,6 +134,7 @@ def main():
         "evaluator_sha256": digest(__file__), "jax_version": jax.__version__, "gymnasium_version": gym.__version__,
         "devices": [str(d) for d in jax.devices()], "results": [], "summary": {"complete": False}}
     record["candidate_label"] = protocol.get("candidate_label", "Finite-policy candidate")
+    record["verified_config_migrations"] = migrated_configs
     assert record["protocol_sha256"] == digest(protocol_path) and record["evaluator_sha256"] == digest(__file__)
     for existing in record["results"]:
         validate_result(existing, protocol)

@@ -50,7 +50,7 @@ def main():
     records = []
     for std in (.3, .5, 1.):
         with initialize_config_dir(version_base=None, config_dir=str(ROOT / "configs")):
-            cfg = compose(config_name="mujoco_v2", overrides=[f"alg.actor.initial_log_std={np.log(std)}"])
+            cfg = compose(config_name="archive/v2/original", overrides=[f"alg.actor.initial_log_std={np.log(std)}"])
         validate_config(cfg)
         model = OptiQDIME("MlpPolicy", gym.make("Humanoid-v4"), None, 1, cfg)
         a = cfg.alg.actor

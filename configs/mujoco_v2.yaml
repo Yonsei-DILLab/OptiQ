@@ -1,42 +1,5 @@
 # @package _global_
+# Final v2 entry point; checked is retained as an equivalent historical name.
 defaults:
-  - mujoco_setting
+  - /v2/final
   - _self_
-
-# OptiQ OT actor with IDAC self-inclusive entropy estimates in soft TD targets.
-alg:
-  behavior_uniform_probability: 0.0
-  ent_coef:
-    type: const
-    init: ${alg.actor.temperature}
-  actor:
-    type: semi_implicit
-    num_policy_samples: 16
-    proposals_per_policy_sample: 4
-    include_anchor: false
-    proposal_sampling_mode: exact
-    entropy_samples: 16
-    log_std_min: -5.0
-    log_std_max: 1.0
-    initial_log_std: -0.6931471805599453
-    mean_output_init_scale: 1.0e-4
-    log_std_output_init_scale: 0.0
-    proposal_std_pretanh: 0.8
-    proposal_std: ${alg.actor.proposal_std_pretanh}
-    density_correction: true
-    density_correction_beta: 1.0
-    adaptive_density_beta: false
-    # Shared by soft TD entropy and the Boltzmann teacher; see calibration report.
-    temperature: 0.5
-    td_noise_std: 0.0
-    td_noise_clip: 0.0
-    normalize_ot_cost: false
-    sinkhorn_epsilon: 0.25
-    sinkhorn_iterations: 100
-
-run_name: ${task}-v2-T${alg.actor.temperature}-h${alg.actor.proposal_std_pretanh}-s${seed}
-output_root: outputs/optiq_mujoco_v2
-wandb:
-  entity: OptiQ
-  project: optiq_mujoco_v2_scalar_h256x3_no_anchor_idac_4seed_1m
-  group: ${env_name}_v2_T${alg.actor.temperature}_h${alg.actor.proposal_std_pretanh}_beta1_M${alg.actor.entropy_samples}_behavior${alg.behavior_uniform_probability}
