@@ -196,3 +196,34 @@ Its `goal_complete` field remains false even when report generation succeeds.
 Artifacts: `proximal_final_evaluation_protocol.json`,
 `proximal_final_evaluation_readiness.json`,
 `proximal_final_evaluation_validation.log`, `proximal_finisher_status.json`.
+
+## First checkpoint review: 50K
+
+All four runs reached 50K and all eight actor/critic checkpoints parsed
+successfully. The 30K/35K/40K/45K/50K evaluation means are:
+
+| Method | Seed 0 | Seed 1 | Seed 2 | Seed 3 | Four-seed mean |
+|---|---:|---:|---:|---:|---:|
+| Proximal v2 |440.2|419.9|434.9|468.4|440.9|
+| Completed continuous v2 |442.5|445.5|446.1|440.4|443.7|
+| Matched OptiQ, uniform 0% |529.2|395.4|438.2|473.4|459.0|
+| Historical OptiQ, uniform 10% |517.3|472.4|482.3|417.7|472.4|
+
+The candidate is near continuous v2 and below both OptiQ references. This
+does not establish superior returns or stability. The four-seed SD is 20.3,
+versus 2.7/56.6/41.3 for the respective references; no confidence claim follows
+from these small early samples.
+
+Over the same training interval, ESS averaged 16.00–16.01/64, compared with
+2.39–2.66 when applying the untempered full-step weights to those same candidate
+sets. Mean eta was .252–.278, sigma .826–.845, and cumulative guard acceptance
+averaged 60.4–62.3%. Latent-mean variance contributed only about .0022% of the
+pre-tanh variance on these replay batches; a multimodal representation
+advantage has not been demonstrated. These observations are not causal
+attributions or statewise improvement bounds.
+
+Training core hashes and process PIDs remained unchanged. The W&B API
+independently confirmed all four runs receiving live logs in the intended
+project. Continue to the predeclared 100K review. Evidence:
+`proximal_review_0050000.json`, `proximal_wandb_delivery.json`, and
+`proximal_report/step_0050000.{json,md,png,pdf}`.
