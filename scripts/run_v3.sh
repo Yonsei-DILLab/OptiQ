@@ -18,7 +18,7 @@ if [[ -z "${OPTIQ_ENV_FILE:-}" && -f "$repo_root/.env" ]]; then
   export OPTIQ_ENV_FILE="$repo_root/.env"
 fi
 export OPTIQ_CONFIG="${OPTIQ_CONFIG:-mujoco_v3}"
-case "$OPTIQ_CONFIG" in mujoco_v3|v3/final) ;; *) printf 'Use a v3 configuration.\n' >&2; exit 2 ;; esac
+case "$OPTIQ_CONFIG" in mujoco_v3|v3/final|mujoco_v3_exploration|v3/exploration) ;; *) printf 'Use a v3 configuration.\n' >&2; exit 2 ;; esac
 export WANDB_ENTITY="${WANDB_ENTITY:-OptiQ}" WANDB_MODE=online
 unset WANDB_RUN_ID WANDB_RESUME WANDB_RUN_GROUP WANDB_NAME WANDB_PROJECT
 export XLA_PYTHON_CLIENT_PREALLOCATE=false MUJOCO_GL=egl PYTHONUNBUFFERED=1

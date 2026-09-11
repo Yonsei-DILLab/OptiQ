@@ -1,0 +1,3 @@
+defaults:
+  - v3/exploration
+  - _self_

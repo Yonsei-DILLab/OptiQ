@@ -1,0 +1,20 @@
+# @package _global_
+defaults:
+  - /v3/final
+  - _self_
+alg:
+  collection_exploration:
+    mode: adaptive
+    noise_scale: 0.1
+    initial_alpha: 1.5
+    target_entropy_per_dim: 0.0
+    alpha_lr: 0.03
+    update_interval: 10000
+    recent_capacity: 10000
+    entropy_states: 256
+    entropy_samples: 200
+    gmm_components: 3
+    gmm_reg_covar: 0.000001
+wandb:
+  project: v3_test
+  job_type: v3-collection-exploration

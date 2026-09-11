@@ -37,6 +37,9 @@ def is_tracked_environment(cfg):
 
 
 def validate_config(cfg):
+    if cfg.alg.get("collection_exploration") is not None:
+        from optiq_dime.collection_exploration import validate_exploration
+        validate_exploration(cfg)
     is_mujoco = is_tracked_environment(cfg)
     if not 0.0 <= float(cfg.alg.get("behavior_uniform_probability", 0.0)) <= 1.0:
         raise ValueError("behavior_uniform_probability must be between 0 and 1")
@@ -210,7 +213,11 @@ def create_algorithm(cfg: DictConfig):
         save_every_n_steps = int(cfg.checkpoint_interval) or int(cfg.total_steps)
 
     try:
-        model = OptiQDIME(
+        algorithm_class = OptiQDIME
+        if cfg.alg.get("collection_exploration") is not None:
+            from optiq_dime.collection_exploration import CollectionExplorationOptiQDIME
+            algorithm_class = CollectionExplorationOptiQDIME
+        model = algorithm_class(
             "MultiInputPolicy"
             if isinstance(training_env.observation_space, gym.spaces.Dict)
             else "MlpPolicy",
@@ -304,6 +311,14 @@ def initialize_and_run(cfg: DictConfig):
             }
             if cfg.env_name in MYOSUITE_ENVS:
                 environment_metadata["success_criterion"] = f"sum(solved) > {cfg.successful_steps} per episode"
+            if cfg.alg.get("collection_exploration") is not None:
+                environment_metadata["collection_exploration"] = {
+                    "settings": omegaconf.OmegaConf.to_container(cfg.alg.collection_exploration, resolve=True),
+                    "scope": "environment collection only; replay stores executed action",
+                    "evaluation": "base stochastic actor; no external noise",
+                    "entropy_proxy": "per-state full-covariance GMM H(A,Z), clipped normalized actions",
+                    "entropy_state_distribution": "uniform sample from most recent 10000 actor-collected states",
+                }
             if cfg.alg.actor.get("type", "implicit") == "semi_implicit":
                 soft_backup = model.backup_mode == "soft_td"
                 environment_metadata.update(
@@ -361,6 +376,9 @@ def initialize_and_run(cfg: DictConfig):
             artifact.add_dir(str(evaluation.directory), name="evaluation")
             for filename in Path(model.model_save_path).glob(f"*_{model.num_timesteps}.msgpack"):
                 artifact.add_file(str(filename), name=filename.name)
+            exploration_checkpoint = Path(model.model_save_path) / f"exploration_state_{model.num_timesteps}.json"
+            if exploration_checkpoint.exists():
+                artifact.add_file(str(exploration_checkpoint), name=exploration_checkpoint.name)
             run.log_artifact(artifact)
             (Path(cfg.output_root) / "completed.json").write_text(json.dumps({
                 "wandb_url": run.url, "timesteps": model.num_timesteps, "updates": model._n_updates,

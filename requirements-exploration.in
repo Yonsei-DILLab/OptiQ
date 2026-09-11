@@ -1,0 +1,5 @@
+# Install into the campaign's isolated --target directory, with --no-deps.
+# NumPy 1.26.4 and SciPy 1.11.4 remain from the pinned base environment.
+scikit-learn==1.7.2
+joblib==1.5.2
+threadpoolctl==3.6.0

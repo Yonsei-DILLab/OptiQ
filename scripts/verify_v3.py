@@ -10,7 +10,7 @@ from run_optiq_dime import validate_config
 
 
 def verify(overrides=(), config_name="mujoco_v3"):
-    if config_name not in {"mujoco_v3", "v3/final"}:
+    if config_name not in {"mujoco_v3", "v3/final", "mujoco_v3_exploration", "v3/exploration"}:
         raise ValueError("Use mujoco_v3 or v3/final for the v3 launcher")
     with initialize_config_dir(config_dir=str(ROOT / "configs"), version_base=None):
         cfg = compose(config_name=config_name, overrides=list(overrides))

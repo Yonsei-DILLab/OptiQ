@@ -1,6 +1,15 @@
 # OptiQ Experiment Conventions
 
-- This checkout is `/root/OptiQ-v3`, branch `v3`. The original baseline
+- This checkout is `/root/OptiQ-v3-exploration`, branch `v3-exploration`.
+  The collection-only exploration extension uses `mujoco_v3_exploration`;
+  read `docs/v3/EXPLORATION.md`. The unchanged v3 checkout is `/root/OptiQ-v3`.
+  New exploration runs go to `OptiQ/v3_test`, as explicitly requested.
+  All 20 baseline temperature runs must complete 1M before selecting one
+  common temperature by the mean of four seeds' 900K–1M evaluation averages.
+  This temperature applies to every exploration setting and every seed.
+  Exploration entropy controls external collection noise only; keep the
+  base actor, TD target and OT–NLL unchanged. Never modify the running baseline.
+  The original baseline
   remains `/root/OptiQ`, branch `v2`. Build v3 from continuous-latent
   checked-K64; do not substitute the historical Gaussian-W2 variant.
 - Canonical v3 config: `configs/v3/final.yaml`, alias `mujoco_v3`.
