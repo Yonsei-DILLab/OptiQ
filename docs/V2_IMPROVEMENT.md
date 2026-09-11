@@ -1278,3 +1278,33 @@ historical OptiQ. This is an early near-tie with the strongest reference,
 not a final win or stability guarantee. Continue the frozen configuration
 to the predeclared 100k review. Aligned JSON/Markdown/PNG/PDF files are under
 `outputs/v2_improvement/finite_report/step_0050000.*`.
+
+### Frozen 50k soft-critic diagnosis
+
+The existing read-only `diagnose_v2_soft_critic.py` evaluated each of four
+finite-policy and four continuous-v2 50k actors on 20 fixed fresh episodes
+(env seeds 940000–940019; policy seeds 950000–950019), on CPU. All 160
+episodes terminated naturally; no time-limit episodes were excluded.
+The quantity compared with Q is discounted soft return excluding entropy of
+the current action, not raw episode return.
+
+| Method | Seed | Initial predicted Q minus MC soft return | Visited-state average gap |
+|---|---:|---:|---:|
+| finite | 0 | -55.91 | -26.95 |
+| finite | 1 | -49.40 | -30.03 |
+| finite | 2 | -31.92 | -20.34 |
+| finite | 3 | -39.06 | -17.12 |
+| v2 | 0 | -81.22 | -44.35 |
+| v2 | 1 | -54.71 | -32.38 |
+| v2 | 2 | -78.76 | -36.85 |
+| v2 | 3 | -78.44 | -44.22 |
+
+Both methods underestimate on these sampled means at 50k. This does not
+rule out local overestimation, establish a uniform error bound, or predict
+later training stability. The policies visit different state/action
+distributions and have different entropy, so raw Q levels are not directly
+comparable. No change to the running configuration follows from this probe.
+Evidence: `finite_50k_soft_critic_protocol.json`, `finite_50k_soft_critic.json`,
+and `finite_50k_soft_critic_validation.json`. Checkpoint hashes, episode seeds,
+reported means and exact finite-density bracket equality were checked; raw
+trajectories were not retained for an independent discounted-sum reconstruction.
