@@ -67,6 +67,10 @@ def completion_gate(manifest, protocol):
         if status != "EXITED" or not (directory/"completed.json").exists():
             reasons.append({"seed": item["seed"], "reason": "training_not_completed", "status": status})
             continue
+        completed = json.loads((directory/"completed.json").read_text())
+        if completed.get("timesteps") != protocol["checkpoint_step"]:
+            reasons.append({"seed": item["seed"], "reason": "incomplete_step_count", "status": status})
+            continue
         cfg = json.loads((directory/"config.json").read_text())
         assert cfg["seed"] == item["seed"] and cfg["runtime"]["git_commit"] == item["commit"]
         assert cfg["alg"]["actor"]["latent_prior"] == "finite"
@@ -95,12 +99,14 @@ def summarize(results, references):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="Verify references and report readiness without evaluating")
+    parser.add_argument("--protocol", type=Path,
+                        default=ROOT/"outputs/v2_improvement/finite_final_evaluation_protocol.json")
     args = parser.parse_args()
     base = ROOT/"outputs/v2_improvement"
-    protocol_path = base/"finite_final_evaluation_protocol.json"
+    protocol_path = args.protocol
     protocol = json.loads(protocol_path.read_text())
     assert digest(protocol["common_evaluator"]) == protocol["common_evaluator_sha256"]
-    launch = json.loads((base/"finite_screen_protocol.json").read_text())
+    launch = json.loads(Path(protocol.get("launch_protocol", base/"finite_screen_protocol.json")).read_text())
     for name, wanted in launch["core_sha256"].items():
         assert digest(ROOT/name) == wanted
     manifest = json.loads(Path(protocol["candidate_manifest"]).read_text())
@@ -111,7 +117,7 @@ def main():
         return
     if pending:
         raise RuntimeError(f"Final evaluation requires all four completed runs: {pending}")
-    evaluation_lock = (base/"finite_final_evaluation.lock").open("a+")
+    evaluation_lock = Path(protocol.get("evaluation_lock", base/"finite_final_evaluation.lock")).open("a+")
     fcntl.flock(evaluation_lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
 
     from flax import serialization
@@ -121,11 +127,12 @@ def main():
     from optiq_dime import OptiQDIME
     from optiq_dime.latent import FiniteMixtureTrainState
 
-    output = base/"finite_independent_1000000.json"
+    output = Path(protocol.get("result_path", base/"finite_independent_1000000.json"))
     record = json.loads(output.read_text()) if output.exists() else {
         "started_utc": datetime.now(timezone.utc).isoformat(), "protocol_sha256": digest(protocol_path),
         "evaluator_sha256": digest(__file__), "jax_version": jax.__version__, "gymnasium_version": gym.__version__,
         "devices": [str(d) for d in jax.devices()], "results": [], "summary": {"complete": False}}
+    record["candidate_label"] = protocol.get("candidate_label", "Finite-policy candidate")
     assert record["protocol_sha256"] == digest(protocol_path) and record["evaluator_sha256"] == digest(__file__)
     for existing in record["results"]:
         validate_result(existing, protocol)

@@ -173,3 +173,26 @@ parsing of all eight checkpoints before a stop. The common saver writes to
 the final filename directly, so existence/nonzero size alone is insufficient.
 The truncated-checkpoint test passed; all training processes and frozen core
 hashes remained unchanged. No push was performed.
+
+## Final-evaluation automation
+
+The shared finite-policy evaluator and finisher now accept an explicit
+protocol path. The proximal protocol keeps the same primary window, 50 final
+episodes, environment/policy seeds, cached reference episodes and common
+evaluation function as the completed confirmation. Distinct result/lock/status
+paths prevent overwriting the previous finite screen. The original defaults
+remain available.
+
+Seven routing/completion tests passed. A real readiness check validated all
+12 reference models (600 recorded episodes) and correctly reported all four
+candidate runs as still RUNNING. Final evaluation has not yet occurred.
+A completion marker with fewer than 1M actual steps or a missing primary
+evaluation cannot qualify as a full result. If the group stops early, the
+finisher waits for its termination and reports the common horizon with every
+seed retained, without running or claiming final 1M evaluations.
+
+The finisher uses supervisor and CPU evaluation; it never controls training.
+Its `goal_complete` field remains false even when report generation succeeds.
+Artifacts: `proximal_final_evaluation_protocol.json`,
+`proximal_final_evaluation_readiness.json`,
+`proximal_final_evaluation_validation.log`, `proximal_finisher_status.json`.

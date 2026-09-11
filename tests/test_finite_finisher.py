@@ -27,7 +27,7 @@ def test_incomplete_seed_never_runs_final_comparison(tmp_path, monkeypatch, stat
     def forbidden(*args, **kwargs):
         raise AssertionError("Must not evaluate a screen with an incomplete seed")
     monkeypatch.setattr(finisher.subprocess, "run", forbidden)
-    finisher.main()
+    finisher.main([])
     state = json.loads((base/"finite_finisher_status.json").read_text())
     assert state["stage"] == "screen_incomplete" and not state["goal_complete"]
 
@@ -45,7 +45,7 @@ def test_wait_then_report_and_evaluate_without_controlling_training(tmp_path, mo
             (base/"finite_independent_1000000.json").write_text(json.dumps({
                 "summary": {"complete": True}, "results": [{"training_seed": i} for i in range(4)]}))
     monkeypatch.setattr(finisher.subprocess, "run", run)
-    finisher.main()
+    finisher.main([])
     state = json.loads((base/"finite_finisher_status.json").read_text())
     assert waits == [30]
     assert commands == ["report_v2_finite.py", "evaluate_v2_finite.py"]
