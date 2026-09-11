@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+from flax import serialization
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
@@ -20,8 +21,17 @@ def checkpoint_records(runs,step):
             files=list(Path(run['directory']).glob(f'checkpoints/*/{kind}_state_{step}.msgpack'))
             if len(files)!=1 or files[0].stat().st_size==0:
                 return None
+            payload=files[0].read_bytes()
+            # The common saver writes directly to the final name. A nonempty
+            # file can still be in flight, so parse it before stopping training.
+            try:
+                restored=serialization.msgpack_restore(payload)
+            except (ValueError,TypeError):
+                return None
+            if not isinstance(restored,dict) or not {'params','opt_state','step'}<=restored.keys():
+                return None
             records.append({'seed':run['seed'],'kind':kind,'path':str(files[0]),
-                            'sha256':hashlib.sha256(files[0].read_bytes()).hexdigest()})
+                            'sha256':hashlib.sha256(payload).hexdigest()})
     return records
 
 

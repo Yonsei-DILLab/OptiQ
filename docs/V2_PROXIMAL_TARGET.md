@@ -151,3 +151,25 @@ followed by 50 new stochastic evaluation episodes per final actor with the
 same episode seeds as the previous confirmation. Raw returns, all time-limit
 episodes, survival, locomotion and drawdowns must be reported. Passing an
 intermediate gate does not achieve the goal.
+
+## Launch record
+
+The four production runs started at 2026-09-11 01:33:35 UTC from clean local
+commit `9bf6c36ae484f92145b37579a7dca3ee246e645a`. W&B:
+[OptiQ/optiq_mujoco_v2_proximal_screen](https://wandb.ai/OptiQ/optiq_mujoco_v2_proximal_screen).
+Seed 0/1/2/3 run IDs are `pzohewyx`, `xodbilj4`, `ddrh0757`, `wvkctogx`.
+
+All four passed 10K with real learning updates. The first diagnostic ESS was
+16.25/16.73/16.37/16.10 out of 64, with minimum 16 for each batch and mean eta
+.526/.571/.592/.527. This confirms execution of the requested step limiter,
+not a return advantage. The comparison reporter successfully retained all 16
+candidate/reference runs at the same 10K cutoff. Artifacts:
+`proximal_screen_manifest.json`, `proximal_screen_protocol.json`,
+`proximal_launch_validation.json`, `proximal_report/step_0010000.json` under
+`outputs/v2_improvement/`.
+
+After launch, only the monitor was restarted to require successful MessagePack
+parsing of all eight checkpoints before a stop. The common saver writes to
+the final filename directly, so existence/nonzero size alone is insufficient.
+The truncated-checkpoint test passed; all training processes and frozen core
+hashes remained unchanged. No push was performed.

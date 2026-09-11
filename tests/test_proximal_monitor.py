@@ -1,16 +1,20 @@
 from scripts.monitor_v2_proximal import checkpoint_records
 from scripts.monitor_v2_finite import strong_group_decision
+from flax import serialization
 
 
 def test_stopping_requires_all_eight_nonempty_checkpoints(tmp_path):
+    payload=serialization.msgpack_serialize({'params':{},'opt_state':{},'step':0})
     runs=[{'seed':s,'directory':str(tmp_path/str(s))} for s in range(4)]
     for r in runs:
         directory=tmp_path/str(r['seed'])/'checkpoints'/'run'
         directory.mkdir(parents=True)
-        (directory/'actor_state_100000.msgpack').write_bytes(b'actor')
-        (directory/'critic_state_100000.msgpack').write_bytes(b'critic')
+        (directory/'actor_state_100000.msgpack').write_bytes(payload)
+        (directory/'critic_state_100000.msgpack').write_bytes(payload)
     assert len(checkpoint_records(runs,100000))==8
     last=tmp_path/'3/checkpoints/run/critic_state_100000.msgpack'
+    last.write_bytes(payload[:-1])
+    assert checkpoint_records(runs,100000) is None
     last.write_bytes(b'')
     assert checkpoint_records(runs,100000) is None
     last.unlink()
