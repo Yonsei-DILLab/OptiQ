@@ -1341,3 +1341,16 @@ It requires four completed 1M runs, all primary-window evaluations and final
 actor/critic files; a stopped seed is not silently omitted or replaced.
 This prepares final evidence, without declaring that the candidate won or
 that a learned-Q sampled guard provides a true statewise certificate.
+
+### Finite candidate at 150k
+
+The 130k–150k five-evaluation means are 811.0 finite, 1128.7 continuous v2,
+719.4 matched OptiQ and 1033.9 historical OptiQ. Finite seed means are
+[966.3, 828.2, 815.8, 633.6]. The candidate remains above the matched control,
+but its gap to the stronger historical reference has widened to 21.6%;
+this is not a win. The 100k+ monitor has not triggered a stop. All four
+processes and their monitor were confirmed RUNNING; all eight 150k actor/
+critic checkpoints were hashed, and the training source remains frozen.
+Continue to the existing 200k decision point. Evidence: `finite_review_0150000.json`
+and `finite_report/step_0150000.*`. The independently prepared final evaluator
+remains unused until all required final checkpoints exist.
