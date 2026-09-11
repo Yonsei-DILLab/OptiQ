@@ -1354,3 +1354,27 @@ critic checkpoints were hashed, and the training source remains frozen.
 Continue to the existing 200k decision point. Evidence: `finite_review_0150000.json`
 and `finite_report/step_0150000.*`. The independently prepared final evaluator
 remains unused until all required final checkpoints exist.
+
+### Finite candidate at 200k: bounded extension to 250k
+
+The 180k–200k five-evaluation means are 1256.7 finite, 2473.1 continuous v2,
+864.7 matched OptiQ and 2282.5 historical OptiQ. Finite seed means are
+[1179.7, 1163.1, 1827.1, 857.0]. Beating the weaker matched control is
+insufficient: the candidate is 44.9% below the stronger historical reference.
+The original per-seed heuristic does not trigger. Seed 2 just reached 3208
+at the single 200k evaluation, supporting a bounded additional 50k check.
+
+An explicitly adaptive group-budget rule was added after seeing this result:
+at 250k, stop all four runs if their last-five-checkpoint mean remains below
+70% of BOTH continuous-v2 and historical-OptiQ means. All four 250k actor/critic
+files must exist before stopping. This is not a launch-time rule or proof
+about unseen final performance. The old protocol and decision history were
+preserved. Seven monitor/finisher tests passed; only the monitor was restarted,
+with the four training processes unchanged and source hashes verified.
+`finite_review_0200000.json` records eight 200k checkpoint hashes, supervisor
+state, the old decisions and the adaptive budget decision.
+
+The final finisher service is also running (waiting for completed training).
+It will produce the primary report and independent evaluation only for four
+completed 1M runs; otherwise it records an incomplete screen without claiming
+a full result. Its three orchestration tests passed. No push occurred.
