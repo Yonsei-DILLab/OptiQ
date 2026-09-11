@@ -103,7 +103,7 @@ diagnostic_interval: 5000
 checkpoint_interval: 50000
 log_interval: 1
 progress_bar: true
-output_root: outputs/v2_confirmation
+output_root: ../optiq-experiments/v2_checked64/outputs
 run_name: ${task}-v2-checked-T${alg.actor.temperature}-s${seed}
 wandb:
   activate: true

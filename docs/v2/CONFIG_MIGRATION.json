@@ -1,5 +1,14 @@
 {
   "reason": "Promote checked K64 to final default and archive other config definitions without changing their resolved values.",
+  "local_path_migration": {
+    "date": "2026-09-11",
+    "config": "configs/v2/final.yaml",
+    "release_sha256": "d56a990c866d9b040de68073b9e671058cfc23443257408d1d0dc2c89352343b",
+    "changed_field": "output_root",
+    "old_value": "outputs/v2_confirmation",
+    "new_value": "../optiq-experiments/v2_checked64/outputs",
+    "algorithm_settings_changed": false
+  },
   "before_commit": "78fa9d7362820902d04de846333903796efd59ab",
   "before_sha256": {
     "configs/base.yaml": "680471cf9daa8647534ea3b5337d9229d3b630526e2ebc36fc3f6b39875916b5",
@@ -62,7 +71,7 @@
     "configs/mujoco_env/ant.yaml": "44f56073fe0e5477c1079fe53a28dbe5bc877e93ce37bda86634795162291f94",
     "configs/mujoco_env/humanoid.yaml": "063956f1701528f740e3920e60e449d0c31ca3c56ecc52f93f018a6d118021a5",
     "configs/sampler/dis.yaml": "d74c971f0faf2be0b079066c29dc304acfe6030d0d505c7cfec541644271cd7c",
-    "configs/v2/final.yaml": "d56a990c866d9b040de68073b9e671058cfc23443257408d1d0dc2c89352343b",
+    "configs/v2/final.yaml": "c3437c8b9a696a98ff57da4107d4711c8b1fee06716fa5398910cf58d15ec9ff",
     "configs/sampler/dt_schedule/cosine.yaml": "46e5e348ff94013e27e56b1283ed5c5b80feeac6f397441ecbf6b12a129872d3",
     "configs/sampler/score_model/cond_pisgradnet.yaml": "96e53fc069dc15e6d98940c20ea4276149bfbf5a4f39debf1030d7bb620a4f45",
     "configs/archive/v2/original.yaml": "79ae8f255cc432491180ed03f1750d492c9d77acb2a16840353f0fe46b558211",

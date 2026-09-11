@@ -44,16 +44,18 @@ CUDA_VISIBLE_DEVICES=2 scripts/run_v2.sh 2 progress_bar=false
 CUDA_VISIBLE_DEVICES=3 scripts/run_v2.sh 3 progress_bar=false
 ```
 
-On a supervisor-based instance, [supervisor_v2.sh](../../scripts/supervisor_v2.sh)
-is the environment/logging wrapper; pass its seed argument from a managed service.
-For new installations, set `OPTIQ_ROOT`, `OPTIQ_PYTHON`, `OPTIQ_ENV_FILE` and
-`CUDA_VISIBLE_DEVICES` explicitly in the service environment. Existing deployment
-files can contain this instance's absolute paths: adapt those before installing them.
-Do not run two workers on the same GPU unintentionally.
+On the current instance, use the checked-K64 workers documented in
+[INSTANCE.md](INSTANCE.md) and the [deployment index](../../deploy/supervisor/README.md).
+Their wrapper is [supervisor_v2_checked64.sh](../../scripts/supervisor_v2_checked64.sh);
+all four workers have automatic startup and restart disabled. On other machines,
+[supervisor_v2.sh](../../scripts/supervisor_v2.sh) is the portable wrapper: set
+`OPTIQ_ROOT`, `OPTIQ_PYTHON`, `OPTIQ_ENV_FILE` and `CUDA_VISIBLE_DEVICES` explicitly
+in the managed service environment. Do not install the old experiment configs
+unchanged or run two workers on the same GPU unintentionally.
 
-The launcher uses a repo-local `.env` first. On this instance it retains the
-existing `/workspace/OptiQ-heechan-no-anchor/.env` fallback. An explicitly exported
-`OPTIQ_ENV_FILE` takes precedence. W&B defaults to entity `OptiQ`, project
+An explicitly exported `OPTIQ_ENV_FILE` takes precedence; otherwise the launcher
+selects this checkout's `.env` if present. It never falls back to another checkout.
+W&B defaults to entity `OptiQ`, project
 `optiq_mujoco_v2_confirmation`; use the existing account credentials. For an
 independent implementer without access to that team:
 
@@ -65,6 +67,12 @@ WANDB_ENTITY=your-entity CUDA_VISIBLE_DEVICES=0 scripts/run_v2.sh 0 \
 The config, not `WANDB_PROJECT`, sets the final project's name; a Hydra override
 is explicit. Every run receives a UTC timestamp and random suffix, its own output
 directory and W&B run. No existing run is resumed or overwritten by default.
+The default output root is `../optiq-experiments/v2_checked64/outputs`, relative
+to the repository root when using the launcher. Preserve existing outputs in
+place. The default launcher verifies frozen learning sources and canonical
+numerical defaults before invoking the runner. Intentional numerical overrides
+must use distinct run/group names; they are ablations, not unchanged replications.
+Requested training runs to 1M steps without performance-based early stopping.
 
 Other MuJoCo environments use the same algorithm and environment-specific spaces:
 
@@ -113,7 +121,8 @@ JAX_PLATFORMS=cpu OPTIQ_TEST_WANDB=0 "$OPTIQ_PYTHON" -m pytest -q \
   tests/test_v2_final.py tests/test_conditional_proposal.py \
   tests/test_distributional_distillation.py tests/test_soft_guard.py \
   tests/test_soft_improvement.py tests/test_semi_implicit.py \
-  tests/test_grad_clip_standalone.py tests/test_scalar_critic.py
+  tests/test_grad_clip_standalone.py tests/test_scalar_critic.py \
+  tests/test_v2_instance_paths.py
 "$OPTIQ_PYTHON" scripts/verify_v2_final.py
 ```
 
@@ -132,9 +141,12 @@ for the independent 50-episode evaluation. Its environment seeds are
 1100000..1100049; policy seeds are 1110000..1110049. Count all termination types.
 Detailed callback RNG rules and evaluation/checkpoint order are in the pseudocode.
 
-Original artifacts remain under `outputs/v2_confirmation/` and
-`outputs/v2_improvement/`. The latter contains comparison manifests, final
-independent episode records and source/checkpoint hashes. The W&B project is
+On the historical training machine, original artifacts remain under
+`outputs/v2_confirmation/` and `outputs/v2_improvement/`. The latter contains
+comparison manifests, final independent episode records and source/checkpoint
+hashes. Those directories are not Git-tracked and are not supplied by cloning
+this repository; request the original artifacts for independent model evaluation.
+New outputs use the external directory above. The W&B project is
 [OptiQ / optiq_mujoco_v2_confirmation](https://wandb.ai/OptiQ/optiq_mujoco_v2_confirmation).
 Path cleanup does not move or delete those artifacts, nor change running jobs.
 
@@ -146,7 +158,8 @@ restart as an uninterrupted reproduction.
 ## 6. Archived variants
 
 See [the archive index](../archive/v2/README.md). The supplied original algorithm
-is selected explicitly with `OPTIQ_CONFIG=archive/v2/original`. Final `mujoco_v2`
+is selected explicitly with `python run_optiq_dime.py --config-name=archive/v2/original`.
+The default launcher is reserved for checked K64. Final `mujoco_v2`
 does not inherit that original configuration. Other historical config names remain
 compatibility aliases. Shared diagnostic/monitor scripts retain their existing paths
 because archived manifests and running services reference them.

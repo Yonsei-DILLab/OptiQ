@@ -1,5 +1,9 @@
 # DMC Dog: OptiQ actor with DIME critic
 
+This is the historical DMC experiment design, not the current scalar-critic
+checked-K64 v2 protocol. See [README.md](README.md) and the
+[v2 reproduction guide](docs/v2/REPRODUCIBILITY.md) for the active default.
+
 ## Question
 
 Does OptiQ's one-step implicit actor match or improve DIME on high-dimensional

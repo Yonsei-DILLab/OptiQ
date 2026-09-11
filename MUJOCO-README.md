@@ -1,5 +1,10 @@
 # MuJoCo 5개 환경 — OptiQ scalar critic, fixed β=1
 
+> 이 문서는 이전 `mujoco-setting` 실험의 기록이며 현재 `v2` 기본 실행 안내가 아니다.
+> 성공한 checked-K64 v2의 설정·실행은 [README.md](README.md)와
+> [v2 재현 안내](docs/v2/REPRODUCIBILITY.md)를 따른다. 아래 anchor, 온도,
+> TD noise 및 시드 구성을 현재 v2에 자동 적용하지 않는다.
+
 브랜치: `mujoco-setting` (`critic-dime-no-anchor` 기반).
 **256×3 GELU scalar twin-Q, BN 없음, UTD=1, anchor 포함, 고정 β=1**을 사용한다.
 이 문서는 실행 프로토콜이며, 코드 준비만으로 실험이 자동 시작되지는 않는다.

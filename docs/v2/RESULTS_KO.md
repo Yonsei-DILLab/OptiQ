@@ -28,9 +28,10 @@ v2의 주 지표는 현재 대조군보다 6.2% 높고, 이전의 강한 기준�
 탐색 하나의 인과 효과라고 해석하지 않는다. 현재 v2와 대조군 사이에도
 여러 알고리즘 요소가 다르므로 개별 요소의 효과를 분리한 실험은 아니다.
 
-![전체 1M 곡선과 개별 시드](../../outputs/v2_improvement/confirmation_historical_comparison/step_1000000.png)
-
-[벡터 PDF](../../outputs/v2_improvement/confirmation_historical_comparison/step_1000000.pdf)
+전체 곡선의 원본 PNG/PDF는 과거 학습 서버의
+`outputs/v2_improvement/confirmation_historical_comparison/step_1000000.{png,pdf}`에
+보존되어 있다. 이 출력 폴더는 Git에 포함되지 않는다. 온라인 학습 기록은
+아래 W&B 프로젝트에서 확인한다.
 
 ## 새 에피소드에서의 최종 정책
 
@@ -108,14 +109,19 @@ entropy-gradient loss를 넣지 않았다. 실제 수식과 세부 설정은
 확인 실험의 학습 소스는 `8cb4f237aacb61113f65e693e23236f17d77f978`이다.
 최종 경로 정리로 `mujoco_v2` 기본값도 이 checked 구성으로 승격했다.
 `OPTIQ_CONFIG=mujoco_v2_checked`는 동등한 호환 이름으로 유지한다.
-원안은 `OPTIQ_CONFIG=archive/v2/original`을 명시하여 재현한다.
+원안은 `python run_optiq_dime.py --config-name=archive/v2/original`로 명시하여
+재현한다. 기본 실행기는 checked K64 설정만 허용한다.
 [최종 명세·출처](README.md)와 [경로 검토](REVIEW.md)를 따른다.
 
 - [W&B 프로젝트](https://wandb.ai/OptiQ/optiq_mujoco_v2_confirmation)
-- [최종 비교 입력](../../outputs/v2_improvement/confirmation_final_review_inputs.json)
-- [학습 완료·체크포인트 검증](../../outputs/v2_improvement/confirmation_final_training_audit.json)
-- [600개 평가 에피소드 검증](../../outputs/v2_improvement/confirmation_final_independent_validation.json)
-- [평가·저장 순서 검증](../../outputs/v2_improvement/confirmation_evaluation_checkpoint_timing.json)
+
+다음 근거 파일도 과거 학습 서버의 `outputs/v2_improvement/` 아래에 보존하며,
+저장소를 clone하는 것만으로 다운로드되지 않는다.
+
+- 최종 비교 입력: `confirmation_final_review_inputs.json`
+- 학습 완료·체크포인트 검증: `confirmation_final_training_audit.json`
+- 600개 평가 에피소드 검증: `confirmation_final_independent_validation.json`
+- 평가·저장 순서 검증: `confirmation_evaluation_checkpoint_timing.json`
 
 최종 구성의 확인 실험은 완료했다. 사용자 선택과 별개로, 더 강한 이전 OptiQ 대비
 보상 격차와 학습 중 일시적 저하는 위의 실험 결과 그대로 보존한다.
