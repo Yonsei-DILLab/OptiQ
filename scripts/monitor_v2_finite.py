@@ -1,10 +1,13 @@
-"""Bounded, predeclared poor-performance stopping for the four finite runs.
+"""Poor-performance stopping for the four finite runs.
 
 Only stops explicitly manifested finite-screen services. Saves evidence before
 SIGINT. Does not restart runs, delete results, or control other experiments.
 These thresholds are compute-budget heuristics, not statistical tests.
+The optional stronger-reference group review is explicitly recorded as an
+adaptive decision after the 200k results, not as a predeclared launch rule.
 """
 from datetime import datetime, timezone
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -39,15 +42,88 @@ def evaluations(directory):
     return {int(step): float(row.mean()) for step, row in zip(steps, returns)}
 
 
+def strong_group_decision(candidate, continuous, historical, cutoff, threshold):
+    """All four seeds at one fixed horizon, against BOTH stronger references."""
+    pending = {"available": False, "stop": False, "reason": "awaiting_all_seeds_at_group_cutoff"}
+    if any(set(group) != set(range(4)) for group in (candidate, continuous, historical)):
+        return pending
+    curves = [group[s] for group in (candidate, continuous, historical) for s in range(4)]
+    common = sorted(set.intersection(*(set(curve) for curve in curves)))
+    steps = [t for t in common if t <= cutoff]
+    if cutoff not in steps or len(steps) < 5:
+        return pending
+    scores = {name: [float(np.mean([group[s][t] for t in steps[-5:]])) for s in range(4)]
+              for name, group in (("finite", candidate), ("v2", continuous), ("historical", historical))}
+    means = {name: float(np.mean(values)) for name, values in scores.items()}
+    reference = min(means["v2"], means["historical"])
+    if not all(np.isfinite(v) for v in means.values()) or reference <= 0:
+        return {**pending, "reason": "requires_manual_data_review"}
+    return {"available": True, "stop": bool(means["finite"] < threshold*reference),
+            "step": cutoff, "tail_steps": steps[-5:], "seed_means": scores, "means": means,
+            "ratio_to_lower_strong_reference": means["finite"]/reference, "threshold": threshold,
+            "reason": "adaptive_budget_review_against_both_stronger_references"}
+
+
 def main():
     manifest = json.loads((BASE/"finite_screen_manifest.json").read_text())
     assert [r["seed"] for r in manifest["runs"]] == [0, 1, 2, 3]
     refs = json.loads((BASE/"confirmation_manifest.json").read_text())["runs"]
     references = {(r["method"], r["seed"]): evaluations(r["directory"]) for r in refs}
+    policy = json.loads((BASE/"finite_screen_protocol.json").read_text())
+    group_review = policy.get("adaptive_strong_reference_review")
+    historical = {}
+    if group_review:
+        items = json.loads((BASE/"historical_behavior010_reference.json").read_text())["runs"]
+        for item in items:
+            path = next(Path(item["directory"]).glob("eval/*/evaluations.npz"))
+            assert hashlib.sha256(path.read_bytes()).hexdigest() == item["evaluation_sha256"]
+            historical[item["seed"]] = evaluations(item["directory"])
     output = BASE/"finite_screen_monitor.json"
-    state = {"started_utc": datetime.now(timezone.utc).isoformat(), "decisions": [], "stops": [], "complete": False}
-    handled = set()
+    state = json.loads(output.read_text()) if output.exists() else {
+        "started_utc": datetime.now(timezone.utc).isoformat(), "decisions": [], "stops": [], "complete": False}
+    state.setdefault("activations", []).append(datetime.now(timezone.utc).isoformat())
+    handled = {r["seed"] for r in state["stops"] if r["returncode"] == 0}
+
+    def save():
+        state["updated_utc"] = datetime.now(timezone.utc).isoformat()
+        temporary = output.with_suffix(".tmp")
+        temporary.write_text(json.dumps(state, indent=2)); temporary.replace(output)
+
     while True:
+        if group_review and not state.get("strong_reference_review", {}).get("applied", False):
+            try:
+                group = strong_group_decision(
+                    {r["seed"]: evaluations(r["directory"]) for r in manifest["runs"]},
+                    {s: references["v2", s] for s in range(4)}, historical,
+                    group_review["step"], group_review["threshold"])
+                group["checked_utc"] = datetime.now(timezone.utc).isoformat()
+                state["strong_reference_review"] = group
+                save()
+                if group["available"] and not group["stop"]:
+                    group["applied"] = True
+                    save()
+                elif group["available"] and group["stop"]:
+                    ready = all(list(Path(r["directory"]).glob(
+                        f'checkpoints/*/{kind}_state_{group["step"]}.msgpack'))
+                        for r in manifest["runs"] for kind in ("actor", "critic"))
+                    if ready:
+                        for run in manifest["runs"]:
+                            if run["seed"] in handled:
+                                continue
+                            service = f'optiq-v2-finite:optiq-v2-finite-{run["seed"]}'
+                            assert run["service"] == service
+                            print(json.dumps({"stopping_group_member": service, **group}), flush=True)
+                            result = subprocess.run(["supervisorctl", "stop", service], capture_output=True, text=True)
+                            state["stops"].append({"seed": run["seed"], "step": group["step"],
+                                "reason": group["reason"], "service": service, "returncode": result.returncode,
+                                "supervisor_response": result.stdout.strip()})
+                            if result.returncode == 0:
+                                handled.add(run["seed"])
+                            save()
+                        group["applied"] = len(handled) == 4
+                        save()
+            except (OSError, ValueError, EOFError, StopIteration) as error:
+                print(f"group review deferred: {error}", flush=True)
         alive = False
         for run in manifest["runs"]:
             service = f'optiq-v2-finite:optiq-v2-finite-{run["seed"]}'

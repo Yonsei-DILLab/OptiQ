@@ -97,3 +97,21 @@ W&B project: `OptiQ/optiq_mujoco_v2_finite_screen`.
 Launcher: `scripts/supervisor_v2_finite.sh`; monitor:
 `scripts/monitor_v2_finite.py`; service template:
 `deploy/supervisor/optiq-v2-finite.conf`.
+
+## Adaptive budget decision after the 200k review
+
+At 200k, the five-evaluation four-seed mean is 1256.7, compared with 2473.1
+for continuous v2 and 2282.5 for historical OptiQ. The original per-seed
+stop rule does not trigger because the matched zero-exploration control is
+weaker (864.7). Beating that control alone is not the goal. Seed 2 has just
+risen to 3208 at the single 200k evaluation, so allow a bounded extra 50k.
+
+At 250k, compare all four seeds over 230k/235k/240k/245k/250k. If the candidate
+mean is below 70% of BOTH continuous-v2 and historical-OptiQ means, stop the
+entire candidate group after all 250k actor/critic checkpoints are present.
+This is an **adaptive compute-budget decision made after observing 200k**.
+It is not described as a launch-time rule or as evidence about unseen 1M
+performance. The original protocol and monitor history are preserved in
+`finite_screen_protocol_before_200k_adaptation.json` and
+`finite_screen_monitor_before_strong_gate.json`. Training parameters and
+primary/final evaluation protocols remain unchanged.
