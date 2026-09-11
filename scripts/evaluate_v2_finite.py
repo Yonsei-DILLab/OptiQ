@@ -5,6 +5,7 @@ evaluate early/stopped candidates as a completed four-seed result. This script
 does not control training or declare that the overall research goal is met.
 """
 import argparse
+import fcntl
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -110,6 +111,8 @@ def main():
         return
     if pending:
         raise RuntimeError(f"Final evaluation requires all four completed runs: {pending}")
+    evaluation_lock = (base/"finite_final_evaluation.lock").open("a+")
+    fcntl.flock(evaluation_lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
 
     from flax import serialization
     import gymnasium as gym
