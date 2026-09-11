@@ -227,3 +227,36 @@ independently confirmed all four runs receiving live logs in the intended
 project. Continue to the predeclared 100K review. Evidence:
 `proximal_review_0050000.json`, `proximal_wandb_delivery.json`, and
 `proximal_report/step_0050000.{json,md,png,pdf}`.
+
+## First budget gate: 100K
+
+The 80K/85K/90K/95K/100K four-seed comparison is:
+
+| Method | Seed 0 | Seed 1 | Seed 2 | Seed 3 | Mean ± seed SD |
+|---|---:|---:|---:|---:|---:|
+| Proximal v2 |591.7|787.6|565.4|654.1|649.7 ± 99.2|
+| Completed continuous v2 |710.2|638.9|649.3|696.3|673.7 ± 34.9|
+| Matched OptiQ, uniform 0% |598.2|527.0|538.1|623.4|571.7 ± 46.5|
+| Historical OptiQ, uniform 10% |723.0|721.8|702.4|697.1|711.1 ± 13.2|
+
+The candidate is 3.6% below continuous v2 and 8.6% below historical OptiQ,
+while 13.7% above the weaker matched control. Only seed 1 exceeds both stronger
+references; seed variation is larger here. Thus neither overall superiority
+nor a stability advantage is established. The ratio to the lower stronger
+reference is .9644, above the predeclared .60 stopping threshold. The monitor
+applied the 100K gate and continued all four runs without changing parameters.
+The next resource gate remains 250K at .80 of both stronger reference means.
+
+Over 80K–100K, ESS averaged 16.00–16.01/64, versus 2.02–2.14 for the counterfactual
+untempered full step on the same candidate sets. Mean eta fell to .208–.218;
+conditional sigma averaged .845–.860. Cumulative guard acceptance averaged
+59.9–61.4%. The latent-mean share of pre-tanh variance remained about .0023%
+on replay batches. Increased ESS is a verified mechanism effect; none of
+these numbers is a true statewise improvement or critic-error certificate.
+
+All eight 100K actor/critic checkpoints parsed successfully, their hashes were
+recorded, and all training core hashes/PIDs still matched the launch. The
+comparison report and monitor agree numerically. Final-evaluation automation
+remains waiting for training, with no final result claimed.
+Evidence: `proximal_review_0100000.json`, `proximal_screen_monitor.json`,
+`proximal_report/step_0100000.{json,md,png,pdf}`.
