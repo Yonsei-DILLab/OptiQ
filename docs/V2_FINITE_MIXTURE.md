@@ -115,3 +115,13 @@ performance. The original protocol and monitor history are preserved in
 `finite_screen_protocol_before_200k_adaptation.json` and
 `finite_screen_monitor_before_strong_gate.json`. Training parameters and
 primary/final evaluation protocols remain unchanged.
+
+## Outcome at 250k
+
+All four runs were early-stopped by the adaptive group rule on 2026-09-11.
+The five-evaluation mean was 1865.6 versus 3258.2 for continuous v2 and 3441.4
+for historical OptiQ (ratio to the lower stronger reference: .5726 < .7).
+All eight 250k actor/critic checkpoints and the unchanged core hashes were
+verified. Final evaluation automation exited as `screen_incomplete`; no 1M
+completion or success is claimed. See `V2_FINITE_SCREEN_RESULTS_KO.md` and
+`outputs/v2_improvement/finite_review_0250000.json` for the retained evidence.
