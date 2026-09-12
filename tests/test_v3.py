@@ -99,6 +99,35 @@ def test_td_target_sampled_action_terminal_temperature_and_stopped_gradient(monk
     assert all(np.count_nonzero(x) == 0 for x in jax.tree_util.tree_leaves(gradients))
 
 
+def test_mu_only_evaluation_samples_latent_but_ignores_conditional_std():
+    actor = actor_state()
+    obs = jnp.ones((3, 3))
+    key = jax.random.PRNGKey(812)
+    action = OptiQPolicy.sample_action(
+        actor, obs, key, deterministic=False, sample_conditional_noise=False
+    )
+    latent_key, _ = jax.random.split(key)
+    z = jax.random.normal(latent_key, (3, 2), dtype=obs.dtype)
+    mu, _ = actor.apply_fn({"params": actor.params}, obs, z)
+    # JIT and eager GELU paths can differ by a few float32 ulps.
+    np.testing.assert_allclose(action, jnp.tanh(mu), atol=3e-5, rtol=3e-5)
+
+    changed_params = dict(actor.params)
+    changed_params["log_std"] = dict(actor.params["log_std"])
+    changed_params["log_std"]["bias"] = actor.params["log_std"]["bias"] + 1.0
+    changed = actor.replace(params=changed_params)
+    np.testing.assert_array_equal(
+        action,
+        OptiQPolicy.sample_action(
+            changed, obs, key, deterministic=False, sample_conditional_noise=False
+        ),
+    )
+    assert not np.array_equal(
+        OptiQPolicy.sample_action(actor, obs, key, deterministic=False),
+        OptiQPolicy.sample_action(changed, obs, key, deterministic=False),
+    )
+
+
 def test_actor_update_retains_full_nll_when_entropy_diagnostics_are_disabled():
     actor, critic = actor_state(), critic_state()
     args = (actor, critic, jnp.ones((2, 3)), jax.random.PRNGKey(57),

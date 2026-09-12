@@ -97,6 +97,7 @@ eval_interval: 5000
 num_eval_episodes: 10
 eval_at_start: true
 stochastic_eval: true
+mu_only_eval: false  # If true: sample z, but evaluate tanh(mu(s,z)) with epsilon=0.
 diagnostic_interval: 5000
 checkpoint_interval: 50000
 log_interval: 1

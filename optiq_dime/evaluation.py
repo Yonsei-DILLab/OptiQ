@@ -12,6 +12,7 @@ class MujocoEvalCallback(EvalCallback):
 
     def __init__(self, eval_env, cfg, directory):
         self.directory = Path(directory)
+        self.mu_only_eval = bool(cfg.get("mu_only_eval", False))
         self.successful_steps = cfg.get("successful_steps")
         self._solved_counts = {}
         self._episode_steps = {}
@@ -56,7 +57,13 @@ class MujocoEvalCallback(EvalCallback):
             self._episode_steps.clear()
             self._evaluation_solved_counts = []
         previous_count = len(self.evaluations_timesteps)
-        continue_training = super()._on_step()
+        policy = self.model.policy
+        previous_mu_only = bool(getattr(policy, "evaluation_mu_only", False))
+        policy.evaluation_mu_only = self.mu_only_eval
+        try:
+            continue_training = super()._on_step()
+        finally:
+            policy.evaluation_mu_only = previous_mu_only
         if len(self.evaluations_timesteps) != previous_count:
             if not np.isfinite(self.evaluations_results[-1]).all():
                 raise FloatingPointError("Nonfinite evaluation return")

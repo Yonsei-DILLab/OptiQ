@@ -301,6 +301,9 @@ clipping을 Adam 이전에 적용한다. Critic 두 네트워크의 gradient nor
 환경/seed/evaluation callback과 기본 hyperparameter는 v2를 계승한다.
 평가는 확률적이며 latent와 Gaussian noise를 모두 샘플링한다. 평가가
 rollout용 policy RNG를 진행시키는 기존 동작도 유지한다.
+실험 옵션 `mu_only_eval=true`는 학습/수집/TD를 바꾸지 않고 정기 평가에서만
+latent `z`를 계속 샘플링한 채 Gaussian noise를 0으로 두어
+`tanh(mu(s,z))`를 실행한다. canonical v3의 기본값은 false다.
 5K 간격 10 episode 평가, 50K 간격 checkpoint, 5K 간격 상세 진단을 기록한다.
 900K–1M의 21개 평가 평균을 seed별로 계산한 뒤 seed 간 비교한다.
 

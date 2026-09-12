@@ -185,8 +185,14 @@ class OptiQPolicy(BaseJaxPolicy):
         return key
 
     @staticmethod
-    @partial(jax.jit, static_argnames=["deterministic"])
-    def sample_action(actor_state, observations, key, deterministic=False):
+    @partial(jax.jit, static_argnames=["deterministic", "sample_conditional_noise"])
+    def sample_action(
+        actor_state,
+        observations,
+        key,
+        deterministic=False,
+        sample_conditional_noise=True,
+    ):
         if "mu" in actor_state.params:
             latent_key, noise_key = jax.random.split(key)
             shape = (observations.shape[0], actor_state.params["mu"]["bias"].shape[0])
@@ -197,7 +203,7 @@ class OptiQPolicy(BaseJaxPolicy):
                 z = (jnp.zeros(shape, dtype=observations.dtype) if deterministic else
                      sample_latents(actor_state, latent_key, shape, observations.dtype))
             mu, log_std = actor_state.apply_fn({"params": actor_state.params}, observations, z)
-            eps = (jnp.zeros_like(mu) if deterministic else
+            eps = (jnp.zeros_like(mu) if deterministic or not sample_conditional_noise else
                    jax.random.normal(noise_key, shape, dtype=observations.dtype))
             return jnp.tanh(mu + jnp.exp(log_std) * eps)
         output_layer = f"Dense_{len(actor_state.params) - 1}"
@@ -221,6 +227,12 @@ class OptiQPolicy(BaseJaxPolicy):
             observation,
             self.noise_key,
             deterministic=deterministic,
+            # Evaluation callbacks may disable only the conditional Gaussian
+            # draw while retaining a fresh stochastic latent z. Collection and
+            # TD calls never set this flag and therefore keep the full policy.
+            sample_conditional_noise=not bool(
+                getattr(self, "evaluation_mu_only", False)
+            ),
         )[0]
 
     def reset_noise(self, batch_size: int = 1) -> None:
