@@ -8,6 +8,10 @@ policy. See [v4 specification and commands](docs/v4/PSEUDOCODE.md).
 Run `bash scripts/run_v4.sh 0 --check benchmark=hopper` to inspect the config.
 `python run_optiq_dime.py` now defaults to `mujoco_v4`.
 
+The optional `mujoco_v4_behavior010` profile enables 10% uniform collection
+after warmup and logs to `OptiQ/v4-test`. It retains v4 training and both
+mu-only evaluations. See [the uniform-collection protocol and commands](docs/v4/BEHAVIOR010.md).
+
 ## Historical v3 reference
 
 v3 uses a **plain twin-min TD backup**, a continuous-latent conditional Gaussian

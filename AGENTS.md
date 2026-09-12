@@ -7,6 +7,12 @@
   Log v4 to `OptiQ/v4_test` unless the user overrides it. The instructions below
   describe the preserved historical v3 baseline.
 
+- Optional 10% uniform collection: `mujoco_v4_behavior010`, alias
+  `v4/behavior010`; read `docs/v4/BEHAVIOR010.md`. It uses the existing
+  collection hook after warmup and logs to user-requested `OptiQ/v4-test`.
+  Default v4 remains p=0. Enabling the profile does not imply permission to
+  replace or restart an existing frozen experiment campaign.
+
 - This checkout is `/root/OptiQ-v3`, branch `v3`. The original baseline
   remains `/root/OptiQ`, branch `v2`. Build v3 from continuous-latent
   checked-K64; do not substitute the historical Gaussian-W2 variant.

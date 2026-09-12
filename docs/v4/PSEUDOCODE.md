@@ -43,3 +43,7 @@ python run_optiq_dime.py --config-name=mujoco_v4 benchmark=hopper seed=0
 
 Default project: `OptiQ/v4_test`. Outputs are separate from v3. Existing v3
 configs and launcher retain their previous network/evaluation defaults.
+
+The optional [10% uniform-collection profile](BEHAVIOR010.md) uses
+`mujoco_v4_behavior010` and logs to the user-requested `OptiQ/v4-test` project.
+Only the collection action replacement probability changes in the algorithm.
