@@ -14,6 +14,7 @@ from common.type_aliases import ReplayBufferSamplesNp, RLTrainState
 from diffusion.dime import DIME
 
 from .policy import OptiQPolicy
+from .temperature import parse_temperature_schedule, scheduled_temperature
 from .critic_utils import critic_expectation
 from .distillation import conditional_ot_nll, hard_projection_mass_error
 from .soft_improvement import sampled_soft_update
@@ -62,6 +63,9 @@ class OptiQDIME(DIME):
         self.backup_mode = self.cfg.alg.critic.get(
             "backup_mode",
             "soft_td" if self.cfg.alg.actor.get("type") == "semi_implicit" else "td",
+        )
+        self.temperature_schedule = parse_temperature_schedule(
+            self.cfg.alg.actor, self.backup_mode
         )
 
     def _sample_action(self, learning_starts, action_noise=None, n_envs=1):
@@ -127,6 +131,19 @@ class OptiQDIME(DIME):
             data.rewards.numpy().flatten(),
         )
         actor = self.cfg.alg.actor
+        temperature = actor.temperature
+        schedule_metrics = {}
+        if self.temperature_schedule is not None:
+            temperature, progress = scheduled_temperature(
+                temperature, self.temperature_schedule, self.num_timesteps, self.learning_starts
+            )
+            schedule_metrics = {
+                "temperature": temperature,
+                "temperature_anneal_progress": progress,
+                "temperature_schedule_enabled": 1.0,
+                "temperature_final_target": self.temperature_schedule.final_temperature,
+                "temperature_env_steps": self.num_timesteps,
+            }
         guard = actor.get("soft_guard", {})
         guard_enabled = bool(guard.get("enabled", False))
         validation_observations = None
@@ -181,7 +198,7 @@ class OptiQDIME(DIME):
             actor.adaptive_density_beta,
             actor.minimum_source_ess,
             actor.density_beta_grid_size,
-            actor.temperature,
+            temperature,
             actor.sinkhorn_epsilon,
             actor.sinkhorn_iterations,
             actor.source_q_eval,
@@ -240,6 +257,10 @@ class OptiQDIME(DIME):
         core_metrics = {"actor_loss", "critic_loss", "current_q_values", "next_q_values",
                         "entrQ_1", "entrQ_2", "ent_coef", "backup_entropy_lower",
                         "backup_entropy_term", "policy_entropy_lower", "actor_std_mean"}
+        # The exact scalar supplied to the dynamic JIT argument is recorded at
+        # every logger flush. The saved config keeps the initial value/schedule.
+        log_metrics = dict(log_metrics, **schedule_metrics)
+        core_metrics.update(schedule_metrics)
         anchor_metrics = {"local_best_q_gain_over_anchor", "local_improvement_fraction",
                           "local_anchor_argmax_fraction", "twin_local_delta_correlation",
                           "twin_local_improvement_sign_agreement"}

@@ -6,7 +6,8 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from scripts.verify_v3 import verify as verify_training
 
-CONFIGS = {"mujoco_v4", "v4/final", "mujoco_v4_behavior010", "v4/behavior010"}
+CONFIGS = {"mujoco_v4", "v4/final", "mujoco_v4_behavior010", "v4/behavior010",
+           "mujoco_v4_annealing", "v4/annealing"}
 
 
 def verify(overrides=(), config_name="mujoco_v4"):

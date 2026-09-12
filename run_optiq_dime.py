@@ -22,6 +22,7 @@ from models.actor_critic_evaluation_callback import EvalCallback
 from optiq_dime import OptiQDIME
 from optiq_dime.evaluation import MujocoEvalCallback
 from optiq_dime.dual_evaluation import DualMuEvalCallback
+from optiq_dime.temperature import parse_temperature_schedule
 from optiq_dime.runtime import ROOT, WandbWriter, load_environment, provenance
 
 DOG_TASKS = {"run", "trot", "walk", "stand"}
@@ -55,6 +56,7 @@ def validate_config(cfg):
     )
     if backup_mode not in {"td", "soft_td"}:
         raise ValueError("critic.backup_mode must be td or soft_td")
+    parse_temperature_schedule(actor, backup_mode)
     if backup_mode == "soft_td" and actor.get("type") != "semi_implicit":
         raise ValueError("Soft TD requires a conditional Gaussian policy")
     if backup_mode == "td":

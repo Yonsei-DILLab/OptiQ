@@ -13,6 +13,12 @@
   Default v4 remains p=0. Enabling the profile does not imply permission to
   replace or restart an existing frozen experiment campaign.
 
+- Optional user-requested teacher annealing: `mujoco_v4_annealing`, alias
+  `v4/annealing`; read `docs/v4/ANNEALING.md`. Log-space T=10 to .25 over
+  20K or 40K environment steps after 5K warmup, then hold .25. Support p=0
+  and p=.1 uniform collection; retain plain TD and OptiQ/v4-test. Canonical
+  v3/v4 fixed-temperature profiles remain unchanged.
+
 - This checkout is `/root/OptiQ-v3`, branch `v3`. The original baseline
   remains `/root/OptiQ`, branch `v2`. Build v3 from continuous-latent
   checked-K64; do not substitute the historical Gaussian-W2 variant.

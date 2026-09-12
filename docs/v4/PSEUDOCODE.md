@@ -47,3 +47,7 @@ configs and launcher retain their previous network/evaluation defaults.
 The optional [10% uniform-collection profile](BEHAVIOR010.md) uses
 `mujoco_v4_behavior010` and logs to the user-requested `OptiQ/v4-test` project.
 Only the collection action replacement probability changes in the algorithm.
+
+The optional [teacher annealing profile](ANNEALING.md), `mujoco_v4_annealing`,
+adds a fixed log-space 10-to-.25 teacher temperature schedule after warmup.
+It supports both p=0 and p=.1 collection while retaining plain TD.
