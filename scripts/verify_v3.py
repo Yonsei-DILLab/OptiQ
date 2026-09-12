@@ -9,8 +9,8 @@ from hydra import compose, initialize_config_dir
 from run_optiq_dime import validate_config
 
 
-def verify(overrides=(), config_name="mujoco_v3"):
-    if config_name not in {"mujoco_v3", "v3/final"}:
+def verify(overrides=(), config_name="mujoco_v3", *, allowed_configs=None):
+    if config_name not in (allowed_configs or {"mujoco_v3", "v3/final"}):
         raise ValueError("Use mujoco_v3 or v3/final for the v3 launcher")
     with initialize_config_dir(config_dir=str(ROOT / "configs"), version_base=None):
         cfg = compose(config_name=config_name, overrides=list(overrides))

@@ -1,4 +1,4 @@
-"""Train OptiQ; default: v3 semi-implicit Humanoid with plain twin-min TD."""
+"""Train OptiQ; default: v4 256x2 networks with dual mu-only evaluation."""
 
 import json
 import math
@@ -21,6 +21,7 @@ from common.buffers import DMCCompatibleDictReplayBuffer
 from models.actor_critic_evaluation_callback import EvalCallback
 from optiq_dime import OptiQDIME
 from optiq_dime.evaluation import MujocoEvalCallback
+from optiq_dime.dual_evaluation import DualMuEvalCallback
 from optiq_dime.runtime import ROOT, WandbWriter, load_environment, provenance
 
 DOG_TASKS = {"run", "trot", "walk", "stand"}
@@ -45,6 +46,9 @@ def validate_config(cfg):
     if cfg.env_name.startswith("dm_control/dog-") and cfg.task not in DOG_TASKS:
         raise ValueError(f"Invalid Dog task: {cfg.task}")
     actor = cfg.alg.actor
+    if cfg.get("dual_mu_eval", False):
+        if actor.get("type") != "semi_implicit" or actor.get("latent_prior", "normal") != "normal":
+            raise ValueError("dual_mu_eval requires a continuous-latent semi-implicit actor")
     guard = actor.get("soft_guard", {})
     backup_mode = cfg.alg.critic.get(
         "backup_mode", "soft_td" if actor.get("type") == "semi_implicit" else "td"
@@ -225,12 +229,13 @@ def create_algorithm(cfg: DictConfig):
         training_env.close()
         eval_env.close()
         raise
-    if is_mujoco:
+    if is_mujoco or cfg.get("dual_mu_eval", False):
         logger = configure(str(output_root / "logs"), ["stdout", "csv", "tensorboard"])
         if wandb.run is not None:
             logger.output_formats.append(WandbWriter(wandb.run))
         model.set_logger(logger)
-        return model, CallbackList([MujocoEvalCallback(eval_env, cfg, eval_dir)])
+        callback_class = DualMuEvalCallback if cfg.get("dual_mu_eval", False) else MujocoEvalCallback
+        return model, CallbackList([callback_class(eval_env, cfg, eval_dir)])
     eval_callback = EvalCallback(
         eval_env,
         jax_random_key_for_seeds=cfg.seed,
@@ -335,6 +340,15 @@ def initialize_and_run(cfg: DictConfig):
                         extraction="KL-proximal soft target; ESS selects eta multiplying Q/T and -log pi together",
                         objective_temperature=float(cfg.alg.actor.temperature),
                     )
+            if cfg.get("dual_mu_eval", False):
+                environment_metadata["evaluation"] = {
+                    "zero_z": "a=tanh(mu(s,0)); epsilon=0",
+                    "stochastic_z": "z~N(0,I) per action; a=tanh(mu(s,z)); epsilon=0",
+                    "episodes_per_mode": int(cfg.num_eval_episodes),
+                    "legacy_eval_alias": "zero_z",
+                    "paired_episode_reset_seeds": True,
+                    "rng_isolated_from_collection": True,
+                }
             run.config.update({"environment": environment_metadata})
             wandb_config["environment"] = environment_metadata
             (Path(cfg.output_root) / "config.json").write_text(json.dumps(wandb_config, indent=2))
@@ -356,6 +370,10 @@ def initialize_and_run(cfg: DictConfig):
                 "final_eval_return": float(sum(evaluation.returns[-1]) / len(evaluation.returns[-1])),
                 "last_eval_step": evaluation.evaluations_timesteps[-1],
             })
+            if isinstance(evaluation, DualMuEvalCallback):
+                for mode, history in evaluation.histories.items():
+                    values = history["results"][-1]
+                    run.summary[f"final_eval_return_{mode}"] = float(sum(values) / len(values))
             artifact = wandb.Artifact(f"optiq-{run.id}", type="experiment")
             artifact.add_file(str(Path(cfg.output_root) / "config.json"))
             artifact.add_dir(str(evaluation.directory), name="evaluation")
@@ -376,7 +394,7 @@ def initialize_and_run(cfg: DictConfig):
                     callback.eval_env.close()
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="mujoco_v3")
+@hydra.main(version_base=None, config_path="configs", config_name="mujoco_v4")
 def main(cfg: DictConfig) -> None:
     try:
         if cfg.use_jit:

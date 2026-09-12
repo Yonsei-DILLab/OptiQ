@@ -1,4 +1,14 @@
-# OptiQ v3
+# OptiQ v4
+
+The v4 default uses **256x2 actor and critic networks** and evaluates both
+`tanh(mu(s,0))` and `tanh(mu(s,z))`, with fresh `z ~ N(0,I)` per action in the
+second mode. Both set epsilon to zero. Collection and TD use the full Gaussian
+policy. See [v4 specification and commands](docs/v4/PSEUDOCODE.md).
+
+Run `bash scripts/run_v4.sh 0 --check benchmark=hopper` to inspect the config.
+`python run_optiq_dime.py` now defaults to `mujoco_v4`.
+
+## Historical v3 reference
 
 v3 uses a **plain twin-min TD backup**, a continuous-latent conditional Gaussian
 policy, beta=1 proposal density correction, and full 16×64 OT Gaussian NLL.
@@ -29,7 +39,7 @@ scripts/run_v3.sh 0 --check benchmark=ant
 ```
 
 Checks compose and validate the requested configuration without starting
-training or W&B. `python run_optiq_dime.py` defaults to `mujoco_v3` on this
+training or W&B. Pass `--config-name=mujoco_v3` to reproduce v3 on this
 branch. `mujoco_v3` and `v3/final` resolve to the same self-contained config.
 The launcher enforces plain TD, zero policy entropy, no guard, conditional
 mixture, and full OT NLL. Use `OPTIQ_PYTHON` and `OPTIQ_ENV_FILE` to specify the

@@ -1,5 +1,12 @@
 # OptiQ Experiment Conventions
 
+- On branch `v4`, the default entry is `mujoco_v4`, alias `v4/final`.
+  Read `docs/v4/PSEUDOCODE.md`. Actor and critic default to 256x2. Evaluate
+  both zero-z and stochastic-z with epsilon=0, separately logged, using paired
+  episode reset seeds and isolated evaluation RNG. Keep v3 training semantics.
+  Log v4 to `OptiQ/v4_test` unless the user overrides it. The instructions below
+  describe the preserved historical v3 baseline.
+
 - This checkout is `/root/OptiQ-v3`, branch `v3`. The original baseline
   remains `/root/OptiQ`, branch `v2`. Build v3 from continuous-latent
   checked-K64; do not substitute the historical Gaussian-W2 variant.
