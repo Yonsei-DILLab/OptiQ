@@ -14,6 +14,7 @@ from optiq_dime.algorithm import OptiQDIME
 from optiq_dime.distillation import conditional_ot_nll
 from optiq_dime.semi_implicit import ConditionalGaussianProposal
 from optiq_dime.transport import sinkhorn
+import optiq_dime.policy as policy_module
 from run_optiq_dime import create_algorithm
 from scripts.verify_v4 import verify as verify_v4
 from scripts.verify_v5 import verify
@@ -27,16 +28,21 @@ def update(actor, critic, obs, key, mode):
         'conditional_ot_nll', 'conditional_mixture', 0., False, mode)
 
 
-def test_default_and_alias_preserve_the_completed_ablation_recipe():
+def test_default_and_alias_apply_requested_no_clip_sinkhorn_defaults():
     cfg = OmegaConf.to_container(verify(['benchmark=ant']), resolve=True)
     alias = OmegaConf.to_container(verify(['benchmark=ant'], 'v5/final'), resolve=True)
     expected = OmegaConf.to_container(verify_v4(['benchmark=ant', 'alg.actor.temperature=.25']), resolve=True)
     assert expected['alg']['actor'].get('ot_student_action', 'sample') == 'sample'
+    assert expected['alg']['actor']['sinkhorn_epsilon'] == .25
+    assert expected['alg']['optimizer']['ac_grad_norm'] == 2.
     expected['alg']['actor']['ot_student_action'] = 'mean'
+    expected['alg']['actor']['sinkhorn_epsilon'] = .1
+    expected['alg']['optimizer']['ac_grad_norm'] = None
     for key in ('run_name', 'output_root', 'wandb'):
         expected[key] = cfg[key]
     assert cfg == expected == alias
     assert cfg['alg']['actor']['temperature'] == .25
+    assert cfg['alg']['actor']['sinkhorn_iterations'] == 100
     assert cfg['alg']['behavior_uniform_probability'] == 0
     assert 'temperature_schedule' not in cfg['alg']['actor']
     assert cfg['wandb']['project'] == 'v4-test'
@@ -100,14 +106,31 @@ def test_real_ant_routes_mean_ot_and_keeps_td_and_paired_evaluation(tmp_path, mo
         'alg.actor.learning_starts=2', 'num_eval_episodes=2', 'eval_interval=4',
         'diagnostic_interval=4', 'checkpoint_interval=4'])
     seen = []
+    optimizer_limits = []
+    original_optimizer = policy_module.adam_with_grad_clip
+    def record_optimizer(*args, **kwargs):
+        optimizer_limits.append(kwargs['max_grad_norm'])
+        return original_optimizer(*args, **kwargs)
+    monkeypatch.setattr(policy_module, 'adam_with_grad_clip', record_optimizer)
     original = OptiQDIME.update_actor
     signature = inspect.signature(original)
     def record_update(*args, **kwargs):
-        seen.append(signature.bind(*args, **kwargs).arguments['ot_student_action'])
+        arguments = signature.bind(*args, **kwargs).arguments
+        seen.append(arguments['ot_student_action'])
         return original(*args, **kwargs)
     OptiQDIME._train.clear_cache()
     monkeypatch.setattr(OptiQDIME, 'update_actor', staticmethod(record_update))
     model, callbacks = create_algorithm(cfg)
+    # Capture the numeric epsilon before entering JIT; inside update_actor it
+    # is a tracer, whereas the OT mode above is a static argument.
+    sinkhorn_epsilons = []
+    original_train = model._train
+    train_signature = inspect.signature(original_train)
+    def record_train(*args, **kwargs):
+        arguments = train_signature.bind(*args, **kwargs).arguments
+        sinkhorn_epsilons.append(float(arguments['sinkhorn_epsilon']))
+        return original_train(*args, **kwargs)
+    monkeypatch.setattr(model, '_train', record_train)
     model.set_logger(configure(str(tmp_path/'test_logs'), ['csv']))
     cb = callbacks.callbacks[0]
     cb.eval_env.envs[0].env._max_episode_steps = 2
@@ -116,6 +139,8 @@ def test_real_ant_routes_mean_ot_and_keeps_td_and_paired_evaluation(tmp_path, mo
     try:
         model.learn(total_timesteps=8, callback=callbacks)
         assert seen and set(seen) == {'mean'}
+        assert len(sinkhorn_epsilons) == 6 and np.allclose(sinkhorn_epsilons, .1)
+        assert optimizer_limits == [None, None]  # Actual critic and actor construction.
         assert model._n_updates == int(model.policy.actor_state.step) == 6
         assert model.behavior_uniform_count == 0 and model.backup_mode == 'td'
         assert model.soft_guard_attempts == 0

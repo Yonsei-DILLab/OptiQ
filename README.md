@@ -4,30 +4,42 @@ v5 assigns OT students using **`tanh(mu(s,z))`**. The teacher still samples
 conditional Gaussians and uses sigma in proposal density correction; full-row
 Gaussian NLL still learns both mu and sigma. Collection and TD next actions
 retain Gaussian noise. See the [complete v5 pseudocode](docs/v5/PSEUDOCODE.md)
-and [what changed from v4](docs/v5/CHANGES_KO.md).
+and [what changed from v4](docs/v5/CHANGES_KO.md). The
+[v5 documentation index](docs/v5/README.md) covers equations, implementation
+details, evaluation, diagnostics and the registered Ant experiments.
 
-Defaults match the completed Ant ablation: fixed teacher **T=.25**, 256x2 actor
+Current defaults: fixed teacher **T=.25**, **Sinkhorn epsilon=.1 / 100 iterations**,
+**no actor or critic gradient clipping**, 256x2 actor
 and critic, initial sigma=.5, plain TD, no extra uniform collection or annealing,
 and both zero-z and sampled-z evaluation with epsilon=0. Default benchmark
 remains Humanoid-v4; specify `benchmark=ant` for Ant.
 
 ```bash
-OPTIQ_PYTHON=/root/.venv-optiq-mujoco/bin/python bash scripts/run_v5.sh 0 --check benchmark=ant
+OPTIQ_PYTHON=/root/.venv-optiq-mujoco/bin/python bash scripts/run_v5.sh 0 --check benchmark=ant wandb.project=v5-jaehoon
 ```
 
 `--check` validates configuration without training or creating a W&B run.
 `python run_optiq_dime.py` now defaults to `mujoco_v5`. Requested training uses
 the same launcher without `--check`, managed by supervisor; an uninstalled
-[service template](deploy/supervisor/optiq-v5.conf) is provided. W&B stays in
-`OptiQ/v4-test` with v5 groups and fresh run IDs. Outputs use
+[service template](deploy/supervisor/optiq-v5.conf) is provided. Current Ant runs use
+`OptiQ/v5-jaehoon` with fresh run IDs (explicit `wandb.project=v5-jaehoon`
+override; YAML retains the historical `v4-test` destination). Earlier records
+remain in `OptiQ/v5-test`. Outputs use
 `../optiq-experiments/v5/outputs`.
 
-The completed precursor Ant experiment improved the four-seed 900K–1M
+The completed precursor Ant experiment (OT epsilon=.25, gradient clip=2)
+improved the four-seed 900K–1M
 zero-z mean from 4,458 to 5,283, with the gains concentrated in two seeds.
 It increased early mean differentiation but did not maintain large mean
 diversity late in training or accelerate every seed. These are the
 [existing ablation results](docs/v4/MEAN_OT_RESULTS_KO.md), not a new v5
 benchmark run. [Implementation validation](docs/v5/VALIDATION.md) is separate.
+The [residual-mechanism numerical diagnosis](docs/v5/RESIDUAL_DIAGNOSIS_KO.md)
+separates verified sigma-role conflicts from the still-unidentified cause of
+the full learning-curve difference. It includes frozen-policy evaluations and
+actual action-advantage checks; the diagnosis itself did not launch full training.
+Subsequent user-requested training is documented separately in the
+[Ant grid and reproduction record](docs/v5/EXPERIMENTS_KO.md).
 
 The optional [v5 exploration profiles](docs/v5/EXPLORATION.md) add 10% uniform
 collection, 40K teacher annealing from 10 to .25 after warmup, or both. Select
@@ -90,7 +102,7 @@ For a requested GPU experiment, run the wrapper under supervisor using the
 `scripts/supervisor_v3.sh`. The template has autostart disabled. No v3 service
 is installed or started by creating this branch or running validation.
 
-Baseline numerical settings remain: 256×3 networks, batch 256, warmup 5K,
+Historical v3 numerical settings remain: 256×3 networks, batch 256, warmup 5K,
 16 student latents, 64 teacher candidates, Sinkhorn epsilon=.25/100 iterations,
 conditional teacher std floor=.05, Adam LR=3e-4, global gradient clipping=2,
 no LayerNorm, and no extra uniform exploration. Default runs use 1M environment

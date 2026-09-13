@@ -5,9 +5,14 @@
   v5 sets `actor.ot_student_action=mean`: only OT student positions use
   tanh(mu). Preserve Gaussian teacher/density, full-row NLL for both heads,
   Gaussian collection/TD actions, and student epsilon RNG draws.
-  Defaults: fixed T=.25, 256x2 actor/critic, initial sigma=.5, plain TD,
+  Defaults: fixed T=.25, Sinkhorn epsilon=.1 / 100 iterations, no actor or
+  critic gradient clipping (ac_grad_norm=null), 256x2 actor/critic, sigma=.5, plain TD,
   no extra uniform replacement or annealing, and both epsilon=0 evaluations.
-  Use `OptiQ/v4-test` with v5 groups, fresh IDs, and v5 output directories.
+  Current Ant grid uses `OptiQ/v5-jaehoon`; pass `wandb.project=v5-jaehoon`
+  explicitly because YAML retains the historical v4-test destination. Older
+  meanOT/exploration records remain in v5-test. Read docs/v5/EXPERIMENTS_KO.md.
+  The registered six-cell epsilon/T grid uses frozen source 71c5ba8 with explicit
+  overrides. Do not edit its source, manifest or workers when updating this repo.
   Explicit v2/v3/v4 profiles retain sample-action OT when the new field is absent.
   The following sections describe preserved historical profiles.
 
@@ -17,6 +22,9 @@
   p=.1 uniform collection and/or the existing post-warmup 10-to-.25 log-space
   40K temperature schedule. These are opt-in; canonical `mujoco_v5` stays
   fixed T=.25 with no added uniform replacement.
+  Optional v5 profiles inherit the current epsilon=.1 / no-clip defaults;
+  historical exploration runs used epsilon=.25 / clipping=2.0. Use explicit
+  overrides to reproduce those historical settings.
 
 - On branch `v4`, the default entry is `mujoco_v4`, alias `v4/final`.
   Read `docs/v4/PSEUDOCODE.md`. Actor and critic default to 256x2. Evaluate

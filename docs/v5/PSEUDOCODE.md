@@ -3,6 +3,11 @@
 구현: `configs/v5/final.yaml` (alias `mujoco_v5`), `optiq_dime/algorithm.py`.
 v4와의 차이와 근거는 [변경 설명](CHANGES_KO.md), 검사 범위는 [검증 기록](VALIDATION.md)을 참조한다.
 
+2026-09-13 사용자 지정 기본값은 **Sinkhorn epsilon=.1, actor·critic gradient
+clip 없음**이다. Teacher T는 .25로 유지한다. 이전 v5의 epsilon=.25 / clip=2
+기록과 현재 기본값을 구분한다. [구현 세부 사항](IMPLEMENTATION_DETAILS_KO.md)과
+[실험·재현 설정](EXPERIMENTS_KO.md)에 공간, sigma, 평가, 실행 옵션을 정리했다.
+
 ## 1. v5의 정의
 
 정책은 continuous-latent 조건부 Gaussian이다.
@@ -31,7 +36,7 @@ K = M * 4                       # teacher 후보 64개
 ACTOR_WIDTHS = CRITIC_WIDTHS = [256, 256]
 T = 0.25                        # 고정 teacher 온도; annealing 없음
 BETA = 1.0
-LAMBDA_OT = 0.25                 # OT 정규화: Gaussian epsilon과 별개
+LAMBDA_OT = 0.1                  # Sinkhorn epsilon; Gaussian epsilon과 별개
 SINKHORN_ITERATIONS = 100
 TEACHER_STD_FLOOR = 0.05
 LOG_STD_MIN, LOG_STD_MAX = -5.0, 1.0
@@ -41,7 +46,7 @@ TARGET_TAU = 0.005
 LR_ACTOR = LR_CRITIC = 3e-4
 ADAM_BETAS = (0.9, 0.999)
 ADAM_EPS = 1e-8
-GLOBAL_GRAD_CLIP = 2.0
+GLOBAL_GRAD_CLIP = None          # actor·critic 모두 clipping 없이 Adam
 WARMUP = ACTOR_START = 5_000
 REPLAY_CAPACITY = TOTAL_STEPS = 1_000_000
 UTD = POLICY_DELAY = 1
@@ -58,6 +63,8 @@ Warmup 5K의 원래 uniform action 수집은 유지한다. `uniform=0`은 warmup
 `O`는 관측 차원, `D`는 행동 및 latent 차원이다. Ant-v4는 O=27, D=8이며,
 다른 환경에서는 space에서 읽는다. Default benchmark는 v4에서 상속한 Humanoid-v4다.
 Ant 실험은 `benchmark=ant`로 명시한다. M=16은 고정 codebook 크기가 아니다.
+현재 Ant grid는 T=.25/.1/.05, LAMBDA_OT=.1/.05를 조합하고 모든 run에서
+GLOBAL_GRAD_CLIP=None이다. T=.25, LAMBDA_OT=.1 네 시드는 기존 실행을 재사용한다.
 
 | Tensor | Shape |
 |---|---|
@@ -115,7 +122,7 @@ def UPDATE_CRITIC(actor, critics, target_critics, batch, key):
     def loss(phi):
         return mean((Q(phi[0], s, a) - y)**2) \
              + mean((Q(phi[1], s, a) - y)**2)
-    critics = adam_step(critics, clip_global_norm(grad(loss)(critics.params), 2))
+    critics = adam_step(critics, grad(loss)(critics.params))  # clipping 없음
     target_critics = .995 * target_critics + .005 * critics.params
     return critics, target_critics, next_key
 ```
@@ -124,6 +131,8 @@ Next action은 현재 actor의 **mu + sigma*epsilon**에서 나온다. `tanh(mu)
 바뀌는 곳은 OT student 비용뿐이다. TD에 `-T log pi`, entropy 추정,
 별도 smoothing noise를 더하지 않는다. True terminal만 bootstrap을 끄고,
 시간 제한 truncation은 실제 마지막 관측에서 bootstrap한다.
+여기서 twin **min**은 두 Q 중 작은 값을 쓰는 연산이다. Gradient clipping이나
+Q 값 자체의 범위 clipping과 다르며 no-clip 설정에서도 유지한다.
 
 ## 5. Gaussian teacher 생성과 beta=1 중요도 가중치
 
@@ -187,7 +196,7 @@ def SINKHORN(C, w):
     log_columns = log(columns)
     log_kernel = -C / LAMBDA_OT
     log_u, log_v = zeros([B,M]), zeros([B,K])
-    for _ in range(100):
+    for _ in range(SINKHORN_ITERATIONS):
         log_u = log_rows - logsumexp(log_kernel + log_v[:,None,:], axis=-1)
         log_v = log_columns - logsumexp(log_kernel + log_u[:,:,None], axis=-2)
     return exp(log_kernel + log_u[:,:,None] + log_v[:,None,:])
@@ -215,7 +224,7 @@ def UPDATE_ACTOR(actor, critics, s, key):
         per_coordinate = .5*((mu-m)**2 + V)*exp(-2*ls) + ls + .5*log(2*pi)
         return mean(sum(per_coordinate, axis=-1))  # sum D; mean B,M
 
-    actor = adam_step(actor, clip_global_norm(grad(loss)(actor.params), 2))
+    actor = adam_step(actor, grad(loss)(actor.params))  # clipping 없음
     return actor, key
 ```
 
@@ -228,6 +237,9 @@ Teacher component의 sigma를 학생에게 그대로 복사하는 방식이 아�
 전체 R을 사용하며 `transport_target_mode=argmax`는 선택 진단에만 영향을 준다.
 Teacher, Q, weights, OT plan과 teacher moments를 통한 gradient는 차단한다.
 Actor gradient는 위 NLL의 mu·log_sigma로 흐르고 매번 적용된다.
+Teacher action의 tanh Jacobian은 고정된 teacher v만의 함수라 actor gradient에
+기여하지 않는다. 따라서 이 NLL에서 생략할 수 있지만, 5절의 importance
+weight용 action 밀도에서는 반드시 유지한다.
 
 ## 8. 전체 루프와 두 평가
 
@@ -277,14 +289,16 @@ Gaussian epsilon까지 적분한 tanh 행동의 기대값과 일반적으로 다
 ## 9. 실행·기록·검증 범위
 
 ```bash
-OPTIQ_PYTHON=/root/.venv-optiq-mujoco/bin/python bash scripts/run_v5.sh 0 --check benchmark=ant
+OPTIQ_PYTHON=/root/.venv-optiq-mujoco/bin/python bash scripts/run_v5.sh 0 --check benchmark=ant wandb.project=v5-jaehoon
 # 학습이 요청된 경우에만 실행; GPU worker는 supervisor로 관리한다.
-OPTIQ_PYTHON=/root/.venv-optiq-mujoco/bin/python bash scripts/run_v5.sh 0 benchmark=ant
+OPTIQ_PYTHON=/root/.venv-optiq-mujoco/bin/python bash scripts/run_v5.sh 0 benchmark=ant wandb.project=v5-jaehoon
 # 기본 entrypoint 역시 mujoco_v5다.
-python run_optiq_dime.py --config-name=mujoco_v5 benchmark=ant seed=0
+python run_optiq_dime.py --config-name=mujoco_v5 benchmark=ant seed=0 wandb.project=v5-jaehoon
 ```
 
-W&B는 기존 사용자 지정 프로젝트 `OptiQ/v4-test`의 v5 group/run 이름을 쓴다.
+현재 no-clip Ant 실험은 `OptiQ/v5-jaehoon`을 쓴다. YAML의 역사적 기본값
+`v4-test` 대신 `wandb.project=v5-jaehoon`을 명시한다. 이전 완료 mean OT와
+uniform/annealing 기록은 `OptiQ/v5-test`에 보존한다.
 출력은 `../optiq-experiments/v5/outputs` 아래 새 run ID/디렉터리다.
 두 평가의 episode reward·환경 seed·정책 seed를 별도 npz에 저장한다.
 `eval/mean_reward`는 zero-z 호환 alias이며 두 모드 중 높은 점수를 고르는 지표가 아니다.
@@ -300,3 +314,6 @@ NLL 감소가 return의 단조 증가 또는 정확한 Q-reference marginal fit�
 
 위 의사코드는 기본 v5다. 추가로 요청된 uniform/annealing 실험은
 [EXPLORATION.md](EXPLORATION.md)의 별도 profile을 사용한다.
+이전 알고리즘 설정을 재현할 때는 `alg.actor.sinkhorn_epsilon=.25`
+`alg.optimizer.ac_grad_norm=2.0`을 명시한다. 보존 실험은 기존 commit과
+resolved config를 기준으로 읽으며, 새 기본값으로 과거 결과를 다시 해석하지 않는다.

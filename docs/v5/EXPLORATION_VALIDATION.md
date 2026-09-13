@@ -1,5 +1,9 @@
 # v5 exploration profile validation
 
+This is the original epsilon=.25 / clip=2 validation record. The updated
+epsilon=.1 / no-clip profiles are covered by the 86-test final suite in
+[VALIDATION.md](VALIDATION.md); historical run configurations remain frozen.
+
 Validated on 2026-09-13 using `/root/.venv-optiq-mujoco/bin/python`, CPU JAX,
 MuJoCo Ant-v4, and no W&B training runs for the short checks.
 

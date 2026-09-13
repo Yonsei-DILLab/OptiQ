@@ -4,6 +4,11 @@ v5는 완료된 Ant-v4 mean-action OT 대조를 정식 실행 profile로 옮긴 
 v4 branch `558ad09`에서 분기했으며, 실험의 보존 source `6f5c987`에 적용했던
 OT student 입력 변경을 `alg.actor.ot_student_action=mean`으로 선택한다.
 
+2026-09-13 후속 사용자 요청으로 v5 기본 Sinkhorn epsilon을 **.25 → .1**,
+actor·critic global gradient clip을 **2.0 → 없음(null)**으로 바꿨다.
+이 두 설정 변경은 최초 mean OT 변경과 구분한다. 학습 수식과 진행 중인
+보존 실험 소스는 유지하며, 새 기본값은 이 checkout의 v5 profile에 적용된다.
+
 ## 실제 알고리즘 차이
 
 | 단계 | v4 기본 | v5 기본 |
@@ -12,7 +17,8 @@ OT student 입력 변경을 `alg.actor.ot_student_action=mean`으로 선택한�
 | Teacher 후보 | Conditional Gaussian mixture, sigma 사용 | 동일 |
 | Proposal density 및 beta=1 중요도 보정 | Sigma 포함 | 동일 |
 | OT row / column marginal | 1/16 / teacher weights | 동일 |
-| OT 정규화·반복 | .25 / 100 | 동일 |
+| OT 정규화·반복 | .25 / 100 | **.1 / 100** (최초 v5는 .25 / 100) |
+| Actor·critic gradient clipping | global norm 2.0 | **없음** (최초 v5는 2.0) |
 | Full-row conditional Gaussian NLL | Mu와 sigma 학습 | 동일 |
 | 환경 행동·TD next action | Gaussian noise와 latent 모두 샘플링 | 동일 |
 | Critic backup | Plain TD, target twin min-Q | 동일 |
@@ -33,7 +39,7 @@ Teacher, OT plan, NLL target은 stop-gradient이며 별도 Q-gradient loss를 �
 | Entry / alias | `mujoco_v4` / `v4/final` | `mujoco_v5` / `v5/final` |
 | Teacher T | .1 | **.25 고정** |
 | OT 위치 선택 설정 | 생략하면 `sample` | `ot_student_action: mean` |
-| W&B project | 기본 `v4_test`, 기존 실험은 사용자 지정 `v4-test` | 사용자 지정 `v4-test` 유지 |
+| W&B project | 기본 `v4_test`, 기존 실험은 사용자 지정 `v4-test` | 현재 no-clip은 `v5-jaehoon`, 과거 실험은 `v5-test`; 명시적 override |
 | W&B group / job type | v4 | v5_meanOT / v5-comparison |
 | 출력 위치 | `optiq-experiments/v4/outputs` | `optiq-experiments/v5/outputs` |
 | Launcher | `scripts/run_v4.sh` | `scripts/run_v5.sh` |
@@ -67,6 +73,8 @@ student의 sigma 자체를 구분하지 않으므로, mu가 같고 sigma만 다�
 ## 관측된 효과와 한계
 
 Ant-v4, T=.25, seed 0·1·2·3, 1M step, 추가 uniform/annealing 없는 대조:
+이 대조의 OT epsilon은 .25, gradient clip은 2.0이었다. 아래 점수를 새
+epsilon=.1 / no-clip 기본값의 성능으로 해석하지 않는다.
 
 | 900K–1M 평균 | 기존 v4 | Mean-action OT |
 |---|---:|---:|
@@ -93,3 +101,5 @@ z를 넣은 50K actor에서 mean-action spread가 14.6배, mu 절대 분산이 �
 | v5 profile 검사 | [verify_v5.py](../../scripts/verify_v5.py) |
 | 학습 launcher | [run_v5.sh](../../scripts/run_v5.sh) |
 | 의사코드 | [PSEUDOCODE.md](PSEUDOCODE.md) |
+| 밀도·NLL·sigma·gradient·지표 해석 | [IMPLEMENTATION_DETAILS_KO.md](IMPLEMENTATION_DETAILS_KO.md) |
+| 현재 Ant grid / 과거 설정 / 재현 명령 | [EXPERIMENTS_KO.md](EXPERIMENTS_KO.md) |

@@ -30,6 +30,8 @@ def test_exact_profile_difference_and_alias(profile, probability, annealing, see
         expected[key] = cfg[key]
     assert cfg == expected == alias
     assert cfg['alg']['actor']['ot_student_action'] == 'mean'
+    assert cfg['alg']['actor']['sinkhorn_epsilon'] == .1
+    assert cfg['alg']['optimizer']['ac_grad_norm'] is None
     assert cfg['wandb']['project'] == 'v4-test'
 
 

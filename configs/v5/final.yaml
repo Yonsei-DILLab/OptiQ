@@ -7,8 +7,12 @@ defaults:
 alg:
   actor:
     ot_student_action: mean
-    # Match the completed four-seed Ant ablation; no temperature schedule.
+    # Fixed teacher temperature; distinct from Sinkhorn regularization.
     temperature: 0.25
+    sinkhorn_epsilon: 0.1
+  optimizer:
+    # User-selected v5 default: plain Adam for both actor and twin critics.
+    ac_grad_norm: null
   behavior_uniform_probability: 0.0
 
 output_root: ../optiq-experiments/v5/outputs
