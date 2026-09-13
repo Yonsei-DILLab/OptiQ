@@ -1,4 +1,35 @@
-# OptiQ v4
+# OptiQ v5
+
+v5 assigns OT students using **`tanh(mu(s,z))`**. The teacher still samples
+conditional Gaussians and uses sigma in proposal density correction; full-row
+Gaussian NLL still learns both mu and sigma. Collection and TD next actions
+retain Gaussian noise. See the [complete v5 pseudocode](docs/v5/PSEUDOCODE.md)
+and [what changed from v4](docs/v5/CHANGES_KO.md).
+
+Defaults match the completed Ant ablation: fixed teacher **T=.25**, 256x2 actor
+and critic, initial sigma=.5, plain TD, no extra uniform collection or annealing,
+and both zero-z and sampled-z evaluation with epsilon=0. Default benchmark
+remains Humanoid-v4; specify `benchmark=ant` for Ant.
+
+```bash
+OPTIQ_PYTHON=/root/.venv-optiq-mujoco/bin/python bash scripts/run_v5.sh 0 --check benchmark=ant
+```
+
+`--check` validates configuration without training or creating a W&B run.
+`python run_optiq_dime.py` now defaults to `mujoco_v5`. Requested training uses
+the same launcher without `--check`, managed by supervisor; an uninstalled
+[service template](deploy/supervisor/optiq-v5.conf) is provided. W&B stays in
+`OptiQ/v4-test` with v5 groups and fresh run IDs. Outputs use
+`../optiq-experiments/v5/outputs`.
+
+The completed precursor Ant experiment improved the four-seed 900K–1M
+zero-z mean from 4,458 to 5,283, with the gains concentrated in two seeds.
+It increased early mean differentiation but did not maintain large mean
+diversity late in training or accelerate every seed. These are the
+[existing ablation results](docs/v4/MEAN_OT_RESULTS_KO.md), not a new v5
+benchmark run. [Implementation validation](docs/v5/VALIDATION.md) is separate.
+
+## Historical v4 profiles
 
 The v4 default uses **256x2 actor and critic networks** and evaluates both
 `tanh(mu(s,0))` and `tanh(mu(s,z))`, with fresh `z ~ N(0,I)` per action in the
@@ -6,7 +37,7 @@ second mode. Both set epsilon to zero. Collection and TD use the full Gaussian
 policy. See [v4 specification and commands](docs/v4/PSEUDOCODE.md).
 
 Run `bash scripts/run_v4.sh 0 --check benchmark=hopper` to inspect the config.
-`python run_optiq_dime.py` now defaults to `mujoco_v4`.
+Select `--config-name=mujoco_v4` explicitly to run the preserved v4 profile.
 
 The optional `mujoco_v4_behavior010` profile enables 10% uniform collection
 after warmup and logs to `OptiQ/v4-test`. It retains v4 training and both

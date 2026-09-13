@@ -104,6 +104,15 @@ def validate_config(cfg):
         raise ValueError("Unknown teacher distribution")
     if actor.get("teacher_distribution") == "conditional_mixture" and actor.get("type") != "semi_implicit":
         raise ValueError("Conditional mixture teacher requires a semi-implicit actor")
+    ot_student_action = actor.get("ot_student_action", "sample")
+    if ot_student_action not in {"sample", "mean"}:
+        raise ValueError("ot_student_action must be sample or mean")
+    if ot_student_action == "mean" and (
+        actor.get("type") != "semi_implicit"
+        or actor.get("teacher_distribution") != "conditional_mixture"
+        or actor.get("distillation_loss") != "conditional_ot_nll"
+    ):
+        raise ValueError("Mean-action OT requires a conditional-mixture teacher and conditional OT NLL")
     if actor.get("type", "implicit") not in {"implicit", "semi_implicit"}:
         raise ValueError("actor.type must be implicit or semi_implicit")
     if actor.get("type", "implicit") == "semi_implicit":
@@ -396,7 +405,7 @@ def initialize_and_run(cfg: DictConfig):
                     callback.eval_env.close()
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="mujoco_v4")
+@hydra.main(version_base=None, config_path="configs", config_name="mujoco_v5")
 def main(cfg: DictConfig) -> None:
     try:
         if cfg.use_jit:

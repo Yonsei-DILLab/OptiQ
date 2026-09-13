@@ -218,6 +218,7 @@ class OptiQDIME(DIME):
             float(actor.get("soft_proximal_ess_fraction", 0.0)),
             self.backup_mode,
             bool(actor.get("entropy_diagnostics", True)),
+            actor.get("ot_student_action", "sample"),
         )
         self._n_updates += gradient_steps
         if guard_enabled:
@@ -535,6 +536,7 @@ class OptiQDIME(DIME):
             "teacher_distribution",
             "soft_proximal_ess_fraction",
             "entropy_diagnostics",
+            "ot_student_action",
         ],
     )
     def update_actor(
@@ -565,7 +567,15 @@ class OptiQDIME(DIME):
         teacher_distribution: str = "realized_kde",
         soft_proximal_ess_fraction: float = 0.0,
         entropy_diagnostics: bool = True,
+        ot_student_action: str = "sample",
     ):
+        if ot_student_action not in {"sample", "mean"}:
+            raise ValueError("ot_student_action must be sample or mean")
+        if ot_student_action == "mean" and (
+            not semi_implicit or teacher_distribution != "conditional_mixture"
+            or distillation_loss != "conditional_ot_nll"
+        ):
+            raise ValueError("Mean-action OT requires a conditional-mixture teacher and conditional OT NLL")
         if soft_proximal_ess_fraction > 0 and (
             not isinstance(actor_state, FiniteMixtureTrainState)
             or not semi_implicit or teacher_distribution != "conditional_mixture"
@@ -716,8 +726,12 @@ class OptiQDIME(DIME):
                     soft_proximal_ess_fraction * num_proposals,
                 )
 
+            # v5 assigns each student by its mean action. Keep the original
+            # epsilon draw, Gaussian teacher/density and full-row NLL unchanged.
+            # Earlier profiles keep sample-action OT through the default mode.
+            ot_policy_samples = jnp.tanh(mu) if ot_student_action == "mean" else policy_samples
             squared_costs = jnp.sum(
-                jnp.square(policy_samples[:, :, None, :] - proposals[:, None, :, :]),
+                jnp.square(ot_policy_samples[:, :, None, :] - proposals[:, None, :, :]),
                 axis=-1,
             )
             costs = squared_costs / (
@@ -1058,6 +1072,7 @@ class OptiQDIME(DIME):
             "soft_proximal_ess_fraction",
             "backup_mode",
             "entropy_diagnostics",
+            "ot_student_action",
         ],
     )
     def _train(
@@ -1111,6 +1126,7 @@ class OptiQDIME(DIME):
         soft_proximal_ess_fraction=0.0,
         backup_mode=None,
         entropy_diagnostics=True,
+        ot_student_action="sample",
     ):
         del n_env_interacts
         backup_mode = backup_mode or ("soft_td" if semi_implicit else "td")
@@ -1238,6 +1254,7 @@ class OptiQDIME(DIME):
                     teacher_distribution,
                     soft_proximal_ess_fraction,
                     entropy_diagnostics,
+                    ot_student_action,
                 )
                 if soft_guard_enabled:
                     key, guard_key = jax.random.split(key)

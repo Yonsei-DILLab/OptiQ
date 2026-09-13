@@ -1,5 +1,16 @@
 # OptiQ Experiment Conventions
 
+- This checkout is `/root/OptiQ-v5`, branch `v5`. Default entry `mujoco_v5`,
+  alias `v5/final`; read `docs/v5/PSEUDOCODE.md` and `docs/v5/CHANGES_KO.md`.
+  v5 sets `actor.ot_student_action=mean`: only OT student positions use
+  tanh(mu). Preserve Gaussian teacher/density, full-row NLL for both heads,
+  Gaussian collection/TD actions, and student epsilon RNG draws.
+  Defaults: fixed T=.25, 256x2 actor/critic, initial sigma=.5, plain TD,
+  no extra uniform replacement or annealing, and both epsilon=0 evaluations.
+  Use `OptiQ/v4-test` with v5 groups, fresh IDs, and v5 output directories.
+  Explicit v2/v3/v4 profiles retain sample-action OT when the new field is absent.
+  The following sections describe preserved historical profiles.
+
 - On branch `v4`, the default entry is `mujoco_v4`, alias `v4/final`.
   Read `docs/v4/PSEUDOCODE.md`. Actor and critic default to 256x2. Evaluate
   both zero-z and stochastic-z with epsilon=0, separately logged, using paired
