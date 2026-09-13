@@ -11,6 +11,13 @@
   Explicit v2/v3/v4 profiles retain sample-action OT when the new field is absent.
   The following sections describe preserved historical profiles.
 
+- Optional user-requested v5 exploration profiles: `mujoco_v5_behavior010`,
+  `mujoco_v5_annealing`, `mujoco_v5_annealing_behavior010`. Read
+  `docs/v5/EXPLORATION.md`. They retain mean-action OT and plain TD, with
+  p=.1 uniform collection and/or the existing post-warmup 10-to-.25 log-space
+  40K temperature schedule. These are opt-in; canonical `mujoco_v5` stays
+  fixed T=.25 with no added uniform replacement.
+
 - On branch `v4`, the default entry is `mujoco_v4`, alias `v4/final`.
   Read `docs/v4/PSEUDOCODE.md`. Actor and critic default to 256x2. Evaluate
   both zero-z and stochastic-z with epsilon=0, separately logged, using paired

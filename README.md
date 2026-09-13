@@ -29,6 +29,11 @@ diversity late in training or accelerate every seed. These are the
 [existing ablation results](docs/v4/MEAN_OT_RESULTS_KO.md), not a new v5
 benchmark run. [Implementation validation](docs/v5/VALIDATION.md) is separate.
 
+The optional [v5 exploration profiles](docs/v5/EXPLORATION.md) add 10% uniform
+collection, 40K teacher annealing from 10 to .25 after warmup, or both. Select
+them with `OPTIQ_CONFIG=mujoco_v5_behavior010`, `mujoco_v5_annealing`, or
+`mujoco_v5_annealing_behavior010` when using the v5 launcher.
+
 ## Historical v4 profiles
 
 The v4 default uses **256x2 actor and critic networks** and evaluates both

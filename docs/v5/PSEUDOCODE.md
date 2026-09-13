@@ -297,3 +297,6 @@ Teacher ESS, NLL, sigma, latent mean variance fraction, OT residual을 유지한
 학습 가속이나 후반 mean 다양성 유지, 다른 환경의 성능 개선을 증명하지 않았다.
 NLL 감소가 return의 단조 증가 또는 정확한 Q-reference marginal fit을 보장하지 않는다.
 자세한 결과는 [4시드 분석](../v4/MEAN_OT_RESULTS_KO.md)에 보존했다.
+
+위 의사코드는 기본 v5다. 추가로 요청된 uniform/annealing 실험은
+[EXPLORATION.md](EXPLORATION.md)의 별도 profile을 사용한다.

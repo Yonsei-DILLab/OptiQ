@@ -48,6 +48,10 @@ mean-action OT, Gaussian teacher/NLL, plain TD, 두 평가, 추가 uniform 없�
 annealing 없음이라는 계약을 검사한다. Supervisor template은 제공하되 설치·시작은
 별도 실험 실행 요청에 따른다.
 
+이후 사용자가 요청한 추가 탐색 실험은 [별도 profile](EXPLORATION.md)로 제공한다.
+`mujoco_v5_behavior010`, `mujoco_v5_annealing`, `mujoco_v5_annealing_behavior010`은
+각각 uniform 10%, 기존 40K annealing, 두 옵션의 결합이며 기본 v5 설정은 유지한다.
+
 ## 왜 이 입력을 바꾸는가
 
 기존 OT는 같은 `(s,z)`라도 매번 다른 student epsilon에 따라 teacher 배정이 달라진다.
