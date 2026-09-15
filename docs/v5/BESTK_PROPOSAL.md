@@ -191,6 +191,12 @@ Ant도 실제250K 로그에서Kb1, 첫 전환 후 로그250556에서Kb8과 활�
 `DELAYED_ANT_ACTIVATION_250K.json`에 전환 근거를 남겼다. 이후 실제
 수집8 학습의 지속적인 성능 개선은 별도로 검증해야 한다.
 
+후속 상태: Hopper 지연 실행은 지속적인 불안정과 meanOT 대비 부진으로
+440300 step에서 중단했고, 원래 Gaussian 수집을 절반 보존하는
+[혼합 수집 조건](BESTK_MIXED.md)을 GPU3에서 새로 시작했다. Ant 지연
+실행과 GPU0/1 proposal-only 비교는 유지한다. 서로 다른 수집 조건을
+동일한 실험으로 합치거나 중단한 Hopper를1M 완료로 표시하지 않는다.
+
 동기는 보정 proposal-only seed0의 별도 고정 체크포인트 진단이다.
 400K에서 동일한10개 episode seed로 비교한 실제 수집 보상은 Ant가
 Gaussian1 1398.5 → best8 2624.5, Hopper가2695.4 →3404.8이었다.

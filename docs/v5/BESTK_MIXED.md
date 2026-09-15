@@ -44,3 +44,14 @@ parameter·optimizer·RNG·평가 일치, TD/평가에서 selector 미호출을 
 예상한 Bernoulli 선택 횟수(해당 seed에서17/40)를 확인했다. 초기 경계값
 테스트4개는 Hydra struct에 필드를 추가하는 테스트 설정 오류였으며 수정 후
 재검증했다. 구현 검증은 학습 성능 검증을 대신하지 않는다.
+
+2026-09-15 실험: 지연 수집 Hopper는440300 step에서 중단했다. 전환 후
+350–400K 평균1817.7/1876.8이 같은 구간 meanOT3351.7/3408.0보다 낮았고,
+중단 직전440K까지도 지속적인 회복을 확인하지 못했다. 결과는 부분 실행으로
+보존하고 해당 seed1은 취소했다. GPU3에 이 혼합 조건의 새 Hopper seed0를
+시작했으며 seed1은 그 뒤에 대기한다. Source `07312d3`, W&B
+[noo6mflw](https://wandb.ai/OptiQ/v5-bestk/runs/noo6mflw).
+실제7592 step 이후 로그와 온라인 설정에서 T=.01,beta1,수집 확률.5를
+확인했다. GPU0/1 proposal-only와 GPU2 Ant 지연 수집은 계속 진행한다.
+Ant350K의 최근50K 평균은2742.0/2595.6으로 proposal-only2126.2/2158.0보다
+높지만, 한 학습 seed의 부분 결과이므로 전체 결합 성공으로 확정하지 않는다.
