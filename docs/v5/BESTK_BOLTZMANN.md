@@ -92,8 +92,8 @@ Ant/Hopper의 batch256 실제 짧은 학습으로 guided teacher 미호출, 수�
 검증 결과: 새 테스트 24개와 기존 v5 / guided proposal / actor-winner 회귀를
 포함한 **69개 테스트 통과**. 실제 학습 검사는 CPU에서 Ant/Hopper 각각
 batch256, 4 updates이며, 두 평가 모드를 실행했다. 학습 로그에서도
-teacher K=8, T=.25/.01, beta=1과 pilot 미사용을 확인했다. 아직 새 프로필의
-GPU 성능 실험을 실행한 결과는 없다.
+teacher K=8, T=.25/.01, beta=1과 pilot 미사용을 확인했다. GPU 검증과 실제
+성능 실험의 현황은 아래 실행 기록에서 구분한다.
 
 T가 이미 낮아 원래 질량이 하나에 집중되면 best-k의 추가 효과가 거의 없을
 수 있다. Q가 잘못되면 집중을 강화할 수도 있다. `teacher_base_ess`,
@@ -106,3 +106,41 @@ teacher를 기준으로 계산한다.
 기존 proposal-only/delayed/mixed 실행과 소스는 과거 실험으로 보존한다.
 이 문서나 새 profile을 추가하는 것만으로 실행 중인 worker가 바뀌지 않는다.
 새 성능 실험은 별도 run ID와 처음부터의 학습으로 구분한다.
+
+## 실제 실행 — 2026-09-15 10:07 UTC 시작
+
+실행 소스는 `578dd76457129429700d814c4efe7426d9941a38`로 고정했다.
+CPU 검증에 이어 실제 GPU에서도 Ant/Hopper 각각 batch256, 40 updates를
+확인한 뒤 새 1M 성능 실험을 시작했다. 위의 검증 결과와 아래 학습 실험은
+별도 출력이다. 아직 새 알고리즘의 성능 성공은 입증되지 않았다.
+
+| 환경 | seed | GPU | T | W&B |
+|---|---:|---:|---:|---|
+| Ant | 0 | 0 | .25 | [3fip97rq](https://wandb.ai/OptiQ/v5-bestk/runs/3fip97rq) |
+| Hopper | 0 | 1 | .01 | [rxv6mo2k](https://wandb.ai/OptiQ/v5-bestk/runs/rxv6mo2k) |
+
+OT epsilon=.1, Kb8/teacher8/Kt1, 두 기존 평가를 사용한다. 두 환경의 새
+seed0가 각각 1M 완료 검증을 통과하면 새 seed1 두 개가 시작하는 큐다.
+성능상 조기 중단은 기존 사용자 지시대로 근거를 기록하여 수동으로 판단한다.
+실패/중단을 완료로 처리하거나 자동 재시도/체크포인트 재개하지 않는다.
+
+기존 네 실행은 유지했으며, 새 두 실행은 GPU0/1을 기존 proposal-only
+seed1과 **공유**한다. 배치 전 각 GPU 메모리는 약1GB/24GB였고,
+10초 표본 평균 GPU 사용률은16–32%였다. 이는 장기 처리량 보장이 아니다.
+공유 GPU의 경과시간을 단독 GPU baseline과 직접 비교하지 않는다.
+원래 Hopper baseline은 RTX3090, 이번 실행은 RTX4090이라는 하드웨어
+차이도 남는다. Ant baseline과 이번 실행은 RTX4090이다.
+
+실제 `/proc` PID, 저장된 config/소스, post-warmup 로그와 W&B online config를
+확인했다. Ant/Hopper 모두 teacher K=8, collection K=8, T=.25/.01, beta=1,
+plain TD, 추가 pilot 없음이 일치한다. 새 seed1은 실행되지 않은 registered
+상태다. 현재 확보한 평가 prefix에서 기존 meanOT와 environment/policy seed
+배열이 모두 같고, 초기 및 warmup 결과도 episode 단위로 일치한다.
+이는 전체 1M 성능 검증이 아닌 실행/비교 조건 확인이다.
+
+캠페인: `/root/optiq-experiments/optiq_bestk_boltzmann_v5_20260915`.
+`manifest.json`에 원래 같은-seed meanOT config와의 두 알고리즘 필드 차이,
+패키지/소스/실행 제어 파일 해시, 새 출력 경로와 단계별 큐를 기록했다.
+`launch_verification/`에는 실제 local/online 확인 결과를 저장한다.
+비교 분석은 `/root/anal/optiq_bestk_integration_20260915`에서 새 family
+`boltzmann_winner`로 분리하고, 첫 성능 검토는100K에서 한다.
