@@ -21,6 +21,20 @@ def parse_behavior_best_of_k(alg):
     return int(number)
 
 
+def parse_behavior_best_of_k_start_step(alg):
+    """Optional collection delay; zero preserves the original warmup-only gate."""
+    value = alg.get("behavior_best_of_k_start_step", 0)
+    try:
+        number = float(value)
+    except (ValueError, TypeError):
+        raise ValueError("behavior_best_of_k_start_step must be a nonnegative integer") from None
+    if isinstance(value, bool) or not math.isfinite(number) or number < 0 or int(number) != number:
+        raise ValueError("behavior_best_of_k_start_step must be a nonnegative integer")
+    if number > 0 and parse_behavior_best_of_k(alg) == 1:
+        raise ValueError("behavior_best_of_k_start_step requires best-of-k collection")
+    return int(number)
+
+
 @partial(jax.jit, static_argnames=["k"])
 def select_best_of_k(actor_state, critic_state, observations, first_action, key, k):
     """Keep the baseline draw as candidate 0; add k-1 independent policy draws.

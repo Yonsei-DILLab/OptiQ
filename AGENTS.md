@@ -17,6 +17,12 @@
   collection to the corrected best-k proposal. It keeps T/density/OT/NLL/Kt1
   and evaluation unchanged. Compare to proposal-only Kb1; success of Kb1 alone
   does not establish success of the originally requested collection combination.
+  Optional delayed combination `mujoco_v5_bestk_delayed` / `v5/bestk_delayed`
+  keeps collection Kb1 through250K, then uses Kb8. Teacher guidance starts
+  normally; only collection activation changes. Preserve exact pre-switch
+  actions/replay/parameters/RNG and plain TD/evaluation on both sides.
+  This is an unproven follow-up hypothesis; registering the profile does not
+  change existing frozen workers or authorize claiming empirical success.
   Latest user steering on 2026-09-15 permits rational performance early stops:
   continue promising/recovering runs up to 1M, stop persistently poor runs and
   explore alternatives. Assess both evaluation modes, matched meanOT windows

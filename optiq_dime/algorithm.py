@@ -14,7 +14,7 @@ from common.type_aliases import ReplayBufferSamplesNp, RLTrainState
 from diffusion.dime import DIME
 
 from .policy import OptiQPolicy
-from .behavior import parse_behavior_best_of_k, select_best_of_k
+from .behavior import parse_behavior_best_of_k, parse_behavior_best_of_k_start_step, select_best_of_k
 from .winner_distillation import update_winner_actor
 from .bestk_proposal import make_bestk_proposal
 from .temperature import parse_temperature_schedule, scheduled_temperature
@@ -62,6 +62,7 @@ class OptiQDIME(DIME):
         self.behavior_uniform_count = 0
         self.behavior_action_count = 0
         self.behavior_best_of_k = parse_behavior_best_of_k(self.cfg.alg)
+        self.behavior_best_of_k_start_step = parse_behavior_best_of_k_start_step(self.cfg.alg)
         self.behavior_best_of_k_key = jax.random.fold_in(
             jax.random.PRNGKey(int(self.seed or 0)), 580008
         )
@@ -86,7 +87,12 @@ class OptiQDIME(DIME):
             return action, buffer_action
 
         k = getattr(self, "behavior_best_of_k", 1)
-        if k > 1:
+        start = getattr(self, "behavior_best_of_k_start_step", 0)
+        selection_active = k > 1 and self.num_timesteps >= start
+        if k > 1 and start > 0:
+            self.logger.record("rollout/behavior_best_of_k", k if selection_active else 1)
+            self.logger.record("rollout/behavior_best_of_k_active", float(selection_active))
+        if selection_active:
             if action_noise is not None:
                 raise ValueError("best-of-k collection does not support additional action_noise")
             observations, _ = self.policy.prepare_obs(self._last_obs)

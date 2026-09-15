@@ -118,6 +118,39 @@ plain TD/기존 paired 평가가 유지된다. 별도 실제 경로 검사에서
 일치, TD/평가 중 collector selector 미호출, 평가 RNG 격리도 확인했다.
 이 검사는 구현 검증이며1M 성능 성공을 의미하지 않는다.
 
+## Best-of-8 수집을 늦게 시작하는 조건
+
+`mujoco_v5_bestk_delayed` / `v5/bestk_delayed`는 전체 결합 조건에
+`alg.behavior_best_of_k_start_step=250000`만 추가한다. Uniform warmup은
+기존5K이며, 이후250K까지 원래 full Gaussian 행동을 수집한다.
+수집 직전 `num_timesteps >= 250000`부터 Kb8을 사용하므로 처음 선별된
+행동은250001번째 transition에 저장된다. Teacher pilot guidance는 기존처럼
+actor 학습 시작부터 활성화된다. T, beta1, sigma floor, mean OT, full NLL,
+TD/Kt1과 두 공식 평가에는 변경이 없다.
+
+지연 전에는 selector와 그 RNG를 호출하지 않는다. 기존 actor draw는 항상
+그대로 소비하며, 전환 뒤 그 draw를 후보0으로 포함해 나머지7개와 비교한다.
+이 필드가 없거나0이면 기존 warmup 직후 Kb8 동작을 유지한다. 지연 설정은
+warmup 이상, 전체 학습 예산 미만이어야 한다. 지연 프로필의 로그
+`rollout/behavior_best_of_k`는 전환 전1, 이후8이고,
+`rollout/behavior_best_of_k_active`가 실제 활성 여부를 나타낸다.
+
+검증은 실제 Ant/Hopper에서 전환 전 replay/actor·critic·optimizer/학습 및
+수집 RNG의 일치, 정확한 전환 시점, 전환 후 실행 행동과 replay의 일치,
+TD/평가에서 selector 미호출 및 평가 RNG 격리를 검사한다.
+관련 회귀73개 통과. 학습 RNG와 replay RNG까지 포함해 보강한 전환 전
+동일성 검사도 Ant/Hopper 각각 통과했다.
+이 설정은 성능이 입증된 기본값이 아니라 후속 가설이다.
+
+동기는 보정 proposal-only seed0의 별도 고정 체크포인트 진단이다.
+400K에서 동일한10개 episode seed로 비교한 실제 수집 보상은 Ant가
+Gaussian1 1398.5 → best8 2624.5, Hopper가2695.4 →3404.8이었다.
+100K에서는 각각6.0 →10.5,987.4 →1123.3으로 차이가 작았다.
+CPU에서 수행한 이 별도 진단은 공식 평가·학습 seed 반복을 대체하지 않으며,
+초반 실패 원인이나250K 전환의 성공을 증명하지 않는다. 전체 결합 학습이
+부진할 때 지연 시작을 비교할 근거로만 사용한다. 원본:
+`/root/anal/optiq_bestk_integration_20260915/behavior_checkpoint_diagnostic_100k_400k`.
+
 2026-09-15 구현 검증: CPU 회귀 90개 통과. Ant/Hopper 각각 batch256에서
 40회 GPU update와 기존 paired 평가 통과. TD, collector, policy, evaluation,
 NLL, Sinkhorn, canonical v5 config는 이전 commit과 동일하다.

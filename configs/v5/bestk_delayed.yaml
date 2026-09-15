@@ -1,0 +1,14 @@
+# @package _global_
+defaults:
+  - /v5/bestk_combined
+  - _self_
+
+alg:
+  # Preserve the proposal-only collection prefix, then activate collection best8.
+  behavior_best_of_k_start_step: 250000
+
+output_root: ../optiq-experiments/v5_bestk_delayed/outputs
+run_name: ${task}-v5-Kb8-start${alg.behavior_best_of_k_start_step}-bestkProposal8-mix${alg.actor.proposal_guided_fraction}-T${alg.actor.temperature}-eps${alg.actor.sinkhorn_epsilon}-s${seed}
+wandb:
+  group: ${env_name}_v5_Kb8_start${alg.behavior_best_of_k_start_step}_bestkProposal8_mix${alg.actor.proposal_guided_fraction}_T${alg.actor.temperature}_eps${alg.actor.sinkhorn_epsilon}
+  job_type: v5-bestk-delayed
