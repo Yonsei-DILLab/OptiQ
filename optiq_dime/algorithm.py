@@ -14,7 +14,8 @@ from common.type_aliases import ReplayBufferSamplesNp, RLTrainState
 from diffusion.dime import DIME
 
 from .policy import OptiQPolicy
-from .behavior import parse_behavior_best_of_k, parse_behavior_best_of_k_start_step, select_best_of_k
+from .behavior import (parse_behavior_best_of_k, parse_behavior_best_of_k_start_step,
+    parse_behavior_best_of_k_probability, select_best_of_k)
 from .winner_distillation import update_winner_actor
 from .bestk_proposal import make_bestk_proposal
 from .temperature import parse_temperature_schedule, scheduled_temperature
@@ -63,6 +64,11 @@ class OptiQDIME(DIME):
         self.behavior_action_count = 0
         self.behavior_best_of_k = parse_behavior_best_of_k(self.cfg.alg)
         self.behavior_best_of_k_start_step = parse_behavior_best_of_k_start_step(self.cfg.alg)
+        self.behavior_best_of_k_probability = parse_behavior_best_of_k_probability(self.cfg.alg)
+        self.behavior_best_of_k_rng = np.random.default_rng(
+            np.random.SeedSequence([int(self.seed or 0), 580050])
+        )
+        self.behavior_best_of_k_opportunity_count = 0
         self.behavior_best_of_k_key = jax.random.fold_in(
             jax.random.PRNGKey(int(self.seed or 0)), 580008
         )
@@ -88,28 +94,51 @@ class OptiQDIME(DIME):
 
         k = getattr(self, "behavior_best_of_k", 1)
         start = getattr(self, "behavior_best_of_k_start_step", 0)
-        selection_active = k > 1 and self.num_timesteps >= start
-        if k > 1 and start > 0:
+        selection_probability = getattr(self, "behavior_best_of_k_probability", 1.0)
+        selection_available = k > 1 and self.num_timesteps >= start
+        selection_active = selection_available and selection_probability > 0
+        if selection_active and action_noise is not None:
+            raise ValueError("best-of-k collection does not support additional action_noise")
+        if k > 1 and (start > 0 or selection_probability < 1):
             self.logger.record("rollout/behavior_best_of_k", k if selection_active else 1)
             self.logger.record("rollout/behavior_best_of_k_active", float(selection_active))
-        if selection_active:
-            if action_noise is not None:
-                raise ValueError("best-of-k collection does not support additional action_noise")
+        selected = None
+        if selection_available and selection_probability < 1:
+            # An isolated Bernoulli draw decides whether each original Gaussian
+            # action is reranked. No mixture RNG is consumed before the gate.
+            selected = (self.behavior_best_of_k_rng.random(n_envs) < selection_probability
+                if selection_probability > 0 else np.zeros(n_envs, dtype=bool))
+            self.behavior_best_of_k_opportunity_count += n_envs
+        if selection_active and (selected is None or selected.any()):
             observations, _ = self.policy.prepare_obs(self._last_obs)
             self.behavior_best_of_k_key, selection_key = jax.random.split(self.behavior_best_of_k_key)
             chosen, metrics = select_best_of_k(
-                self.policy.actor_state, self.policy.qf_state, observations,
-                buffer_action, selection_key, k,
+                self.policy.actor_state, self.policy.qf_state,
+                observations if selected is None else observations[selected],
+                buffer_action if selected is None else buffer_action[selected], selection_key, k,
             )
-            buffer_action = np.asarray(chosen, dtype=buffer_action.dtype)
+            chosen = np.asarray(chosen, dtype=buffer_action.dtype)
+            if selected is None:
+                buffer_action = chosen
+            else:
+                buffer_action = buffer_action.copy()
+                buffer_action[selected] = chosen
             if not np.isfinite(buffer_action).all():
                 raise FloatingPointError("Nonfinite best-of-k collection action")
             action = self.policy.unscale_action(buffer_action)
-            self.behavior_best_of_k_count += n_envs
+            self.behavior_best_of_k_count += n_envs if selected is None else int(selected.sum())
             self.logger.record("rollout/behavior_best_of_k", k)
             self.logger.record("rollout/best_of_k_action_count", self.behavior_best_of_k_count)
             for name, value in metrics.items():
                 self.logger.record(f"rollout/{name}", float(value))
+
+        if selected is not None:
+            self.logger.record("rollout/behavior_best_of_k_probability", selection_probability)
+            self.logger.record("rollout/best_of_k_applied_fraction", float(selected.mean()))
+            self.logger.record("rollout/best_of_k_action_count", self.behavior_best_of_k_count)
+            self.logger.record("rollout/best_of_k_opportunity_count", self.behavior_best_of_k_opportunity_count)
+            self.logger.record("rollout/best_of_k_fraction",
+                self.behavior_best_of_k_count / self.behavior_best_of_k_opportunity_count)
 
         probability = self.behavior_uniform_probability
         if probability == 0.0:

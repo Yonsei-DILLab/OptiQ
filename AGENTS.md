@@ -1,5 +1,13 @@
 # OptiQ Experiment Conventions
 
+- Optional follow-up profile `mujoco_v5_bestk_mixed` / `v5/bestk_mixed` keeps
+  original full Gaussian collection with probability .5 and applies best8 with
+  probability .5 after warmup. Read `docs/v5/BESTK_MIXED.md`. It preserves the
+  corrected teacher's T/density/meanOT/fullNLL/plainTD/evaluations. Label the
+  mixture probability explicitly; it is not best8 on every transition. Default
+  profiles and frozen campaigns retain their original semantics. This is an
+  unproven alternative; existing running jobs must not silently change.
+
 - Latest user goal 2026-09-15: investigate failed best-k combinations and
   successfully integrate best-k while respecting existing OptiQ components;
   all four GPUs may be used. Read `docs/v5/BESTK_PROPOSAL.md`.

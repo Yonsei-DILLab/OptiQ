@@ -128,7 +128,7 @@ def test_winner_profile_changes_only_teacher_and_collection_settings():
 
 
 @pytest.mark.parametrize('task', ['hopper', 'ant'])
-@pytest.mark.parametrize('profile', ['mujoco_v5_bestof8', 'mujoco_v5_bestk_combined', 'mujoco_v5_bestk_delayed'])
+@pytest.mark.parametrize('profile', ['mujoco_v5_bestof8', 'mujoco_v5_bestk_combined', 'mujoco_v5_bestk_delayed', 'mujoco_v5_bestk_mixed'])
 def test_real_training_replay_and_unchanged_dual_evaluation(tmp_path, monkeypatch, task, profile):
     overrides = [f'benchmark={task}', 'seed=4', f'output_root={tmp_path}',
         'alg.batch_size=4', 'alg.buffer_size=32', 'alg.learning_starts=2',
@@ -136,9 +136,16 @@ def test_real_training_replay_and_unchanged_dual_evaluation(tmp_path, monkeypatc
         'diagnostic_interval=4', 'checkpoint_interval=4']
     if profile == 'mujoco_v5_bestk_delayed':
         overrides.append('alg.behavior_best_of_k_start_step=6')
+    if profile in {'mujoco_v5_bestk_delayed', 'mujoco_v5_bestk_mixed'}:
         overrides.append('alg.actor.temperature=.01' if task == 'hopper' else 'alg.actor.temperature=.25')
     cfg = verify(overrides, profile)
     expected_calls = 2 if profile == 'mujoco_v5_bestk_delayed' else 6
+    expected_steps = list(range(8-expected_calls, 8))
+    if profile == 'mujoco_v5_bestk_mixed':
+        draws = np.random.default_rng(np.random.SeedSequence([4, 580050])).random(6)
+        expected_steps = [step for step, draw in zip(range(2, 8), draws) if draw < .5]
+        expected_calls = len(expected_steps)
+        assert 0 < expected_calls < 6
     model, callbacks = create_algorithm(cfg)
     model.set_logger(configure(str(tmp_path / 'test_logs'), ['csv']))
     callback = callbacks.callbacks[0]
@@ -173,12 +180,11 @@ def test_real_training_replay_and_unchanged_dual_evaluation(tmp_path, monkeypatc
     monkeypatch.setattr(model, '_sample_action', collect)
     try:
         model.learn(total_timesteps=8, callback=callbacks)
-        expected_steps = list(range(8-expected_calls, 8))
         assert calls == [(step,8) for step in expected_steps]
         assert model.behavior_best_of_k_count == expected_calls
         assert model._n_updates == int(model.policy.actor_state.step) == 6
         assert model.backup_mode == 'td' and model.behavior_uniform_count == 0
-        if profile in {'mujoco_v5_bestk_combined', 'mujoco_v5_bestk_delayed'}:
+        if profile in {'mujoco_v5_bestk_combined', 'mujoco_v5_bestk_delayed', 'mujoco_v5_bestk_mixed'}:
             import csv
             with (tmp_path / 'test_logs' / 'progress.csv').open() as handle:
                 rows = [r for r in csv.DictReader(handle) if r.get('train/proposal_best_of_k')]
@@ -195,10 +201,12 @@ def test_real_training_replay_and_unchanged_dual_evaluation(tmp_path, monkeypatc
                 assert {float(r['rollout/behavior_best_of_k']) for r in collection_rows} == {1., 8.}
         np.testing.assert_allclose(model.policy.unscale_action(model.replay_buffer.actions[:8, 0]), executed, atol=1e-6)
         key = model.behavior_best_of_k_key.copy()
+        mixture_rng = copy.deepcopy(model.behavior_best_of_k_rng.bit_generator.state)
         policy_key, noise_key = model.policy.key.copy(), model.policy.noise_key.copy()
         callback.n_calls = callback.num_timesteps = 12
         callback._on_step()
         np.testing.assert_array_equal(key, model.behavior_best_of_k_key)
+        assert model.behavior_best_of_k_rng.bit_generator.state == mixture_rng
         np.testing.assert_array_equal(policy_key, model.policy.key)
         np.testing.assert_array_equal(noise_key, model.policy.noise_key)
         assert len(calls) == expected_calls

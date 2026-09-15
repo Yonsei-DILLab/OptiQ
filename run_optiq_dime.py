@@ -20,7 +20,8 @@ from wandb.integration.sb3 import WandbCallback
 from common.buffers import DMCCompatibleDictReplayBuffer
 from models.actor_critic_evaluation_callback import EvalCallback
 from optiq_dime import OptiQDIME
-from optiq_dime.behavior import parse_behavior_best_of_k, parse_behavior_best_of_k_start_step
+from optiq_dime.behavior import (parse_behavior_best_of_k, parse_behavior_best_of_k_start_step,
+    parse_behavior_best_of_k_probability)
 from optiq_dime.evaluation import MujocoEvalCallback
 from optiq_dime.dual_evaluation import DualMuEvalCallback
 from optiq_dime.temperature import parse_temperature_schedule
@@ -42,6 +43,7 @@ def is_tracked_environment(cfg):
 def validate_config(cfg):
     is_mujoco = is_tracked_environment(cfg)
     parse_behavior_best_of_k(cfg.alg)
+    parse_behavior_best_of_k_probability(cfg.alg)
     collection_start = parse_behavior_best_of_k_start_step(cfg.alg)
     if collection_start > 0 and not int(cfg.alg.learning_starts) <= collection_start < int(cfg.total_steps):
         raise ValueError("behavior_best_of_k_start_step must be after warmup and before total_steps")
@@ -425,6 +427,12 @@ def initialize_and_run(cfg: DictConfig):
                     environment_metadata["collection"].update(
                         best_of_k_start_step=model.behavior_best_of_k_start_step,
                         before_start="original full Gaussian collection; Kb=1",
+                    )
+                if model.behavior_best_of_k_probability < 1:
+                    environment_metadata["collection"].update(
+                        best_of_k_probability=model.behavior_best_of_k_probability,
+                        other_branch="original full Gaussian actor draw; no reranking",
+                        mixture_decision="independent Bernoulli per environment using isolated RNG",
                     )
             if cfg.get("dual_mu_eval", False):
                 environment_metadata["evaluation"] = {

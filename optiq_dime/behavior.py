@@ -35,6 +35,23 @@ def parse_behavior_best_of_k_start_step(alg):
     return int(number)
 
 
+def parse_behavior_best_of_k_probability(alg):
+    """Probability of reranking; the complementary branch keeps the original draw."""
+    value = alg.get("behavior_best_of_k_probability", 1.0)
+    try:
+        probability = float(value)
+    except (TypeError, ValueError):
+        raise ValueError("behavior_best_of_k_probability must be between 0 and 1") from None
+    if isinstance(value, bool) or not math.isfinite(probability) or not 0 <= probability <= 1:
+        raise ValueError("behavior_best_of_k_probability must be between 0 and 1")
+    if probability < 1:
+        if float(alg.get("behavior_best_of_k", 1)) <= 1:
+            raise ValueError("behavior_best_of_k_probability requires best-of-k collection")
+        if float(alg.get("behavior_uniform_probability", 0)) != 0:
+            raise ValueError("mixed best-of-k collection cannot combine with uniform replacement")
+    return probability
+
+
 @partial(jax.jit, static_argnames=["k"])
 def select_best_of_k(actor_state, critic_state, observations, first_action, key, k):
     """Keep the baseline draw as candidate 0; add k-1 independent policy draws.
