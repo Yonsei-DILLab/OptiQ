@@ -1,0 +1,4 @@
+# @package _global_
+defaults:
+  - v5/random_proposal
+  - _self_

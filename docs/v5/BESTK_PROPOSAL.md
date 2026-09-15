@@ -90,3 +90,47 @@ Q로 pilot을 고르는 방법은 추가 sampling 계산을 좋은 영역에 집
 2026-09-15 구현 검증: CPU 회귀 90개 통과. Ant/Hopper 각각 batch256에서
 40회 GPU update와 기존 paired 평가 통과. TD, collector, policy, evaluation,
 NLL, Sinkhorn, canonical v5 config는 이전 commit과 동일하다.
+
+## Random-pilot 대조군
+
+`mujoco_v5_random_proposal` / `v5/random_proposal`은 동일한 16×8 IID pilot
+묶음에서 argmax 대신 첫 후보를 중심으로 택한다. 첫 후보도 q0의 독립 표본이므로
+Q 선택 없는 random-pilot 대조군이다. 추가 RNG를 사용하지 않고 같은 pilot
+생성·128개 Q 평가·64개 최종 teacher·정확한 혼합 밀도 보정·OT·NLL을 유지한다.
+`actor.proposal_pilot_selection=first`만 알고리즘 설정에 추가한다.
+
+이 대조군은 Gaussian mixture를 확장한 효과와 Q 기반 best-k 선별 효과를
+구분한다. 기존 로그 `proposal_pilot_winner_q_gain`은 두 경우 모두 동일한
+pool의 잠재적 최대 Q gain이다. 실제 선택의 gain은
+`proposal_pilot_selected_q_gain`, 선별 활성 여부는
+`proposal_pilot_selects_best`(best=1, random=0)로 구분한다.
+Random-pilot에서는 `proposal_best_of_k=8`이 후보 pool 크기이며, argmax를
+수행했다는 뜻이 아니다. Run 이름과 metadata에는 random-pilot을 명시한다.
+
+대조군 추가 검증: 관련 CPU 회귀 82개 통과, 실제 Ant/Hopper 각각 8회
+update와 paired 평가 통과(짧은 구현 검사이며 학습 성능 실험이 아님).
+동일 입력/RNG의 K=1 및 K=8 업데이트를 frozen c846e96과 비교하면 actor,
+optimizer, loss, 다음 RNG는 bitwise 동일하다. 비교한 기존 출력 154개 중
+153개가 bitwise 동일하고, pilot Q gain 진단값 하나의 차이는 약 1.2e-7이다.
+
+## SAC와 winner 증류의 차이
+
+| 구성 | 기존 OptiQ | Winner-only OT | 현재 proposal 결합안 |
+|---|---|---|---|
+| Teacher 목표 | exp(Q_mean/T)에 비례 | 현재 actor의 best-of-8 winner law | 기존과 같은 exp(Q_mean/T) |
+| Teacher 질량 | exp(Q/T)/q0 정규화 | 독립 winner 64개에 각각 1/64 | exp(Q/T)/qmix 정규화 |
+| Actor 업데이트 | Mean OT → full conditional NLL | Mean OT → full conditional NLL | 기존과 동일 |
+| Q를 통한 actor 미분 | 없음 | 없음 | 없음 |
+| Critic target | Plain TD, Kt=1 | Plain TD, Kt=1 | Plain TD, Kt=1 |
+
+Winner law 자체를 증류할 때 균등 표본 가중치는 타당하다. 그러나 이것은 기존
+OptiQ의 Boltzmann 목표를 유지한 것이 아니다. 밀도 보정을 제거한 이유는
+argmax 연산 자체가 아니라 **목표를 winner law로 변경했기 때문**이다.
+
+SAC는 actor에서 E[alpha log pi(a|s) - Q(s,a)]를 최소화하고 soft backup을
+사용한다. Best-k를 행동 선택에 추가해도 SAC 업데이트를 그대로 두면 이
+차이가 남는다. SAC의 actor 손실은 고정 Q의 Boltzmann 분포에 대한 reverse
+KL과 연결되지만, OptiQ는 가중 teacher에 대한 OT assignment와 조건부 NLL을
+사용하고 현재 v5 critic은 plain TD다. 따라서 밀도 보정 유무 하나로 SAC와
+동일한 알고리즘이라고 판단할 수 없다.
+참고: [SAC 원논문](https://proceedings.mlr.press/v80/haarnoja18b.html).

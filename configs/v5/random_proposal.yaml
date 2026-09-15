@@ -1,0 +1,15 @@
+# @package _global_
+defaults:
+  - /v5/bestk_proposal
+  - _self_
+
+alg:
+  actor:
+    # Random-pilot control: first member of each IID pool, same 128 Q evaluations.
+    proposal_pilot_selection: first
+
+output_root: ../optiq-experiments/v5_random_proposal_control/outputs
+run_name: ${task}-v5-randomPilot8-mix${alg.actor.proposal_guided_fraction}-T${alg.actor.temperature}-eps${alg.actor.sinkhorn_epsilon}-s${seed}
+wandb:
+  group: ${env_name}_v5_randomPilot8_mix${alg.actor.proposal_guided_fraction}_T${alg.actor.temperature}_eps${alg.actor.sinkhorn_epsilon}
+  job_type: v5-random-pilot-control

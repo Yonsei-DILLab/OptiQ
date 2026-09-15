@@ -52,6 +52,9 @@ def validate_config(cfg):
     winner_teacher = actor.get("teacher_distribution") == "best_of_k_winners"
     proposal_k = actor.get("proposal_best_of_k", 1)
     guided_fraction = actor.get("proposal_guided_fraction", 0.0)
+    pilot_selection = actor.get("proposal_pilot_selection", "best")
+    if pilot_selection not in {"best", "first"} or (proposal_k == 1 and pilot_selection != "best"):
+        raise ValueError("proposal_pilot_selection must be best, or first for enabled guided proposals")
     if isinstance(proposal_k, bool) or not isinstance(proposal_k, int) or proposal_k < 1:
         raise ValueError("proposal_best_of_k must be a positive integer")
     if not math.isfinite(float(guided_fraction)) or not 0 <= guided_fraction < 1:
@@ -396,11 +399,12 @@ def initialize_and_run(cfg: DictConfig):
                 )
             if cfg.alg.actor.get("proposal_best_of_k", 1) > 1:
                 environment_metadata.update(
-                    teacher="independent best-k pilot guided Gaussian mixture with original proposal coverage",
+                    teacher="independent pilot guided Gaussian mixture with original proposal coverage",
                     teacher_objective="Boltzmann exp(Q/T); self-normalized importance sampling",
                     teacher_q_aggregation=cfg.alg.actor.source_q_eval,
                     teacher_density_correction="exact conditional proposal mixture density, beta=1",
                     proposal_best_of_k=int(cfg.alg.actor.proposal_best_of_k),
+                    proposal_pilot_selection=cfg.alg.actor.get("proposal_pilot_selection", "best"),
                     proposal_guided_fraction=float(cfg.alg.actor.proposal_guided_fraction),
                     proposal_pilot_count=int(cfg.alg.actor.num_policy_samples * cfg.alg.actor.proposal_best_of_k),
                     teacher_pretanh_targets="fresh independent proposal draws; original u retained",

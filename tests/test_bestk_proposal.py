@@ -12,6 +12,7 @@ from optiq_dime.algorithm import OptiQDIME
 from optiq_dime.bestk_proposal import BestKGuidedProposal, make_bestk_proposal
 from optiq_dime.semi_implicit import ConditionalGaussianProposal
 from scripts.verify_v5 import verify
+from run_optiq_dime import validate_config
 from test_best_of_k import directional_state
 from test_semi_implicit import actor_state, critic_state
 
@@ -80,27 +81,56 @@ def test_sampling_and_correction_recover_boltzmann_target_not_winner_law():
     assert abs((np.asarray(u)**2).mean()-expected_second) < .015
 
 
-def update(actor, critic, obs, key, k=8, fraction=.5):
+def test_random_pilots_use_same_pools_and_scales_without_q_selection():
+    base = ConditionalGaussianProposal(jnp.array([[[-.5, .1], [.4, -.3]]]),
+        jnp.log(jnp.array([[[.02, .8], [.3, .6]]])), .05)
+    obs, key, critic = jnp.array([[1., 0., 0.]]), jax.random.PRNGKey(119), directional_state()
+    random, metrics = make_bestk_proposal(base, critic, obs, key, 8, .5, 'mean', 'first')
+    best, best_metrics = make_bestk_proposal(base, critic, obs, key, 8, .5, 'mean')
+    actions, u, origins = base.sample(jax.random.split(key)[0], 8, 'exact')
+    expected_origins = np.asarray(origins).reshape(1, 2, 8)[:, :, 0]
+    np.testing.assert_array_equal(random.guide_means, np.asarray(u).reshape(1, 2, 8, 2)[:, :, 0])
+    np.testing.assert_array_equal(random.guide_origins, expected_origins)
+    np.testing.assert_array_equal(random.guide_log_std,
+        np.asarray(base.effective_log_std())[0, expected_origins[0]][None])
+    scores = 5 - np.asarray(actions[..., 0]).reshape(1, 2, 8)
+    np.testing.assert_allclose(metrics['proposal_pilot_selected_q_gain'],
+        (scores[:, :, 0] - scores.mean(-1)).mean(), atol=1e-6)
+    assert metrics['proposal_pilot_selects_best'] == 0
+    assert best_metrics['proposal_pilot_selects_best'] == 1
+    np.testing.assert_array_equal(metrics['proposal_pilot_winner_q_gain'],
+        best_metrics['proposal_pilot_winner_q_gain'])
+    assert metrics['proposal_pilot_count'] == best_metrics['proposal_pilot_count'] == 16
+    assert not np.array_equal(random.guide_means, best.guide_means)
+    # Reversing the critic changes winners but cannot change random-pilot centers.
+    reverse, _ = make_bestk_proposal(base, critic.replace(params={'sign': -critic.params['sign']}),
+        obs, key, 8, .5, 'mean', 'first')
+    np.testing.assert_array_equal(random.guide_means, reverse.guide_means)
+
+
+def update(actor, critic, obs, key, k=8, fraction=.5, selection='best'):
     return OptiQDIME.update_actor(actor, critic, obs, key, jnp.array([-3600.]),
         16, 4, 'exact', .05, .5, False, True, 1., False, 16., 257,
         .25, .1, 100, 'mean', 'argmax', True, False,
-        'conditional_ot_nll', 'conditional_mixture', 0., False, 'mean', 1, k, fraction)
+        'conditional_ot_nll', 'conditional_mixture', 0., False, 'mean', 1, k, fraction, selection)
 
 
-def test_actor_updates_both_heads_without_gradients_through_pilot_q():
+@pytest.mark.parametrize('selection', ['best', 'first'])
+def test_actor_updates_both_heads_without_gradients_through_pilot_q(selection):
     actor, critic = actor_state(), directional_state()
     obs, key = jnp.ones((4,3)), jax.random.PRNGKey(661)
-    changed, loss, next_key, metrics = update(actor, critic, obs, key)
+    changed, loss, next_key, metrics = update(actor, critic, obs, key, selection=selection)
     assert np.isfinite(loss) and metrics['density_beta_mean'] == 1
     assert metrics['temperature'] == .25 and metrics['proposal_best_of_k'] == 8
     assert metrics['proposal_guided_fraction'] == .5
     assert metrics['proposal_pilot_count'] == 128
+    assert metrics['proposal_pilot_selects_best'] == float(selection == 'best')
     for head in ['mu','log_std']:
         assert any(not np.array_equal(a,b) for a,b in zip(jax.tree.leaves(actor.params[head]),jax.tree.leaves(changed.params[head])))
-    qgrad = jax.grad(lambda p: update(actor, critic.replace(params=p), obs, key)[1])(critic.params)
+    qgrad = jax.grad(lambda p: update(actor, critic.replace(params=p), obs, key, selection=selection)[1])(critic.params)
     assert all(np.count_nonzero(g)==0 for g in jax.tree.leaves(qgrad))
     base = ConditionalGaussianProposal(jnp.zeros((4,16,2)), jnp.zeros((4,16,2)), .05)
-    pilot_grad = jax.grad(lambda mu: make_bestk_proposal(base._replace(means=mu), critic,obs,key,8,.5,'mean')[0].guide_means.sum())(base.means)
+    pilot_grad = jax.grad(lambda mu: make_bestk_proposal(base._replace(means=mu), critic,obs,key,8,.5,'mean',selection)[0].guide_means.sum())(base.means)
     assert np.count_nonzero(pilot_grad)==0
     np.testing.assert_array_equal(next_key,jax.random.split(key,4)[0])
 
@@ -113,6 +143,26 @@ def test_profile_only_changes_proposal_and_metadata_and_alias_matches():
     for key in ['run_name','wandb','output_root']: expected[key]=guided[key]
     assert guided==expected
     assert guided==OmegaConf.to_container(verify(['benchmark=hopper','alg.actor.temperature=.01'],'v5/bestk_proposal'),resolve=True)
+
+
+def test_random_profile_only_changes_pilot_selection_and_metadata():
+    best = OmegaConf.to_container(verify(['benchmark=ant'], 'mujoco_v5_bestk_proposal'), resolve=True)
+    random = OmegaConf.to_container(verify(['benchmark=ant'], 'mujoco_v5_random_proposal'), resolve=True)
+    expected = copy.deepcopy(best)
+    expected['alg']['actor']['proposal_pilot_selection'] = 'first'
+    for key in ['run_name', 'wandb', 'output_root']: expected[key] = random[key]
+    assert random == expected
+    assert random == OmegaConf.to_container(verify(['benchmark=ant'], 'v5/random_proposal'), resolve=True)
+
+
+@pytest.mark.parametrize('profile,selection', [
+    ('mujoco_v5', 'first'), ('mujoco_v5_bestk_proposal', 'unknown'),
+])
+def test_invalid_pilot_selection_rejected(profile, selection):
+    cfg = verify([], profile)
+    OmegaConf.update(cfg, 'alg.actor.proposal_pilot_selection', selection, force_add=True)
+    with pytest.raises(ValueError, match='proposal_pilot_selection'):
+        validate_config(cfg)
 
 
 @pytest.mark.parametrize('override', [

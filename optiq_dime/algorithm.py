@@ -253,6 +253,7 @@ class OptiQDIME(DIME):
             int(actor.get("teacher_best_of_k", 1)),
             int(actor.get("proposal_best_of_k", 1)),
             float(actor.get("proposal_guided_fraction", 0.0)),
+            actor.get("proposal_pilot_selection", "best"),
         )
         self._n_updates += gradient_steps
         if guard_enabled:
@@ -299,6 +300,7 @@ class OptiQDIME(DIME):
         if actor.get("proposal_best_of_k", 1) > 1:
             core_metrics.update({"proposal_best_of_k", "proposal_guided_fraction",
                 "proposal_pilot_count", "proposal_pilot_winner_q_gain",
+                "proposal_pilot_selected_q_gain", "proposal_pilot_selects_best",
                 "source_ess_absolute", "temperature", "density_beta_mean"})
         if actor.get("teacher_distribution") == "best_of_k_winners":
             core_metrics.update({"teacher_best_of_k", "teacher_winner_count",
@@ -580,6 +582,7 @@ class OptiQDIME(DIME):
             "ot_student_action",
             "teacher_best_of_k",
             "proposal_best_of_k",
+            "proposal_pilot_selection",
         ],
     )
     def update_actor(
@@ -614,6 +617,7 @@ class OptiQDIME(DIME):
         teacher_best_of_k: int = 1,
         proposal_best_of_k: int = 1,
         proposal_guided_fraction: float = 0.0,
+        proposal_pilot_selection: str = "best",
     ):
         if teacher_distribution == "best_of_k_winners":
             if (not semi_implicit or ot_student_action != "mean"
@@ -697,7 +701,8 @@ class OptiQDIME(DIME):
                     pilot_key, teacher_draw_key = jax.random.split(proposal_key)
                     proposal_kde, proposal_metrics = make_bestk_proposal(
                         proposal_kde, qf_state, observations, pilot_key,
-                        proposal_best_of_k, proposal_guided_fraction, source_q_eval)
+                        proposal_best_of_k, proposal_guided_fraction, source_q_eval,
+                        proposal_pilot_selection)
                 proposals, proposal_u, proposal_component_indices = proposal_kde.sample(
                     teacher_draw_key, proposals_per_policy_sample, proposal_sampling_mode
                 )
@@ -1142,6 +1147,7 @@ class OptiQDIME(DIME):
             "ot_student_action",
             "teacher_best_of_k",
             "proposal_best_of_k",
+            "proposal_pilot_selection",
         ],
     )
     def _train(
@@ -1199,6 +1205,7 @@ class OptiQDIME(DIME):
         teacher_best_of_k=1,
         proposal_best_of_k=1,
         proposal_guided_fraction=0.0,
+        proposal_pilot_selection="best",
     ):
         del n_env_interacts
         backup_mode = backup_mode or ("soft_td" if semi_implicit else "td")
@@ -1333,6 +1340,7 @@ class OptiQDIME(DIME):
                     teacher_best_of_k,
                     proposal_best_of_k,
                     proposal_guided_fraction,
+                    proposal_pilot_selection,
                 )
                 if soft_guard_enabled:
                     key, guard_key = jax.random.split(key)

@@ -9,6 +9,10 @@
   and existing evaluations. This first controlled variant keeps original
   Gaussian collection (Kb=1); do not label it collection best-k.
   It is under empirical investigation, not a demonstrated successful method.
+  Random-pilot control `mujoco_v5_random_proposal` / `v5/random_proposal` keeps
+  the same mixture, pilot/teacher counts and OptiQ components; selects the first
+  IID pilot instead of argmax (`proposal_pilot_selection=first`). Its pool size
+  is 8 but best-k selection is OFF. Use explicit random-pilot run labels.
   Compare complete fresh 1M runs against matched meanOT seeds. Keep historical
   winner-only/collection-only source snapshots and logs intact.
   Work log: `/root/anal/optiq_bestk_integration_20260915/WORKLOG.md`.

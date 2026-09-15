@@ -49,12 +49,13 @@ class BestKGuidedProposal(NamedTuple):
 
 
 def make_bestk_proposal(base, qf_state, observations, key, k, guided_fraction,
-                       source_q_eval):
-    """Condition on independent pilot winners, then define an explicit mixture.
+                       source_q_eval, pilot_selection="best"):
+    """Condition on independent selected pilots, then define an explicit mixture.
 
 There are M independent groups of k draws from the original floored Gaussian
-mixture. Each winner inherits its generating component's Gaussian scale. The
-final teacher sampler uses a different key, AFTER this proposal is fixed.
+mixture. Each selected pilot inherits its generating component's Gaussian scale.
+Selection is best-Q by default, or the first IID draw for a random-pilot control.
+The final teacher sampler uses a different key, AFTER this proposal is fixed.
 """
     batch, components, dim = base.means.shape
     sample_key, dropout_key = jax.random.split(key)
@@ -75,7 +76,14 @@ final teacher sampler uses a different key, AFTER this proposal is fixed.
         score = twin_q.min(axis=0)
     else:
         raise ValueError("source_q_eval must be mean or min")
-    index = score.argmax(axis=-1)
+    if pilot_selection == "best":
+        index = score.argmax(axis=-1)
+    elif pilot_selection == "first":
+        # The first member of each IID pool is an unbiased random pilot.
+        # Keep the same pools and Q evaluations for a controlled ablation.
+        index = jnp.zeros(score.shape[:-1], dtype=jnp.int32)
+    else:
+        raise ValueError("pilot_selection must be best or first")
     winner_u = jnp.take_along_axis(pilot_u.reshape(batch, components, k, dim),
                                  index[..., None, None], axis=2).squeeze(2)
     winner_origins = jnp.take_along_axis(origins.reshape(batch, components, k),
@@ -88,5 +96,9 @@ final teacher sampler uses a different key, AFTER this proposal is fixed.
         "proposal_guided_fraction": jnp.asarray(guided_fraction),
         "proposal_pilot_count": jnp.asarray(float(components * k)),
         "proposal_pilot_winner_q_gain": (score.max(-1) - score.mean(-1)).mean(),
+        "proposal_pilot_selected_q_gain": (
+            jnp.take_along_axis(score, index[..., None], axis=-1).squeeze(-1)
+            - score.mean(-1)).mean(),
+        "proposal_pilot_selects_best": jnp.asarray(float(pilot_selection == "best")),
     }
     return proposal, jax.tree.map(jax.lax.stop_gradient, metrics)
