@@ -1,5 +1,16 @@
 # OptiQ Experiment Conventions
 
+- Latest user steering 2026-09-15: remove heuristic winner-centered Gaussian
+  proposals and arbitrary 50:50 mixtures. Preferred new candidate profile
+  `mujoco_v5_bestk_boltzmann` / `v5/bestk_boltzmann` inherits original v5 and
+  adds only Kb8 collection and K8 categorical winner masses of its existing
+  Boltzmann teacher. Read `docs/v5/BESTK_BOLTZMANN.md`.
+  The teacher target is B8[p_hat_T], NOT unchanged p_T and NOT B8[actor].
+  Preserve original q, T/density, mean OT/full NLL, plain TD and evaluations.
+  No guided proposal, collection mixture or delay in this candidate. Existing
+  frozen jobs and historical profiles below retain their original semantics.
+  This is unproven; implementation validation alone is not empirical success.
+
 - Optional follow-up profile `mujoco_v5_bestk_mixed` / `v5/bestk_mixed` keeps
   original full Gaussian collection with probability .5 and applies best8 with
   probability .5 after warmup. Read `docs/v5/BESTK_MIXED.md`. It preserves the

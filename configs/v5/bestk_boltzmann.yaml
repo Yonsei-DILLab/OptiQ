@@ -1,0 +1,18 @@
+# @package _global_
+defaults:
+  - /v5/final
+  - _self_
+
+alg:
+  behavior_best_of_k: 8
+  actor:
+    # Exact winner masses of the ORIGINAL empirical Boltzmann teacher.
+    # Original proposal, density correction, temperature, OT and NLL stay active.
+    teacher_boltzmann_best_of_k: 8
+
+output_root: ../optiq-experiments/v5_bestk_boltzmann/outputs
+run_name: ${task}-v5-boltzmannWinner-Kb8-Kteacher8-T${alg.actor.temperature}-eps${alg.actor.sinkhorn_epsilon}-s${seed}
+wandb:
+  project: v5-bestk
+  group: ${env_name}_v5_boltzmannWinner_Kb8_Kteacher8_T${alg.actor.temperature}_eps${alg.actor.sinkhorn_epsilon}
+  job_type: v5-bestk-boltzmann

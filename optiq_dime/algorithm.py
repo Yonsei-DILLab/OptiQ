@@ -18,6 +18,7 @@ from .behavior import (parse_behavior_best_of_k, parse_behavior_best_of_k_start_
     parse_behavior_best_of_k_probability, select_best_of_k)
 from .winner_distillation import update_winner_actor
 from .bestk_proposal import make_bestk_proposal
+from .bestk_teacher import best_of_k_mass
 from .temperature import parse_temperature_schedule, scheduled_temperature
 from .critic_utils import critic_expectation
 from .distillation import conditional_ot_nll, hard_projection_mass_error
@@ -289,6 +290,7 @@ class OptiQDIME(DIME):
             int(actor.get("proposal_best_of_k", 1)),
             float(actor.get("proposal_guided_fraction", 0.0)),
             actor.get("proposal_pilot_selection", "best"),
+            int(actor.get("teacher_boltzmann_best_of_k", 1)),
         )
         self._n_updates += gradient_steps
         if guard_enabled:
@@ -340,6 +342,10 @@ class OptiQDIME(DIME):
         if actor.get("teacher_distribution") == "best_of_k_winners":
             core_metrics.update({"teacher_best_of_k", "teacher_winner_count",
                 "teacher_candidate_count", "teacher_uniform_mass", "teacher_winner_q_gain"})
+        if actor.get("teacher_boltzmann_best_of_k", 1) > 1:
+            core_metrics.update({"teacher_boltzmann_best_of_k", "teacher_base_ess",
+                "teacher_base_max_weight", "teacher_bestk_q_gain", "source_ess_absolute",
+                "temperature", "density_beta_mean"})
         anchor_metrics = {"local_best_q_gain_over_anchor", "local_improvement_fraction",
                           "local_anchor_argmax_fraction", "twin_local_delta_correlation",
                           "twin_local_improvement_sign_agreement"}
@@ -618,6 +624,7 @@ class OptiQDIME(DIME):
             "teacher_best_of_k",
             "proposal_best_of_k",
             "proposal_pilot_selection",
+            "teacher_boltzmann_best_of_k",
         ],
     )
     def update_actor(
@@ -653,7 +660,16 @@ class OptiQDIME(DIME):
         proposal_best_of_k: int = 1,
         proposal_guided_fraction: float = 0.0,
         proposal_pilot_selection: str = "best",
+        teacher_boltzmann_best_of_k: int = 1,
     ):
+        if teacher_boltzmann_best_of_k > 1 and (
+            not semi_implicit or teacher_distribution != "conditional_mixture"
+            or ot_student_action != "mean" or distillation_loss != "conditional_ot_nll"
+            or normalize_ot_cost or not density_correction or adaptive_density_beta
+            or include_anchor or soft_proximal_ess_fraction > 0 or proposal_best_of_k != 1
+            or source_q_eval != "mean" or isinstance(actor_state, FiniteMixtureTrainState)
+        ):
+            raise ValueError("Boltzmann best-k requires original OptiQ teacher, mean OT and full NLL")
         if teacher_distribution == "best_of_k_winners":
             if (not semi_implicit or ot_student_action != "mean"
                 or distillation_loss != "conditional_ot_nll" or normalize_ot_cost
@@ -825,6 +841,16 @@ class OptiQDIME(DIME):
             effective_density_score = selected_density_beta[:, None] * density_score
             logits = q_score + effective_density_score
             source_weights = jax.lax.stop_gradient(jax.nn.softmax(logits, axis=-1))
+            if teacher_boltzmann_best_of_k > 1:
+                base_weights = source_weights
+                source_weights = jax.lax.stop_gradient(best_of_k_mass(
+                    base_weights, source_q, teacher_boltzmann_best_of_k))
+                proposal_metrics.update(
+                    teacher_boltzmann_best_of_k=jnp.asarray(float(teacher_boltzmann_best_of_k)),
+                    teacher_base_ess=(1.0 / jnp.square(base_weights).sum(axis=-1)).mean(),
+                    teacher_base_max_weight=base_weights.max(axis=-1).mean(),
+                    teacher_bestk_q_gain=((source_weights - base_weights) * source_q).sum(axis=-1).mean(),
+                )
             if soft_proximal_ess_fraction > 0:
                 full_step_ess = 1.0 / jnp.square(source_weights).sum(axis=-1)
                 source_weights, proximal_fraction = proximal_policy_weights(
@@ -917,6 +943,9 @@ class OptiQDIME(DIME):
             q2_weights = jax.nn.softmax(
                 q2 / temperature + effective_density_score, axis=-1
             )
+            if teacher_boltzmann_best_of_k > 1:
+                q1_weights = best_of_k_mass(q1_weights, q1, teacher_boltzmann_best_of_k)
+                q2_weights = best_of_k_mass(q2_weights, q2, teacher_boltzmann_best_of_k)
             cross_critic_q_gain = 0.5 * (
                 weighted_q_gain(q1_weights, q2)
                 + weighted_q_gain(q2_weights, q1)
@@ -1097,6 +1126,9 @@ class OptiQDIME(DIME):
                     source_q / counterfactual_temperature + effective_density_score,
                     axis=-1,
                 )
+                if teacher_boltzmann_best_of_k > 1:
+                    counterfactual_weights = best_of_k_mass(
+                        counterfactual_weights, source_q, teacher_boltzmann_best_of_k)
                 counterfactual_ess = 1.0 / jnp.sum(
                     jnp.square(counterfactual_weights), axis=-1
                 )
@@ -1183,6 +1215,7 @@ class OptiQDIME(DIME):
             "teacher_best_of_k",
             "proposal_best_of_k",
             "proposal_pilot_selection",
+            "teacher_boltzmann_best_of_k",
         ],
     )
     def _train(
@@ -1241,6 +1274,7 @@ class OptiQDIME(DIME):
         proposal_best_of_k=1,
         proposal_guided_fraction=0.0,
         proposal_pilot_selection="best",
+        teacher_boltzmann_best_of_k=1,
     ):
         del n_env_interacts
         backup_mode = backup_mode or ("soft_td" if semi_implicit else "td")
@@ -1376,6 +1410,7 @@ class OptiQDIME(DIME):
                     proposal_best_of_k,
                     proposal_guided_fraction,
                     proposal_pilot_selection,
+                    teacher_boltzmann_best_of_k,
                 )
                 if soft_guard_enabled:
                     key, guard_key = jax.random.split(key)

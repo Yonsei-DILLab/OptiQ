@@ -1,5 +1,9 @@
 # Best-of-k를 proposal에 결합하는 OptiQ 실험
 
+**과거 실험 설계.** 최신 사용자 지시는 winner 중심 Gaussian과 임의의 혼합을
+제거하는 것이다. 새 후보는 [Boltzmann teacher의 직접 best-k 변환](BESTK_BOLTZMANN.md)을
+참고한다. 아래는 기존 실행의 재현과 해석을 위해 보존한 기록이다.
+
 Profile `mujoco_v5_bestk_proposal` / `v5/bestk_proposal`, branch `v5_bestk`.
 2026-09-15 목표: 기존 OptiQ 컴포넌트를 보존하며 best-k 결합을 검증한다.
 **수학·구현 검증과 실제 학습 성공은 별개다. 성능 검증 전에는 성공한 방법으로 표시하지 않는다.**

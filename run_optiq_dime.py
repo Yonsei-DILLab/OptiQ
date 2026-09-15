@@ -55,6 +55,9 @@ def validate_config(cfg):
         raise ValueError(f"Invalid Dog task: {cfg.task}")
     actor = cfg.alg.actor
     winner_teacher = actor.get("teacher_distribution") == "best_of_k_winners"
+    boltzmann_k = actor.get("teacher_boltzmann_best_of_k", 1)
+    if isinstance(boltzmann_k, bool) or not isinstance(boltzmann_k, int) or boltzmann_k < 1:
+        raise ValueError("teacher_boltzmann_best_of_k must be a positive integer")
     proposal_k = actor.get("proposal_best_of_k", 1)
     guided_fraction = actor.get("proposal_guided_fraction", 0.0)
     pilot_selection = actor.get("proposal_pilot_selection", "best")
@@ -82,6 +85,18 @@ def validate_config(cfg):
     )
     if backup_mode not in {"td", "soft_td"}:
         raise ValueError("critic.backup_mode must be td or soft_td")
+    if boltzmann_k > 1 and (
+        actor.get("teacher_distribution") != "conditional_mixture"
+        or actor.get("type") != "semi_implicit" or actor.get("latent_prior", "normal") != "normal"
+        or actor.get("ot_student_action") != "mean" or actor.distillation_loss != "conditional_ot_nll"
+        or not actor.density_correction or actor.density_beta != 1 or actor.adaptive_density_beta
+        or actor.normalize_ot_cost or actor.include_anchor or actor.source_q_eval != "mean"
+        or actor.proposal_sampling_mode != "exact" or proposal_k != 1
+        or actor.get("teacher_best_of_k", 1) != 1 or actor.get("soft_proximal_ess_fraction", 0.) != 0
+        or backup_mode != "td" or cfg.alg.critic.n_atoms != 1 or cfg.alg.critic.n_critics != 2
+        or cfg.alg.get("behavior_best_of_k_probability", 1.) != 1. or collection_start != 0
+        or cfg.alg.get("behavior_uniform_probability", 0.) != 0.):
+        raise ValueError("Boltzmann best-k requires original OptiQ components without guided proposals or collection mixtures/delays")
     if winner_teacher:
         k = actor.get("teacher_best_of_k")
         if isinstance(k, bool) or not isinstance(k, int) or k < 1 or k != cfg.alg.get("behavior_best_of_k", 1):
@@ -413,6 +428,17 @@ def initialize_and_run(cfg: DictConfig):
                     proposal_guided_fraction=float(cfg.alg.actor.proposal_guided_fraction),
                     proposal_pilot_count=int(cfg.alg.actor.num_policy_samples * cfg.alg.actor.proposal_best_of_k),
                     teacher_pretanh_targets="fresh independent proposal draws; original u retained",
+                )
+            if cfg.alg.actor.get("teacher_boltzmann_best_of_k", 1) > 1:
+                environment_metadata.update(
+                    teacher="original conditional Gaussian proposal; all original teacher actions retained",
+                    teacher_objective="best-of-k winner of empirical Boltzmann teacher, not actor winner or unchanged Boltzmann target",
+                    teacher_boltzmann_best_of_k=int(cfg.alg.actor.teacher_boltzmann_best_of_k),
+                    teacher_weights="base softmax(Q_mean/T-log q), then exact categorical winner masses",
+                    teacher_ties="first occurrence among IID draws; mass proportional to base weights within a score tie",
+                    teacher_density_correction="original conditional proposal density including tanh Jacobian, beta=1",
+                    teacher_pretanh_targets="original sampled u; stop-gradient",
+                    teacher_extra_candidates=0,
                 )
             if model.behavior_best_of_k > 1:
                 environment_metadata["collection"] = {

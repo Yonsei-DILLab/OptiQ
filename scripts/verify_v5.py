@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from scripts.verify_v3 import verify as verify_training
 
 PROFILES = {
+    "mujoco_v5_bestk_boltzmann": (0., False), "v5/bestk_boltzmann": (0., False),
     "mujoco_v5_bestk_mixed": (0., False), "v5/bestk_mixed": (0., False),
     "mujoco_v5_bestk_delayed": (0., False), "v5/bestk_delayed": (0., False),
     "mujoco_v5_bestk_combined": (0., False), "v5/bestk_combined": (0., False),
@@ -25,11 +26,13 @@ def verify(overrides=(), config_name="mujoco_v5"):
     winner = config_name in {"mujoco_v5_bestof8", "v5/bestof8"}
     delayed = config_name in {"mujoco_v5_bestk_delayed", "v5/bestk_delayed"}
     mixed = config_name in {"mujoco_v5_bestk_mixed", "v5/bestk_mixed"}
+    boltzmann_bestk = config_name in {"mujoco_v5_bestk_boltzmann", "v5/bestk_boltzmann"}
     cfg = verify_training(overrides, config_name, allowed_configs=CONFIGS,
         expected_teacher="best_of_k_winners" if winner else "conditional_mixture")
     actor = cfg.alg.actor
     probability, annealing = PROFILES[config_name]
     checks = {
+        "Boltzmann winner law matches profile": actor.get("teacher_boltzmann_best_of_k", 1) == (8 if boltzmann_bestk else 1),
         "pilot selection matches profile": actor.get("proposal_pilot_selection", "best") == (
             "first" if config_name in {"mujoco_v5_random_proposal", "v5/random_proposal"} else "best"),
         "best-k proposal matches profile": actor.get("proposal_best_of_k", 1) == (
@@ -41,7 +44,7 @@ def verify(overrides=(), config_name="mujoco_v5"):
         "uniform collection probability matches profile": cfg.alg.behavior_uniform_probability == probability,
         "temperature schedule matches profile": actor.get("temperature_schedule", {}).get("enabled", False) == annealing,
         "best-of-k collection matches profile": cfg.alg.get("behavior_best_of_k", 1) == (
-            8 if delayed or mixed or config_name in {"mujoco_v5_bestof8", "v5/bestof8", "mujoco_v5_bestk_combined", "v5/bestk_combined"} else 1
+            8 if boltzmann_bestk or delayed or mixed or config_name in {"mujoco_v5_bestof8", "v5/bestof8", "mujoco_v5_bestk_combined", "v5/bestk_combined"} else 1
         ),
     }
     for name, valid in checks.items():
