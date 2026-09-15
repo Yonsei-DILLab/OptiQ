@@ -140,10 +140,14 @@ warmup 이상, 전체 학습 예산 미만이어야 한다. 지연 프로필의 
 TD/평가에서 selector 미호출 및 평가 RNG 격리를 검사한다.
 관련 회귀73개 통과. 학습 RNG와 replay RNG까지 포함해 보강한 전환 전
 동일성 검사도 Ant/Hopper 각각 통과했다. 이는 같은 코드 버전의 두 설정을
-비교한 검사다. 기존 실행 중인 c846e96 보정 버전과 새38e3454 GPU 실행의
+비교한 검사다. Hopper에서 기존 c846e96 보정 버전과 새38e3454 GPU 실행의
 5001 checkpoint를 별도로 비교하면 critic은 같지만 actor parameter에는
 최대1.49e-7 차이가 있었다. 이 수치 차이의 원인을 확정하지 않았으며,
-기존 실행과250K까지 완전히 같은 trajectory라고 간주하지 않는다.
+따라서 Hopper의 기존 실행과250K까지 완전히 같은 trajectory라고 간주하지 않는다.
+Ant는 별도로 실제5001/50K/100K/150K actor·critic checkpoint 파일이
+기존 proposal-only 실행과 byte 단위로 같고,165K까지 두 모드의 모든 평가
+episode return도 일치함을 확인했다. 이는 저장된 결과의 비교이며, 저장하지
+않은 replay/RNG 상태나 아직 도달하지 않은250K의 일치를 입증하지 않는다.
 이 설정은 성능이 입증된 기본값이 아니라 후속 가설이다.
 
 Hopper의 즉시 Kb8 결합은150K 판단 시 두 연속50K 평균이354.8 →367.5로
@@ -158,6 +162,14 @@ seed1 큐를 취소하고, GPU2에 지연 결합 Ant seed0를 새로 시작했�
 (W&B run `8xhn2lj7`, source38e3454). 지연 결합 Ant seed1은 뒤에 대기한다.
 GPU0/1의 proposal-only 실행은 계속 유지한다. 지연 조건의250K 이전 점수는
 수집 Kb8의 성능 증거가 아니며, 전환 후 학습을 반드시 따로 확인한다.
+
+Hopper seed0는 실제250K 로그에서Kb1, 첫 전환 후 로그250181에서Kb8과
+활성 플래그1을 확인했다. 같은 로그에서T=.01,밀도 보정beta1,entropy 없는
+TD가 유지된다. 테스트한 코드상 첫 선별 transition은250001이지만, 학습
+로그가 매 step 기록되는 것은 아니다. 전환 전 마지막50K 평균은
+zero-z1764.4/stochastic-z1747.5이며, 활성화 확인 자체는 성능 성공이 아니다.
+원본은 분석 폴더의 `DELAYED_HOPPER_ACTIVATION_250K.json`과
+`delayed_ant_actual_prefix_comparison.json`에 보존한다.
 
 동기는 보정 proposal-only seed0의 별도 고정 체크포인트 진단이다.
 400K에서 동일한10개 episode seed로 비교한 실제 수집 보상은 Ant가
