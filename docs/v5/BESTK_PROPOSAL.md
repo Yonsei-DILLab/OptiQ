@@ -4,6 +4,8 @@ Profile `mujoco_v5_bestk_proposal` / `v5/bestk_proposal`, branch `v5_bestk`.
 2026-09-15 목표: 기존 OptiQ 컴포넌트를 보존하며 best-k 결합을 검증한다.
 **수학·구현 검증과 실제 학습 성공은 별개다. 성능 검증 전에는 성공한 방법으로 표시하지 않는다.**
 
+[완료된 seed0 1M 비교와 현재 결합 실험 결과](BESTK_RESULTS.md)를 별도로 기록한다.
+
 ## 보존하는 목적과 구조
 
 기존 v5의 Boltzmann teacher `p_T(a|s) ∝ exp(Q_mean(s,a)/T)`, 정확한 proposal
