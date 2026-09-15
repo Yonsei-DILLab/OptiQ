@@ -1,11 +1,14 @@
 # OptiQ Experiment Conventions
 
 - Experimental worktree `/root/OptiQ-v5-bestof8`, branch `v5_bestk`:
-  user requested best-of-8 for environment collection ONLY, keeping TD targets
-  and both existing evaluations unchanged. Read `docs/v5/BEST_OF_8.md`.
-  Opt-in `mujoco_v5_bestof8` / `v5/bestof8` uses 8 full Gaussian policy samples
-  after warmup and selects by live twin-min Q. Canonical v5 remains unchanged.
-  Keep W&B `OptiQ/v5-jaehoon`, distinct comparison groups and fresh 1M runs.
+  user requested best-of-8 collection AND winner-distribution OT distillation.
+  Read `docs/v5/BEST_OF_8.md`. Opt-in `mujoco_v5_bestof8` / `v5/bestof8`
+  uses Kb=8, teacher K=8, Kt=1: 64 independent full-Gaussian winners,
+  uniform teacher mass, no Boltzmann temperature or density correction.
+  Keep mean-action student OT/full conditional NLL and both evaluations unchanged.
+  W&B `OptiQ/v5-bestk`; fresh 1M seed0 runs then queued seed1 after both finish.
+  Preserve cancelled collection-only snapshots. Seed4 recovery remains on hold.
+  Canonical v5 and its historical profiles remain unchanged.
 
 - This checkout is `/root/OptiQ-v5`, branch `v5`. Default entry `mujoco_v5`,
   alias `v5/final`; read `docs/v5/PSEUDOCODE.md` and `docs/v5/CHANGES_KO.md`.

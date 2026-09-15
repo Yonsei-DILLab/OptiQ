@@ -80,12 +80,17 @@ def test_invalid_k_rejected(value):
         validate_config(cfg)
 
 
-def test_only_collection_setting_changes_training_and_evaluation_config():
+def test_winner_profile_changes_only_teacher_and_collection_settings():
     baseline = OmegaConf.to_container(verify(['benchmark=ant']), resolve=True)
     changed = OmegaConf.to_container(verify(['benchmark=ant'], 'mujoco_v5_bestof8'), resolve=True)
     alias = OmegaConf.to_container(verify(['benchmark=ant'], 'v5/bestof8'), resolve=True)
     expected = copy.deepcopy(baseline)
     expected['alg']['behavior_best_of_k'] = 8
+    expected['alg']['actor'].update(
+        teacher_distribution='best_of_k_winners', teacher_best_of_k=8,
+        source_q_eval='min', source_reference='winner_distribution',
+        density_correction=False, density_beta=0., density_correction_beta=0.,
+        temperature=None, teacher_std_floor=0., proposal_std=0., proposal_std_pretanh=0.)
     for key in ('wandb', 'output_root', 'run_name'):
         expected[key] = changed[key]
     assert changed == expected == alias
@@ -111,7 +116,8 @@ def test_real_training_replay_and_unchanged_dual_evaluation(tmp_path, monkeypatc
         executed.append(np.array(action, copy=True))
         return original_step(action)
     monkeypatch.setattr(env, 'step', record_step)
-    # Every best-of-k invocation must come through collection, never TD or eval.
+    # The collector selection helper must never be called by TD or evaluation.
+    # Winner OT uses its own independent teacher groups inside the actor update.
     import optiq_dime.algorithm as algorithm
     original_select = algorithm.select_best_of_k
     calls = []

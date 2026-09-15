@@ -1,73 +1,83 @@
-# 학습 행동 수집에만 best-of-8 적용
+# Best-of-8 winner 분포를 OT로 증류
 
-Profile: `mujoco_v5_bestof8`, alias `v5/bestof8`.
-Canonical v5 config는 변경하지 않고, 추가 `alg.behavior_best_of_k: 8`로 선택한다.
-이번 설정은 **Kb=8, Kt=1**, 평가에서는 후보 비교를 수행하지 않는다.
-작업 브랜치는 `v5_bestk`이며 `v5`에는 이 변경을 커밋하지 않는다.
+Profile `mujoco_v5_bestof8` / `v5/bestof8`, branch `v5_bestk`.
+2026-09-15 사용자 요청으로 collection-only 실험에서 winner distillation으로
+변경했다. 이전 collection-only 코드는 commit `2cd0532`와 기존 캠페인의
+frozen source에 보존한다. Canonical `mujoco_v5` / branch `v5`는 그대로다.
 
-Warmup 5K는 기존 uniform 행동이다. 이후 같은 상태에서 현재 Gaussian
-정책의 행동 8개를 만들고 **live twin critic min(Q1,Q2)**가 가장 큰 하나를
-실행한다. 후보마다 z와 conditional Gaussian epsilon을 샘플링한다.
-기존 collector의 정책 draw가 후보 0이며, 나머지 7개는 seed로 고정한 별도
-RNG에서 뽑는다. 추가 RNG는 평가나 learner RNG를 진행시키지 않는다.
-Replay에는 실제 실행한 행동의 정규화 좌표를 저장한다.
+## 목표와 업데이트
 
-TD target은 기존 current actor의 단일 Gaussian 행동과 target twin-min을
-유지한다. OT teacher와 NLL, 100회 Sinkhorn, mean-action student OT,
-optimizer, 평가 callback은 기존 v5와 같다. 정책 예측 함수도 변경하지 않는다.
-따라서 평가는 **zero-z/epsilon=0 및 sampled-z/epsilon=0**, 각 10 episode,
-5K 간격으로 기존과 동일하며, 평가에서 Q로 행동을 선택하지 않는다.
+현재 full Gaussian actor를 π라 하면 teacher는 각 상태에서 π의 독립적인
+행동 8개 중 live min(Q1,Q2)가 가장 높은 행동의 분포 β8이다.
+연속 Q 분포에서 β8(a|s) = 8 π(a|s) F_Q(Q(s,a)|s)^7이다.
+구현은 이 밀도를 계산하지 않고 β8에서 직접 샘플링한다. 동점은 각 묶음의
+첫 argmax를 택한다(수집과 동일).
 
-이는 수집 정책만 바꾸는 off-policy 실험이다. 선택된 행동의 critic 점수가
-높아져도 평가 actor의 return 향상을 보장하지는 않는다. 평가 점수가 바뀌는
-이유는 학습 결과의 차이여야 하며 평가 시 best-of-8의 도움을 받지 않는다.
+1. Student는 기존처럼 독립적인 z 16개에 대한 tanh(μ(s,z))를 사용한다.
+2. Teacher는 상태마다 **64개의 독립적인 묶음 × 8개 후보 = 512개**의
+   full policy 행동을 생성한다. 모든 후보는 새 continuous z와 Gaussian ε를
+   사용한다. 기존 16개 student component를 재사용하지 않는다.
+3. 각 묶음에서 live twin-min winner 하나를 선택한다. 전체 512개에서 상위
+   64개를 고르는 방식이 아니다. Teacher σ floor나 추가 noise는 없다.
+4. Student 16개에 각각 1/16, winner 64개에 각각 **1/64**의 질량을 부여한다.
+   Squared action distance, Sinkhorn ε=.1, 100회, cost normalization=false.
+5. Teacher의 원래 pre-tanh u와 OT coupling을 stop-gradient한다.
+   모든 OT row의 조건부 Gaussian NLL로 μ와 σ를 함께 업데이트한다.
+   Argmax teacher 하나나 barycenter로 손실을 대체하지 않는다.
 
-`rollout/behavior_best_of_k`, `best_of_k_action_count`, `best_of_k_selected_q`,
-`best_of_k_base_q`, `best_of_k_q_gain`, `best_of_k_kept_base_fraction`을 기록한다.
-마지막 다섯 지표도 `rollout/` prefix를 가진다. Q gain은 같은 후보 집합에서
-선택값과 후보 0의 차이다. 환경 메타데이터에 collection-only 적용을 명시한다.
+`exp(Q/T)/q` 가중치는 제거한다. 이미 선택된 winner에 이를 다시 적용하면
+β8과 다른 목표가 된다. **온도 T는 사용하지 않으며 temperature=null**이다.
+따라서 이전 Ant T=.25 / Hopper T=.01을 새 실험의 활성 하이퍼파라미터로
+표시하지 않는다. `density_correction=false`, beta=0, teacher_std_floor=0.
+이 설정에 활성 온도·밀도 보정·teacher K 불일치를 넣으면 시작 전에 거부한다.
 
-`tests/test_best_of_k.py`는 live twin-min 선택, Gaussian 후보의 분산,
-warmup/K=1 보존, 실행/replay 일치, 실제 Hopper/Ant 업데이트 및 평가·TD
-분리를 검증한다. 기존 v5/behavior/dual-evaluation 회귀 검사도 함께 수행한다.
+## 수집, TD, 평가
 
-## 문헌과 이번 실험의 관계
+- Warmup 5K uniform 수집 이후 **Kb=8**, live twin-min 선택. Replay에는 실제
+  실행한 정규화 행동을 저장한다. 별도 collector RNG는 이전 구현과 동일하다.
+- **Kt=1**: TD target은 current actor의 단일 full Gaussian 행동과 target
+  twin-min critic. TD 코드와 정책 sampling 함수는 변경하지 않는다.
+- 평가는 기존 **zero-z/ε=0와 stochastic-z/ε=0**, 각 10 episodes, 5K 간격과
+  step 1 평가. 평가에서 best-of-k를 사용하지 않고 평가 RNG도 그대로 격리한다.
+- Actor/critic 256×2, initial σ=.5, batch 256, clipping 없음, UTD=1,
+  학습 1M steps. 표준 v5 baseline의 actor loss 경로는 변경하지 않는다.
 
-- [QVPO §4.4/§5.2](https://papers.nips.cc/paper_files/paper/2024/file/6111371a868af8dcfba0f96ad9e25ae3-Paper-Conference.pdf)는
-  behavior Kb와 target Kt를 분리하며 target-Q 과대추정 때문에 Kt<Kb를
-  권장한다. Ant ablation에서 (4,1)/(4,2)가 (4,4)보다 안정적이다.
-  이를 모든 환경에서 Kt>1이 금지된다는 뜻으로 해석하지 않는다.
-- [SMFP §4.4](https://arxiv.org/html/2605.21282v1#S4.SS4)는
-  Kt=0.5Kb를 명시한다. TD target에서도 후보 선택을 사용한다.
-  이번 Kb=8/Kt=1은 사용자가 고른 수집-only ablation이며 SMFP 재현이 아니다.
-- [FASTER](https://arxiv.org/html/2604.19730v1)는 best-of-N의 test-time
-  계산량을 줄이기 위해 denoising 도중 후보를 거른다. 학습/배포의 후보
-  선택을 다루지만, 이번처럼 평가 시 선택을 끈 설정과 결과를 동일시하지 않는다.
-- [Q-Planning §3.3](https://arxiv.org/html/2608.21204v1#S3.SS3)는 배포 시
-  BC 후보들의 softmax Q-weighted 평균을 사용한다. Hard argmax best-of-N은
-  별도 비교 대상이며, 이번 선택 연산을 Q-Planning 전체 알고리즘으로 부르지 않는다.
+Gaussian conditional NLL은 winner law의 OT projection이다. 유한 student
+표현과 Gaussian 조건부 분포 때문에 이를 완벽히 재현하거나 μ-only 평가의
+성능 향상을 보장하는 것은 아니다. Teacher critic 계산은 64개에서 512개로
+늘어난다. OT 행렬 크기는 16×64 그대로다.
 
-## 실행과 검증
+## 실행과 기록
 
 ```bash
-# 설정 검사만 수행한다. Seed 4도 직접 entrypoint에서 지원한다.
 OPTIQ_CONFIG=mujoco_v5_bestof8 JAX_PLATFORMS=cpu \
-  /root/.venv-optiq-mujoco/bin/python scripts/verify_v5.py \
-  benchmark=hopper seed=4 alg.actor.temperature=.01
+  /root/.venv-optiq-mujoco/bin/python scripts/verify_v5.py benchmark=hopper seed=0
 
-# Supervisor worker에서 호출하는 학습 entrypoint 예시.
+# Long runs are launched by a supervisor-managed campaign worker.
 python run_optiq_dime.py --config-name=mujoco_v5_bestof8 \
-  benchmark=hopper seed=4 alg.actor.temperature=.01 \
-  alg.actor.sinkhorn_epsilon=.1 wandb.entity=OptiQ wandb.project=v5-jaehoon
+  benchmark=hopper seed=0 alg.actor.sinkhorn_epsilon=.1 \
+  wandb.entity=OptiQ wandb.project=v5-bestk
 ```
 
-2026-09-15 검증: `test_best_of_k.py`, `test_behavior_uniform.py`, `test_v5.py`,
-`test_v4.py`, `test_v5_exploration.py`의 CPU 회귀 **62개 통과**.
-`test_real_training_replay_and_unchanged_dual_evaluation`의 Hopper/Ant GPU
-검증 **2개 통과**. GPU 검증은 각각 8 environment steps의 짧은 integration
-test이며 1M 학습 실험 결과가 아니다.
+W&B: `OptiQ/v5-bestk`; 새로운 winnerOT 이름·group·run ID·output directory.
+GPU 2 Ant seed0, GPU 3 Hopper seed0. 둘 모두 1M을 완료한 뒤 같은 GPU에서
+seed1 두 개를 시작한다. 취소된 collection-only seed0 로그는 보존한다.
+Seed4 복구는 보류 상태로 유지한다.
 
-AST 대조에서 `OptiQDIME`의 변경 메서드는 `__init__`, `_sample_action`뿐이다.
-`update_critic`, `update_actor`, `_train`은 기존과 동일하다.
-Policy/dual-evaluation/base collector 파일은 이전 Hopper 38f48bd와 Ant
-71c5ba8 source와 byte 단위로 동일함을 확인했다.
+`train/teacher_best_of_k=8`, `teacher_winner_count=64`,
+`teacher_candidate_count=512`, `teacher_uniform_mass=1`, `teacher_winner_q_gain`을
+기록한다. 후자의 gain은 winner Q와 같은 묶음의 평균 candidate Q의 차이다.
+기존 collection 지표도 유지한다. Inactive Boltzmann/density 지표는 출력하지 않는다.
+
+검증은 `tests/test_winner_distillation.py`(묶음별 twin-min, 원래 u 보존,
+정책 σ 사용, 균등 OT, full-row NLL, 두 head gradient, teacher stop-gradient),
+`tests/test_best_of_k.py`(실제 Ant/Hopper 수집·replay·TD·평가 경로), 기존
+v4/v5/exploration 회귀를 포함한다. 짧은 검증은 1M 학습 결과가 아니다.
+
+2026-09-15 검증: CPU 회귀 76개 통과, winner GPU 단위 검사 14개 통과.
+실제 Ant/Hopper GPU integration도 통과했고, 각 환경에서 batch=256,
+16 student / 64 winners / 8 candidates의 40회 update를 추가 확인했다.
+GPU 전체 회귀의 기존 v4 수치 비교 1개는 이전 commit에서도 동일하게 실패했다
+(μ-only float32 연산 차이, 약 5.5e-6). 해당 policy 코드는 변경하지 않았고
+CPU 회귀에서는 통과했다. 테스트 결과와 짧은 검증 로그는 새 캠페인
+`hopper_ant_v5_bestk_winner_ot_seeds01_20260915/validation`에 보존한다.

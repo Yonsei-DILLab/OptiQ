@@ -9,7 +9,7 @@ from hydra import compose, initialize_config_dir
 from run_optiq_dime import validate_config
 
 
-def verify(overrides=(), config_name="mujoco_v3", *, allowed_configs=None):
+def verify(overrides=(), config_name="mujoco_v3", *, allowed_configs=None, expected_teacher="conditional_mixture"):
     if config_name not in (allowed_configs or {"mujoco_v3", "v3/final"}):
         raise ValueError("Use mujoco_v3 or v3/final for the v3 launcher")
     with initialize_config_dir(config_dir=str(ROOT / "configs"), version_base=None):
@@ -22,7 +22,7 @@ def verify(overrides=(), config_name="mujoco_v3", *, allowed_configs=None):
         "no soft guard": not actor.soft_guard.enabled,
         "no policy entropy evaluation": actor.entropy_samples == 0 and not actor.entropy_diagnostics,
         "continuous conditional Gaussian policy": actor.type == "semi_implicit" and actor.get("latent_prior", "normal") == "normal",
-        "conditional-mixture teacher": actor.teacher_distribution == "conditional_mixture",
+        "requested teacher distribution": actor.teacher_distribution == expected_teacher,
         "full OT NLL": actor.distillation_loss == "conditional_ot_nll",
         "no proximal acceptance substitute": actor.get("soft_proximal_ess_fraction", 0.) == 0.,
     }

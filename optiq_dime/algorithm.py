@@ -15,6 +15,7 @@ from diffusion.dime import DIME
 
 from .policy import OptiQPolicy
 from .behavior import parse_behavior_best_of_k, select_best_of_k
+from .winner_distillation import update_winner_actor
 from .temperature import parse_temperature_schedule, scheduled_temperature
 from .critic_utils import critic_expectation
 from .distillation import conditional_ot_nll, hard_projection_mass_error
@@ -160,7 +161,7 @@ class OptiQDIME(DIME):
             data.rewards.numpy().flatten(),
         )
         actor = self.cfg.alg.actor
-        temperature = actor.temperature
+        temperature = 0.0 if actor.get("teacher_distribution") == "best_of_k_winners" else actor.temperature
         schedule_metrics = {}
         if self.temperature_schedule is not None:
             temperature, progress = scheduled_temperature(
@@ -248,6 +249,7 @@ class OptiQDIME(DIME):
             self.backup_mode,
             bool(actor.get("entropy_diagnostics", True)),
             actor.get("ot_student_action", "sample"),
+            int(actor.get("teacher_best_of_k", 1)),
         )
         self._n_updates += gradient_steps
         if guard_enabled:
@@ -291,6 +293,9 @@ class OptiQDIME(DIME):
         # every logger flush. The saved config keeps the initial value/schedule.
         log_metrics = dict(log_metrics, **schedule_metrics)
         core_metrics.update(schedule_metrics)
+        if actor.get("teacher_distribution") == "best_of_k_winners":
+            core_metrics.update({"teacher_best_of_k", "teacher_winner_count",
+                "teacher_candidate_count", "teacher_uniform_mass", "teacher_winner_q_gain"})
         anchor_metrics = {"local_best_q_gain_over_anchor", "local_improvement_fraction",
                           "local_anchor_argmax_fraction", "twin_local_delta_correlation",
                           "twin_local_improvement_sign_agreement"}
@@ -566,6 +571,7 @@ class OptiQDIME(DIME):
             "soft_proximal_ess_fraction",
             "entropy_diagnostics",
             "ot_student_action",
+            "teacher_best_of_k",
         ],
     )
     def update_actor(
@@ -597,7 +603,18 @@ class OptiQDIME(DIME):
         soft_proximal_ess_fraction: float = 0.0,
         entropy_diagnostics: bool = True,
         ot_student_action: str = "sample",
+        teacher_best_of_k: int = 1,
     ):
+        if teacher_distribution == "best_of_k_winners":
+            if (not semi_implicit or ot_student_action != "mean"
+                or distillation_loss != "conditional_ot_nll" or normalize_ot_cost
+                or density_correction or include_anchor or adaptive_density_beta
+                or soft_proximal_ess_fraction > 0 or source_q_eval != "min"
+                or isinstance(actor_state, FiniteMixtureTrainState) or teacher_best_of_k < 1):
+                raise ValueError("Winner OT requires continuous mean-action full NLL and uniform winner mass")
+            return update_winner_actor(actor_state, qf_state, observations, key,
+                num_policy_samples, proposals_per_policy_sample, teacher_best_of_k,
+                sinkhorn_epsilon, sinkhorn_iterations)
         if ot_student_action not in {"sample", "mean"}:
             raise ValueError("ot_student_action must be sample or mean")
         if ot_student_action == "mean" and (
@@ -1102,6 +1119,7 @@ class OptiQDIME(DIME):
             "backup_mode",
             "entropy_diagnostics",
             "ot_student_action",
+            "teacher_best_of_k",
         ],
     )
     def _train(
@@ -1156,6 +1174,7 @@ class OptiQDIME(DIME):
         backup_mode=None,
         entropy_diagnostics=True,
         ot_student_action="sample",
+        teacher_best_of_k=1,
     ):
         del n_env_interacts
         backup_mode = backup_mode or ("soft_td" if semi_implicit else "td")
@@ -1218,6 +1237,9 @@ class OptiQDIME(DIME):
                          "ot_row_marginal_error", "ot_col_marginal_error"):
                 actor_metrics[name] = jnp.asarray(0.0)
             actor_metrics["hard_projection_mass_tv"] = jnp.asarray(0.0)
+        if teacher_distribution == "best_of_k_winners":
+            # Do not publish inapplicable Boltzmann/density diagnostics as zeros.
+            actor_metrics = {}
         guard_metrics = {}
         guard_attempts = jnp.asarray(0.0)
         guard_accepts = jnp.asarray(0.0)
@@ -1284,6 +1306,7 @@ class OptiQDIME(DIME):
                     soft_proximal_ess_fraction,
                     entropy_diagnostics,
                     ot_student_action,
+                    teacher_best_of_k,
                 )
                 if soft_guard_enabled:
                     key, guard_key = jax.random.split(key)

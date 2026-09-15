@@ -5,10 +5,20 @@ defaults:
 
 alg:
   behavior_best_of_k: 8
+  actor:
+    teacher_distribution: best_of_k_winners
+    teacher_best_of_k: 8
+    # 16 student means; 16*4 independent winners, each from 8 full policy draws.
+    source_q_eval: min
+    source_reference: winner_distribution
+    density_correction: false
+    density_correction_beta: 0.0
+    temperature: null  # Winner law has no Boltzmann temperature.
+    teacher_std_floor: 0.0  # Use the actor sigma exactly.
 
-output_root: ../optiq-experiments/v5_bestof8/outputs
-run_name: ${task}-v5-meanOT-bestof8-collect-T${alg.actor.temperature}-eps${alg.actor.sinkhorn_epsilon}-s${seed}
+output_root: ../optiq-experiments/v5_bestof8_winner_ot/outputs
+run_name: ${task}-v5-winnerOT-Kb8-Kteacher8-Kt1-eps${alg.actor.sinkhorn_epsilon}-s${seed}
 wandb:
-  project: v5-jaehoon
-  group: ${env_name}_v5_meanOT_bestof8_collect_T${alg.actor.temperature}_eps${alg.actor.sinkhorn_epsilon}
-  job_type: v5-bestof8-collection
+  project: v5-bestk
+  group: ${env_name}_v5_winnerOT_Kb8_Kteacher8_Kt1_eps${alg.actor.sinkhorn_epsilon}
+  job_type: v5-bestof8-winner-ot

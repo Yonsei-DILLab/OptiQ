@@ -49,6 +49,7 @@ def validate_config(cfg):
     if cfg.env_name.startswith("dm_control/dog-") and cfg.task not in DOG_TASKS:
         raise ValueError(f"Invalid Dog task: {cfg.task}")
     actor = cfg.alg.actor
+    winner_teacher = actor.get("teacher_distribution") == "best_of_k_winners"
     if cfg.get("dual_mu_eval", False):
         if actor.get("type") != "semi_implicit" or actor.get("latent_prior", "normal") != "normal":
             raise ValueError("dual_mu_eval requires a continuous-latent semi-implicit actor")
@@ -58,6 +59,20 @@ def validate_config(cfg):
     )
     if backup_mode not in {"td", "soft_td"}:
         raise ValueError("critic.backup_mode must be td or soft_td")
+    if winner_teacher:
+        k = actor.get("teacher_best_of_k")
+        if isinstance(k, bool) or not isinstance(k, int) or k < 1 or k != cfg.alg.get("behavior_best_of_k", 1):
+            raise ValueError("teacher_best_of_k must be a positive integer matching behavior_best_of_k")
+        if (actor.temperature is not None or actor.get("temperature_schedule", {}).get("enabled", False)
+            or actor.density_correction or actor.density_beta != 0 or actor.adaptive_density_beta):
+            raise ValueError("Winner teacher requires temperature=null and no density correction or annealing")
+        if (actor.get("latent_prior", "normal") != "normal" or actor.get("type") != "semi_implicit"
+            or actor.get("ot_student_action") != "mean" or actor.get("distillation_loss") != "conditional_ot_nll"
+            or actor.normalize_ot_cost or actor.source_q_eval != "min" or backup_mode != "td"
+            or cfg.alg.critic.n_atoms != 1 or actor.get("source_reference") != "winner_distribution"
+            or actor.get("teacher_std_floor") != 0 or actor.proposal_std != 0
+            or cfg.alg.get("behavior_uniform_probability", 0.) != 0.):
+            raise ValueError("Winner teacher requires continuous mean OT/full NLL, live scalar twin-min, plain TD, no sigma floor or uniform replacement")
     parse_temperature_schedule(actor, backup_mode)
     if backup_mode == "soft_td" and actor.get("type") != "semi_implicit":
         raise ValueError("Soft TD requires a conditional Gaussian policy")
@@ -102,7 +117,7 @@ def validate_config(cfg):
         multiplier = float(guard.get("standard_error_multiplier", 2.0))
         if not math.isfinite(multiplier) or multiplier < 0:
             raise ValueError("soft_guard.standard_error_multiplier must be finite and nonnegative")
-    if actor.get("teacher_distribution", "realized_kde") not in {"realized_kde", "conditional_mixture"}:
+    if actor.get("teacher_distribution", "realized_kde") not in {"realized_kde", "conditional_mixture", "best_of_k_winners"}:
         raise ValueError("Unknown teacher distribution")
     if actor.get("teacher_distribution") == "conditional_mixture" and actor.get("type") != "semi_implicit":
         raise ValueError("Conditional mixture teacher requires a semi-implicit actor")
@@ -111,14 +126,14 @@ def validate_config(cfg):
         raise ValueError("ot_student_action must be sample or mean")
     if ot_student_action == "mean" and (
         actor.get("type") != "semi_implicit"
-        or actor.get("teacher_distribution") != "conditional_mixture"
+        or actor.get("teacher_distribution") not in {"conditional_mixture", "best_of_k_winners"}
         or actor.get("distillation_loss") != "conditional_ot_nll"
     ):
         raise ValueError("Mean-action OT requires a conditional-mixture teacher and conditional OT NLL")
     if actor.get("type", "implicit") not in {"implicit", "semi_implicit"}:
         raise ValueError("actor.type must be implicit or semi_implicit")
     if actor.get("type", "implicit") == "semi_implicit":
-        if actor.include_anchor or not actor.density_correction or actor.density_beta != 1.0:
+        if actor.include_anchor or (not winner_teacher and (not actor.density_correction or actor.density_beta != 1.0)):
             raise ValueError("v2 requires no teacher anchors and full beta=1 density correction")
         if actor.adaptive_density_beta:
             raise ValueError("v2 requires fixed density beta")
@@ -127,14 +142,14 @@ def validate_config(cfg):
         if backup_mode == "td" and (actor.entropy_samples < 0 or int(actor.entropy_samples) != actor.entropy_samples):
             raise ValueError("entropy_samples must be a nonnegative integer (unused by plain TD)")
         if not all(math.isfinite(float(actor[k])) for k in
-                   ("log_std_min", "log_std_max", "initial_log_std", "proposal_std_pretanh", "temperature")):
+                   ("log_std_min", "log_std_max", "initial_log_std", "proposal_std_pretanh") + (() if winner_teacher else ("temperature",))):
             raise ValueError("v2 scales and log-std limits must be finite")
         if not actor.log_std_min <= actor.initial_log_std <= actor.log_std_max or actor.log_std_min >= actor.log_std_max:
             raise ValueError("initial_log_std must lie within ordered log_std limits")
         if any(not math.isfinite(float(actor[k])) or actor[k] < 0 for k in
                ("mean_output_init_scale", "log_std_output_init_scale")):
             raise ValueError("Output initialization scales must be finite and nonnegative")
-        if actor.proposal_std_pretanh <= 0 or actor.proposal_std != actor.proposal_std_pretanh:
+        if (not winner_teacher and actor.proposal_std_pretanh <= 0) or actor.proposal_std != actor.proposal_std_pretanh:
             raise ValueError("proposal_std must equal the positive pre-tanh KDE bandwidth")
         if actor.td_noise_std != 0 or actor.td_noise_clip != 0:
             raise ValueError("Conditional Gaussian backups must not add TD smoothing")
@@ -162,7 +177,7 @@ def validate_config(cfg):
         raise ValueError("proposal_sampling_mode must be stratified or exact")
     if not 0 <= actor.density_beta <= 1:
         raise ValueError("density_beta must be between 0 and 1")
-    if actor.proposal_std <= 0 or actor.proposal_clip <= 0 or actor.temperature <= 0:
+    if actor.proposal_clip <= 0 or (not winner_teacher and (actor.proposal_std <= 0 or actor.temperature <= 0)):
         raise ValueError("Proposal scale, clip, and temperature must be positive")
     if actor.num_policy_samples < 1 or actor.proposals_per_policy_sample <= int(actor.include_anchor):
         raise ValueError("At least one random proposal per policy sample is required")
@@ -328,7 +343,7 @@ def initialize_and_run(cfg: DictConfig):
                     policy="tanh(mu(s,z)+sigma(s,z)*eps)",
                     critic_backup=model.backup_mode,
                     backup_entropy_coefficient=float(cfg.alg.actor.temperature) if soft_backup else 0.0,
-                    teacher_temperature=float(cfg.alg.actor.temperature),
+                    teacher_temperature=cfg.alg.actor.temperature,
                     entropy_estimator=("IDAC self-inclusive conditional mixture in normalized action coordinates"
                                        if soft_backup else "disabled; action sampling only"),
                     entropy_components=int(cfg.alg.actor.entropy_samples) if soft_backup else 0,
@@ -353,6 +368,17 @@ def initialize_and_run(cfg: DictConfig):
                         extraction="KL-proximal soft target; ESS selects eta multiplying Q/T and -log pi together",
                         objective_temperature=float(cfg.alg.actor.temperature),
                     )
+            if cfg.alg.actor.get("teacher_distribution") == "best_of_k_winners":
+                winner_count = int(cfg.alg.actor.num_policy_samples * cfg.alg.actor.proposals_per_policy_sample)
+                environment_metadata.update(
+                    teacher="independent best-of-k winners from current full Gaussian actor; live twin-min",
+                    teacher_objective="winner_distribution", teacher_best_of_k=int(cfg.alg.actor.teacher_best_of_k),
+                    teacher_winner_count=winner_count,
+                    teacher_candidate_count=winner_count * int(cfg.alg.actor.teacher_best_of_k),
+                    teacher_weights="uniform", teacher_density_correction=False,
+                    teacher_std_floor=0.0, teacher_bandwidth_space=None,
+                    teacher_temperature=None, teacher_pretanh_targets="original sampled u; stop-gradient",
+                )
             if model.behavior_best_of_k > 1:
                 environment_metadata["collection"] = {
                     "best_of_k": model.behavior_best_of_k,
