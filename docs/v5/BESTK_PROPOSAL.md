@@ -82,6 +82,17 @@ Q로 pilot을 고르는 방법은 추가 sampling 계산을 좋은 영역에 집
 실험·검증 원본과 비교 기준은 `/root/anal/optiq_bestk_integration_20260915`에
 저장한다. Winner-only와 collection-only 과거 소스/결과는 그대로 보존한다.
 
+2026-09-15 최신 사용자 지시에 따라, 회복 추세나 가능성이 있는 실험은 최대
+1M까지 관찰하되 지속적으로 부진한 실험은 근거를 기록하고 조기 중단한다.
+두 평가 모드의 연속 50K 구간과 같은 seed의 mean OT를 비교하며, 한 번의
+낮은 점수로 중단하지 않는다. 중단한 실험은 부분 결과로만 보고한다.
+이 기준으로 기존 winner-only seed0 두 개를 중단하고, GPU2/3에 아래의
+전체 결합 조건을 새 seed0부터 우선 배치했다. GPU0/1의 proposal-only
+실험과 seed1 큐는 유지한다. Random-pilot 대조군은 우선순위를 뒤로 미뤘다.
+실행 소스는 검증한 `88690ae`, 캠페인은
+`/root/optiq-experiments/optiq_bestk_combined_priority_v5_20260915`이다.
+구체적 판단 근거는 분석 폴더의 `ADAPTIVE_DECISION_20260915.json`에 남겼다.
+
 이 설계는 adaptive/mixture importance sampling의 일반 원리를 사용한다.
 참고: [He & Owen, Optimal mixture weights](https://arxiv.org/abs/1411.3954),
 [Agapiou et al., Importance Sampling](https://arxiv.org/abs/1511.06196).

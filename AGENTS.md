@@ -17,7 +17,13 @@
   collection to the corrected best-k proposal. It keeps T/density/OT/NLL/Kt1
   and evaluation unchanged. Compare to proposal-only Kb1; success of Kb1 alone
   does not establish success of the originally requested collection combination.
-  Compare complete fresh 1M runs against matched meanOT seeds. Keep historical
+  Latest user steering on 2026-09-15 permits rational performance early stops:
+  continue promising/recovering runs up to 1M, stop persistently poor runs and
+  explore alternatives. Assess both evaluation modes, matched meanOT windows
+  and recovery trends; record the evidence before stopping. This overrides
+  the older default prohibition below for the current best-k investigation.
+  Compare fresh runs against matched meanOT seeds; report partial budgets
+  honestly and never mark early-stopped runs as completed 1M. Keep historical
   winner-only/collection-only source snapshots and logs intact.
   Work log: `/root/anal/optiq_bestk_integration_20260915/WORKLOG.md`.
 
