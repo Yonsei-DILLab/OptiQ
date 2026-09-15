@@ -155,6 +155,16 @@ def test_random_profile_only_changes_pilot_selection_and_metadata():
     assert random == OmegaConf.to_container(verify(['benchmark=ant'], 'v5/random_proposal'), resolve=True)
 
 
+def test_combined_profile_only_adds_collection_to_corrected_teacher():
+    guided = OmegaConf.to_container(verify(['benchmark=ant'], 'mujoco_v5_bestk_proposal'), resolve=True)
+    combined = OmegaConf.to_container(verify(['benchmark=ant'], 'mujoco_v5_bestk_combined'), resolve=True)
+    expected = copy.deepcopy(guided)
+    expected['alg']['behavior_best_of_k'] = 8
+    for key in ['run_name', 'wandb', 'output_root']: expected[key] = combined[key]
+    assert combined == expected
+    assert combined == OmegaConf.to_container(verify(['benchmark=ant'], 'v5/bestk_combined'), resolve=True)
+
+
 @pytest.mark.parametrize('profile,selection', [
     ('mujoco_v5', 'first'), ('mujoco_v5_bestk_proposal', 'unknown'),
 ])

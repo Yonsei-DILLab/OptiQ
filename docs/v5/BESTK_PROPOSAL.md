@@ -87,6 +87,26 @@ Q로 pilot을 고르는 방법은 추가 sampling 계산을 좋은 영역에 집
 [Agapiou et al., Importance Sampling](https://arxiv.org/abs/1511.06196).
 두 논문이 이 RL 결합의 성능을 보장한다는 뜻은 아니다.
 
+## 행동 수집까지 결합하는 조건
+
+`mujoco_v5_bestk_combined` / `v5/bestk_combined`는 위 proposal-only 조건에
+`alg.behavior_best_of_k=8`만 추가한다. Warmup5K 이후 full Gaussian 후보8개
+중 live twin-min Q로 행동을 선택하고, 실행한 행동을 replay에 저장한다.
+Teacher pilot은 원래 OptiQ 목표와 같은 twin-mean Q로 고른다. 서로 역할이
+다르며, 수집의 min-Q를 teacher의 Q 정의에 덮어쓰지 않는다.
+
+T, beta1 정확한 proposal 밀도 보정, sigma floor, mean OT, full NLL,
+plain TD/Kt1과 기존 두 평가를 모두 유지한다. 평가에는 best-k를 넣지 않는다.
+이는 기존 winner-only의 목표 변경과 구분되는 전체 결합 조건이다.
+Proposal-only Kb1이 회복하는 것만으로 collection Kb8까지 성공했다고
+판단하지 않는다. 같은 seed의 Kb1과 비교해 수집 선택의 기여를 따로 확인한다.
+
+전체 결합 검증: 관련 CPU 회귀85개 통과. Ant/Hopper 각각 batch256에서
+40회 update와40회 collection best8을 확인했다. T=.25/.01과 beta1이 활성화되고
+plain TD/기존 paired 평가가 유지된다. 별도 실제 경로 검사에서 replay 행동
+일치, TD/평가 중 collector selector 미호출, 평가 RNG 격리도 확인했다.
+이 검사는 구현 검증이며1M 성능 성공을 의미하지 않는다.
+
 2026-09-15 구현 검증: CPU 회귀 90개 통과. Ant/Hopper 각각 batch256에서
 40회 GPU update와 기존 paired 평가 통과. TD, collector, policy, evaluation,
 NLL, Sinkhorn, canonical v5 config는 이전 commit과 동일하다.

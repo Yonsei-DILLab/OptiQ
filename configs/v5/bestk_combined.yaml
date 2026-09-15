@@ -1,0 +1,14 @@
+# @package _global_
+defaults:
+  - /v5/bestk_proposal
+  - _self_
+
+alg:
+  # Full requested training combination: collection selection plus corrected teacher.
+  behavior_best_of_k: 8
+
+output_root: ../optiq-experiments/v5_bestk_combined/outputs
+run_name: ${task}-v5-Kb8-bestkProposal8-mix${alg.actor.proposal_guided_fraction}-T${alg.actor.temperature}-eps${alg.actor.sinkhorn_epsilon}-s${seed}
+wandb:
+  group: ${env_name}_v5_Kb8_bestkProposal8_mix${alg.actor.proposal_guided_fraction}_T${alg.actor.temperature}_eps${alg.actor.sinkhorn_epsilon}
+  job_type: v5-bestk-combined

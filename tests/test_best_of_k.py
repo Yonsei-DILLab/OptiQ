@@ -99,11 +99,12 @@ def test_winner_profile_changes_only_teacher_and_collection_settings():
 
 
 @pytest.mark.parametrize('task', ['hopper', 'ant'])
-def test_real_training_replay_and_unchanged_dual_evaluation(tmp_path, monkeypatch, task):
+@pytest.mark.parametrize('profile', ['mujoco_v5_bestof8', 'mujoco_v5_bestk_combined'])
+def test_real_training_replay_and_unchanged_dual_evaluation(tmp_path, monkeypatch, task, profile):
     cfg = verify([f'benchmark={task}', 'seed=4', f'output_root={tmp_path}',
         'alg.batch_size=4', 'alg.buffer_size=32', 'alg.learning_starts=2',
         'alg.actor.learning_starts=2', 'num_eval_episodes=2', 'eval_interval=4',
-        'diagnostic_interval=4', 'checkpoint_interval=4'], 'mujoco_v5_bestof8')
+        'diagnostic_interval=4', 'checkpoint_interval=4'], profile)
     model, callbacks = create_algorithm(cfg)
     model.set_logger(configure(str(tmp_path / 'test_logs'), ['csv']))
     callback = callbacks.callbacks[0]
@@ -141,6 +142,17 @@ def test_real_training_replay_and_unchanged_dual_evaluation(tmp_path, monkeypatc
         assert calls == [8] * 6 and model.behavior_best_of_k_count == 6
         assert model._n_updates == int(model.policy.actor_state.step) == 6
         assert model.backup_mode == 'td' and model.behavior_uniform_count == 0
+        if profile == 'mujoco_v5_bestk_combined':
+            import csv
+            with (tmp_path / 'test_logs' / 'progress.csv').open() as handle:
+                rows = [r for r in csv.DictReader(handle) if r.get('train/proposal_best_of_k')]
+            assert rows
+            for row in rows:
+                assert float(row['train/proposal_best_of_k']) == 8
+                assert float(row['train/proposal_pilot_selects_best']) == 1
+                assert float(row['train/density_beta_mean']) == 1
+                assert float(row['train/temperature']) == cfg.alg.actor.temperature
+                assert float(row['train/backup_entropy_term']) == 0
         np.testing.assert_allclose(model.policy.unscale_action(model.replay_buffer.actions[:8, 0]), executed, atol=1e-6)
         key = model.behavior_best_of_k_key.copy()
         policy_key, noise_key = model.policy.key.copy(), model.policy.noise_key.copy()
