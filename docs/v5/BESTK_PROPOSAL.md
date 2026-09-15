@@ -106,6 +106,19 @@ Q로 pilot을 고르는 방법은 추가 sampling 계산을 좋은 영역에 집
 Teacher pilot은 원래 OptiQ 목표와 같은 twin-mean Q로 고른다. 서로 역할이
 다르며, 수집의 min-Q를 teacher의 Q 정의에 덮어쓰지 않는다.
 
+수집의 Q 집계 방식은 별도 고정 체크포인트 진단으로도 비교했다. 4개
+체크포인트에 대해 min8/mean8 각각 동일한 10개 episode seed를 사용한
+총 80개 CPU episode에서, 실패한 즉시 결합 Ant250K는 −5.1 → −5.2,
+Hopper150K는 365.5 → 366.7로 평균 Q 선택만으로 회복하지 않았다.
+학습된 proposal-only400K는 Ant2274.0 → 2183.4, Hopper2981.4 → 3356.3으로
+혼합된 결과였다. Episode는 학습 seed 반복이 아니며, 이 진단으로 전체
+학습 실패의 원인이나 집계 방식 변경의 학습 효과를 확정할 수 없다.
+따라서 현재 수집 min-Q를 유지한다. 원본은 분석 폴더의
+`BEHAVIOR_AGGREGATION_DIAGNOSTIC.md`와 `behavior_aggregation_diagnostic_v1`에 있다.
+[QVPO 5.1절](https://proceedings.neurips.cc/paper_files/paper/2024/file/6111371a868af8dcfba0f96ad9e25ae3-Paper-Conference.pdf)은
+policy와 critic 업데이트에 최소 Q를 쓴다고 명시하지만, 기존 OptiQ의
+mean-Q teacher와 같은 알고리즘이라는 뜻은 아니다.
+
 T, beta1 정확한 proposal 밀도 보정, sigma floor, mean OT, full NLL,
 plain TD/Kt1과 기존 두 평가를 모두 유지한다. 평가에는 best-k를 넣지 않는다.
 이는 기존 winner-only의 목표 변경과 구분되는 전체 결합 조건이다.
@@ -144,10 +157,10 @@ TD/평가에서 selector 미호출 및 평가 RNG 격리를 검사한다.
 5001 checkpoint를 별도로 비교하면 critic은 같지만 actor parameter에는
 최대1.49e-7 차이가 있었다. 이 수치 차이의 원인을 확정하지 않았으며,
 따라서 Hopper의 기존 실행과250K까지 완전히 같은 trajectory라고 간주하지 않는다.
-Ant는 별도로 실제5001/50K/100K/150K actor·critic checkpoint 파일이
-기존 proposal-only 실행과 byte 단위로 같고,165K까지 두 모드의 모든 평가
-episode return도 일치함을 확인했다. 이는 저장된 결과의 비교이며, 저장하지
-않은 replay/RNG 상태나 아직 도달하지 않은250K의 일치를 입증하지 않는다.
+Ant는 별도로 실제5001/50K/100K/150K/200K/250K actor·critic checkpoint
+파일이 기존 proposal-only 실행과 byte 단위로 같고,250K까지 두 모드의 모든
+평가 episode return도 일치함을 확인했다. 이는 저장된 결과의 비교이며,
+저장하지 않은 replay/RNG 상태를 직접 비교한 것은 아니다.
 이 설정은 성능이 입증된 기본값이 아니라 후속 가설이다.
 
 Hopper의 즉시 Kb8 결합은150K 판단 시 두 연속50K 평균이354.8 →367.5로
@@ -170,6 +183,13 @@ TD가 유지된다. 테스트한 코드상 첫 선별 transition은250001이지�
 zero-z1764.4/stochastic-z1747.5이며, 활성화 확인 자체는 성능 성공이 아니다.
 원본은 분석 폴더의 `DELAYED_HOPPER_ACTIVATION_250K.json`과
 `delayed_ant_actual_prefix_comparison.json`에 보존한다.
+
+Ant도 실제250K 로그에서Kb1, 첫 전환 후 로그250556에서Kb8과 활성 플래그1을
+확인했다. T=.25,beta1,plainTD는 유지되며 두 환경 모두 온라인 설정·진행과
+대조했다. Ant250K의 zero-z/stochastic-z 평균은1368.8/1434.3으로,
+기존 proposal-only의 같은 step과 episode 단위까지 일치한다.
+`DELAYED_ANT_ACTIVATION_250K.json`에 전환 근거를 남겼다. 이후 실제
+수집8 학습의 지속적인 성능 개선은 별도로 검증해야 한다.
 
 동기는 보정 proposal-only seed0의 별도 고정 체크포인트 진단이다.
 400K에서 동일한10개 episode seed로 비교한 실제 수집 보상은 Ant가
