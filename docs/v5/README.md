@@ -12,6 +12,7 @@ actor·critic gradient clip 없음**이다. 네트워크는 256x2, 초기 sigma=
 | [v4에서 달라진 점](CHANGES_KO.md) | 최초 mean OT 변경과 이후 epsilon/no-clip 기본값 변경, 과거 대조의 범위 |
 | [실험·재현 설정](EXPERIMENTS_KO.md) | 2x3x4 Ant grid, W&B, 현재와 과거 설정, CLI, 실행 순서, 기록 파일 |
 | [선택적 탐색](EXPLORATION.md) | uniform 10%, 40K annealing, 과거 실행과 현재 profile 상속 관계 |
+| [수집 best-of-8](BEST_OF_8.md) | Kb=8 / Kt=1, 학습 행동 수집만 twin-min 선택, 기존 두 평가 유지 |
 | [구현 검증](VALIDATION.md) | 기존 수치 parity와 새 기본값 회귀·통합 검사 |
 | [탐색 profile 검증](EXPLORATION_VALIDATION.md) | collection hook, schedule, 평가 RNG 분리 |
 | [잔여 학습 지연 진단](RESIDUAL_DIAGNOSIS_KO.md) | sigma 관련 확인 결과, frozen-model 수치 실험, 반증된 설명, 아직 식별하지 못한 전체 원인 |

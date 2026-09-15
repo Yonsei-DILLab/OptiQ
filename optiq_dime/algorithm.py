@@ -14,6 +14,7 @@ from common.type_aliases import ReplayBufferSamplesNp, RLTrainState
 from diffusion.dime import DIME
 
 from .policy import OptiQPolicy
+from .behavior import parse_behavior_best_of_k, select_best_of_k
 from .temperature import parse_temperature_schedule, scheduled_temperature
 from .critic_utils import critic_expectation
 from .distillation import conditional_ot_nll, hard_projection_mass_error
@@ -58,6 +59,11 @@ class OptiQDIME(DIME):
         )
         self.behavior_uniform_count = 0
         self.behavior_action_count = 0
+        self.behavior_best_of_k = parse_behavior_best_of_k(self.cfg.alg)
+        self.behavior_best_of_k_key = jax.random.fold_in(
+            jax.random.PRNGKey(int(self.seed or 0)), 580008
+        )
+        self.behavior_best_of_k_count = 0
         self.soft_guard_attempts = 0
         self.soft_guard_accepts = 0
         self.backup_mode = self.cfg.alg.critic.get(
@@ -74,8 +80,31 @@ class OptiQDIME(DIME):
         action, buffer_action = super()._sample_action(
             learning_starts, action_noise, n_envs
         )
+        if self.num_timesteps < learning_starts:
+            return action, buffer_action
+
+        k = getattr(self, "behavior_best_of_k", 1)
+        if k > 1:
+            if action_noise is not None:
+                raise ValueError("best-of-k collection does not support additional action_noise")
+            observations, _ = self.policy.prepare_obs(self._last_obs)
+            self.behavior_best_of_k_key, selection_key = jax.random.split(self.behavior_best_of_k_key)
+            chosen, metrics = select_best_of_k(
+                self.policy.actor_state, self.policy.qf_state, observations,
+                buffer_action, selection_key, k,
+            )
+            buffer_action = np.asarray(chosen, dtype=buffer_action.dtype)
+            if not np.isfinite(buffer_action).all():
+                raise FloatingPointError("Nonfinite best-of-k collection action")
+            action = self.policy.unscale_action(buffer_action)
+            self.behavior_best_of_k_count += n_envs
+            self.logger.record("rollout/behavior_best_of_k", k)
+            self.logger.record("rollout/best_of_k_action_count", self.behavior_best_of_k_count)
+            for name, value in metrics.items():
+                self.logger.record(f"rollout/{name}", float(value))
+
         probability = self.behavior_uniform_probability
-        if self.num_timesteps < learning_starts or probability == 0.0:
+        if probability == 0.0:
             return action, buffer_action
 
         # One Bernoulli decision per environment, replacing the entire action.

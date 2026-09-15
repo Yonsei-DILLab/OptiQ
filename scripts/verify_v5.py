@@ -8,6 +8,7 @@ from scripts.verify_v3 import verify as verify_training
 
 PROFILES = {
     "mujoco_v5": (0., False), "v5/final": (0., False),
+    "mujoco_v5_bestof8": (0., False), "v5/bestof8": (0., False),
     "mujoco_v5_behavior010": (.1, False), "v5/behavior010": (.1, False),
     "mujoco_v5_annealing": (0., True), "v5/annealing": (0., True),
     "mujoco_v5_annealing_behavior010": (.1, True), "v5/annealing_behavior010": (.1, True),
@@ -24,6 +25,9 @@ def verify(overrides=(), config_name="mujoco_v5"):
         "both mu-only evaluation modes": cfg.get("dual_mu_eval", False) and cfg.mu_only_eval,
         "uniform collection probability matches profile": cfg.alg.behavior_uniform_probability == probability,
         "temperature schedule matches profile": actor.get("temperature_schedule", {}).get("enabled", False) == annealing,
+        "best-of-k collection matches profile": cfg.alg.get("behavior_best_of_k", 1) == (
+            8 if config_name in {"mujoco_v5_bestof8", "v5/bestof8"} else 1
+        ),
     }
     for name, valid in checks.items():
         if not valid:
