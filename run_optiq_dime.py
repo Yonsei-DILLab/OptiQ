@@ -50,6 +50,21 @@ def validate_config(cfg):
         raise ValueError(f"Invalid Dog task: {cfg.task}")
     actor = cfg.alg.actor
     winner_teacher = actor.get("teacher_distribution") == "best_of_k_winners"
+    proposal_k = actor.get("proposal_best_of_k", 1)
+    guided_fraction = actor.get("proposal_guided_fraction", 0.0)
+    if isinstance(proposal_k, bool) or not isinstance(proposal_k, int) or proposal_k < 1:
+        raise ValueError("proposal_best_of_k must be a positive integer")
+    if not math.isfinite(float(guided_fraction)) or not 0 <= guided_fraction < 1:
+        raise ValueError("proposal_guided_fraction must be finite in [0,1)")
+    if (proposal_k == 1) != (guided_fraction == 0):
+        raise ValueError("Enable best-k proposals with k>1 and 0<guided_fraction<1")
+    if proposal_k > 1 and (
+        actor.get("teacher_distribution") != "conditional_mixture"
+        or actor.get("type") != "semi_implicit" or not actor.density_correction
+        or actor.density_beta != 1.0 or actor.adaptive_density_beta or actor.include_anchor
+        or actor.proposal_sampling_mode != "exact" or cfg.alg.critic.n_atoms != 1
+        or cfg.alg.critic.n_critics != 2 or actor.get("soft_proximal_ess_fraction", 0.) != 0):
+        raise ValueError("Best-k proposals preserve conditional-mixture Boltzmann teacher with full beta=1 correction")
     if cfg.get("dual_mu_eval", False):
         if actor.get("type") != "semi_implicit" or actor.get("latent_prior", "normal") != "normal":
             raise ValueError("dual_mu_eval requires a continuous-latent semi-implicit actor")
@@ -378,6 +393,17 @@ def initialize_and_run(cfg: DictConfig):
                     teacher_weights="uniform", teacher_density_correction=False,
                     teacher_std_floor=0.0, teacher_bandwidth_space=None,
                     teacher_temperature=None, teacher_pretanh_targets="original sampled u; stop-gradient",
+                )
+            if cfg.alg.actor.get("proposal_best_of_k", 1) > 1:
+                environment_metadata.update(
+                    teacher="independent best-k pilot guided Gaussian mixture with original proposal coverage",
+                    teacher_objective="Boltzmann exp(Q/T); self-normalized importance sampling",
+                    teacher_q_aggregation=cfg.alg.actor.source_q_eval,
+                    teacher_density_correction="exact conditional proposal mixture density, beta=1",
+                    proposal_best_of_k=int(cfg.alg.actor.proposal_best_of_k),
+                    proposal_guided_fraction=float(cfg.alg.actor.proposal_guided_fraction),
+                    proposal_pilot_count=int(cfg.alg.actor.num_policy_samples * cfg.alg.actor.proposal_best_of_k),
+                    teacher_pretanh_targets="fresh independent proposal draws; original u retained",
                 )
             if model.behavior_best_of_k > 1:
                 environment_metadata["collection"] = {

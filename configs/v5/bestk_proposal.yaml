@@ -1,0 +1,17 @@
+# @package _global_
+defaults:
+  - /v5/final
+  - _self_
+
+alg:
+  actor:
+    # Best-k guides the proposal; the OptiQ Boltzmann objective is unchanged.
+    proposal_best_of_k: 8
+    proposal_guided_fraction: 0.5
+
+output_root: ../optiq-experiments/v5_bestk_proposal/outputs
+run_name: ${task}-v5-bestkProposal8-mix${alg.actor.proposal_guided_fraction}-T${alg.actor.temperature}-eps${alg.actor.sinkhorn_epsilon}-s${seed}
+wandb:
+  project: v5-bestk
+  group: ${env_name}_v5_bestkProposal8_mix${alg.actor.proposal_guided_fraction}_T${alg.actor.temperature}_eps${alg.actor.sinkhorn_epsilon}
+  job_type: v5-bestk-proposal

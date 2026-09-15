@@ -16,6 +16,7 @@ from diffusion.dime import DIME
 from .policy import OptiQPolicy
 from .behavior import parse_behavior_best_of_k, select_best_of_k
 from .winner_distillation import update_winner_actor
+from .bestk_proposal import make_bestk_proposal
 from .temperature import parse_temperature_schedule, scheduled_temperature
 from .critic_utils import critic_expectation
 from .distillation import conditional_ot_nll, hard_projection_mass_error
@@ -250,6 +251,8 @@ class OptiQDIME(DIME):
             bool(actor.get("entropy_diagnostics", True)),
             actor.get("ot_student_action", "sample"),
             int(actor.get("teacher_best_of_k", 1)),
+            int(actor.get("proposal_best_of_k", 1)),
+            float(actor.get("proposal_guided_fraction", 0.0)),
         )
         self._n_updates += gradient_steps
         if guard_enabled:
@@ -293,6 +296,10 @@ class OptiQDIME(DIME):
         # every logger flush. The saved config keeps the initial value/schedule.
         log_metrics = dict(log_metrics, **schedule_metrics)
         core_metrics.update(schedule_metrics)
+        if actor.get("proposal_best_of_k", 1) > 1:
+            core_metrics.update({"proposal_best_of_k", "proposal_guided_fraction",
+                "proposal_pilot_count", "proposal_pilot_winner_q_gain",
+                "source_ess_absolute", "temperature", "density_beta_mean"})
         if actor.get("teacher_distribution") == "best_of_k_winners":
             core_metrics.update({"teacher_best_of_k", "teacher_winner_count",
                 "teacher_candidate_count", "teacher_uniform_mass", "teacher_winner_q_gain"})
@@ -572,6 +579,7 @@ class OptiQDIME(DIME):
             "entropy_diagnostics",
             "ot_student_action",
             "teacher_best_of_k",
+            "proposal_best_of_k",
         ],
     )
     def update_actor(
@@ -604,6 +612,8 @@ class OptiQDIME(DIME):
         entropy_diagnostics: bool = True,
         ot_student_action: str = "sample",
         teacher_best_of_k: int = 1,
+        proposal_best_of_k: int = 1,
+        proposal_guided_fraction: float = 0.0,
     ):
         if teacher_distribution == "best_of_k_winners":
             if (not semi_implicit or ot_student_action != "mean"
@@ -665,6 +675,8 @@ class OptiQDIME(DIME):
             else:
                 raw_actions = actor_output.reshape(batch_size, num_policy_samples, action_dim)
                 policy_samples = clip_action(raw_actions)
+            proposal_metrics = {}
+            teacher_draw_key = proposal_key
             # Define the KDE from actor centers BEFORE drawing its random candidates.
             # Density evaluation below uses this very same distribution, never a
             # KDE fitted to the newly drawn candidate cloud.
@@ -678,8 +690,16 @@ class OptiQDIME(DIME):
                         0.0 if soft_proximal_ess_fraction > 0 else proposal_std)
                 else:
                     proposal_kde = PretanhTeacherKDE(jax.lax.stop_gradient(student_u), proposal_std)
+                if proposal_best_of_k > 1:
+                    if (teacher_distribution != "conditional_mixture" or not density_correction
+                        or include_anchor or adaptive_density_beta or soft_proximal_ess_fraction > 0):
+                        raise ValueError("Best-k proposals require conditional-mixture teacher and full density correction")
+                    pilot_key, teacher_draw_key = jax.random.split(proposal_key)
+                    proposal_kde, proposal_metrics = make_bestk_proposal(
+                        proposal_kde, qf_state, observations, pilot_key,
+                        proposal_best_of_k, proposal_guided_fraction, source_q_eval)
                 proposals, proposal_u, proposal_component_indices = proposal_kde.sample(
-                    proposal_key, proposals_per_policy_sample, proposal_sampling_mode
+                    teacher_draw_key, proposals_per_policy_sample, proposal_sampling_mode
                 )
             else:
                 proposal_kde = TruncatedGaussianKDE.from_centers(
@@ -1077,6 +1097,7 @@ class OptiQDIME(DIME):
                     proximal_target_ess=jnp.asarray(soft_proximal_ess_fraction*num_proposals),
                     proximal_actual_policy_proposal=jnp.asarray(1.0),
                 )
+            metrics.update(proposal_metrics)
             return loss, metrics
 
         (loss, metrics), grads = jax.value_and_grad(actor_loss, has_aux=True)(
@@ -1120,6 +1141,7 @@ class OptiQDIME(DIME):
             "entropy_diagnostics",
             "ot_student_action",
             "teacher_best_of_k",
+            "proposal_best_of_k",
         ],
     )
     def _train(
@@ -1175,6 +1197,8 @@ class OptiQDIME(DIME):
         entropy_diagnostics=True,
         ot_student_action="sample",
         teacher_best_of_k=1,
+        proposal_best_of_k=1,
+        proposal_guided_fraction=0.0,
     ):
         del n_env_interacts
         backup_mode = backup_mode or ("soft_td" if semi_implicit else "td")
@@ -1307,6 +1331,8 @@ class OptiQDIME(DIME):
                     entropy_diagnostics,
                     ot_student_action,
                     teacher_best_of_k,
+                    proposal_best_of_k,
+                    proposal_guided_fraction,
                 )
                 if soft_guard_enabled:
                     key, guard_key = jax.random.split(key)

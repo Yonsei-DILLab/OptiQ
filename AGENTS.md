@@ -1,5 +1,18 @@
 # OptiQ Experiment Conventions
 
+- Latest user goal 2026-09-15: investigate failed best-k combinations and
+  successfully integrate best-k while respecting existing OptiQ components;
+  all four GPUs may be used. Read `docs/v5/BESTK_PROPOSAL.md`.
+  `mujoco_v5_bestk_proposal` / `v5/bestk_proposal` uses independent best-of-8
+  pilots to guide an explicit Gaussian proposal, retains original proposal mass,
+  and applies full exp(Q/T)/q_mix correction. Preserve mean OT/full NLL/plain TD
+  and existing evaluations. This first controlled variant keeps original
+  Gaussian collection (Kb=1); do not label it collection best-k.
+  It is under empirical investigation, not a demonstrated successful method.
+  Compare complete fresh 1M runs against matched meanOT seeds. Keep historical
+  winner-only/collection-only source snapshots and logs intact.
+  Work log: `/root/anal/optiq_bestk_integration_20260915/WORKLOG.md`.
+
 - Experimental worktree `/root/OptiQ-v5-bestof8`, branch `v5_bestk`:
   user requested best-of-8 collection AND winner-distribution OT distillation.
   Read `docs/v5/BEST_OF_8.md`. Opt-in `mujoco_v5_bestof8` / `v5/bestof8`
