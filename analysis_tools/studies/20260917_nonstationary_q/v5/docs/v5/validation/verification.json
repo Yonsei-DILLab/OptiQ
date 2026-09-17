@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "base_commit": "558ad09abfd28e2f60af02de06a84bc6e7c60d91",
+  "tests": 58,
+  "test_summary": "58 passed, 13 warnings in 75.13s",
+  "parity_cases": 8,
+  "all_bitwise_equal": true,
+  "launcher_dry_run_seed": 3,
+  "direct_entry_defaults_to_v5": true,
+  "benchmark_training_started": false,
+  "queue_modified": false,
+  "file_hashes": {
+    "AGENTS.md": "899c9304996f3b8337c587177823d48f031252af64d888dcab7feed31ab2da89",
+    "README.md": "a1f613e76c5ba0213b9a0f734ac461922ad4c704505520f4660614c2f25ead02",
+    "optiq_dime/algorithm.py": "7c0f47cd5a472f80a2ecd31159a02903019f81298c74e47eac536e6fed420407",
+    "run_optiq_dime.py": "11992c69f5137bb3e69d0796b69e95c30030e48cef3f559f11d7a60c94efcf71",
+    "configs/mujoco_v5.yaml": "446ae216feb05821c2f251581d99619643559961dedf8ebfa5af48c86060c7d0",
+    "configs/v5/final.yaml": "2b4ae9179b87ced60af29e676048987a79440c544d1f02dc26c6d8f8a64a6ade",
+    "scripts/run_v5.sh": "fd3b7788918a573f81f8fbd1033d55a41c6f64c197f8488eea24d315e615dede",
+    "scripts/verify_v5.py": "3c51df5d70222d2154cb5ca7782c9d326cb24ac15dd998de14c8ced2a5a7adad",
+    "scripts/supervisor_v5.sh": "63bd1347ddc02c046908665c60ee580084a198dddf08d41c775fa7a250b7318d",
+    "deploy/supervisor/optiq-v5.conf": "40a05baf17d0806cbe67104af80986d24688a7e40365328291af84ac93a3bc28",
+    "tests/test_v5.py": "5f253ae89475b9243a42f8cb94f17694a72b684b1c9586038f8b8d24332e155b",
+    "docs/v5/PSEUDOCODE.md": "2d907459dc6930bdca2a9ed5041661f1f963101197014fe1cb9bf061d1962e49",
+    "docs/v5/CHANGES_KO.md": "1589234493a5fad714aecb40c9834e3566c84ba2287b959fd9c26e28e8b97d87",
+    "docs/v5/VALIDATION.md": "e503cd89f2df423ae8e4d3434f527df47b70aadf0ccf33c59967771fbfe3e8cd"
+  },
+  "external_log_hashes": {
+    "/root/anal/v5_validation_20260913/tests.log": "4e1f456d667850150c34161deb437170b77a9de4f87aff148b35e293086dcaf6",
+    "/root/anal/v5_validation_20260913/launcher.log": "773b353a0339ec79c2fb3e41619e0139494afcedb3dedb5188c1941680ff974f",
+    "/root/anal/v5_validation_20260913/default_entry.yaml": "6e135594bc73ee2eb857cd41ea36c1c169109ddb30fb0a56d980dfb1bad4fe57",
+    "/root/anal/v5_validation_20260913/parity.log": "15d3862680736cf28059cba856fa82ee3b9762ec7af6cf307e3c63ae815fc8f7"
+  }
+}

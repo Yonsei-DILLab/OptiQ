@@ -1,0 +1,42 @@
+{
+  "descriptive_summary": {
+    "v1_256x2_fixed025": {
+      "tail": 5178.766546291428,
+      "reach3000": 335000.0,
+      "time_average_0_1m": 3665.2015575061682
+    },
+    "v5_meanOT_256x2_fixed025": {
+      "tail": 5265.045046577381,
+      "reach3000": 345000.0,
+      "time_average_0_1m": 3367.621919422439
+    }
+  },
+  "median_reach3000": {
+    "v1_256x2_fixed025": 285000.0,
+    "v5_meanOT_256x2_fixed025": 340000.0
+  },
+  "bootstrap_mean_differences_v5_minus_v1": {
+    "tail": {
+      "point": 86.27850028595276,
+      "percentile_95": [
+        -444.57377539166646,
+        924.4956007064293
+      ]
+    },
+    "reach3000": {
+      "point": 10000.0,
+      "percentile_95": [
+        -122750.0,
+        116500.0
+      ]
+    },
+    "time_average_0_1m": {
+      "point": -297.5796380837287,
+      "percentile_95": [
+        -827.1765541266441,
+        310.54896159622285
+      ]
+    }
+  },
+  "scope": "Descriptive, tiny independent seed samples; physics/source changes confound algorithm attribution. Bootstrap uncertainty is not an equivalence test or causal adjustment."
+}

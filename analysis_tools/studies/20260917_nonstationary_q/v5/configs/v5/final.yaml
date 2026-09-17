@@ -1,0 +1,23 @@
+# @package _global_
+# v5: mean-action student OT, full conditional Gaussian teacher/NLL, plain TD.
+defaults:
+  - /v4/final
+  - _self_
+
+alg:
+  actor:
+    ot_student_action: mean
+    # Fixed teacher temperature; distinct from Sinkhorn regularization.
+    temperature: 0.25
+    sinkhorn_epsilon: 0.1
+  optimizer:
+    # User-selected v5 default: plain Adam for both actor and twin critics.
+    ac_grad_norm: null
+  behavior_uniform_probability: 0.0
+
+output_root: ../optiq-experiments/v5/outputs
+run_name: ${task}-v5-meanOT-T${alg.actor.temperature}-s${seed}
+wandb:
+  project: v4-test
+  group: ${env_name}_v5_meanOT_T${alg.actor.temperature}_dual_mu_eval
+  job_type: v5-comparison

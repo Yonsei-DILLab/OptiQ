@@ -1,0 +1,5 @@
+# @package _global_
+# Final v2 entry point; checked is retained as an equivalent historical name.
+defaults:
+  - /v2/final
+  - _self_

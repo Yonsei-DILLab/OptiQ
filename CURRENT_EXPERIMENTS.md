@@ -1,4 +1,24 @@
-# Current OptiQ experiments — 2026-09-11
+# Current OptiQ experiments
+
+## 2026-09-17: non-stationary Q tracking
+
+The current 1D experiment is preserved in
+[`analysis_tools/studies/20260917_nonstationary_q/`](analysis_tools/studies/20260917_nonstationary_q/README.md).
+Its own `v5/` tree is the validated execution source: Direct GMM, exact OT,
+and Sinkhorn with learned or fixed sigma. The snapshot includes all384
+source-manifest files,448 comparison trajectories in the task plan, validation
+records, Slurm launchers, and the complete MD/HTML report generator.
+
+The experiment uses the study's source and protocol, not the historical
+repository-root entry point. Running jobs keep their frozen numerical source.
+See [execution records](analysis_tools/studies/20260917_nonstationary_q/CURRENT_STATE.md)
+and [settings](analysis_tools/studies/20260917_nonstationary_q/PROTOCOL.md).
+
+From2026-09-17 onward, commit source/configuration before launching new
+experiments and record the full commit SHA with each campaign. The current
+snapshot was committed after launch and retains the original source hashes.
+
+## 2026-09-11: historical Boltzmann and batch-one experiments
 
 The `heejoon` branch preserves the code used for the Boltzmann-backup study,
 including the current batch-one frozen-Q and GMM40 campaign. Model parameters,

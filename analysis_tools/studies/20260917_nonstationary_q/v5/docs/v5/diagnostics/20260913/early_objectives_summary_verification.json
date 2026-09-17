@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "conditions": 2,
+  "training_seeds": 4,
+  "all_initial_evaluations_identical": true,
+  "verified_input_files": 12,
+  "input_hashes": {
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed1/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/checkpoints/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/actor_state_250000.msgpack": "5c610df03a523ba336258c3591ae01cf804d30624ac08a5d2b00a3f8c43d788b",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed1/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/checkpoints/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/critic_state_250000.msgpack": "0dc015dc11f7c0792979c3bbd0edba65841bb10d9f898821b2a444550d42a6da",
+    "/root/anal/v5_residual_cause_20260913/early_frozen_states/data_seed1.npz": "416d28a9b3bbf91d1825dc8bf54b90dd12e444f75990dc5f09e5999e79c9fd32",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed0/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/checkpoints/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/actor_state_250000.msgpack": "f725359e39ac9bf3442dc2ac4348d06c80aadc156f6a66a1532ef39c3f344872",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed0/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/checkpoints/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/critic_state_250000.msgpack": "e09baadb6f476e10bdaff9a76d0172659b7c49cf689ce9300554be54efff8087",
+    "/root/anal/v5_residual_cause_20260913/early_frozen_states/data_seed0.npz": "cf24101a0c03e7956ef5f0353f90f93e295f66f8e1ee7c339f0eea6744cf53a4",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed2/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/checkpoints/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/actor_state_250000.msgpack": "33183555c724bc2f9ca438cbef527c2343f3f1ff83591e0dfb987f10db1394fc",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed2/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/checkpoints/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/critic_state_250000.msgpack": "a670308ef7e7af1c18a372e65f0532b789de3e25c9e6acfd89d537edc6a8271f",
+    "/root/anal/v5_residual_cause_20260913/early_frozen_states/data_seed2.npz": "62229d8e0945aa7f90850ea41cf820fc5a7b8a7c4f8140a4b8dea56df53fabef",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed3/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/checkpoints/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/actor_state_250000.msgpack": "609fd1cae485d866968692822f072a700362fca74b49e0984823bb0efca87ff3",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed3/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/checkpoints/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/critic_state_250000.msgpack": "78cdb05be415c94260726319c21b179f806f93fbd29fe39a0b42fe82eea8ba49",
+    "/root/anal/v5_residual_cause_20260913/early_frozen_states/data_seed3.npz": "a6c598b43225d72d51f429c4e7ba7363a05b62989744ce26f43a365830751011"
+  },
+  "original_updates": 0,
+  "memory_actor_updates": 4000,
+  "scope": "Frozen 250Kcritic, newly collected frozen-policy states, fresh Adam shared across two numerical objectives. Evaluation semantics are epsilon0 zero-z/sampledz; batched actor_apply/NumPy tanh and normalized Ant actions, mathematically same modes but not bitwise source B1/SB3 inference."
+}

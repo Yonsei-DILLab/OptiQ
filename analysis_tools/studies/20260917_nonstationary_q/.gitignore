@@ -1,0 +1,13 @@
+/runs/
+/validation_runs/
+/validation_history/
+/logs/
+/report/
+__pycache__/
+*.pyc
+*.tmp
+/GIT_PROVENANCE.json
+/STORAGE_SYNC_STATUS.json
+/ops/backup_key*
+/ops/known_hosts
+/ops/sync.lock
