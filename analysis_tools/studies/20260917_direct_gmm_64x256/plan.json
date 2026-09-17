@@ -1,0 +1,19 @@
+{
+  "campaign": "20260917_DirectGMM_T0.5_N64_M256",
+  "root": "/workspace/DirectGMM/campaigns/20260917_N64_M256",
+  "predecessor": "/workspace/DirectGMM",
+  "repo": "/workspace/DirectGMM/repo",
+  "python": "/workspace/venvs/optiq-gmm/bin/python",
+  "source_git_path": "analysis_tools/studies/20260917_nonstationary_q/v5",
+  "source_code_id": "fd918514023ae5ce20a91db53f19801549fd9d249e46e963b643d498834f5f28",
+  "config_name": "mujoco_direct_gmm",
+  "order": ["ant", "humanoid", "hopper", "walker2d", "halfcheetah"],
+  "seeds": [0, 1, 2, 3],
+  "n": 64,
+  "m": 256,
+  "temperature": 0.5,
+  "total_steps": 1000000,
+  "wandb_entity": "OptiQ",
+  "wandb_project": "DirectGMM_heejoon",
+  "wandb_group": "20260917_DirectGMM_T0.5_N64_M256"
+}
