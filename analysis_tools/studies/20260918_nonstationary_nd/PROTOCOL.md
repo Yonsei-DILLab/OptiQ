@@ -8,6 +8,11 @@ Gaussian KDE. No barycentric, categorical, or unbounded/clipped Gaussian MSE.
 
 ## Registered design
 
+All GPU matrix multiplications use `JAX_DEFAULT_MATMUL_PRECISION=highest`.
+This makes the forward/backward precision explicit across different GPU models
+and independently compiled legacy-update verification paths. Parameters remain
+float32; exact OT and analytic references use float64 on the CPU.
+
 - Dimensions1,2,4,8; N×M16×64,256×16384,1024×4096,2048×2048; seeds0–3.
 - Temperature0.25; Adam3e-4; no clipping/EMA/history/sigma annealing.
 - Seven original NLL methods are retained. Learned-sigma Sinkhorn expands to

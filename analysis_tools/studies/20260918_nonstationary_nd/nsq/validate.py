@@ -53,7 +53,11 @@ def main(root,dim):
     assert np.max(abs(np.asarray(t['P']).sum(-1)-1/16))<1e-6
     assert np.max(abs(np.asarray(t['P']).sum(-2)-np.asarray(t['w'])))<1e-6
    if method=='argmax_truncated':
-    reference,_,_=f['update'](state,t);assert tree_diff(new.params,reference.params)<3e-5
+    reference,reference_loss,_=f['update'](state,t)
+    gap=tree_diff(new.params,reference.params)
+    record['legacy_update_check']=dict(parameter_max_abs=gap,production_loss=float(value),recomputed_loss=float(reference_loss),source_max_abs=float(jnp.max(jnp.abs(t['mu']-t['positions']))))
+    write_json(dest,record)
+    assert gap<3e-5,record['legacy_update_check']
     assert np.all(np.abs(np.asarray(t['b']))<=1)
    elapsed=time.perf_counter()-tick
    # A warm update, separate from JIT compilation.
