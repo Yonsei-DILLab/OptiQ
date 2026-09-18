@@ -1,0 +1,49 @@
+{
+  "training_commit": "8cb4f237aacb61113f65e693e23236f17d77f978",
+  "device": "[CpuDevice(id=0)]",
+  "scope": "Original algorithm/guard function bodies vs current common implementation, same initialized states/base draws, final continuous settings; shared unchanged numerical helpers. Four synthetic states and small-network fixtures, production Adam/clipping parameters, full N16/K64/M16/J8/BG32. Not a long-run performance replication.",
+  "checks": {
+    "actor_trainstate": {
+      "array_equal": true,
+      "array_count": 26,
+      "additional_diagnostics": []
+    },
+    "actor_loss": {
+      "array_equal": true,
+      "array_count": 1,
+      "additional_diagnostics": []
+    },
+    "actor_rng": {
+      "array_equal": true,
+      "array_count": 1,
+      "additional_diagnostics": []
+    },
+    "critic_trainstate": {
+      "array_equal": true,
+      "array_count": 6,
+      "additional_diagnostics": []
+    },
+    "critic_metrics": {
+      "array_equal": true,
+      "array_count": 13,
+      "additional_diagnostics": [
+        "backup_policy_density_exact"
+      ]
+    },
+    "critic_rng": {
+      "array_equal": true,
+      "array_count": 1,
+      "additional_diagnostics": []
+    },
+    "guard_trainstate": {
+      "array_equal": true,
+      "array_count": 26,
+      "additional_diagnostics": []
+    },
+    "guard_metrics": {
+      "array_equal": true,
+      "array_count": 6,
+      "additional_diagnostics": []
+    }
+  }
+}

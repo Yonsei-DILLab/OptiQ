@@ -1,0 +1,319 @@
+ARCHIVED ORIGINAL DESIGN; final specification: docs/v2/PSEUDOCODE.md
+
+OptiQ + IDAC entropy estimator: pseudocode
+작성일: 2026-09-11
+======================================================================
+
+목적
+----
+IDAC의 semi-implicit 정책과 엔트로피 추정 원리만 가져온다.
+Actor 학습은 OptiQ의 OT distillation을 유지한다.
+Teacher는 실제 student의 pre-tanh 샘플 16개로 만든 별도 KDE에서
+64개를 새로 추출한 뒤 tanh를 적용한다. Student anchor는 추가하지 않는다.
+이 파일은 설계 문서이며, 학습 코드 변경 또는 실행을 의미하지 않는다.
+
+반드시 구분할 세 분포
+--------------------
+1. 실제 정책 pi_theta(a|s) = E_z[k_theta(a|s,z)]
+   k_theta는 actor가 출력한 mu, sigma로 정의되는 tanh-Gaussian이다.
+
+2. 엔트로피 추정용 g_M(a|s) = (1/M) sum_i k_theta(a|s,z_i)
+   실현된 액션에 kernel을 씌우는 KDE가 아니다.
+   평가할 액션을 생성한 z의 성분을 반드시 포함한다.
+
+3. Teacher proposal q_F(b|s): 실제 student의 pre-tanh 값 u_i 16개로
+   Gaussian KDE r_F(v|s) = (1/16) sum_i Normal(v; stopgrad(u_i), h^2 I)를
+   만들고 b=tanh(v)로 보내는 분포이다.
+   q_F(b|s) = r_F(atanh(b)|s) / product_d(1-b[d]^2).
+   중심은 mu_i가 아니라 실제 실현값 u_i=mu_i+sigma_i*eps_i이다.
+   h는 pre-tanh 공간의 proposal bandwidth이며, 학습하는 actor sigma와 다르다.
+
+설정
+----
+N_STUDENT = 16
+N_TEACHER = 64
+M_ENTROPY = 16                 # 생성 성분 1개 + 독립 보조 성분 15개
+                              # 논문 기본 L=21을 그대로 복제하는 것은 아님
+TAU = existing_temperature     # backup entropy와 Boltzmann target에 같은 값
+BETA = 1                      # teacher weight = exp(Q/TAU) / q_F
+H = proposal_sigma_pretanh     # pre-tanh KDE bandwidth; actor sigma가 아님
+SAMPLING = "exact"            # "exact" 또는 "stratified"
+USE_ANCHOR = False            # student 16개를 teacher 후보에 다시 추가하지 않음
+TRANSPORT_TARGET = "argmax"    # 기존 OptiQ 설정 유지
+SOURCE_Q_AGG = existing_setting  # "mean" 또는 "min"; TD backup은 min 유지
+LOG_STD_MIN, LOG_STD_MAX = existing_safe_limits
+
+# 엔트로피 추정/백업에는 추가 TD smoothing이나 teacher KDE noise를 넣지 않는다.
+# Actor rollout은 아래의 실제 pi_theta를 사용한다.
+# Critic 구조, optimizer, UTD, replay, 종료 처리 등은 기존 설정을 유지한다.
+# H는 action-space perturbation sigma와 같은 의미가 아니다. tanh 변환으로
+# 인해 경계 근처의 실제 action-space perturbation은 더 작아진다.
+# 아래 sampling/밀도/OT 표기는 상태 하나 기준이다. Replay batch에서는
+# 각 상태마다 독립적으로 vectorize하며, 서로 다른 상태의 성분을 섞지 않는다.
+# Anchor 제거는 teacher 후보에만 해당한다. IDAC entropy의 생성 성분 z_0는
+# 하한 추정에 필요하므로 density 평균에서 제거하지 않는다.
+
+
+1. 실제 정책: 조건부 Gaussian + tanh
+======================================================================
+
+function ACTOR_PARAMS(theta, s, z):
+    mu, raw_log_std = G_theta(s, z)
+    log_std = clamp(raw_log_std, LOG_STD_MIN, LOG_STD_MAX)
+    sigma = exp(log_std)
+    return mu, log_std, sigma
+
+function SAMPLE_COMPONENT(mu, sigma):
+    eps ~ Normal(0, I)
+    u = mu + sigma * eps
+    a = tanh(u)
+    return a, u                 # density 계산을 위해 원래 u를 보존한다
+
+function SAMPLE_POLICY(theta, s):
+    z ~ p_z                    # 예: 표준정규; 모든 latent는 지정대로 독립 추출
+    mu, log_std, sigma = ACTOR_PARAMS(theta, s, z)
+    a, u = SAMPLE_COMPONENT(mu, sigma)
+    return a                   # 실제 환경에서 실행하는 액션
+
+# 추론: actor network 1회 + Gaussian noise + tanh.
+# 별도 KDE, teacher, Q 평가, OT는 추론 시 필요하지 않다.
+
+
+2. 조건부 혼합밀도: IDAC 엔트로피 추정에 사용
+======================================================================
+
+function TANH_LOG_JACOBIAN(u):
+    # log |det d(tanh(u))/du|, 안정적인 계산식
+    return sum_d 2 * (log(2) - u[d] - softplus(-2*u[d]))
+
+function LOG_CONDITIONAL_MIXTURE(u, mu[0:M], log_std[0:M]):
+    for i in 0 .. M-1:
+        log_normal[i] = sum_d (
+            -0.5 * ((u[d] - mu[i,d]) / exp(log_std[i,d]))**2
+            -log_std[i,d] -0.5*log(2*pi)
+        )
+
+    # 먼저 action 차원을 합쳐 joint Gaussian density를 만들고,
+    # 그 다음 mixture 성분에 대해 logsumexp한다. 순서를 바꾸면 안 된다.
+    log_g = logsumexp(log_normal) - log(M) - TANH_LOG_JACOBIAN(u)
+    return log_g
+
+function IDAC_ACTION_AND_LOG_DENSITY(theta, s, M=M_ENTROPY):
+    z[0:M] ~ iid p_z
+    mu, log_std, sigma = ACTOR_PARAMS(theta, repeat(s, M), z)
+
+    # 성분 0으로 액션 하나를 생성한다.
+    a, u = SAMPLE_COMPONENT(mu[0], sigma[0])
+
+    # 생성 성분 0도 density 평균에 포함한다: leave-one-out이 아님.
+    log_g = LOG_CONDITIONAL_MIXTURE(u, mu, log_std)
+    return a, log_g
+
+# 수학적 의미 (s, theta 고정, latent/액션 randomness에 대한 기대값):
+#   E[-log_g] = E_F[H(g_M)] <= H(pi_theta).
+# 각 샘플의 -log_g가 항상 entropy의 하한인 것은 아니다.
+# 생성 성분을 제외한 독립 혼합밀도를 쓰면 이 하한 논리가 달라진다.
+# g_M = pi_theta라고 가정하지 않는다.
+
+
+3. Critic: 실제 정책 액션 하나 + IDAC entropy estimate
+======================================================================
+
+function UPDATE_CRITIC(batch):
+    s, a, reward, s_next, terminated = batch
+
+    with no_grad:
+        # 여기서는 current actor theta를 평가 정책으로 사용한다.
+        # 기존 target actor를 사용하려면 이 함수의 모든 성분을 동일한
+        # target theta로 생성해야 하며, 평가 대상도 그 target 정책이다.
+        a_next, log_g_next = IDAC_ACTION_AND_LOG_DENSITY(theta, s_next)
+
+        # 서로 다른 액션 16개/64개를 Q 평가하는 것이 아니다.
+        # next action 1개를 각 target critic에 한 번씩 넣는다.
+        q_next = min(Q1_target(s_next, a_next),
+                     Q2_target(s_next, a_next))
+
+        y = reward + gamma * (1-terminated) * (q_next - TAU*log_g_next)
+
+    critic_loss = mean((Q1(s,a)-y)**2 + (Q2(s,a)-y)**2)
+    critic_optimizer.step(gradient(critic_loss, critic_parameters))
+    soft_update_target_critics()
+
+# terminated는 진짜 MDP terminal을 의미한다. 단순 time-limit truncation과
+# 구분하고, 해당 환경의 기존 bootstrap 처리 규칙을 유지한다.
+# 위 MSE는 scalar twin critic 예시이다. Distributional critic이면 기존의
+# 분포 target/loss 구조를 유지하면서 동일한 entropy 항을 반영한다.
+# 이 soft backup은 IDAC의 entropy estimator를 사용하는 우리의 조합이다.
+
+
+4. Teacher용 KDE: 실제 student의 pre-tanh 샘플을 중심으로 구성
+======================================================================
+
+# Actor network를 다시 통과시키지 않고, 저장한 실제 u_i를 중심으로 쓴다.
+# tanh로 bounds를 처리하므로 box rejection이나 단순 clipping은 필요 없다.
+# h>0인 Gaussian이면 변환 후 q_F는 (-1,1)^d 전체에 support를 갖는다.
+
+function BUILD_TEACHER_KDE(u_student[16,d], h):
+    centers = stopgrad(u_student)
+    return KDE(centers, h)
+
+function SAMPLE_KDE_COMPONENT(KDE, i):
+    eta[d] ~ iid Normal(0,1)
+    v = KDE.centers[i] + KDE.h * eta
+    b = tanh(v)
+    return b, v
+
+function LOG_KDE_DENSITY(KDE, v):
+    for i in 0 .. 15:
+        log_kernel[i] = sum_d (
+            -0.5*((v[d]-KDE.centers[i,d])/KDE.h)**2
+            -log(KDE.h) -0.5*log(2*pi)
+        )
+    log_r = logsumexp(log_kernel) - log(16)
+    return log_r - TANH_LOG_JACOBIAN(v)
+
+# Q는 action b에서 평가하고, IS 분모는 action-space density q_F(b)를 쓴다.
+# pre-tanh density r_F(v)를 그대로 분모에 쓰면 Jacobian이 누락된다.
+# 원래 v를 보존하고, atanh(tanh(v))로 복원하지 않는다.
+# 이 초안은 tanh bounds를 사용하며 별도 2.5-sigma hard cutoff는 넣지 않는다.
+
+
+5. OptiQ actor update: student 16 -> KDE -> teacher 64 -> OT
+======================================================================
+
+function UPDATE_ACTOR(s):
+    z[16] ~ iid p_z
+    mu, log_std, sigma = ACTOR_PARAMS(theta, repeat(s,16), z)
+    eps[16,d] ~ iid Normal(0,1)
+    u_student = mu + sigma * eps
+    a_student = tanh(u_student)               # gradient 유지
+
+    with no_grad:
+        kde = BUILD_TEACHER_KDE(u_student, H)
+
+        if SAMPLING == "exact":
+            for j in 0 .. 63:
+                i ~ UniformInteger(0,15)      # 매번 독립적으로 성분 선택
+                b_teacher[j], v_teacher[j] = SAMPLE_KDE_COMPONENT(kde, i)
+        else if SAMPLING == "stratified":
+            for i in 0 .. 15:
+                for r in 0 .. 3:
+                    b_teacher[4*i+r], v_teacher[4*i+r] = SAMPLE_KDE_COMPONENT(kde, i)
+
+        # Anchor 없음: a_student를 b_teacher에 concatenate하지 않는다.
+        # Teacher 후보는 위에서 새로 생성한 64개뿐이다.
+        # 두 경우 모두 선택된 성분의 density가 아니라 전체 mixture q_F 사용.
+        for j in 0 .. 63:
+            log_q[j] = LOG_KDE_DENSITY(kde, v_teacher[j])
+            teacher_q[j] = aggregate(
+                Q1(s,b_teacher[j]), Q2(s,b_teacher[j]), SOURCE_Q_AGG
+            )
+        weights = softmax(teacher_q / TAU - log_q)
+
+        source_mass = vector_of_length_16_filled_with(1/16)
+        for each (i,j) in {0..15} x {0..63}:
+            cost[i,j] = squared_norm(stopgrad(a_student[i])-b_teacher[j])
+        P = Sinkhorn(cost, row_mass=source_mass, col_mass=weights,
+                     epsilon=existing_sinkhorn_eps,
+                     iterations=existing_sinkhorn_iters)
+
+        # 기존 OptiQ의 target 선택 방식을 유지한다.
+        if TRANSPORT_TARGET == "argmax":
+            for i in 0 .. 15:
+                j_star[i] = argmax_j P[i,j]
+                target[i] = b_teacher[j_star[i]]
+        else if TRANSPORT_TARGET == "barycentric":
+            for i in 0 .. 15:
+                target[i] = sum_j P[i,j]*b_teacher[j] / sum_j P[i,j]
+
+    actor_loss = mean_i squared_norm(a_student[i]-stopgrad(target[i]))
+    actor_optimizer.step(gradient(actor_loss, theta))
+
+    # 이 로그에는 update 전에 저장한 mu, log_std, u_student를 사용한다.
+    with no_grad:
+        entropy_lower_sample = mean_i (
+            -LOG_CONDITIONAL_MIXTURE(u_student[i], mu, log_std)
+        )
+        teacher_ess = 1 / sum_j weights[j]**2
+        log(entropy_lower_sample, teacher_ess, actor_loss)
+
+# Teacher의 KDE 중심, 후보, Q, IS weights, OT plan, targets는 모두 고정한다.
+# Student의 mu/sigma 재매개화 경로는 끊지 않고 미분한다.
+# 이 entropy 로그는 IDAC의 self-inclusive 원리로 16개를 재사용하는 변형이다.
+# teacher 액션의 -log_q 평균은 teacher KDE의 entropy이지 실제 pi의 entropy가 아니다.
+# 별도 -entropy actor loss나 Q를 통한 actor gradient는 여기서 추가하지 않는다.
+
+
+6. 전체 학습 루프
+======================================================================
+
+initialize actor theta, twin critics, target critics, replay_buffer
+state = env.reset()
+
+for environment_step in 1 .. TOTAL_STEPS:
+    if warmup:
+        action = existing_warmup_action()
+    else:
+        action = SAMPLE_POLICY(theta, state)
+
+    next_state, reward, terminated, truncated = env.step(action)
+    replay_buffer.add(state, action, reward, next_state, terminated, truncated)
+    state = reset_if_needed(next_state, terminated, truncated)
+
+    if learning_started:
+        repeat existing_updates_per_step times:
+            batch = replay_buffer.sample(existing_batch_size)
+            UPDATE_CRITIC(batch)
+            if actor_update_due:
+                UPDATE_ACTOR(batch.states)
+
+
+7. 수학적 해석
+======================================================================
+
+A. IDAC에서 가져오는 부분
+   학습된 조건부 mu/sigma, 생성 성분을 포함한 log-mixture entropy estimator.
+   원 논문은 actor를 Q/entropy gradient로 학습한다. OT actor는 우리의 부분.
+   원 논문 식 (9)와 TF 코드의 critic backup에는 entropy 항이 없고,
+   공식 PyTorch 구현에는 entropy 항이 있다. 이 문서는 estimator의 원리를
+   가져와 soft backup에 쓰는 설계이며, 원 IDAC 전체의 재현이 아니다.
+
+B. 하나의 next action으로 가능한 이유
+   a_next의 marginal은 실제 pi_theta다. 이 액션에 Q를 평가하면서,
+   같은 액션의 entropy만 생성 성분 + 보조 성분으로 추정한다.
+   Q는 각 twin critic에서 1개 액션만 평가하고, actor 조건부 성분은 16개다.
+   Teacher KDE q_F를 next-action sampling이나 entropy에 사용하지 않는다.
+
+C. beta=1 importance correction의 의미
+   F를 고정하면 q_F(b)*exp(Q(b)/TAU)/q_F(b) = exp(Q(b)/TAU).
+   Gaussian KDE + tanh는 action box 내부 전체에 support를 갖는다.
+   별도 local hard truncation을 추가하면 kernel support 합집합 안의
+   target으로 제한된다. 이 초안에는 해당 hard truncation을 넣지 않는다.
+   실제 64개 normalized weights는 self-normalized IS 근사이며,
+   "exact" 옵션은 KDE에서 정확히 sampling한다는 뜻이지,
+   teacher 64개가 정확한 Boltzmann iid samples라는 뜻이 아니다.
+
+D. 보장 범위
+   유한 M의 entropy 하한을 넣은 backup은 정확한 log pi를 쓰는 backup과
+   구분해야 한다. 또 현재 argmax/barycentric distillation은 그 자체로
+   exact distribution matching 또는 단조 policy improvement 보장이 아니다.
+   정확한 soft policy evaluation과 Boltzmann 분포의 정확한 복구를 가정하면
+   표준 soft policy improvement 논리를 적용할 수 있다.
+
+출처
+----
+IDAC, Implicit Distributional Reinforcement Learning (NeurIPS 2020):
+  https://arxiv.org/html/2007.06159
+  특히 식 (12)-(13), (16)-(17).
+공식 원 TF entropy estimator:
+  https://github.com/zhougroup/IDAC/blob/main/stable_baselines_idac/idac/idac.py#L208-L234
+공식 PyTorch soft target:
+  https://github.com/zhougroup/IDAC/blob/main/agents/idac.py#L375-L380
+
+최종 요약
+---------
+실제 정책: tanh(mu + sigma*eps).
+Backup: 실제 정책 액션 1개 + IDAC self-inclusive entropy estimator.
+Teacher: 실제 student의 pre-tanh 샘플 16개 -> KDE -> 신규 후보 64개 -> tanh.
+Sampling: exact / stratified 유지. Anchor 없음.
+Actor: KDE-IS teacher를 고정하고 기존 OptiQ OT distillation.

@@ -1,0 +1,78 @@
+{
+  "passed": true,
+  "records": [
+    {
+      "seed": 0,
+      "mode": "sample",
+      "max_absolute_difference": 0.0,
+      "bitwise_equal": true,
+      "checked": "actor params, optimizer state, loss, next RNG and every metric"
+    },
+    {
+      "seed": 0,
+      "mode": "mean",
+      "max_absolute_difference": 0.0,
+      "bitwise_equal": true,
+      "checked": "actor params, optimizer state, loss, next RNG and every metric"
+    },
+    {
+      "seed": 1,
+      "mode": "sample",
+      "max_absolute_difference": 0.0,
+      "bitwise_equal": true,
+      "checked": "actor params, optimizer state, loss, next RNG and every metric"
+    },
+    {
+      "seed": 1,
+      "mode": "mean",
+      "max_absolute_difference": 0.0,
+      "bitwise_equal": true,
+      "checked": "actor params, optimizer state, loss, next RNG and every metric"
+    },
+    {
+      "seed": 2,
+      "mode": "sample",
+      "max_absolute_difference": 0.0,
+      "bitwise_equal": true,
+      "checked": "actor params, optimizer state, loss, next RNG and every metric"
+    },
+    {
+      "seed": 2,
+      "mode": "mean",
+      "max_absolute_difference": 0.0,
+      "bitwise_equal": true,
+      "checked": "actor params, optimizer state, loss, next RNG and every metric"
+    },
+    {
+      "seed": 3,
+      "mode": "sample",
+      "max_absolute_difference": 0.0,
+      "bitwise_equal": true,
+      "checked": "actor params, optimizer state, loss, next RNG and every metric"
+    },
+    {
+      "seed": 3,
+      "mode": "mean",
+      "max_absolute_difference": 0.0,
+      "bitwise_equal": true,
+      "checked": "actor params, optimizer state, loss, next RNG and every metric"
+    }
+  ],
+  "checkpoint_hashes": {
+    "/root/optiq-experiments/ant_v4_default_256x2_20260912T113914Z/outputs/ant_v4_T0.25_seed0/ant-v4-256x2-T0.25-s0_20260912T142801Z_0f46e158/checkpoints/ant-v4-256x2-T0.25-s0_20260912T142801Z_0f46e158/actor_state_50000.msgpack": "fd4e9bf0cd86dc494f075cf4e2fbf50ebd1a161e8eaf81bf7f6edd78228c59aa",
+    "/root/optiq-experiments/ant_v4_default_256x2_20260912T113914Z/outputs/ant_v4_T0.25_seed0/ant-v4-256x2-T0.25-s0_20260912T142801Z_0f46e158/checkpoints/ant-v4-256x2-T0.25-s0_20260912T142801Z_0f46e158/critic_state_50000.msgpack": "73170179f478af1abb051c29d64d33646c5d7e627174c4c7fe055e14c47804a5",
+    "/root/optiq-experiments/ant_v4_default_256x2_20260912T113914Z/outputs/ant_v4_T0.25_seed1/ant-v4-256x2-T0.25-s1_20260912T142801Z_5712d1dc/checkpoints/ant-v4-256x2-T0.25-s1_20260912T142801Z_5712d1dc/actor_state_50000.msgpack": "608ec1fa68d88120aaa51e1977093705017e2b40ebac380f0a86d33ef2efacbc",
+    "/root/optiq-experiments/ant_v4_default_256x2_20260912T113914Z/outputs/ant_v4_T0.25_seed1/ant-v4-256x2-T0.25-s1_20260912T142801Z_5712d1dc/checkpoints/ant-v4-256x2-T0.25-s1_20260912T142801Z_5712d1dc/critic_state_50000.msgpack": "f3c67e548ec52a090736ca2153ffc00ed92776d162f1aaee34bed41010aee209",
+    "/root/optiq-experiments/ant_v4_default_256x2_20260912T113914Z/outputs/ant_v4_T0.25_seed2/ant-v4-256x2-T0.25-s2_20260912T142802Z_7fd2fdc1/checkpoints/ant-v4-256x2-T0.25-s2_20260912T142802Z_7fd2fdc1/actor_state_50000.msgpack": "d4b816033bd131f543672c9645a48593e80d26eae2a6997a98a1d378f14e773e",
+    "/root/optiq-experiments/ant_v4_default_256x2_20260912T113914Z/outputs/ant_v4_T0.25_seed2/ant-v4-256x2-T0.25-s2_20260912T142802Z_7fd2fdc1/checkpoints/ant-v4-256x2-T0.25-s2_20260912T142802Z_7fd2fdc1/critic_state_50000.msgpack": "937da713fc022fd1c2859a8e1969b40f56c2e67bb1457e3dc87c091abe986bdc",
+    "/root/optiq-experiments/ant_v4_default_256x2_20260912T113914Z/outputs/ant_v4_T0.25_seed3/ant-v4-256x2-T0.25-s3_20260912T142801Z_2239fb12/checkpoints/ant-v4-256x2-T0.25-s3_20260912T142801Z_2239fb12/actor_state_50000.msgpack": "14c6d6d19dc9b12c64416cb8de5512ef9a91f6c10cb663c150d091e279038121",
+    "/root/optiq-experiments/ant_v4_default_256x2_20260912T113914Z/outputs/ant_v4_T0.25_seed3/ant-v4-256x2-T0.25-s3_20260912T142801Z_2239fb12/checkpoints/ant-v4-256x2-T0.25-s3_20260912T142801Z_2239fb12/critic_state_50000.msgpack": "696c2c538b8fc3c5be76662f2a4037e4645e3e437fde59b23b8b278787e54e84"
+  },
+  "current_algorithm_sha256": "7c0f47cd5a472f80a2ecd31159a02903019f81298c74e47eac536e6fed420407",
+  "baseline_source": "/root/optiq-experiments/ant_v4_default_256x2_20260912T113914Z/source",
+  "mean_ot_source": "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/source",
+  "reference_source_sha256": {
+    "sample": "d5b4e2513e27e474981a46da5855b40d5d67f4c955307053c1759054238da299",
+    "mean": "e05997663e12dd2b75c8aaa22dd726b6f918b84d6ec7a8edcbb4697cd74fac9b"
+  }
+}

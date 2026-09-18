@@ -1,0 +1,4 @@
+# @package _global_
+defaults:
+  - v4/annealing
+  - _self_
