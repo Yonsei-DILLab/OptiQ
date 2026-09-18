@@ -18,3 +18,9 @@ experiments be committed before they are launched.
   history and the source/configuration used by earlier experiments.
 
 Recent self-contained experiments are under `analysis_tools/studies/`.
+
+User clarification (2026-09-18): MuJoCo environment order is a scheduling
+preference, not a completion dependency. Independent runs should be eligible
+together and use available GPUs concurrently. Use priority/nice to express
+environment preference; add cross-environment `afterok` only when the user
+explicitly requests a completion gate. Keep explicitly deferred runs deferred.
