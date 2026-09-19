@@ -1,0 +1,71 @@
+{
+  "description": "GMM40 recipe comparisons; v5 OT vs GMM is loss-only matched within size.",
+  "gpu": 3,
+  "seeds": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "updates": 75000,
+  "chunk": 15000,
+  "temperature": 1.0,
+  "beta": 1.0,
+  "eval_samples": 32768,
+  "eval_interval": 5000,
+  "conditions": [
+    {
+      "name": "legacy_reference",
+      "method": "legacy",
+      "N": 2048,
+      "M": 2048
+    },
+    {
+      "name": "legacy_matched",
+      "method": "legacy",
+      "N": 256,
+      "M": 1024
+    },
+    {
+      "name": "monge_matched",
+      "method": "monge",
+      "N": 256,
+      "M": 1024
+    },
+    {
+      "name": "v5_ot_matched",
+      "method": "v5_ot",
+      "N": 256,
+      "M": 1024
+    },
+    {
+      "name": "gmm_matched",
+      "method": "gmm",
+      "N": 256,
+      "M": 1024
+    },
+    {
+      "name": "gmm_small",
+      "method": "gmm",
+      "N": 16,
+      "M": 64
+    },
+    {
+      "name": "gmm_large",
+      "method": "gmm",
+      "N": 2048,
+      "M": 2048
+    },
+    {
+      "name": "v5_ot_large",
+      "method": "v5_ot",
+      "N": 2048,
+      "M": 2048
+    }
+  ],
+  "references": {
+    "legacy": "1d9394ad7e35d18856115f47983d19f81e4f136e",
+    "v5": "a3b1ffc272e54119d6ea9752ace105be47178800",
+    "heechan": "c6132fd94ec0981cb47e9b25c936ff571abf9d5b"
+  }
+}

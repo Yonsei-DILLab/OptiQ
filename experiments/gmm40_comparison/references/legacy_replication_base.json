@@ -1,0 +1,127 @@
+{
+  "phase": "replication_base",
+  "group": "gmm40-independent-base-seeds0-1-2",
+  "job_type": "replication-base",
+  "description": "Independent seeds0,1,2, from fresh random initialization: common HP19 depth5 width512 first50k recipe. This is preparation for replication, not a completed/final confirmation. No trained state is shared between seeds. Identical K2048/R1, sigma8to1 and epsilon.01to1e-4 over15k, T1,beta1,lr3e-4,300 Sinkhorn iterations, native unbounded latentgrid OptiQ. Eventual continuation recipe will be chosen using tuningseed42 evidence only, without choosing which replication seeds to retain. All three base outputs and any failures retained. Parent HP24 jobs are resource-only dependencies, not model parents. Each base50k uses102.4M target calls; new measured timing is enabled. Final frozen continuation and full three-seed paper evaluation remain outstanding.",
+  "launch_dependencies": {
+    "0": [
+      {
+        "program": "optiq-gmm40-tuning-hp24-0",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp24/000-depth5-K2048-T0.95-equalquery-polish/gmm40-K2048-M2048-anchor0-unbounded1-scale1.0-std1.0-T0.95-beta1.0-seed42-20260909T000804Z-02c34d/completed.json"
+      }
+    ],
+    "1": [
+      {
+        "program": "optiq-gmm40-tuning-hp24-1",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp24/001-depth5-K4096-T0.9-equalquery-polish/gmm40-K4096-M4096-anchor0-unbounded1-scale1.0-std1.0-T0.9-beta1.0-seed42-20260909T000808Z-6e0667/completed.json"
+      }
+    ],
+    "2": [
+      {
+        "program": "optiq-gmm40-tuning-hp24-2",
+        "completion": "/workspace/OptiQ-heechan-no-anchor/outputs/gmm40_tuning/hp24/002-depth5-K4096-T0.95-equalquery-polish/gmm40-K4096-M4096-anchor0-unbounded1-scale1.0-std1.0-T0.95-beta1.0-seed42-20260909T000811Z-cb6597/completed.json"
+      }
+    ]
+  },
+  "jobs": [
+    {
+      "seed": 0,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0003,
+      "updates": 50000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "label": "fresh-depth5-width512-seed0-base50k",
+      "anneal_updates": 15000,
+      "temperature_start": -1.0,
+      "proposal_std_start": 8.0,
+      "sinkhorn_epsilon_start": 0.01,
+      "latent_sampling": "grid"
+    },
+    {
+      "seed": 1,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0003,
+      "updates": 50000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "label": "fresh-depth5-width512-seed1-base50k",
+      "anneal_updates": 15000,
+      "temperature_start": -1.0,
+      "proposal_std_start": 8.0,
+      "sinkhorn_epsilon_start": 0.01,
+      "latent_sampling": "grid"
+    },
+    {
+      "seed": 2,
+      "batch_size": 1,
+      "hidden_dims": [
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "num_policy_samples": 2048,
+      "proposals_per_policy_sample": 1,
+      "include_anchor": false,
+      "unbounded_actions": true,
+      "coordinate_scale": 1.0,
+      "proposal_std": 1.0,
+      "temperature": 1.0,
+      "density_beta": 1.0,
+      "sinkhorn_epsilon": 0.0001,
+      "sinkhorn_iterations": 300,
+      "learning_rate": 0.0003,
+      "updates": 50000,
+      "eval_interval": 5000,
+      "eval_samples": 10000,
+      "checkpoint_interval": 5000,
+      "reference_seed": 20260909,
+      "label": "fresh-depth5-width512-seed2-base50k",
+      "anneal_updates": 15000,
+      "temperature_start": -1.0,
+      "proposal_std_start": 8.0,
+      "sinkhorn_epsilon_start": 0.01,
+      "latent_sampling": "grid"
+    }
+  ]
+}
