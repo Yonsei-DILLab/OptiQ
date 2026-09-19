@@ -1,0 +1,134 @@
+[
+  {
+    "name": "double_mass_argmax_s0",
+    "case": "double_mass",
+    "method": "argmax",
+    "seed": 0,
+    "n": 256,
+    "m": 1024,
+    "dim": 1,
+    "updates": 35000,
+    "temperature": 0.25
+  },
+  {
+    "name": "double_mass_exact_argmax_s0",
+    "case": "double_mass",
+    "method": "exact_argmax",
+    "seed": 0,
+    "n": 256,
+    "m": 1024,
+    "dim": 1,
+    "updates": 35000,
+    "temperature": 0.25
+  },
+  {
+    "name": "double_mass_monge_quantile_s0",
+    "case": "double_mass",
+    "method": "monge_quantile",
+    "seed": 0,
+    "n": 256,
+    "m": 1024,
+    "dim": 1,
+    "updates": 35000,
+    "temperature": 0.25
+  },
+  {
+    "name": "double_mass_argmax_s1",
+    "case": "double_mass",
+    "method": "argmax",
+    "seed": 1,
+    "n": 256,
+    "m": 1024,
+    "dim": 1,
+    "updates": 35000,
+    "temperature": 0.25
+  },
+  {
+    "name": "double_mass_exact_argmax_s1",
+    "case": "double_mass",
+    "method": "exact_argmax",
+    "seed": 1,
+    "n": 256,
+    "m": 1024,
+    "dim": 1,
+    "updates": 35000,
+    "temperature": 0.25
+  },
+  {
+    "name": "double_mass_monge_quantile_s1",
+    "case": "double_mass",
+    "method": "monge_quantile",
+    "seed": 1,
+    "n": 256,
+    "m": 1024,
+    "dim": 1,
+    "updates": 35000,
+    "temperature": 0.25
+  },
+  {
+    "name": "tri_split_argmax_s0",
+    "case": "tri_split",
+    "method": "argmax",
+    "seed": 0,
+    "n": 256,
+    "m": 1024,
+    "dim": 1,
+    "updates": 35000,
+    "temperature": 0.25
+  },
+  {
+    "name": "tri_split_exact_argmax_s0",
+    "case": "tri_split",
+    "method": "exact_argmax",
+    "seed": 0,
+    "n": 256,
+    "m": 1024,
+    "dim": 1,
+    "updates": 35000,
+    "temperature": 0.25
+  },
+  {
+    "name": "tri_split_monge_quantile_s0",
+    "case": "tri_split",
+    "method": "monge_quantile",
+    "seed": 0,
+    "n": 256,
+    "m": 1024,
+    "dim": 1,
+    "updates": 35000,
+    "temperature": 0.25
+  },
+  {
+    "name": "tri_split_argmax_s1",
+    "case": "tri_split",
+    "method": "argmax",
+    "seed": 1,
+    "n": 256,
+    "m": 1024,
+    "dim": 1,
+    "updates": 35000,
+    "temperature": 0.25
+  },
+  {
+    "name": "tri_split_exact_argmax_s1",
+    "case": "tri_split",
+    "method": "exact_argmax",
+    "seed": 1,
+    "n": 256,
+    "m": 1024,
+    "dim": 1,
+    "updates": 35000,
+    "temperature": 0.25
+  },
+  {
+    "name": "tri_split_monge_quantile_s1",
+    "case": "tri_split",
+    "method": "monge_quantile",
+    "seed": 1,
+    "n": 256,
+    "m": 1024,
+    "dim": 1,
+    "updates": 35000,
+    "temperature": 0.25
+  }
+]
