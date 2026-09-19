@@ -1,0 +1,19 @@
+# @package _global_
+defaults:
+  - v1_heejoon_explorer
+  - _self_
+
+algorithm_name: v2_heejoon_explorer
+alg:
+  policy_tau: 0.0
+  evaluator:
+    loss: positive_advantage_action_mse
+    q_samples: 16
+    learning_rate: ${alg.optimizer.lr_actor}
+    threshold: 0.0
+    matched_latent: true
+
+wandb:
+  entity: OptiQ
+  project: legacy_explorer
+  group: v2_heejoon_explorer_legacy_N16_M64_T025_PositiveA_K16
