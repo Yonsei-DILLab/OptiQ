@@ -161,3 +161,20 @@ dildata root: /data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/REVISION
 Reuse the original study's READ-ONLY restricted backup connection; credentials
 never enter source or reports. Source/manifests,logs,full checkpoints,data live on
 central storage. Original experiments and MuJoCo runs remain unmodified.
+
+## September19 legacy TD correction
+
+The first wave's legacy closed-loop path incorrectly sent zero TD perturbation
+std/clip through a truncated Gaussian CDF, producing NaNs on the first critic
+update. In the corrected immutable revision, zero std OR zero clip bypasses
+that sampler and returns the already-sampled legacy action unchanged. Latent
+sampling, twin TD objective, RNG split, actor fitting, target EMA and all other
+hyperparameters are unchanged. Conditional Gaussian TD does not enter this
+branch and is unchanged.
+
+The corrected revision is used ONLY for64 legacy closed-loop trials (16 failed
+N16/M64 replacements plus48 not-yet-started larger trials). Completed analytic,
+replayed-Q and NLL results and their checkpoints stay under the original
+cc11f537af330e23e1cc77cb94a9426660b55ebb revision. Validate independent TD
+target/loss/gradient and finite actual closed-loop checkpoint continuation in
+all four dimensions before registering corrected production runs.

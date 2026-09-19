@@ -346,10 +346,17 @@ class OptiQDIME(DIME):
                 target_actor_state, next_observations, actor_key, deterministic=False
             )
             if not semi_implicit:
-                next_actions = sample_truncated_gaussian(
-                    noise_key, next_actions, repeats=1, std=td_noise_std,
-                    perturb_clip=td_noise_clip, include_anchor=False,
-                )[:, 0]
+                # A zero-width perturbation is the identity, not a Gaussian
+                # CDF evaluated with std=0 (which produces 0/0 at the anchor).
+                next_actions = jax.lax.cond(
+                    (jnp.asarray(td_noise_std) == 0) | (jnp.asarray(td_noise_clip) == 0),
+                    lambda a: a,
+                    lambda a: sample_truncated_gaussian(
+                        noise_key, a, repeats=1, std=td_noise_std,
+                        perturb_clip=td_noise_clip, include_anchor=False,
+                    )[:, 0],
+                    next_actions,
+                )
             entropy_adjustment = jnp.zeros_like(rewards)
         next_actions = jax.lax.stop_gradient(next_actions)
 
