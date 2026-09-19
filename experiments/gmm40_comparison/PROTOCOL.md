@@ -108,7 +108,9 @@ independent-reference metrics give a finite-sample floor.
    bins[-50,50]^2 plus outside bin). Mean logp alone is not distribution fidelity.
 4. Independent teacher probe: candidates, Q, proposal log-density, weights, ESS,
    mode masses; separate teacher error from actor/teacher mode discrepancy.
-5. Sinkhorn finite-iteration row/column residual and effective column error after
+5. Legacy effective assignment is its hard row-argmax/N; its soft P and R are
+   also saved, so hard projection mass error is not confused with soft OT.
+   Sinkhorn finite-iteration row/column residual and effective column error after
    row normalization. GMM effective plan=w_j*posterior responsibility. Usage ESS
    is not interpreted as permanent latent identities.
 6. At0,15K,30K,50K,75K retain full assignment matrices, raw AND mode/x1-sorted
@@ -124,7 +126,9 @@ results substituted for mature runs.
 
 ## Execution and storage
 
-Server heejoonorm@31.148.50.247:11717, GPU3 only; CPU6–9. Existing MuJoCo GPU0–2
+Server heejoonorm@31.148.50.247:11717, GPU3 only; CPU6–9.
+`JAX_PLATFORMS=cuda,cpu` enables the CPU callback required by the exact Monge solver;
+JAX default backend remains the single visible GPU3. Existing MuJoCo GPU0–2
 workers untouched. One tmux worker rotates15K-update checkpoint segments over
 conditions and seeds, then repeats to75K. No sample/seed filtering; failures stay
 visible. Latest checkpoints contain actor, optimizer, RNG, step and source SHA.

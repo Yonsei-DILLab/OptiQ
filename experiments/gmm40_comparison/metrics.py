@@ -83,5 +83,5 @@ def plot_snapshot(out,step,samples,ref,locs,stats,teacher,method):
     fig,axs=plt.subplots(1,2,figsize=(12,5),layout='constrained')
     for ax,a,title in [(axs[0],A,'Original row/column order'),(axs[1],A[ri][:,ci],'Sorted by nearest mode, then x1')]:
         ax.imshow(small(a),aspect='auto',origin='lower',norm=LogNorm(vmin=1e-8,vmax=max(float(a.max()),1e-7)),cmap='viridis');ax.set(title=title,xlabel='Teacher (display block)',ylabel='Student (display block)')
-    fig.suptitle(('GMM effective assignment w_j * responsibility' if method=='gmm' else 'Monge hard assignment / N' if method=='monge' else 'Row-normalized Sinkhorn R / N')+f' | step {step}')
+    fig.suptitle(('GMM effective assignment w_j * responsibility' if method=='gmm' else 'Monge hard assignment / N' if method=='monge' else 'Legacy row-argmax / N (soft P retained)' if method=='legacy' else 'Row-normalized Sinkhorn R / N')+f' | step {step}')
     fig.savefig(out/f'assignment_{step:06d}.png',dpi=150);plt.close(fig)

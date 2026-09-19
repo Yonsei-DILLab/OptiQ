@@ -127,6 +127,7 @@ def engine(method,n,m):
             A=t['R']/n
             stats.update(row_l1=jnp.abs(t['P'].sum(1)-1/n).sum(),column_l1=jnp.abs(t['P'].sum(0)-t['w']).sum(),
                          effective_column_l1=jnp.abs(A.sum(0)-t['w']).sum())
+            if legacy:A=jax.nn.one_hot(jnp.argmax(t['R'],axis=1),m)/n
         elif method=='monge':
             A=jax.nn.one_hot(t['indices'],m)/n
             stats['quantization_atom_tv']=.5*jnp.abs(A.sum(0)-t['w']).sum()

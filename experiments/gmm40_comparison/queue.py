@@ -11,7 +11,7 @@ def main():
     plan=json.loads((repo/'experiments/gmm40_comparison/plan.json').read_text());manifest=json.loads((repo/'SOURCE_MANIFEST.json').read_text())
     val=json.loads((root/'validation/VALIDATION_PASSED.json').read_text());assert val['passed'] and val['commit']==manifest['commit']
     env=os.environ.copy();env.update(CUDA_VISIBLE_DEVICES='3',OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1',MKL_NUM_THREADS='1',NUMEXPR_NUM_THREADS='1',
-        JAX_DEFAULT_MATMUL_PRECISION='highest',XLA_PYTHON_CLIENT_PREALLOCATE='false',JAX_PLATFORMS='cuda',PYTHONUNBUFFERED='1',PYTHONPATH=str(repo),WANDB_MODE='online',
+        JAX_DEFAULT_MATMUL_PRECISION='highest',XLA_PYTHON_CLIENT_PREALLOCATE='false',JAX_PLATFORMS='cuda,cpu',PYTHONUNBUFFERED='1',PYTHONPATH=str(repo),WANDB_MODE='online',
         JAX_COMPILATION_CACHE_DIR=str(root/'jax_cache'))
     env['WANDB_API_KEY']=(Path.home()/'.config/optiq-secrets/wandb_api_key').read_text().strip();env.pop('LD_LIBRARY_PATH',None)
     order=['legacy_matched','v5_ot_matched','gmm_matched','monge_matched','gmm_small','gmm_large','v5_ot_large','legacy_reference']
