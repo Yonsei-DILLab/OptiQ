@@ -78,7 +78,7 @@ def main():
     C=jnp.asarray(rng.uniform(0,.1,(1,5,19)),jnp.float32)
     P=np.asarray(sinkhorn(C,wj[None],.1,100))[0]
     err=max(abs(P.sum(0)-w2).max(),abs(P.sum(1)-.2).max());assert err<2e-6
-    report['checks']['well_conditioned_sinkhorn_max_marginal_error']=err
+    report['checks']['well_conditioned_sinkhorn_max_marginal_error']=float(err)
     # Timings include an explicit compilation warmup, followed by 100 actual updates.
     plan=json.loads((Path(__file__).parent/'plan.json').read_text())
     for condition in plan['conditions']:
