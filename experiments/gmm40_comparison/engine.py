@@ -19,7 +19,7 @@ def cfg_for(condition,seed):
     return dict(condition,seed=seed,updates=75000,temperature=1.,density_beta=1.,
         hidden_dims=[512]*5 if legacy else [256,256],learning_rate=.0003,
         learning_rate_after_50k=.0001,latent_sampling='grid' if legacy else 'iid',
-        batch_size=1,output_scale=1. if legacy else 50.,
+        matmul_precision='highest',batch_size=1,output_scale=1. if legacy else 50.,
         proposal='unbounded Gaussian KDE' if legacy else 'v5 conditional squashed Gaussian mixture',
         proposal_std_start=8.,proposal_std_final=1.,anneal_updates=15000,
         sinkhorn_epsilon_start=.01 if legacy else .1,sinkhorn_epsilon_final=.0001 if legacy else .1,

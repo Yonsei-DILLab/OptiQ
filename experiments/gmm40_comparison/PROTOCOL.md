@@ -58,6 +58,13 @@ no anchors; physical proposal std8->1 exponentially over15K, then1; squared cost
 normalized by its mean; Sinkhorn epsilon .01->1e-4 over15K,300 iterations.
 Legacy loss is action-space row-argmax MSE. No initial broadening/calibration.
 
+All new runs use `JAX_DEFAULT_MATMUL_PRECISION=highest` (FP32). This is a
+numerical difference from the historical default-precision runs, explicitly
+recorded rather than called a bitwise historical reproduction. The initial
+regression check at GPU default precision had identical loss/targets but Adam
+parameter differences up to5.8e-4 in near-zero hidden gradients. Highest precision
+passes the original-code update parity gate. All methods use the same precision.
+
 v5/GMM: IID Gaussian latent; initial sigma=.5, log sigma clipped[-5,1]; initial
 mean head scale1e-4, sigma head kernel0; conditional Gaussian teacher with pre-tanh
 sigma floor .05, IID mixture-component candidate sampling; v5 source=tanh(mu),

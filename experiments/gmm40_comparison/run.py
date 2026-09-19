@@ -20,6 +20,7 @@ def main():
     package=Path(__file__).parent;repo=package.parents[1];plan=json.loads((package/'plan.json').read_text())
     c=next(x for x in plan['conditions'] if x['name']==a.condition);cfg=cfg_for(c,a.seed)
     manifest=json.loads((repo/'SOURCE_MANIFEST.json').read_text())
+    assert jax.config.jax_default_matmul_precision=='highest'
     assert os.environ['CUDA_VISIBLE_DEVICES']=='3' and len(jax.devices())==1 and jax.default_backend()=='gpu'
     out=a.root/'runs'/f'{a.condition}_s{a.seed}';out.mkdir(parents=True,exist_ok=True)
     checkpoint=out/'latest.msgpack';actor,key,target=initialize(cfg);start_step=0;train_seconds=0.

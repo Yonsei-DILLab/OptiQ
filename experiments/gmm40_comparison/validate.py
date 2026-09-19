@@ -1,6 +1,7 @@
 """Numerical gates and representative timing before the queue can start."""
 import argparse,itertools,json,os,time
 from pathlib import Path
+import flax.serialization
 import numpy as np
 import jax
 import jax.numpy as jnp
@@ -9,12 +10,13 @@ from benchmarks.gmm40 import sampler
 from optiq_dime.transport import sinkhorn
 from .engine import cfg_for,initialize,engine,monge_indices,component_logp,draw
 from .v5_distribution import conditional_ot_nll,ConditionalGaussianProposal
-from .metrics import reference,evaluate
+from .metrics import reference,evaluate,plot_snapshot,component_stats
 
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);a=p.parse_args()
     repo=Path(__file__).resolve().parents[2];manifest=json.loads((repo/'SOURCE_MANIFEST.json').read_text())
+    assert jax.config.jax_default_matmul_precision=='highest'
     assert os.environ['CUDA_VISIBLE_DEVICES']=='3' and len(jax.devices())==1 and jax.default_backend()=='gpu'
     out=a.root/'validation';out.mkdir(parents=True,exist_ok=True)
     report=dict(commit=manifest['commit'],gpu=str(jax.devices()[0]),checks={},timings={})
@@ -60,6 +62,18 @@ def main():
     gt,_=engine('gmm',8,32)['teacher'](ag,kg,tg);ot,_=engine('v5_ot',8,32)['teacher'](ao,ko,to)
     for name in ['z','b','u','w','q','log_q']:np.testing.assert_array_equal(gt[name],ot[name])
     report['checks']['paired_initialization_and_teacher_equal']=True
+    # Checkpoint actor/Adam/RNG restore gives the identical next update.
+    encoded=flax.serialization.msgpack_serialize(dict(actor=flax.serialization.to_state_dict(ag),key=np.asarray(kg)))
+    decoded=flax.serialization.msgpack_restore(encoded);restored=flax.serialization.from_state_dict(ag,decoded['actor'])
+    lhs,lk,lv=engine('gmm',8,32)['step'](ag,kg,tg)
+    rhs,rk,rv=engine('gmm',8,32)['step'](restored,decoded['key'],tg)
+    for x,y in zip(jax.tree_util.tree_leaves(lhs),jax.tree_util.tree_leaves(rhs)):np.testing.assert_array_equal(x,y)
+    np.testing.assert_array_equal(lk,rk);report['checks']['checkpoint_next_update_exact']=True
+    td,ds=engine('gmm',8,32)['diagnostics'](ag,kg,tg);td=jax.device_get(td)
+    sl=np.asarray(draw(ag,jax.random.PRNGKey(999),32768,'gmm'));loc=np.asarray(tg['locs']);sc=np.asarray(tg['scales'])
+    rr=reference(loc,sc);mm,st=evaluate(sl,rr,loc,sc)
+    plot_snapshot(out,0,sl,rr,loc,st,td,'gmm')
+    report['checks']['sample_and_assignment_figures_rendered']=True
     # Sinkhorn only promises finite-iteration approximate marginals; toy residual gate.
     C=jnp.asarray(rng.uniform(0,.1,(1,5,19)),jnp.float32)
     P=np.asarray(sinkhorn(C,wj[None],.1,100))[0]
