@@ -1,0 +1,19 @@
+# @package _global_
+defaults:
+  - mujoco_setting
+  - _self_
+
+algorithm_name: v1_heejoon_explorer
+alg:
+  policy_tau: 0.005
+  actor:
+    # Bootstrap is sampled directly from the EMA evaluator, with no extra noise.
+    td_noise_std: 0.0
+    td_noise_clip: 0.0
+    transport_target_mode: argmax
+
+wandb:
+  entity: OptiQ
+  project: legacy_explorer
+  group: v1_heejoon_explorer_legacy_N16_M64_T025_EMA0005
+progress_bar: false
