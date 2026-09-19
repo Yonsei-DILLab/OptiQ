@@ -61,9 +61,11 @@ def run(root,task,validation=False,max_updates=None,warmup=WARMUP,interrupt_at=N
  warmrng=np.random.default_rng(88001+task['seed']);start=0;elapsed=0.;train_total=0.;parent_hash=None;stream=None
  if stage=='replay':
   src=base/task['q_source'];record=json.loads((src/'COMPLETE.json').read_text())
-  assert record['source_code_id']==code and record['step']>=nsteps
+  from .imports import verify_import
+  source_code=verify_import(root,task['q_source'],src,code)
+  assert record['source_code_id']==source_code and record['step']>=nsteps
   stream=QStream(src/'qstream',critic_state(task['seed'],dim).params)
-  write_json(out/'Q_SOURCE.json',dict(name=task['q_source'],complete_sha256=sha(src/'COMPLETE.json'),code_id=code,representation='Full live twin critic parameters after EVERY critic update; direct Q(0,a), no temporal or spatial interpolation.'))
+  write_json(out/'Q_SOURCE.json',dict(name=task['q_source'],complete_sha256=sha(src/'COMPLETE.json'),code_id=source_code,consumer_code_id=code,source_commit=record['commit'],representation='Full live twin critic parameters after EVERY critic update; direct Q(0,a), no temporal or spatial interpolation.'))
  restore=out/'checkpoint.msgpack'
  if not restore.exists() and task.get('parent'):
   parent=base/task['parent'];record=json.loads((parent/'COMPLETE.json').read_text())

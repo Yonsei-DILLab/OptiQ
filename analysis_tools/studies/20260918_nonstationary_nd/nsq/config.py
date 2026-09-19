@@ -3,8 +3,8 @@ from pathlib import Path
 import json
 TAU=.25
 DIMS=[1,2,4,8]
-SIZES=[(16,64),(256,16384),(1024,4096),(2048,2048)]
-EPSILONS=[1e-4,5e-4,1e-3,5e-3,1e-2,5e-2,1e-1,5e-1,1.,5.,10.,50.]
+SIZES=[(256,1024),(512,512)]
+EPSILONS=[1e-4,1e-3,1e-2,1e-1,1.,10.]
 METHODS={'gmm_learned':('gmm',None,None),'exact_learned':('exact',None,None),
          'exact_fixed05':('exact',.5,None),'exact_fixed01':('exact',.1,None),
          'sinkhorn_fixed05':('sinkhorn',.5,.1),'sinkhorn_fixed01':('sinkhorn',.1,.1),
@@ -33,10 +33,6 @@ def tasks():
        out.append(dict(name=name(stage,family,dim,method,n,m,seed),stage=stage,family=family,dim=dim,
         method=method,n=n,m=m,seed=seed,updates=PREFIX if stage=='prefix' else UPDATES,
         parent=parent,q_source=source,actor_batch=1,priority=priority))
- for dim in DIMS:
-  for seed in range(4):out.append(dict(name=name('source','tri',dim,'sinkhorn_e0.1',16,64,seed),stage='source',
-   family='tri',dim=dim,method='sinkhorn_e0.1',n=16,m=64,seed=seed,updates=UPDATES,
-   parent=None,q_source=None,actor_batch=256,priority=20))
  return sorted(out,key=lambda t:(t['priority'],DIMS.index(t['dim']),t['seed'],list(METHODS).index(t['method'])))
 
 def raw_step(t):return t in {0,1,1000,10000,19980,20000,20001,20020,20200,21000,22000,24980,25000,25001,25020,25200,26000,27000,29980,30000,30001,30020,30200,35000}

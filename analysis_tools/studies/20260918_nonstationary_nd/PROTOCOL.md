@@ -13,13 +13,12 @@ This makes the forward/backward precision explicit across different GPU models
 and independently compiled legacy-update verification paths. Parameters remain
 float32; exact OT and analytic references use float64 on the CPU.
 
-- Dimensions1,2,4,8; N×M16×64,256×16384,1024×4096,2048×2048; seeds0–3.
+- Dimensions1,2,4,8; new N×M256×1024,512×512 (completed16×64 results retained externally); seeds0–3.
 - Temperature0.25; Adam3e-4; no clipping/EMA/history/sigma annealing.
 - Seven original NLL methods are retained. Learned-sigma Sinkhorn expands to
-  epsilon `[0.0001,0.0005,0.001,0.005,0.01,0.05,0.1,0.5,1,5,10,50]`.
+  epsilon `[0.0001,0.001,0.01,0.1,1,10]`.
   Fixed-sigma0.1 and0.5 Sinkhorn retain epsilon0.1. Including historical argmax,
-  there are19 methods. This scope was the recommended clarification option;
-  no response was received before preparation proceeded.
+  there are13 methods. The user explicitly listed six epsilon values; these take precedence over the word five.
 - Exact and Sinkhorn learned sigma use v5 conditional Gaussian actor256×2 GELU;
   log sigma clip[-5,1],initial sigma0.5. Fixed sigma overrides EVERY sampling
   and fitting path. Proposals: conditional Gaussian mixture IID candidates,
@@ -128,21 +127,20 @@ gamma0.99,target coefficient0.005,replay batch256,5K uniform exploration then
 -Assignment panels: original and action1-sorted matrix; GMM w_j gamma_ij clearly
  labelled effective assignment, not OT. Sorting by action1 is only a display
  order inD>1, not a solver or a claim of scalar geometry.
--Sweep plots:12epsilon small multiples, backed by GMM/Exact/legacy anchors;
- full19-method spaghetti plots are avoided.
+-Sweep plots:6epsilon small multiples, backed by GMM/Exact/legacy anchors;
+ full13-method spaghetti plots are avoided.
 
 ## Queue, validation, storage
 
-19methods×4dims×4sizes×4seeds=1216cells. Final trials:5 percell(double mass,
-tri mass/split/replay/closed)=6080. Prefixes2432 + source16 =8528execution nodes.
-No performance-based seed selection or early stopping.
+13methods×4dims×2 NEW sizes×4seeds=416cells. Five final trials percell =2080 new comparisons. Prefixes832 =>2912 newly executable tasks. Reuse16 completed common-Q sources through explicit IMPORTED_Q_SOURCES.json provenance; never relabel their commit. The retained16×64 subset contributes1040 completed comparisons, so the reduced scientific scope is3120 comparisons. All1823 completed old-scope final comparisons (including removed sizes/eps) remain in the retrospective report; they are not all part of the reduced scope.
 
-Prioritize N16/M64 analytic runs in every dimension, then larger matrices.
+All unfinished old-scope trials have been checkpointed/stopped. No old large-size checkpoint initializes a smaller matrix experiment. New sizes start their own actors/Adam/RNG at update0. An original run in an excluded scope is never deleted or restarted by this queue. Prioritize immediately eligible mass/split after a prefix, then common-Q replay and additional prefixes;18 fast workers plus2 multidimensional Exact workers initially,2CPUs each. No performance-based selection.
+
 Only per-trial prefix and same-seed source dependencies exist; no global stage
 or environment completion chains. Multiple workers dynamically claim ready work.
 
 Validation before main: target normalization/peak counts, exact OT vs independent
-LP, all19methods finite at small size, representative methods at all large sizes,
+LP, all13methods finite at small size, representative methods at all large sizes,
 fixed sigma invariance, GMM forbidden OT calls, archived legacy production update
 matching, full actor/critic/replay/RNG checkpoint continuation, source B256 and
 full critic replay roundtrip, diagnostic file validity. Time large Exact OT
@@ -172,9 +170,15 @@ sampling, twin TD objective, RNG split, actor fitting, target EMA and all other
 hyperparameters are unchanged. Conditional Gaussian TD does not enter this
 branch and is unchanged.
 
-The corrected revision is used ONLY for64 legacy closed-loop trials (16 failed
+Historically, the corrected revision was used ONLY for64 legacy closed-loop trials (16 failed
 N16/M64 replacements plus48 not-yet-started larger trials). Completed analytic,
 replayed-Q and NLL results and their checkpoints stay under the original
 cc11f537af330e23e1cc77cb94a9426660b55ebb revision. Validate independent TD
 target/loss/gradient and finite actual closed-loop checkpoint continuation in
 all four dimensions before registering corrected production runs.
+
+## Scope reduction / provenance (September19)
+
+The new snapshot incorporates the already-validated zero-TD-noise correction. All new tasks, including legacy closed-loop, use this corrected source. Original cc11f537/91cb9c3 snapshots remain immutable. Imported source critic trajectories retain cc11f537 commit and source IDs, checked against COMPLETE and ARTIFACTS_SHA256 manifest hashes. Streams are read-only symlinks to original storage; import validation runs actual replay updates. New actor checkpoints retain only the new consumer code ID. Q_SOURCE.json records both source and consumer IDs. No source critic retraining or new16×64 comparison is scheduled.
+
+The two new matrices both contain262144 entries (1/16 of a4194304-entry matrix). Computation is not assumed to scale linearly: solver/JIT/diagnostic timings remain measured. Temperature, architectures, schedules, updates, seeds and solver iteration limits are unchanged.

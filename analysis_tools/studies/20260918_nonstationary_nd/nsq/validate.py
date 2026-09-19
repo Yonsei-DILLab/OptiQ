@@ -70,9 +70,9 @@ def main(root,dim):
   module.sinkhorn=module.exact_plan=forbidden
   f=engine('gmm_learned',17,68,dim,'analytic');new,*_=f['step'](actor_state('gmm_learned',0,dim),jnp.zeros((1,dim)),jax.random.PRNGKey(1),jnp.asarray(schedule('prefix',0)))
   jax.block_until_ready(new.params);module.sinkhorn,module.exact_plan=saved_sinkhorn,saved_exact
-  record['checks'].append('All19 methods finite;fixed sigma constant;legacy production update equals frozen-target MSE;GMM transport forbidden')
-  for n,m in SIZES[1:]:
-   for method in ['gmm_learned','exact_learned','sinkhorn_e0.0001','sinkhorn_e0.1','sinkhorn_e50','argmax_truncated']:
+  record['checks'].append('All13 methods finite;fixed sigma constant;legacy production update equals frozen-target MSE;GMM transport forbidden')
+  for n,m in SIZES:
+   for method in ['gmm_learned','exact_learned','sinkhorn_e0.0001','sinkhorn_e0.1','sinkhorn_e10','argmax_truncated']:
     f=engine(method,n,m,dim,'analytic');state=actor_state(method,0,dim);key=jax.random.PRNGKey(1000);p=jnp.asarray(schedule('prefix',0));obs=jnp.zeros((1,dim))
     tick=time.perf_counter();new,key,t,value,gn=f['step'](state,obs,key,p);jax.block_until_ready(new.params);compile_sec=time.perf_counter()-tick
     assert np.isfinite(float(value)) and np.isfinite(float(gn))
@@ -101,6 +101,12 @@ def main(root,dim):
   fork=dict(prefix,stage='mass',name=f'validation_fork_D{dim}',updates=4,parent=prefix['name'])
   run(root,fork,True,max_updates=4,skip_evaluation=True)
   record['checks'].append('Source B256;full critic parameter stream;replay diagnostics;forked analytic checkpoint')
+  imported=dict(template,stage='replay',name=f'validation_imported_D{dim}',q_source=f'tri_source_D{dim}_sinkhorn_e0.1_N16_M64_s0',updates=3)
+  # Production source path is an audited read-only symlink; validation output stays separate.
+  link=root/'validation_runs'/imported['q_source']
+  if not link.exists():link.symlink_to(root/'runs'/imported['q_source'],target_is_directory=True)
+  run(root,imported,True,max_updates=3,skip_evaluation=True)
+  record['checks'].append('Imported original Q trajectory passes provenance checks and actual replay updates')
   record.update(passed=True,completed_unix=time.time());write_json(dest,record)
  except Exception:
   record.update(error=traceback.format_exc(),failed_unix=time.time());write_json(dest,record);raise

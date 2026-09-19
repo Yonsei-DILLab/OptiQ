@@ -1,0 +1,114 @@
+{
+  "tri_source_D1_sinkhorn_e0.1_N16_M64_s0": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D1_sinkhorn_e0.1_N16_M64_s0",
+    "complete_sha256": "cfc1681ecb5e072783234933f3d075c4411b35d730f3a8d7b00b0456409a8eeb",
+    "artifacts_manifest_sha256": "6fa9633ac1743ec884af6bb929ae22136bd49601b21e961f07e9e7c5f149e7bb"
+  },
+  "tri_source_D1_sinkhorn_e0.1_N16_M64_s1": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D1_sinkhorn_e0.1_N16_M64_s1",
+    "complete_sha256": "9e9b628068d963b91b7529e2c36adc5dd83ad94e0c59a300dc6ae7f3b3d1051b",
+    "artifacts_manifest_sha256": "aa6bb0f486bffc016173b24e66681320f7481fa27a3973983b4c8ef73f809f13"
+  },
+  "tri_source_D1_sinkhorn_e0.1_N16_M64_s2": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D1_sinkhorn_e0.1_N16_M64_s2",
+    "complete_sha256": "24889441b41bd60872c8db63f39675b61d0b048920fd5de97a7dcf3015e98052",
+    "artifacts_manifest_sha256": "dd4e736ca99f97c5640b11e1cce6001775fa40bcc5d1a08965c071a2f622c26b"
+  },
+  "tri_source_D1_sinkhorn_e0.1_N16_M64_s3": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D1_sinkhorn_e0.1_N16_M64_s3",
+    "complete_sha256": "cf50e22aa60f0fc475fbaae52fc4a99cb0fa795afe6cfd7f09fc2154a09bde1b",
+    "artifacts_manifest_sha256": "e6ad1c4429326764f44fa04285470ddc528af7c5571429869c99e943c7353d3f"
+  },
+  "tri_source_D2_sinkhorn_e0.1_N16_M64_s0": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D2_sinkhorn_e0.1_N16_M64_s0",
+    "complete_sha256": "73147fc3aa457a5261c37fcaa79177f9af06c4477de575ea18387639245a1b78",
+    "artifacts_manifest_sha256": "e3c800644f1cf33f6e58755211c52b5cd438608bbe305d65c95c49fb8a06ac39"
+  },
+  "tri_source_D2_sinkhorn_e0.1_N16_M64_s1": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D2_sinkhorn_e0.1_N16_M64_s1",
+    "complete_sha256": "29bc9f9b533ceed244176882edd07c4d3888bbb6e5d60d29f2a03ca1d2aa91c6",
+    "artifacts_manifest_sha256": "1f7357a1a45c38b88d17145b9cded07e1b374d1ec4bb9e22f6c0f10c7dc60078"
+  },
+  "tri_source_D2_sinkhorn_e0.1_N16_M64_s2": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D2_sinkhorn_e0.1_N16_M64_s2",
+    "complete_sha256": "7ec1fda5a75f2d31d11648ab870eaeace37455eadd4d0957cbc877c517394aaa",
+    "artifacts_manifest_sha256": "6959c75e074cb926e12de543af70fd6d4491108c023dfeb186834b7f0f0e283e"
+  },
+  "tri_source_D2_sinkhorn_e0.1_N16_M64_s3": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D2_sinkhorn_e0.1_N16_M64_s3",
+    "complete_sha256": "af8468e7fed17d3cf44e12be6c2535a495c326f6e6053fce92cf0aad709f47c8",
+    "artifacts_manifest_sha256": "eb1921a3ad6231efa06fc5e70eabee06ca62633da7c44b71e55b6fa1576786eb"
+  },
+  "tri_source_D4_sinkhorn_e0.1_N16_M64_s0": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D4_sinkhorn_e0.1_N16_M64_s0",
+    "complete_sha256": "d2aa0a561af5f6d9f2778db0ba9301fc89a0634656e91df6a15e3fe69fe75c50",
+    "artifacts_manifest_sha256": "52d340086e7af419dc51e45b06594605bb129bb7511dba6633a1ab002cdfec63"
+  },
+  "tri_source_D4_sinkhorn_e0.1_N16_M64_s1": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D4_sinkhorn_e0.1_N16_M64_s1",
+    "complete_sha256": "815a55676daeb706a329b4f3e55c6889c56301f3ff4219d2d91dcfe7332d2813",
+    "artifacts_manifest_sha256": "093967940c0672c7344e25f81806f1d3ca6e345f809ce63b397a51850903aa44"
+  },
+  "tri_source_D4_sinkhorn_e0.1_N16_M64_s2": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D4_sinkhorn_e0.1_N16_M64_s2",
+    "complete_sha256": "44c74a985592b802b70b19464dae4eb390a46d6385369d0cf0d25b0c91928d5a",
+    "artifacts_manifest_sha256": "135f2a0ba9073ad6722f7d571cc8a558cf0060db60a3e172f1ba7bb6cc839539"
+  },
+  "tri_source_D4_sinkhorn_e0.1_N16_M64_s3": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D4_sinkhorn_e0.1_N16_M64_s3",
+    "complete_sha256": "a306b59254d425b90e58f915d55a6b927bfe6f4dc308c3a9ac6ee575abda4588",
+    "artifacts_manifest_sha256": "13effe1a3227ee9ea8e7195497e10649e483245831bde2e93c6b701822288b9d"
+  },
+  "tri_source_D8_sinkhorn_e0.1_N16_M64_s0": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D8_sinkhorn_e0.1_N16_M64_s0",
+    "complete_sha256": "7f8660e787ba8645e46988908529875f98eff54a24b79835ab13bd0d76c0f778",
+    "artifacts_manifest_sha256": "b3ddc2e5179896ee3da6794ea9ea89e62a45c8efa4fc8457f592dea860567682"
+  },
+  "tri_source_D8_sinkhorn_e0.1_N16_M64_s1": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D8_sinkhorn_e0.1_N16_M64_s1",
+    "complete_sha256": "1825a3c0d233a916099e0eeff7b54d898b3d74b179f906ca96cc27a87dfa9a9d",
+    "artifacts_manifest_sha256": "4af32ed1e4e84030ef2bd70218eecd606204f74ed27b617ccef1e2e45645369c"
+  },
+  "tri_source_D8_sinkhorn_e0.1_N16_M64_s2": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D8_sinkhorn_e0.1_N16_M64_s2",
+    "complete_sha256": "bba3f633e3f35b2614cd654e276072b8438e0a2602520cd1c8377f6f3cbb8c01",
+    "artifacts_manifest_sha256": "a6211d708f4fd0df6812aff9626cf360249c04b9c383c9e51466170f9edd7b5d"
+  },
+  "tri_source_D8_sinkhorn_e0.1_N16_M64_s3": {
+    "source_code_id": "d67ae9ea52360354fce77a45eb2cc4e0463e975d1057530549edafeddac5370e",
+    "commit": "cc11f537af330e23e1cc77cb94a9426660b55ebb",
+    "path": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/extensions/20260918_nd/cc11f537af33/runs/tri_source_D8_sinkhorn_e0.1_N16_M64_s3",
+    "complete_sha256": "6213c8ab4c5e53df62074ade923c634ea3c56ab27b3e8d88f89fade0cbe3820f",
+    "artifacts_manifest_sha256": "8ac7276bedf6822e63bde82bbfc2e5774a2c897ef5e28c0da24e94f356a52b99"
+  }
+}
