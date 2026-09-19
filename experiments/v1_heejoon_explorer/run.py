@@ -119,8 +119,8 @@ def run(args):
         done=model.num_timesteps>=cfg.total_steps
         write(out/'progress.json',dict(step=model.num_timesteps,updates=model._n_updates,complete=done,
                                        elapsed_seconds=time.time()-start,wandb_url=run.url))
-        run.summary.update(completed=done,timesteps=model.num_timesteps,updates=model._n_updates,
-                           evaluator_gradient_steps=int(model.policy.target_actor_state.step))
+        run.summary.update(dict(completed=done,timesteps=model.num_timesteps,updates=model._n_updates,
+                                evaluator_gradient_steps=int(model.policy.target_actor_state.step)))
         verify_online(run,model.num_timesteps)
         if done:
             (out/'final_models.msgpack').write_bytes(serialization.to_bytes(checkpoint.states(model)))
