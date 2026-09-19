@@ -25,3 +25,18 @@ Up to4 additional workers service this correction after validation passes.
 Use dynamic per-trial dependencies only. Existing explicitly held studies and
 MuJoCo are outside this resume. Before ending the task, verify actual GPU work,
 checkpoint advancement, and dildata backup. Do not wait for campaign completion.
+
+## Scheduler-query resilience
+
+A transient squeue error terminated five idle workers after completed trials.
+Retry failed/timed-out/partial scheduler queries with10..60second backoff,
+outside the claim lock. Never interpret a failed query as zero live workers;
+never reclaim leases until a valid response includes the currently allocated
+job. GPU preflight and numerical code remain unchanged.
+
+Replace each original worker once. Already terminated workers are eligible
+immediately; healthy workers keep training. Their replacements use afterany
+on that concrete worker ID, so they activate only when the original terminates.
+These are operational handoffs, not completion dependencies between environments
+or algorithms. There are still at most16 main plus4 legacy concurrent workers.
+An already submitted replacement is never duplicated on a retry of the launcher.

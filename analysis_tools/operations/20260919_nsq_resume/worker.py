@@ -42,6 +42,22 @@ def preflight(root):
     r=subprocess.run([sys.executable,'-c',code],cwd=root,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=120)
     return r.returncode==0,r.stdout[-6000:]
 
+def scheduler_snapshot(job=None):
+    """Never treat an unavailable scheduler as an empty set of active leases."""
+    attempts=0
+    while not STOP:
+        try:
+            r=subprocess.run(['squeue','-h','-r','-u',os.environ['USER'],'-o','%i'],capture_output=True,text=True,check=True,timeout=30)
+            active=set(r.stdout.split())
+            if job is not None and job!='local' and job not in active:
+                raise RuntimeError('The current allocated worker is absent from scheduler response')
+            return active
+        except (subprocess.CalledProcessError,subprocess.TimeoutExpired,RuntimeError) as e:
+            attempts+=1;delay=min(60,10*2**min(attempts-1,3))
+            print('SCHEDULER_QUERY_RETRY',attempts,'delay',delay,'error',str(e),'stderr',getattr(e,'stderr',None),flush=True)
+            time.sleep(delay)
+    return None
+
 def main(args):
     global CHILD
     root=Path(args.root).resolve();event=args.event
@@ -66,10 +82,11 @@ def main(args):
         if STOP:return 75
         if not healthy:
             write(eventdir/(job+'.GPU_FAILURE.json'),dict(time=time.time(),host=socket.gethostname(),description=description));return 86
+        active=scheduler_snapshot(job)
+        if active is None:return 75
         with (root/'queue/claim.lock').open('a') as lock:
             fcntl.flock(lock,fcntl.LOCK_EX)
-            r=subprocess.run(['squeue','-h','-r','-u',os.environ['USER'],'-o','%i'],capture_output=True,text=True,check=True)
-            active=set(r.stdout.split());chosen=None;leased=0;pending=0
+            chosen=None;leased=0;pending=0
             for i,t in selected:
                 out=root/'runs'/t['name'];lease=root/'queue'/(t['name']+'.json')
                 if (out/'COMPLETE.json').exists() or (out/'FAILED.json').exists():continue
