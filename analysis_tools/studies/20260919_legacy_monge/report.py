@@ -21,7 +21,7 @@ def main():
   '두 mode 질량 변경:20K까지50:50 →25K까지80:20 →30K까지20:80 →35K까지50:50. 세 mode 분리:20K–22K에3→6,25K–27K에6→3.']
  figures=[]
  def emit(fig,name,caption):
-  fig.tight_layout();fig.savefig(a.output/name,dpi=155);plt.close(fig);figures.append((name,caption));lines.extend([f'## {caption}',f'![{caption}]({name})'])
+  fig.tight_layout();fig.savefig(a.output/name,dpi=300 if name=='assignments.png' else 155);plt.close(fig);figures.append((name,caption));lines.extend([f'## {caption}',f'![{caption}]({name})'])
  fig,axs=plt.subplots(2,4,figsize=(18,7))
  for r,case in enumerate(['double_mass','tri_split']):
   for c,step in enumerate([20000,22000,27000,35000]):
@@ -81,12 +81,12 @@ def main():
    for r in range(2):
     for c,name in enumerate(['sinkhorn','exact','monge']):
      matrix=d[name+'_plan'][np.ix_(orders[r],cols[r])]*len(d['x'])
-     axs[r,c].imshow(np.log10(np.maximum(matrix,1e-7)),aspect='auto',vmin=-7,vmax=0,cmap='magma')
+     axs[r,c].imshow(np.log10(np.maximum(matrix,1e-7)),aspect='auto',vmin=-7,vmax=0,cmap='magma',interpolation='nearest')
      axs[r,c].set(title=name+(' original' if r==0 else ' sorted'),xlabel='1,024 original candidate columns',ylabel='256 source rows')
-   emit(fig,'assignments.png','double_mass seed 0, update 25,001의 동일 baseline cloud: log10(NP), 원본·정렬; N=256, proposal=1,024')
+   emit(fig,'assignments.png','double_mass seed 0, update 25,001의 동일 baseline cloud: log10(NP), 공통 색 범위 -7~0 (어두움~밝음), 원본·정렬; N=256, proposal=1,024')
    fig,axs=plt.subplots(1,2,figsize=(10,4))
    for r,order in enumerate(orders):
-    axs[r].imshow(d['monge_bijection'][order]*len(d['x']),aspect='auto',vmin=0,vmax=1,cmap='magma')
+    axs[r].imshow(d['monge_bijection'][order]*len(d['x']),aspect='auto',vmin=0,vmax=1,cmap='magma',interpolation='nearest')
     axs[r].set(title='Monge 256 x 256 '+('original source order' if r==0 else 'sorted source order'),xlabel='256 equal-weight quantile representatives',ylabel='256 source rows')
    emit(fig,'monge_bijection.png','double_mass seed 0, update 25,001: 실제 256×256 bijection; target은 원래부터 quantile 순서')
    lines+=['위 비교용 Monge 256×1024 그림은 여러 대표점을 원래 candidate column으로 합친 표현이다. 원래 teacher w를 정확히 보존한 plan이 아니다.',
