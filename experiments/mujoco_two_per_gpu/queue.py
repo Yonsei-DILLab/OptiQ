@@ -131,7 +131,7 @@ def main():
             children[key]=(proc,metadata,log);attempted.add(key)
             write(out/'SCHEDULING.json',metadata)
             with (root/'events.jsonl').open('a') as f:f.write(json.dumps(dict(**metadata,event='launched'))+'\n')
-        write(root/'STATUS.json',dict(time=time.time(),scheduler_commit=source['commit'],pid=os.getpid(),gpus=states,failed_attempts=failed))
+        write(root/'STATUS.json',dict(time=time.time(),scheduler_commit=source['commit'],pid=os.getpid(),gpus=states,failed_attempts=failed,priority_order=plan['order']))
         if not active and not children and all(select_next(plan,e,[],attempted,failed,roots) is None for e in plan['gpus']):
             write(root/'QUEUE_DONE.json',dict(time=time.time(),failed_attempts=len(failed)));return
         time.sleep(plan['poll_seconds'])

@@ -10,9 +10,13 @@
 - v1 기존 queue에는 STOP_NEW_RUNS만 써서 현재 자식이 끝난 후 추가 dispatch를 막는다.
 - v2의 아직 대기 중인 queue worker만 종료한다. 학습 중이었다면 자동 변경을 중단한다.
 - 새 dispatcher가 기존 training process를 발견하여 이미 차지한 slot으로 계산한다.
-- 첫 추가 run은 각 환경 v1 seed1이다. 같은 algorithm 설정에서 1개/2개 합산
-  처리량을 비교하기 위함이다. 이후 order는 v2 seeds0,1 → v1 seeds2,3 → v2 seeds2,3.
+- 초기 병렬 실행 때 v1 seed1을 추가해 처리량을 확인했다. 이후 사용자 요청에 따라
+  **대기 우선순위를 v2 seeds0,1,2,3 → v1 seeds0,1,2,3으로 변경**한다. 실행 중인
+  run은 그대로 두고, 완료/실패/이미 실행 중인 run을 제외한 다음 run을 고른다.
   순서는 우선순위이며 다른 환경이나 버전의 성공을 기다리는 dependency는 없다.
+- 우선순위 변경 시 이전 dispatcher는 STOP_NEW_RUNS로 추가 dispatch만 막고
+  살아 있게 둔다. 자식 training에 terminal hangup을 전파할 수 있는 parent/tmux
+  종료를 피한다. 새 dispatcher가 active PID를 인계한다.
 - v2 GPU 검증은 기존 committed validator로 최초 실행 전에 수행한다.
 - 기존 실패/중단 run은 자동 재시도하지 않으며 다른 independent seed는 eligible하다.
 
