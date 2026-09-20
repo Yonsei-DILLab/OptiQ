@@ -67,8 +67,9 @@ def unit_tests():
     ev=toy_actor(kernel=.4);ex=toy_actor();cr=critic.replace(target_params=jnp.array([[0.,1.],[0.,-1.]]))
     tt=evaluator_teacher(ev,ex,cr,jnp.zeros((4,1)),key)
     actions=np.asarray(tt['baseline_actions'])[:,0]
-    np.testing.assert_array_equal(tt['baseline_actions'],latent_actions(ev,jnp.zeros((4,1)),tt['z']))
-    np.testing.assert_array_equal(tt['actions'],latent_actions(ex,jnp.zeros((4,1)),tt['z']))
+    # Fused JIT and eager float32 arithmetic can differ by one ULP.
+    np.testing.assert_allclose(tt['baseline_actions'],latent_actions(ev,jnp.zeros((4,1)),tt['z']),rtol=1e-6,atol=1e-7)
+    np.testing.assert_allclose(tt['actions'],latent_actions(ex,jnp.zeros((4,1)),tt['z']),rtol=1e-6,atol=1e-7)
     np.testing.assert_allclose(tt['q_eval'],np.abs(actions),rtol=1e-6)
     np.testing.assert_allclose(tt['advantage'],-np.abs(actions),rtol=1e-6)
     assert np.all(np.asarray(tt['accepted'])==0)
