@@ -7,12 +7,13 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 from scipy.stats import truncnorm
+from scipy.integrate import trapezoid
 from optiq_dime.box_gaussian import sample_box, mixture_log_prob, component_log_prob
 from optiq_dime.distillation import direct_gmm_nll
 from optiq_dime.policy import SemiImplicitActor, OptiQPolicy
 
 def test_config_and_import():
-    cfg=train.compose_config(['benchmark=humanoid','wandb.mode=disabled'])
+    cfg=train.compose_config(['benchmark=humanoid'])
     assert cfg.alg.actor.log_std_max==-1
     import optiq_dime.algorithm as a
     assert str(Path(__file__).parent) in a.__file__
@@ -24,7 +25,7 @@ def test_density_normalizes_and_matches_scipy():
         got=np.asarray(mixture_log_prob(jnp.array(x[None,:,None]),m,ls))[0]
         expected=truncnorm.logpdf(x,(-1-mu)/std,(1-mu)/std,loc=mu,scale=std)
         np.testing.assert_allclose(got,expected,rtol=2e-5,atol=.02)
-        assert abs(np.trapezoid(np.exp(got),x)-1)<2e-4
+        assert abs(trapezoid(np.exp(got),x)-1)<2e-4
 
 def test_sampling_bounds_and_moments():
     for mu,std in [(0,.367879),(.99,.05),(-1,.00673795),(1,.367879)]:
@@ -69,7 +70,7 @@ def test_environment_update(task,tmp_path,monkeypatch):
     cfg=train.compose_config([f'benchmark={task}',f'output_root={tmp_path}',
         'alg.batch_size=4','alg.buffer_size=32','alg.learning_starts=2',
         'alg.actor.learning_starts=2','num_eval_episodes=1','eval_interval=4',
-        'diagnostic_interval=4','checkpoint_interval=4','wandb.mode=disabled'])
+        'diagnostic_interval=4','checkpoint_interval=4'])
     monkeypatch.setattr(algorithm,'sinkhorn',lambda *a,**k:pytest.fail('No OT'))
     model,callbacks=train.runner.create_algorithm(cfg)
     model.set_logger(configure(str(tmp_path/'logs'),['csv']))
