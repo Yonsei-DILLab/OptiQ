@@ -24,7 +24,7 @@ Q(a)=0.25\log f(a),\quad a\in[-1,1].
 
 | 항목 | 설정 |
 |---|---|
-| N / M | N64,2048 / M4096 공통 |
+| N / M | 추가16×16,64×64 |
 | Seeds | 0,1,2,3, 총8개 run |
 | 학습 | Random initialization → 20,000 updates |
 | Actor | 원본 v5 256×2 GELU, state0, latent1D IID Gaussian, batch1 |
@@ -35,9 +35,10 @@ Q(a)=0.25\log f(a),\quad a\in[-1,1].
 | Precision | 원본 JAX float32/default matmul, GMM40의 highest override를 상속하지 않음 |
 | 평가 | 32768 새 latent/noise action histogram,256bins, KDE smoothing 없음 |
 | Fixed probe | 동일한 seed별2048 latent, training RNG와 별도 |
-| 실행 | 31.148.50.247:11717 GPU3, CPU6–9, 한 run씩5K segment round robin |
+| 실행 | 31.148.50.247:11717 GPU0–2, GPU당1run, 독립 worker별5K segment |
 
-M을 고정한 것은 N의 효과와 teacher 후보 수 효과를 분리하기 위함이다.
+기존1b1c6947d06b11d85df3400d16941ab111e56cef의 N64/2048,M4096 실험에 추가한다.
+기존 N64×M4096 대 새 N64×M64는 N 고정/M 변화 비교이며,16×16 대64×64에서는 N과 M이 함께 변한다.
 기존 크기 표 전체를 재현하는 실험은 아니다. N은 새로운 latent 표본 수이지
 독립적으로 학습되는 network/component head의 개수가 아니다.
 
@@ -100,12 +101,20 @@ checkpoint 다음 update 일치, 진단 후 actor/Adam/RNG 불변을 검사한�
 그림의 density는 모두 실제32768 actions의 histogram이며, CDF는 reference와
 component 역할 진단에만 사용한다.
 
-GPU3에서 사전검증 →8개 학습을 실행한다. GPU0–2 MuJoCo와 큐는 변경하지 않는다.
+사용자 지시로 GPU0–2 MuJoCo 학습/큐를 취소한 뒤 GPU0에서 사전검증 → GPU0–2에서8개 학습을 실행한다.
+기존 GPU3 실험의 immutable snapshot은 변경하지 않는다.
 매500step checkpoint,5K segment round robin. Training 시간과 diagnostic 시간을 분리한다.
-각 segment 뒤 MD와 그림이 embedded된 HTML 보고서를 갱신한다. 통계적 결론은
+각 segment에서 checkpoint/diagnostic을 기록하고 최종 MD와 그림이 embedded된 HTML 보고서를 작성한다. 통계적 결론은
 4seeds의 같은 step을 비교하며, seed0 figure 하나만으로 일반화하지 않는다.
 
 소스·설정·launch·본 protocol을 heejoon에 commit/push 후 실행한다. SHA,manifest,
 queue PID/run ID를 기록한다. 데이터는 legacy_monge/gradient_interference/SHA/ 아래에
 저장하고 기존 dildata collector로 회수한다. SSH/W&B keys는 포함하지 않는다.
 Toy는 로컬 상세 로그/리포트에 기록하며 기존 MuJoCo W&B run과 섞지 않는다.
+
+## 작은 M의 teacher 누락과 gradient 구분
+
+매 진단에서 세 basin의 원시 후보 수와 importance-weight 질량을 추가 저장한다.
+후보가 없는 mode의 loss 및 gradient는0이며 cosine은 정의되지 않으므로 그림에 N/A로 표시한다.
+이는 gradient 간섭이 없다는 뜻이 아니다. 원본 gradient 데이터와 old snapshot은 유지한다.
+Fixed evaluation latent2048개, histogram32768개, 진단시점 및 training update는 이전과 같다.

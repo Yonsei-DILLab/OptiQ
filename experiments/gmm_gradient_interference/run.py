@@ -23,10 +23,12 @@ def verify():
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--n',type=int,required=True)
+    p.add_argument('--m',type=int,required=True)
     p.add_argument('--seed',type=int,required=True);p.add_argument('--until',type=int,required=True);a=p.parse_args()
-    manifest=verify();plan=json.loads((Path(__file__).parent/'plan.json').read_text());m=plan['m']
-    assert a.n in plan['n_values'] and a.seed in plan['seeds'] and a.until<=plan['updates']
-    assert jax.default_backend()=='gpu' and len(jax.devices())==1 and os.environ['CUDA_VISIBLE_DEVICES']=='3'
+    manifest=verify();plan=json.loads((Path(__file__).parent/'plan.json').read_text());m=a.m
+    assert [a.n,m] in plan['sizes'] and a.seed in plan['seeds'] and a.until<=plan['updates']
+    assert jax.default_backend()=='gpu' and len(jax.devices())==1
+    assert int(os.environ['CUDA_VISIBLE_DEVICES']) in plan['gpus']
     assert jax.config.jax_default_matmul_precision is None
     out=a.root/'runs'/f'N{a.n}_M{m}_s{a.seed}';out.mkdir(parents=True,exist_ok=True)
     state,key=initialize(a.seed);train_seconds=0.;diag_seconds=0.;stop=[False]
@@ -36,7 +38,7 @@ def main():
         state=serialization.from_state_dict(state,old['actor']);key=jnp.asarray(old['key'])
         train_seconds=old['train_seconds'];diag_seconds=old['diagnostic_seconds']
     if int(state.step)>=a.until:return
-    write(out/'config.json',dict(**plan,n=a.n,seed=a.seed,source_commit=manifest['commit'],source_code_id=manifest['source_code_id']))
+    write(out/'config.json',dict(**plan,n=a.n,m=m,seed=a.seed,actual_gpu=int(os.environ['CUDA_VISIBLE_DEVICES']),source_commit=manifest['commit'],source_code_id=manifest['source_code_id']))
     write(out/'RUNNING.json',dict(pid=os.getpid(),start=time.time(),step=int(state.step),commit=manifest['commit'],until=a.until))
     for sig in (signal.SIGTERM,signal.SIGINT):signal.signal(sig,lambda *_:stop.__setitem__(0,True))
     def checkpoint():

@@ -11,14 +11,16 @@ import matplotlib.pyplot as plt
 def main():
     p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);a=p.parse_args()
     root=a.root;out=root/'report';out.mkdir(exist_ok=True);fig=out/'figures';fig.mkdir(exist_ok=True)
+    plan=json.loads((Path(__file__).parent/'plan.json').read_text());sizes=plan['sizes'];total=len(sizes)*len(plan['seeds'])
     runs=sorted((root/'runs').glob('N*_s*'));rows=[]
     for r in runs:
         histories=[json.loads(l) for l in (r/'history.jsonl').read_text().splitlines()] if (r/'history.jsonl').exists() else []
         if histories:rows.append((r,histories[-1]))
-    lines=['# Direct GMM: 3-mode gradient 간섭과 latent 분업','',f'완료 {sum((r/"COMPLETE.json").exists() for r in runs)}/8. 아래는 현재 저장된 결과이며, 학습 중 결과를 최종 성능으로 해석하지 않는다.','',
+    lines=['# Direct GMM: 3-mode gradient 간섭과 latent 분업','',f'완료 {sum((r/"COMPLETE.json").exists() for r in runs)}/{total}. 아래는 현재 저장된 결과이며, 학습 중 결과를 최종 성능으로 해석하지 않는다.','',
         '## 실험 설정과 그림 읽는 법','',
         '기존 0917 toy의 세 mode를 그대로 사용한다. 중심 −0.6, 0, 0.6 / 폭0.1 / 동일 질량, action [−1,1], Q=0.25 log f, temperature0.25. Q는 20K updates 동안 고정한다.','',
-        '| 항목 | 값 |','|---|---|','| 크기 / seeds | N=64,2048 / M=4096 고정 / seed0–3 |','| Actor | 기존 v5 256×2 GELU, latent1D IID Normal, 초기 sigma0.5, log sigma [−5,1] |','| Update | 원본 Direct GMM marginal NLL, Adam3e−4, batch1, clipping/OT/gradient 수정 없음 |','| Proposal | 원본 conditional squashed Gaussian mixture, teacher-only sigma floor0.05, 정확한 mixture density correction |','| Density | 새 latent·noise로 뽑은 32,768개 action의 histogram, 256 bins, smoothing 없음 |','',
+        '| 항목 | 값 |','|---|---|',f'| 크기 / seeds | {sizes} / seed0–3 |','| Actor | 기존 v5 256×2 GELU, latent1D IID Normal, 초기 sigma0.5, log sigma [−5,1] |','| Update | 원본 Direct GMM marginal NLL, Adam3e−4, batch1, clipping/OT/gradient 수정 없음 |','| Proposal | 원본 conditional squashed Gaussian mixture, teacher-only sigma floor0.05, 정확한 mixture density correction |','| Density | 새 latent·noise로 뽑은 32,768개 action의 histogram, 256 bins, smoothing 없음 |','',
+        '이번 추가 실험은 16×16,64×64이다. 기존 N64×M4096과의 비교는 N64를 고정한 M의 효과를 보여준다. 16×16 대64×64는 N·M이 함께 변하므로 둘의 효과를 분리할 수 없다.','',
         'Mode는 target 중심 사이 경계 −0.3,0.3으로 나눈 basin이다. Mode별 NLL은 원래 w를 그대로 분할하며, 각 mode 질량으로 재정규화하지 않는다. 세 gradient의 합은 원래 gradient다. Histogram TV=1/2 Σ_bin|actor mass−target mass|.','',
         '고정 latent 2048개의 conditional Gaussian이 특정 basin에 확률0.8 이상을 두면 그 mode의 specialist로 분류한다. 나머지는 broad/ambiguous다. 이 확률만 Gaussian CDF로 계산하며 actor density plot은 histogram이다. Tanh(mu)는 대표 위치이며 action 평균이 아니다.','',
         '진단 시 actor·Adam 상태를 복사해 full Adam, zero-gradient momentum control, mode별 Adam, full Adam과 같은 parameter 이동 norm의 mode별 SGD를 각각 한 번 적용한다. 모두 폐기하며 실제 학습 및 RNG는 바꾸지 않는다. Mode별 Adam에서 다른 mode가 악화돼도 이것만으로 실제 full update의 실패라고 결론내리지 않는다.','',
@@ -28,23 +30,23 @@ def main():
     x=np.linspace(-1,1,2001);c=np.array([-.6,0,.6]);norm=(ndtr((1-c)/.1)-ndtr((-1-c)/.1)).mean()
     density=np.exp(-.5*((x[:,None]-c)/.1)**2).mean(1)/(.1*np.sqrt(2*np.pi)*norm)
     figure,axes=plt.subplots(1,2,figsize=(13,4),sharex=True)
-    for ax,n in zip(axes,[64,2048]):
+    for ax,(n,m) in zip(axes,sizes):
         ax.plot(x,density,'k--',label='Exact target',lw=2)
         for r,h in rows:
-            if not r.name.startswith(f'N{n}_'):continue
+            if not r.name.startswith(f'N{n}_M{m}_'):continue
             d=np.load(r/f'eval_{h["step"]:06d}.npz');ax.stairs(d['histogram']/np.diff(d['edges']),d['edges'],label=f'{r.name.split("_")[-1]}, step {h["step"]}',alpha=.7)
-        ax.set(title=f'N={n}, M=4096',xlabel='Action',ylabel='Density');ax.legend(fontsize=8)
+        ax.set(title=f'N={n}, M={m}',xlabel='Action',ylabel='Density');ax.legend(fontsize=8)
     figure.tight_layout();figure.savefig(fig/'densities.png',dpi=160);plt.close(figure)
     lines+=['','## 현재 density','', 'Seed별 최신 step을 범례에 표시한다. 서로 다른 step의 결과를 평균내지 않는다.','', '![실제 action histogram](figures/densities.png)']
-    for n in [64,2048]:
-        r=root/'runs'/f'N{n}_M4096_s0';paths=sorted(r.glob('diagnostic_*.npz'))
+    for n,m in sizes:
+        r=root/'runs'/f'N{n}_M{m}_s0';paths=sorted(r.glob('diagnostic_*.npz'))
         if not paths:continue
-        d=np.load(paths[-1]);step=int(paths[-1].stem.split('_')[1]);tag=f'N{n}_s0_{step}'
+        d=np.load(paths[-1]);step=int(paths[-1].stem.split('_')[1]);tag=f'N{n}_M{m}_s0_{step}'
         figure,axes=plt.subplots(1,3,figsize=(13,4))
         for ax,name in zip(axes,['gradient_cosine','cosine_trunk','cosine_mu_head']):
-            im=ax.imshow(d[name],vmin=-1,vmax=1,cmap='coolwarm');ax.set(title=name,xticks=range(3),yticks=range(3),xticklabels=['L','C','R'],yticklabels=['L','C','R'])
+            valid=d['gradient_cosine_valid' if name=='gradient_cosine' else name.replace('cosine_','cosine_valid_')];im=ax.imshow(np.ma.masked_where(~valid,d[name]),vmin=-1,vmax=1,cmap='coolwarm');ax.set(title=name,xticks=range(3),yticks=range(3),xticklabels=['L','C','R'],yticklabels=['L','C','R'])
             for i in range(3):
-                for j in range(3):ax.text(j,i,f'{d[name][i,j]:.2f}',ha='center',va='center',fontsize=9)
+                for j in range(3):ax.text(j,i,(f'{d[name][i,j]:.2f}' if valid[i,j] else 'N/A'),ha='center',va='center',fontsize=9)
         figure.colorbar(im,ax=axes,shrink=.7);figure.suptitle(f'N={n}, seed0, step={step}');figure.savefig(fig/f'{tag}_cosine.png',dpi=150,bbox_inches='tight');plt.close(figure)
         figure,axes=plt.subplots(1,3,figsize=(14,4))
         for ax,name,title in zip(axes,['delta_mode_nll','delta_reference_nll','cross_mode_own_mass_change'],['Same-teacher NLL change','Held-out reference NLL change','Old specialist own-basin mass change']):
@@ -62,7 +64,8 @@ def main():
         axes[0].plot(steps,np.stack([np.tanh(h['mu'][ix,0]) for h in hist]),alpha=.35,lw=.7);axes[0].set(title='Same fixed latent trajectories',xlabel='Training update',ylabel='tanh(mu)')
         axes[1].plot(steps,np.stack([h['specialist_counts']/2048 for h in hist]),label=['Left','Center','Right','Ambiguous']);axes[1].legend();axes[1].set(title='Specialist fractions',xlabel='Training update')
         figure.tight_layout();figure.savefig(fig/f'{tag}_trajectory.png',dpi=150);plt.close(figure)
-        lines+=['',f'## N={n}, seed0, step={step} 진단','',
+        lines+=['',f'## N={n}, M={m}, seed0, step={step} 진단','',
+            f'Teacher의 mode별 후보 수: {d["teacher_mode_count"].tolist()}, 가중 질량: {d["teacher_mode_mass"].round(4).tolist()}. 후보/gradient가 없는 mode의 cosine은 N/A다. 이는 간섭이 없다는 뜻이 아니다.','',
             'Cosine은 parameter gradient 간의 각도다. 음수는 해당 단독 SGD 방향이 다른 mode loss를 1차 근사에서 증가시킴을 뜻한다. 실제 Adam의 전체 update 결과와 구별한다.','',
             f'![Gradient cosine](figures/{tag}_cosine.png)','',
             '아래 행은 update에 사용한 mode, 열은 영향을 받은 mode다. NLL 변화의 양수는 악화, own-basin mass 변화의 음수는 기존 specialist가 담당 mode에서 이탈함을 뜻한다. 빈칸은 해당 specialist가 없어서 측정 불가한 경우다.','',
@@ -87,6 +90,6 @@ def main():
         encoded='data:image/png;base64,'+base64.b64encode(pth.read_bytes()).decode()
         body=body.replace('figures/'+pth.name,encoded)
     (out/'report.html').write_text('<!doctype html><meta charset="utf-8"><style>body{font:16px system-ui;max-width:1200px;margin:40px auto;padding:20px;line-height:1.65}img{max-width:100%}table{border-collapse:collapse}td,th{border:1px solid #bbb;padding:6px}code{overflow-wrap:anywhere}</style>'+body)
-    print(f'Report: {len(rows)} runs with data, {sum((r/"COMPLETE.json").exists() for r in runs)}/8 complete')
+    print(f'Report: {len(rows)} runs with data, {sum((r/"COMPLETE.json").exists() for r in runs)}/{total} complete')
 
 if __name__=='__main__':main()

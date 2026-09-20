@@ -38,11 +38,17 @@ def probe(state,key,n,m,seed):
                 training_z=np.asarray(t['z'][0]),teacher_Q=np.asarray(t['Q'][0]),teacher_log_q=np.asarray(t['log_q'][0]))
     gram=np.asarray(gram_tree(gs),np.float64);cos,norm=cosine(gram)
     arrays.update(gradient_gram=gram,gradient_cosine=cos,gradient_norm=norm)
+    teacher_labels=np.digitize(arrays['teacher_b'],[-.3,.3])
+    mode_count=np.bincount(teacher_labels,minlength=3)
+    mode_mass=np.bincount(teacher_labels,weights=arrays['teacher_w'],minlength=3)
+    arrays.update(teacher_mode_count=mode_count,teacher_mode_mass=mode_mass,
+                  gradient_cosine_valid=(norm[:,None]*norm[None,:]>1e-30))
     # Head versus shared trunk blocks, all differentiated w.r.t. parameters.
     for label,subtree in [('mu_head',gs['mu']),('sigma_head',gs['log_std']),
                           ('trunk',{k:v for k,v in gs.items() if k not in ('mu','log_std')})]:
         g=np.asarray(gram_tree(subtree),np.float64);c,nn=cosine(g)
         arrays['cosine_'+label]=c;arrays['norm_'+label]=nn
+        arrays['cosine_valid_'+label]=nn[:,None]*nn[None,:]>1e-30
     assignment,alpha,rowmode=responsibility(state.params,t)
     arrays.update(assignment_mode_mass=np.asarray(assignment),alpha=np.asarray(alpha),row_mode_fraction=np.asarray(rowmode))
     changes=[];reference_changes=[];prediction=[];delta_mu=[];delta_ls=[];after_probs=[];paramnorm=[]
@@ -76,6 +82,8 @@ def probe(state,key,n,m,seed):
     # Shared trunk and mean/sigma interference need not have the same sign.
     summary=dict(specialist_fraction=float((pur>=.8).mean()),specialist_counts=counts.tolist(),
         gradient_norm=norm.tolist(),gradient_cosine=cos.tolist(),
+        teacher_mode_count=mode_count.tolist(),teacher_mode_mass=mode_mass.tolist(),
+        gradient_mode_active=(norm>1e-15).tolist(),
         teacher_ess=float(1/np.square(arrays['teacher_w']).sum()),
         teacher_wmax=float(arrays['teacher_w'].max()),
         component_usage_ess=float(1/np.square(arrays['alpha']).sum()),
