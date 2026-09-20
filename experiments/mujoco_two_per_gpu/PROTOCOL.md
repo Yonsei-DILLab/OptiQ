@@ -24,9 +24,10 @@
 
 Numerical source는 immutable v1@9b26ade655097728e12aa63f8c274fe2350729f1 및
 v2@947ad432be6719654feef20c94f09018faf7100e를 유지한다.
-v3@6b7c23e9609cbf0bef7ce573411e5f6207a10ff7의12개 run을 추가해 총36개 계획이 된다.
-v3는 target-min explorer Q에서 evaluator의 mean-target-max Q를 뺀 A>0일 때
+v3@e0e5ddaa565815401a566faf70e9316a8814a7d0의12개 run을 추가해 총36개 계획이 된다.
+v3는 동일한 z의 target-min explorer Q에서 target-max evaluator Q를 뺀 A>0일 때
 raw A 가중 action MSE를 사용한다. 상세 수식은 해당 알고리즘 PROTOCOL.md에 있다.
+최초 MC 평균 기반 v3 source(6b7c23e)는 사용자 정정에 따라 종료 및 비교 제외했다.
 이 scheduler는 별도 commit으로
 기록한다. 새로운 SCHEDULING.json에 numerical/source commit과 scheduler commit,
 GPU/CPU/PID를 별도로 저장한다. 원래 W&B ID와 checkpoint provenance는 유지한다.
