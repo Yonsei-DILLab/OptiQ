@@ -5,6 +5,7 @@ import train
 import jax
 import jax.numpy as jnp
 import numpy as np
+import pytest
 from scipy.stats import truncnorm
 from optiq_dime.box_gaussian import sample_box, mixture_log_prob, component_log_prob
 from optiq_dime.distillation import direct_gmm_nll
@@ -59,3 +60,30 @@ def test_actor_and_policy_sampling():
     assert np.isfinite(a).all() and np.max(np.abs(a))<=1
     centers,_=model.apply({'params':params},obs,jnp.zeros_like(z))
     np.testing.assert_allclose(OptiQPolicy.sample_action(state,obs,jax.random.PRNGKey(1),deterministic=True),centers,atol=1e-6)
+
+@pytest.mark.parametrize('task',['humanoid','ant','halfcheetah','walker2d','hopper'])
+def test_environment_update(task,tmp_path,monkeypatch):
+    import copy
+    from stable_baselines3.common.logger import configure
+    import optiq_dime.algorithm as algorithm
+    cfg=train.compose_config([f'benchmark={task}',f'output_root={tmp_path}',
+        'alg.batch_size=4','alg.buffer_size=32','alg.learning_starts=2',
+        'alg.actor.learning_starts=2','num_eval_episodes=1','eval_interval=4',
+        'diagnostic_interval=4','checkpoint_interval=4','wandb.mode=disabled'])
+    monkeypatch.setattr(algorithm,'sinkhorn',lambda *a,**k:pytest.fail('No OT'))
+    model,callbacks=train.runner.create_algorithm(cfg)
+    model.set_logger(configure(str(tmp_path/'logs'),['csv']))
+    cb=callbacks.callbacks[0]
+    cb.eval_env.envs[0].env._max_episode_steps=2
+    model.get_env().envs[0].env._max_episode_steps=2
+    before=copy.deepcopy(model.policy.actor_state.params)
+    try:
+        model.learn(total_timesteps=6,callback=callbacks)
+        assert model._n_updates==4 and model.backup_mode=='td'
+        for head in ['mu','log_std']:
+            assert not np.array_equal(before[head]['kernel'],model.policy.actor_state.params[head]['kernel'])
+        assert all(np.isfinite(p).all() for p in jax.tree_util.tree_leaves(model.policy.actor_state.params))
+        assert np.max(np.abs(model.replay_buffer.actions))<=1
+    finally:
+        cb.eval_env.close();model.get_env().close();model.logger.close()
+        algorithm.OptiQDIME._train.clear_cache()
