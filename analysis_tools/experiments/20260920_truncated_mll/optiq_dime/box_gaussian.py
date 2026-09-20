@@ -1,6 +1,6 @@
 """Diagonal Gaussian conditioned on [-1,1]^D, with bounded centers.
 
-No tanh Jacobian and no clipping of sampled Gaussian actions. Because centers
+No tanh Jacobian or clipping of unconditioned Gaussian actions. Because centers
 are inside the box and sigma<=exp(-1), each coordinate normalization is >=~.5.
 Inverse CDF avoids exponentially inefficient whole-box rejection.
 """
@@ -21,7 +21,10 @@ def sample_box(key, mu, log_std):
     # Floating point endpoint protection only; not action clipping.
     p=lo+(hi-lo)*uniform
     p=jnp.clip(p,jnp.finfo(p.dtype).eps,1-jnp.finfo(p.dtype).eps)
-    return mu+std*ndtri(p)
+    # ndtri/ndtr float32 roundoff can overshoot the support by a few ULPs
+    # (observed -1.00000012). Project numerical residue only, after exact
+    # inverse-CDF truncation, so valid generated samples never get logp=-inf.
+    return jnp.clip(mu+std*ndtri(p),-1.,1.)
 
 
 def component_log_prob(actions, mu, log_std):

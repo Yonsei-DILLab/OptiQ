@@ -29,9 +29,9 @@ OVERRIDES = [
     'alg.optimizer.ac_grad_norm=null', 'alg.behavior_uniform_probability=0.0',
     'progress_bar=false', 'wandb.project=heejoon-truncated-mll',
     'wandb.job_type=direct-marginal-likelihood',
-    'run_name=${task}-truncatedMLL-N64-M64-T025-s${seed}',
-    'wandb.group=${env_name}_directMLL_N64_M64_T025',
-    '+experiment={method:truncated_marginal_nll,distribution:box_truncated_gaussian,bounded_mu:true,ot:false,resampling:false,components:64,candidates:64,teacher_extra_floor:false}',
+    'run_name=${task}-truncatedMLL-r2-N64-M64-T025-s${seed}',
+    'wandb.group=${env_name}_truncatedMLL_r2_N64_M64_T025',
+    '+experiment={method:truncated_marginal_nll,distribution:box_truncated_gaussian,center_transform:tanh,bounded_mu:true,ot:false,resampling:false,components:64,candidates:64,teacher_extra_floor:false}',
 ]
 
 

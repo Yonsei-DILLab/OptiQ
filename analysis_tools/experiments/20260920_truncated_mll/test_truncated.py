@@ -36,6 +36,14 @@ def test_sampling_bounds_and_moments():
         assert abs(samples.mean()-mean)<.01*std
         assert abs(samples.var()-var)<.01*std**2
 
+def test_float32_support_stress():
+    key=jax.random.PRNGKey(413)
+    mu=jax.random.uniform(key,(1000000,),minval=-1.,maxval=1.)
+    ls=jnp.full_like(mu,-1.)
+    for seed in range(4):
+        samples=sample_box(jax.random.PRNGKey(seed),mu,ls)
+        assert np.isfinite(samples).all() and np.min(samples)>=-1 and np.max(samples)<=1
+
 def test_nll_normalizer_gradient_and_stops():
     mu=jnp.array([[[.8],[-.3]]]);ls=jnp.array([[[-2.],[-1.5]]])
     targets=jnp.array([[[.9],[-.2]]]);w=jnp.array([[.4,.6]])
@@ -61,6 +69,13 @@ def test_actor_and_policy_sampling():
     assert np.isfinite(a).all() and np.max(np.abs(a))<=1
     centers,_=model.apply({'params':params},obs,jnp.zeros_like(z))
     np.testing.assert_allclose(OptiQPolicy.sample_action(state,obs,jax.random.PRNGKey(1),deterministic=True),centers,atol=1e-6)
+    # Distinguish tanh centers from hard clipping.
+    import copy
+    altered=copy.deepcopy(params)
+    altered['mu']['kernel']=jnp.zeros_like(altered['mu']['kernel'])
+    altered['mu']['bias']=jnp.array([.5,2.])
+    centers,_=model.apply({'params':altered},obs,z)
+    np.testing.assert_allclose(centers,np.broadcast_to(np.tanh([.5,2.]),(32,2)),atol=1e-6)
 
 @pytest.mark.parametrize('task',['humanoid','ant','halfcheetah','walker2d','hopper'])
 def test_environment_update(task,tmp_path,monkeypatch):

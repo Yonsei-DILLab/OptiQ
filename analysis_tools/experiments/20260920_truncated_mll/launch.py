@@ -12,7 +12,7 @@ import traceback
 HERE=Path(__file__).resolve().parent
 REPO=HERE.parents[2]
 ROOT=REPO.parent
-PREFIX='optiq-truncated-mll64-20260920'
+PREFIX='optiq-truncated-mll64-r2-20260920'
 ALLOCATIONS={
     'vast5':[(0,'humanoid',0),(1,'humanoid',1),(2,'humanoid',2),(3,'ant',0)],
     'vast1':[(0,'ant',1),(2,'ant',2),(3,'halfcheetah',0)],
@@ -52,7 +52,7 @@ def setup(host):
     assert not git('status','--porcelain'), 'Commit experiment before launching'
     jobs=[]
     for gpu,task,seed in ALLOCATIONS[host]:
-        ident=f'{task}-truncatedMLL-N64-M64-T025-s{seed}'
+        ident=f'{task}-truncatedMLL-r2-N64-M64-T025-s{seed}'
         overrides=[f'benchmark={task}',f'seed={seed}',f'run_name={ident}',
                    f'output_root={ROOT}/outputs','require_gpu=true']
         cfg=compose_config(overrides)
