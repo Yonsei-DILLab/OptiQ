@@ -21,6 +21,8 @@ OVERRIDES = [
     'alg.actor.distillation_loss=direct_gmm_nll',
     'alg.actor.num_policy_samples=64', 'alg.actor.proposals_per_policy_sample=1',
     'alg.actor.proposal_sampling_mode=exact', 'alg.actor.temperature=0.25',
+    # User default (2026-09-21): keep these bounds unless explicitly ablated.
+    'alg.actor.log_std_min=-5.0',
     'alg.actor.log_std_max=-1.0', 'alg.actor.initial_log_std=-1.0',
     # This equals exp(log_std_min), so the teacher-only floor is an identity
     # everywhere in the actor's allowed scale range. Keep archived validation.

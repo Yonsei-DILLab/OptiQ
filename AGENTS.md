@@ -24,3 +24,10 @@ preference, not a completion dependency. Independent runs should be eligible
 together and use available GPUs concurrently. Use priority/nice to express
 environment preference; add cross-environment `afterok` only when the user
 explicitly requests a completion gate. Keep explicitly deferred runs deferred.
+
+User default (2026-09-21): For new Direct GMM/TRG runs, keep actor log_std
+bounds fixed at [-5, -1] (log_std_min=-5.0, log_std_max=-1.0). Explicitly
+requested ablations may override these bounds in their own experiment profiles;
+do not promote ablation bounds to defaults based on their results. Preserve
+running/frozen snapshots. The requested Ant/Humanoid 20k cap 0 versus -2
+comparison is an explicit experiment-only exception.
