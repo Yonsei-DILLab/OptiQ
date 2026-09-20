@@ -1,0 +1,19 @@
+# @package _global_
+defaults:
+  - v2_heejoon_explorer
+  - _self_
+
+algorithm_name: v4_heejoon_explorer
+alg:
+  evaluator:
+    loss: positive_advantage_weighted_action_mse
+    advantage_mode: min_mean
+    q_samples: 16
+    baseline_sampling: independent_evaluator_mc
+    weight_mode: exp_advantage
+    normalization: accepted_count
+
+wandb:
+  entity: OptiQ
+  project: legacy_explorer
+  group: v4_heejoon_explorer_legacy_N16_M64_T025_MinMean_ExpA_K16
