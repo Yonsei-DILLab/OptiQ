@@ -2,6 +2,7 @@
 
 상태별 fresh raw-z 거리 OT + 조건부 SAC 구현이다. 전체 수식과 gradient 경로는
 [ALGORITHM_KO.md](ALGORITHM_KO.md)에 정리했다. GMM40 runner와 RL이 같은 actor core를 호출한다.
+현재 4개 GPU 실행 기록은 [GMM100K_KO.md](GMM100K_KO.md)에 정리했다.
 통과한 테스트와 속도 측정 범위는 [VALIDATION_KO.md](VALIDATION_KO.md)에 기록했다.
 이전 NLL 비용 검토 및 raw-z 거리 비용 선택의 근거는 [COST_REVIEW_KO.md](COST_REVIEW_KO.md)를 참고한다.
 
@@ -53,7 +54,7 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_PREALLOCATE=false \
 | 설정 | 값 |
 |---|---:|
 | GMM Q / alpha | log GT / 1 |
-| Batch lanes / source Gaussian H | 256 / 4096 |
+| Batch lanes / raw latent 적분점 H | 256 / 4096 |
 | Teacher 후보 → 사전 재표집 / actor 쿼리 | 256 → 16 / 16 |
 | MLP / actor Adam | 256×2 / 3e-4 |
 | 초기 σ / log σ 범위 / proposal floor | .5 / [-5,1] / .05 |

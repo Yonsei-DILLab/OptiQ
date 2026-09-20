@@ -121,6 +121,8 @@ L_\theta=\alpha\,\mathrm{KL}
 거리 비용은 이미 정확한 mixture의 임의 Gaussian 분해를 그대로 보존하지 않을 수 있다.
 Marginal SAC와 loss가 정확히 같다고 주장하거나 SAC 정책개선 정리를 그대로 적용하지 않는다.
 고정 geometry 배정과 Gaussian 학습의 역할 분리가 선택한 설계 원칙이다.
+복원 등식은 H개 적분점 mixture에 대한 식이다. 실제 continuous-prior 정책과의 일치에는
+유한 적분점의 quadrature 오차와 g의 latent 일반화 오차까지 고려해야 한다.
 
 ## 한 업데이트 의사코드
 

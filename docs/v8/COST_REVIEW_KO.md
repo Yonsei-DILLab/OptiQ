@@ -9,9 +9,9 @@ OT 배정과 Gaussian 학습을 분리하는 것이 사용자가 정한 설계 �
 일반적인 balanced assignment의 Boltzmann 복원 충분조건과 Gaussian 표현 오차의
 구분은 유지한다. 실제 코드·의사코드는 ALGORITHM_KO.md를 따른다.
 
-## 현재 비용과 실제 진단
+## 이전 Gaussian prototype의 비용과 실제 진단
 
-현재 source는 raw latent 좌표가 아니라 현재 actor의 실제 Gaussian이다.
+이전 Gaussian prototype의 source는 raw latent 좌표가 아니라 actor의 실제 Gaussian이었다.
 pre-tanh teacher 좌표를 u_j라 할 때, alpha=1에서 비용은
 
     C_ij = -log pi_old,i(b_j)
@@ -19,7 +19,7 @@ pre-tanh teacher 좌표를 u_j라 할 때, alpha=1에서 비용은
            + sum_d log sigma_id + column_constant_j.
 
 고정된 양쪽 marginal 아래에서는 row-only 및 column-only 비용은 optimal P를
-바꾸지 않는다. 따라서 현재 배정에서 핵심은 row마다 다른 inverse-variance 거리다.
+바꾸지 않는다. 따라서 당시 배정에서 핵심은 row마다 다른 inverse-variance 거리였다.
 NLL 비용은 통계적 적합도 비용이지 Euclidean 의미의 이동 거리가 아니다.
 
 Seed0의 update330 직전 고정 actor·Adam·RNG로 재현한 lane26:

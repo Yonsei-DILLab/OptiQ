@@ -1,4 +1,4 @@
-"""Fresh Gaussian-likelihood OT. Potentials are dimensionless f / alpha."""
+"""Fresh balanced OT plus Gaussian reference helpers. Potentials store f / epsilon."""
 import math
 from numbers import Real
 
@@ -29,7 +29,8 @@ def fresh_balanced_sinkhorn(log_kernel, teacher_weights, *, max_iterations=2000,
                            min_iterations=10, relative_tolerance=1e-3):
     """Solve each batch member independently, initially without a warm start.
 
-    log_kernel[B,H,K] = log pi_old,i(teacher_j), equal to -C/alpha.
+    log_kernel[B,H,K] = -C/epsilon. The canonical v8 cost is raw-z squared
+    distance; historical Gaussian-cost callers supplied log pi_old,i(teacher_j).
     Final columns are normalized exactly up to arithmetic; row tolerance is
     relative to 1/H, so tiny absolute errors cannot hide imbalance. A failed
     solve is returned with converged=False; the actor must reject its update.

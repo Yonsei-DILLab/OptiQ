@@ -1,3 +1,17 @@
+# OptiQ v8
+
+이 브랜치의 기본 실행은 `mujoco_v8`입니다. Raw latent `z → teacher` 제곱거리로 상태마다 fresh OT를 풀고, `g(s,z)`는 조건부 SAC loss로 Gaussian을 학습합니다. RL은 **soft TD**를 사용합니다.
+
+- [v8 실행 안내](docs/v8/README.md)
+- [수식·알고리즘·의사코드](docs/v8/ALGORITHM_KO.md)
+- [검증 기록](docs/v8/VALIDATION_KO.md)
+- [GMM40 100K 실행 기록](docs/v8/GMM100K_KO.md)
+- [비용 설계 검토](docs/v8/COST_REVIEW_KO.md)
+
+아래는 보존한 v5 및 이전 버전 안내입니다. 현재 v8 설정으로 해석하지 마세요.
+
+---
+
 # OptiQ v5
 
 v5 assigns OT students using **`tanh(mu(s,z))`**. The teacher still samples
