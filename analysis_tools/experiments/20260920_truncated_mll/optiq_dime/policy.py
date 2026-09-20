@@ -42,7 +42,7 @@ class ImplicitActor(nn.Module):
 
 
 class SemiImplicitActor(nn.Module):
-    """One forward pass supplies a conditional Gaussian, followed by tanh."""
+    """Bounded Gaussian center and log scale for box-truncated conditionals."""
 
     action_dim: int
     hidden_dims: Sequence[int]

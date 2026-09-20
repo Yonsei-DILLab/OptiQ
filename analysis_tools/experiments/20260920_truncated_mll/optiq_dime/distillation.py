@@ -14,8 +14,9 @@ def direct_gmm_nll(mu, log_std, teacher_u, weights):
     """Marginal finite-mixture NLL with detached value-weighted teacher.
 
     B,N,D conditional parameters; B,M,D candidates; B,M weights.
-    Like conditional_ot_nll, omits the action Jacobian, which is constant
-    for this stopped teacher. No responsibility is detached inside the loss.
+    teacher_u is an actual bounded action in this implementation. Includes
+    the differentiable truncation normalization, no transformation Jacobian.
+    No responsibility is detached inside the loss.
     """
     u = jax.lax.stop_gradient(teacher_u)
     w = jax.lax.stop_gradient(weights)
