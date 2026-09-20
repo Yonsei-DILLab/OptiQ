@@ -19,11 +19,11 @@ total_steps=1M, evaluation every5K with10episodes remain unchanged.
    so28 newly trained runs. Existing Hopper .25 does not enter selection.
 2. Same six HalfCheetah/Walker/Hopper configurations + DACER:30 runs.
 3. Using stage1's environment-specific best temperature, beta=.5/.9/1,
-   no DACER. Reuse beta1, so10 new runs.
+   no DACER. Reuse beta1, so50 new runs (5env x2 new beta x5seeds).
 4. Using stage1's best temperature, beta1 + DACER. Reuse three environments'
    stage2 runs, add Ant/Humanoid:10 new runs.
 
-90 unique configurations/seeds including12 reused originals;78 new runs.
+130 unique configurations/seeds including12 reused originals;118 new runs.
 Never select individual best seeds. Rank temperatures by arithmetic mean over
 five seeds of eval/stochastic_z/mean_reward averaged over eval steps
 (900000,1000000] (20 evaluations, each10episodes). No zero-z ranking, no max
@@ -64,4 +64,5 @@ failure is distinguished from training failure. import-old uses local W&B binary
 history with explicit target project and does not delete original logs.
 
 Advance via coordinator only after all registered hosts have been inspected.
-Unreachable vast3 is reserved, not assumed empty; never duplicate its seeds.
+An unreachable host is reserved, not assumed empty; never duplicate its seeds.
+vast3 recovered during setup; all four originals completed and four GPUs free.

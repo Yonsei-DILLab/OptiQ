@@ -70,3 +70,14 @@ def test_final100k_selection(tmp_path):
         vals=np.broadcast_to(steps[:,None],(len(steps),10))
         np.savez(tmp_path/f'evaluations_{mode}.npz',timesteps=steps,results=vals)
     assert outcome(tmp_path)['stochastic_z']==952500.
+
+def test_campaign_counts_and_uniqueness():
+    from coordinator import phase_jobs, initial_allocation
+    best={'humanoid':.25,'ant':.25,'halfcheetah':.1,'walker2d':.1,'hopper':.05}
+    phases=[phase_jobs(i,best) for i in range(1,5)]
+    assert list(map(len,phases))==[40,30,50,10]
+    ids=[j['id'] for phase in phases for j in phase]
+    assert len(ids)==len(set(ids))==130
+    initial=[j for jobs in initial_allocation().values() for j in jobs]
+    assert len(initial)==len({j['id'] for j in initial})==28
+    assert all(j['id'] in ids for j in initial)
