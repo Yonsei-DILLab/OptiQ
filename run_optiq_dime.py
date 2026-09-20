@@ -1,4 +1,4 @@
-"""Train OptiQ; default: v4 256x2 networks with dual mu-only evaluation."""
+"""Train OptiQ v9: importance-resampled uniform entropic OT and conditional NLL."""
 
 import json
 import math
@@ -405,7 +405,7 @@ def initialize_and_run(cfg: DictConfig):
                     callback.eval_env.close()
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="mujoco_v5")
+@hydra.main(version_base=None, config_path="configs", config_name="mujoco_v9")
 def main(cfg: DictConfig) -> None:
     try:
         if cfg.use_jit:

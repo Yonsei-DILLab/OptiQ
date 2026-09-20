@@ -1,0 +1,16 @@
+# @package _global_
+defaults:
+  - /mujoco_resampled_nll
+  - _self_
+
+alg:
+  actor:
+    normalize_ot_cost: false
+    sinkhorn_epsilon: 0.03
+    sinkhorn_iterations: 50
+
+run_name: optiq-v9
+output_root: outputs/v9
+wandb:
+  project: v5-resampled-nll
+  group: v9-resampled-nll

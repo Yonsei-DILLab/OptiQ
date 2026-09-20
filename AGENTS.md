@@ -1,5 +1,25 @@
 # OptiQ Experiment Conventions
 
+## Current branch: v9
+
+- Read `docs/v9/README.md` before changing or launching v9. Default entry is
+  `mujoco_v9`, alias `v9/final`. The historical sections below describe prior
+  branches, not the current algorithm contract.
+- Preserve the exact running resampled-NLL algorithm: 16 Gaussian components,
+  64 exact-mixture candidates, 16 iid importance-resampled slots, uniform
+  entropic OT, duplicate-column aggregation, and full-row conditional NLL.
+- Shared 256x2 trunk with mu/std heads; plain TD; no separate sigma loss.
+  Collection/TD sample both z and Gaussian epsilon. Both evaluations use
+  epsilon=0, with stochastic z and zero z separately.
+- Release defaults: raw cost, OT epsilon=.03, 50 Sinkhorn iterations,
+  teacher temperature=.25, no gradient clip, 1M steps. Environment-specific
+  temperatures are explicit overrides, not inferred from the environment name.
+- Frozen runtime algorithm files match the cost50 campaign. Historical test
+  suites assuming 16x64 weighted OT are not the v9 acceptance suite. Run
+  `python -m pytest tests/test_v9_resampled.py` for v9 regression checks.
+- Do not alter running campaigns, upload credentials/data, or claim exact
+  Boltzmann recovery from finite resampling or a one-hot entropic plan.
+
 - This checkout is `/root/OptiQ-v5`, branch `v5`. Default entry `mujoco_v5`,
   alias `v5/final`; read `docs/v5/PSEUDOCODE.md` and `docs/v5/CHANGES_KO.md`.
   v5 sets `actor.ot_student_action=mean`: only OT student positions use

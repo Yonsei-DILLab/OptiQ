@@ -1,0 +1,26 @@
+# @package _global_
+defaults:
+  - /v5/final
+  - _self_
+
+alg:
+  actor:
+    normalize_ot_cost: true
+    sinkhorn_epsilon: 0.05
+    sinkhorn_iterations: 30
+  optimizer:
+    ac_grad_norm: null
+
+experiment:
+  name: importance_resampled_uniform_entropic_conditional_nll
+  original_candidates: 64
+  resampled_candidates: 16
+  resampling: multinomial_iid_with_replacement
+  ot_marginals: uniform_uniform
+  full_row_nll: true
+  duplicate_columns_aggregated_after_ot: true
+  sigma_q_entropy_loss: false
+
+wandb:
+  project: v5-resampled-nll
+  job_type: resampled-uniform-entropic-ot-nll

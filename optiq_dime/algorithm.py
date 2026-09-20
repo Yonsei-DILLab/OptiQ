@@ -17,6 +17,7 @@ from .policy import OptiQPolicy
 from .temperature import parse_temperature_schedule, scheduled_temperature
 from .critic_utils import critic_expectation
 from .distillation import conditional_ot_nll, hard_projection_mass_error
+from .resampled_ot import resampled_transport, METRICS as RESAMPLE_METRICS
 from .soft_improvement import sampled_soft_update
 from .proximal import proximal_policy_weights
 from .latent import FiniteMixtureTrainState, stratified_finite_latents
@@ -730,20 +731,12 @@ class OptiQDIME(DIME):
             # epsilon draw, Gaussian teacher/density and full-row NLL unchanged.
             # Earlier profiles keep sample-action OT through the default mode.
             ot_policy_samples = jnp.tanh(mu) if ot_student_action == "mean" else policy_samples
-            squared_costs = jnp.sum(
-                jnp.square(ot_policy_samples[:, :, None, :] - proposals[:, None, :, :]),
-                axis=-1,
-            )
-            costs = squared_costs / (
-                squared_costs.mean(axis=(-2, -1), keepdims=True) + 1.0e-8
-            ) if normalize_ot_cost else squared_costs
-            transport = jax.lax.stop_gradient(
-                sinkhorn(
-                    costs,
-                    source_weights,
-                    sinkhorn_epsilon,
-                    sinkhorn_iterations,
-                )
+            if not semi_implicit or distillation_loss != 'conditional_ot_nll':
+                raise ValueError('This frozen experiment requires conditional full-row NLL')
+            transport, transport_column_mass, squared_costs, resampling_metrics = resampled_transport(
+                jax.random.fold_in(proposal_key, 190925), ot_policy_samples,
+                proposals, source_weights, sinkhorn_epsilon, sinkhorn_iterations,
+                normalize_ot_cost,
             )
             row_distribution = transport / jnp.maximum(
                 transport.sum(axis=-1, keepdims=True), 1.0e-20
@@ -1019,8 +1012,14 @@ class OptiQDIME(DIME):
                     proposal_std_pretanh=jnp.asarray(0.0 if soft_proximal_ess_fraction > 0 else proposal_std),
                     temperature=jnp.asarray(temperature), ot_cost_mean=squared_costs.mean(),
                     ot_row_marginal_error=jnp.abs(transport.sum(axis=-1) - 1.0 / num_policy_samples).mean(),
-                    ot_col_marginal_error=jnp.abs(transport.sum(axis=-2) - source_weights).mean(),
-                    hard_projection_mass_tv=hard_projection_mass_error(row_distribution, source_weights),
+                    ot_col_marginal_error=jnp.abs(transport.sum(axis=-2) - transport_column_mass).mean(),
+                    hard_projection_mass_tv=hard_projection_mass_error(row_distribution, transport_column_mass),
+                )
+                metrics.update(resampling_metrics)
+                metrics.update(
+                    sigma_lower_bound_fraction=jnp.mean(log_std <= -5.0 + 1e-6),
+                    sigma_upper_bound_fraction=jnp.mean(log_std >= 1.0 - 1e-6),
+                    mean_action_spread=jnp.linalg.norm(jnp.tanh(mu).std(axis=1), axis=-1).mean(),
                 )
             if soft_proximal_ess_fraction > 0:
                 metrics.update(
@@ -1189,6 +1188,8 @@ class OptiQDIME(DIME):
                          "ot_row_marginal_error", "ot_col_marginal_error"):
                 actor_metrics[name] = jnp.asarray(0.0)
             actor_metrics["hard_projection_mass_tv"] = jnp.asarray(0.0)
+            for name in RESAMPLE_METRICS + ('sigma_lower_bound_fraction', 'sigma_upper_bound_fraction', 'mean_action_spread'):
+                actor_metrics[name] = jnp.asarray(0.0)
         guard_metrics = {}
         guard_attempts = jnp.asarray(0.0)
         guard_accepts = jnp.asarray(0.0)
