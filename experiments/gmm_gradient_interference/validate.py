@@ -37,7 +37,7 @@ def main():
         checks[f'N{n}']=dict(decomposed_gradient_matches_original=True,original_updates_preserved=True,
             assignment_mass_conserved=True,teacher_stopped=True,finite_difference_gradient=True,checkpoint_next_update_exact=True)
         times[str(n)]=time.monotonic()-start
-    s,k=initialize(0);before=serialization.to_bytes(s);key=np.asarray(k).copy();d,summary=probe(s,k,64,4096)
+    s,k=initialize(0);before=serialization.to_bytes(s);key=np.asarray(k).copy();d,summary=probe(s,k,64,4096,0)
     assert serialization.to_bytes(s)==before;np.testing.assert_array_equal(k,key)
     assert d['delta_mu'].shape==(8,2048,1) and d['delta_reference_nll'].shape==(8,3)
     # At step zero the zero-gradient Adam control must not move anything.
