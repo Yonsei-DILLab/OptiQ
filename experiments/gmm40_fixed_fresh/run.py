@@ -43,7 +43,7 @@ def qvalue(x):
  diff=(x[...,None,:]-jnp.asarray(MEANS))/jnp.asarray(STD)[:,None]
  return jsp.special.logsumexp(-.5*jnp.square(diff).sum(-1)-2*jnp.log(jnp.asarray(STD))-jnp.log(2*jnp.pi),axis=-1)-jnp.log(40.)
 
-p=argparse.ArgumentParser();p.add_argument('--seed',type=int,required=True);p.add_argument('--mode',choices=['fixed','fresh'],required=True);p.add_argument('--out',required=True);a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--seed',type=int,required=True);p.add_argument('--mode',choices=['fixed','fresh'],required=True);p.add_argument('--out',required=True);p.add_argument('--batch',type=int,default=256);a=p.parse_args();B=a.batch
 out=Path(a.out)/f'{a.mode}_seed{a.seed}';out.mkdir(parents=True,exist_ok=False)
 source=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
 manifest=dict(source_commit=source,mode=a.mode,seed=a.seed,n=N,m=M,batch=B,temperature=1.,q='log p_GMM40',steps=100000,actor_hidden=[256,256],mean_output_init_scale=1.,sigma_init=.5,latent_skip=0.,learning_rate=3e-4,teacher_sigma_floor=.05,action_scale=SCALE,eval_samples=EVAL,primary_prior='uniform fixed 64 codes' if a.mode=='fixed' else 'standard Gaussian continuous latent',target_branch_commit='a2328f45b3604f1ab3f6e2b2117f7f21ca6d0b71',target_file_sha256=hashlib.sha256((P/'target.json').read_bytes()).hexdigest(),packages={k:importlib.metadata.version(k) for k in ['jax','jaxlib','flax','numpy','optax','scipy']})
