@@ -40,6 +40,8 @@ $$
 q_N(b)=\frac{1}{N}\sum_{i=1}^N k_\theta(b\mid z_i),\qquad L=-\sum_{j=1}^M w_j\log q_N(b_j)
 $$
 
+초기 actor는 mean이 0 근처이고 sigma가0.5인, 서로 비슷한 conditional들에서 출발한다. 이는 해당 v5 구현의 초기화이며 여러 mode를 미리 학습한 actor를 쓰지 않는다. 동일 seed의 초기 parameter는 N·M에 관계없이 같다.
+
 Teacher 후보·weight·latent는 gradient를 끊는다. 원본 학습은 pre-tanh NLL로 구현되어 있고, 보고서의 공통 likelihood 진단은 parameter와 무관한 tanh Jacobian을 포함한다. 두 표현의 actor gradient는 같다. **OT와 Sinkhorn은 사용하지 않는다.**
 
 | 항목 | 설정 |
@@ -49,6 +51,7 @@ Teacher 후보·weight·latent는 gradient를 끊는다. 원본 학습은 pre-ta
 | Seeds / 학습 길이 | 각 0,1,2,3 / random initialization부터 20K updates |
 | Actor | 256×2 GELU, state 1D·latent 1D, state batch 1 |
 | Variance | Learned sigma, 초기 0.5, log sigma 범위 [−5,1] |
+| Output 초기화 | Mean head variance-scaling initializer scale=10⁻⁴, log-sigma head kernel=0 및 bias=log(0.5), latent skip=0 |
 | Teacher proposal | Conditional squashed Gaussian mixture, proposal에만 sigma floor 0.05 |
 | Optimizer | Adam 3×10⁻⁴, 원본 update, 추가 clipping·EMA·gradient projection 없음 |
 | Precision | 원본 JAX float32/default matmul |
@@ -65,6 +68,8 @@ Actor density에는 KDE smoothing이나 별도의 density 적분을 쓰지 않�
 - **Specialist latent**: 한 conditional Gaussian이 특정 basin에 확률 0.8 이상을 두는 경우 그 basin의 담당 latent로 분류한다. 나머지는 ambiguous다. Mean만 가장 가까운 mode에 강제 배정하지 않는다.
 - **Teacher ESS**: 1/Σw². ESS/M은 후보 weight가 얼마나 균등한지 보여준다.
 - **Component ESS**: GMM responsibility로 component별 할당 질량 α를 구해 1/Σα²을 계산한다. ESS/N이 1에 가까워도 latent들이 서로 다른 mode를 담당한다는 뜻은 아니다.
+
+예를 들어 두 bin의 정답 질량이(0.5,0.5), actor 질량이(0.6,0.4)이면 histogram TV는0.1이다. Conditional basin 확률이(0.85,0.10,0.05)이면 L specialist, (0.45,0.10,0.45)이면 ambiguous다.
 
 표의 ±는 **4 seed의 표본 표준편차**이며 confidence interval이 아니다. `TV<0.1`은 결과를 읽기 위해 적용한 사후 요약 기준이고, 사전에 정한 성공 판정이나 통계적 검정은 아니다. 이 보고서는 속도 우열을 주장하지 않는다. 자동 timing 필드는 진단·컴파일·프로세스 시작을 포함하는 범위가 달라 별도 timing 실험 없이 비교하지 않았다.
 
@@ -131,7 +136,11 @@ $$
 
 각 training latent i에 대해 그 할당 질량 중 L/C/R basin이 차지하는 비율을 표시했다. 즉 row별로 Σ_{j∈basin}Pᵢⱼ / αᵢ를 계산하고 latent z 순으로 정렬했다. 전체 N×M OT 행렬이나 학습에 추가한 constraint가 아니다.
 
-![GMM responsibility의 mode별 분업](figures/16_gmm_assignment.png)
+![GMM responsibility의 mode별 분업 — z 정렬](figures/16_gmm_assignment.png)
+
+동일한 요약 행렬을 정렬하지 않은 원래 sampling 순서로도 표시한다. 두 그림의 색 범위는0–1로 같다. 여기서 정렬 기준은 action이 아니라 z이고, 그림은 전체 candidate별 joint mass를 mode별로 합친 요약이다.
+
+![GMM responsibility의 mode별 분업 — 원본 순서](figures/18_gmm_assignment_raw.png)
 
 **균등한 row supervision만으로 mode 분업이 보장되지는 않는다.** 이번 실패 결과에서는 이미 사용량이 거의 균등했기 때문이다. 이것은 OT의 geometry-aware assignment가 효과 없다는 검증도 아니다. 이번 비교에는 OT 학습 조건이 없어서 그 효과는 판정할 수 없다.
 
@@ -182,6 +191,8 @@ Likelihood는 두 가지로 평가한다.
 행은 update에 사용한 mode, 열은 평가한 mode다. **양수는 악화**, 음수는 개선이다. 값과 colorbar는 NLL 변화에 1,000을 곱해 표시했다. 네 seed의 평균이므로 표의 비율 및 개별 결과와 함께 읽어야 한다.
 
 {{GRADIENT_TABLE}}
+
+Cosine은 부호 기준이므로0에 매우 가까운 음수도 포함한다. 그림의 각도 크기와 함께 해석해야 한다.
 
 음의 쌍 비율은 20K의 3쌍×4seeds, 다른 mode 악화 비율은 6개 off-diagonal×4seeds에서 계산했다. 악화는 ΔNLL>10⁻⁶으로 집계한 서술 통계다. 24개 항목을 독립 seed처럼 취급한 유의성 검정은 하지 않았다.
 
@@ -258,4 +269,4 @@ Momentum-only에서도 loss와 출력이 변한다. Mode-only Adam에서 보이�
 
 중앙 보관: `dildata:/data1/heejoonorm/OptiQ/studies/20260919_legacy_monge/remote_3114850247/gradient_interference/{snapshot}/`.
 
-보고서 폴더의 `INPUT_MANIFEST.json`은 분석에 사용한 파일별 SHA256과 검증 기록을, `per_run.json`과 `summary.json`은 표와 한-step 진단의 수치 원본을 담고 있다. HTML은 그림과 수식을 이미지로 내장해 인터넷 없이 열 수 있고, **report.md에는 LaTeX 수식 원문**을 유지했다.
+보고서 폴더의 `INPUT_MANIFEST.json`은 분석에 사용한 파일 및 최종 checkpoint의 SHA256과 검증 기록을, `per_run.json`과 `summary.json`은 표와 한-step 진단의 수치 원본을 담고 있다. HTML은 그림과 수식을 이미지로 내장해 인터넷 없이 열 수 있고, **report.md에는 LaTeX 수식 원문**을 유지했다.

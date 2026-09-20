@@ -16,24 +16,29 @@ plt.rcParams.update({'font.family':'DejaVu Sans','font.size':11,'axes.titlesize'
 def title(n,m):return f'N={n}, M={m}'
 def short(n,m):return f'{n}×{m}'
 def subplots():return plt.subplots(4,2,figsize=(14,14),constrained_layout=True)
-def finish(fig,path):fig.savefig(path,dpi=160,bbox_inches='tight');plt.close(fig)
+def finish(fig,path):
+    temporal=any(k in path.name for k in ['learning_curves','role_emergence','trajectories'])
+    stamp='0–20K updates' if temporal else '20K checkpoint'
+    note='32768 fresh action samples/run; 256 bins; no smoothing' if 'histogram' in path.name else 'fixed evaluation latents=2048; no training modification'
+    fig.text(.5,-.005,stamp+' | seeds 0–3 | '+note,ha='center',fontsize=8,color='#52606b')
+    fig.savefig(path,dpi=160,bbox_inches='tight');plt.close(fig)
 def mean_finite(a):
     a=np.asarray(a,float);count=np.isfinite(a).sum(0)
     return np.divide(np.nansum(a,0),count,out=np.full(a.shape[1:],np.nan),where=count>0)
-def matrix(ax,a,limit=None,cmap='RdBu_r',annotate=True):
+def matrix(ax,a,limit=None,cmap='RdBu_r',annotate=True,positive=False):
     a=np.asarray(a);lim=limit or max(np.nanmax(np.abs(a)) if np.isfinite(a).any() else 0,1e-8)
-    im=ax.imshow(np.ma.masked_invalid(a),cmap=cmap,vmin=-lim,vmax=lim)
+    im=ax.imshow(np.ma.masked_invalid(a),cmap='Blues' if positive else cmap,vmin=0 if positive else -lim,vmax=lim)
     ax.set(xticks=range(a.shape[1]),xticklabels=['L','C','R'][:a.shape[1]],yticks=range(a.shape[0]))
     if annotate:
         for i in range(a.shape[0]):
             for j in range(a.shape[1]):
                 x=a[i,j];s='N/A' if not np.isfinite(x) else (f'{x:.2f}' if lim<=1.01 else f'{x:.1f}')
-                ax.text(j,i,s,ha='center',va='center',fontsize=10)
+                ax.text(j,i,s,ha='center',va='center',fontsize=10,color='white' if np.isfinite(x) and abs(x)>.55*lim else 'black')
     return im
 
 def plot_all(runs,figdir):
     groups={(n,m):[r for r in runs if (r['n'],r['m'])==(n,m)] for n,m in SIZES}
-    x=np.linspace(-1,1,2001);rho=sum(np.exp(-.5*((x-c)/.1)**2) for c in [-.6,0,.6])/(3*.1*np.sqrt(2*np.pi));rho/=target_mass([-1,1])[0]  # normalization is separately applied below
+    x=np.linspace(-1,1,2001);rho=sum(np.exp(-.5*((x-c)/.1)**2) for c in [-.6,0,.6])/(3*.1*np.sqrt(2*np.pi));rho=rho  # Normalize the target on [-1,1] below.
     from analyze import cdf
     rho/=float(cdf(1)-cdf(-1))
     fig,axs=subplots()
@@ -117,7 +122,7 @@ def plot_all(runs,figdir):
         mats=[mean_finite([r['diags'][20000][key][2:5,:3] for r in groups[n,m]])*mult for n,m in SIZES]
         lim=max(np.nanmax(np.abs(a)) if np.isfinite(a).any() else 0 for a in mats);fig,axs=subplots()
         for ax,(n,m),a in zip(axs.flat,SIZES,mats):
-            im=matrix(ax,a,lim);ax.set(title=title(n,m),yticklabels=['L update','C update','R update'],xlabel='Previously specialized group')
+            im=matrix(ax,a,lim,positive=(key=='cross_mode_position_rms'));ax.set(title=title(n,m),yticklabels=['L update','C update','R update'],xlabel='Previously specialized group')
         fig.colorbar(im,ax=axs.ravel().tolist(),shrink=.7,label=desc);finish(fig,figdir/(name+'.png'))
     # Responsibilities are posterior mode assignments, not an OT map; show a successful and broad case for all seeds.
     fig,axs=plt.subplots(4,2,figsize=(13,12),constrained_layout=True)
@@ -125,6 +130,11 @@ def plot_all(runs,figdir):
         for r in groups[key]:
             d=r['diags'][20000];ax=axs[r['seed'],j];order=np.argsort(d['training_z'][:,0]);im=ax.imshow(d['row_mode_fraction'][order].T,aspect='auto',vmin=0,vmax=1,cmap='viridis');ax.set(title=f'{short(*key)} | seed {r["seed"]}',yticks=range(3),yticklabels=['L','C','R'],xlabel='Fresh training latent (sorted by z)')
     fig.colorbar(im,ax=axs.ravel().tolist(),shrink=.7,label='Responsibility-assigned mode fraction');finish(fig,figdir/'16_gmm_assignment.png')
+    fig,axs=plt.subplots(4,2,figsize=(13,12),constrained_layout=True)
+    for j,key in enumerate([(1024,1024),(2048,2048)]):
+        for r in groups[key]:
+            d=r['diags'][20000];ax=axs[r['seed'],j];im=ax.imshow(d['row_mode_fraction'].T,aspect='auto',vmin=0,vmax=1,cmap='viridis');ax.set(title=f'{short(*key)} | seed {r["seed"]}',yticks=range(3),yticklabels=['L','C','R'],xlabel='Fresh training latent (original sampling order)')
+    fig.colorbar(im,ax=axs.ravel().tolist(),shrink=.7,label='Responsibility-assigned mode fraction');finish(fig,figdir/'18_gmm_assignment_raw.png')
     # Continuous identity across time. Select latent indices by z quantile, not by outcome.
     fig,axs=plt.subplots(4,2,figsize=(14,12),constrained_layout=True)
     for j,key in enumerate([(1024,1024),(2048,2048)]):

@@ -60,7 +60,7 @@ def collect(data):
             tv=.5*np.abs(final['histogram']-target_mass(final['edges'])).sum();assert abs(tv-last['histogram_tv'])<2e-6
             np.testing.assert_array_equal(final['samples'],d['samples'])
             for f in p.iterdir():
-                if f.suffix in ['.npz','.json','.jsonl']:inputs[str(f.relative_to(data))]=hashlib.sha256(f.read_bytes()).hexdigest()
+                if f.suffix in ['.npz','.json','.jsonl'] or f.name=='checkpoint.msgpack':inputs[str(f.relative_to(data))]=hashlib.sha256(f.read_bytes()).hexdigest()
             runs.append(dict(path=p,name=p.name,n=n,m=m,seed=seed,commit=manifest['commit'],history=hist,evals=evals,diags=diags))
     assert len(runs)==32 and {(r['n'],r['m'],r['seed']) for r in runs}=={(n,m,s) for n,m in SIZES for s in range(4)}
     return sorted(runs,key=lambda r:(SIZES.index((r['n'],r['m'])),r['seed'])),inputs,validation
