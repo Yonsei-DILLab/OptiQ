@@ -66,8 +66,10 @@ def add_jobs(jobs):
     with locked():
         added=[]
         for j in jobs:
+            order=j.get('order',0)
             # Rebuild overrides locally to avoid carrying another host's paths.
             j=job(j['task'],j['temperature'],j['seed'],j['beta'],j['dacer'],j['stage'])
+            j['order']=order
             p=ROOT/'state'/(j['id']+'.json')
             if p.exists(): continue
             cfg=compose_config(j['overrides'])
