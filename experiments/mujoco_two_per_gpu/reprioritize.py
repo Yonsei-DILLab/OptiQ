@@ -8,7 +8,7 @@ package=Path(__file__).parent;manifest=json.loads((package/'SCHEDULER_MANIFEST.j
 assert all(hashlib.sha256((package/f).read_bytes()).hexdigest()==h for f,h in manifest['files'].items())
 plan=json.loads((package/'plan.json').read_text());verify(plan)
 old=a.old_root.resolve();new=a.new_root.resolve();assert old!=new
-name='mujoco-v2first-'+manifest['commit'][:7]
+name=plan.get('tmux_prefix','mujoco-v2first')+'-'+manifest['commit'][:7]
 assert subprocess.run(['tmux','has-session','-t',name],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode!=0,'New scheduler already active'
 status=json.loads((old/'STATUS.json').read_text());assert Path(f"/proc/{status['pid']}/cmdline").exists()
 # No process signal: the old scheduler retains its children and their terminal.

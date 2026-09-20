@@ -20,7 +20,7 @@ def processes():
             argv=(p/'cmdline').read_bytes().decode().strip('\0').split('\0')
             if '-m' not in argv:continue
             module=arg(argv,'-m')
-            if module not in ['experiments.v1_heejoon_explorer.run','experiments.v2_heejoon_explorer.run']:continue
+            if module not in ['experiments.v1_heejoon_explorer.run','experiments.v2_heejoon_explorer.run','experiments.v3_heejoon_explorer.run']:continue
             version=module.split('.')[1].split('_')[0]
             # Read only the relevant key; never emit credentials from process environments.
             cuda=next((v.split('=',1)[1] for v in (p/'environ').read_bytes().decode().split('\0') if v.startswith('CUDA_VISIBLE_DEVICES=')),None)
@@ -112,16 +112,16 @@ def main():
             env.update(CUDA_VISIBLE_DEVICES=str(gpu),WANDB_MODE='online',WANDB_ENTITY='OptiQ',WANDB_PROJECT='legacy_explorer',OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1',MKL_NUM_THREADS='1',NUMEXPR_NUM_THREADS='1',XLA_PYTHON_CLIENT_PREALLOCATE='false',JAX_PLATFORMS='cuda',PYTHONUNBUFFERED='1',MUJOCO_GL='egl',JAX_COMPILATION_CACHE_DIR=str(roots[version]/'jax_cache'),PYTHONPATH=str(repo))
             env.pop('LD_LIBRARY_PATH',None);env.pop('JAX_DEFAULT_MATMUL_PRECISION',None)
             env['WANDB_API_KEY']=(Path.home()/'.config/optiq-secrets/wandb_api_key').read_text().strip()
-            # Keep the committed v2 GPU preflight; it uses one slot, not another GPU.
-            gate=roots['v2']/'validation_gpu'/environment/'VALIDATION_PASSED.json'
-            if version=='v2' and not gate.exists():
+            # Keep each new algorithm's committed GPU preflight in the assigned slot.
+            gate=roots[version]/'validation_gpu'/environment/'VALIDATION_PASSED.json'
+            if version in ('v2','v3') and not gate.exists():
                 outval=gate.parent;outval.mkdir(parents=True,exist_ok=True)
-                cmd=['taskset','-c',','.join(map(str,cpus)),plan['python'],'-m','experiments.v2_heejoon_explorer.validate','--device','gpu','--env',environment,'--output',str(outval)]
+                cmd=['taskset','-c',','.join(map(str,cpus)),plan['python'],'-m',f'experiments.{version}_heejoon_explorer.validate','--device','gpu','--env',environment,'--output',str(outval)]
                 write(root/'CURRENT_GATE.json',dict(env=environment,gpu=gpu,started=time.time(),scheduler_commit=source['commit']))
                 with (outval/'console.log').open('a') as log:rc=subprocess.run(cmd,cwd=repo,env=env,stdout=log,stderr=subprocess.STDOUT).returncode
                 if rc or not gate.exists():
                     failed[key]=dict(reason='GPU validation failed',exit_code=rc);write(root/'FAILED_ATTEMPTS.json',failed);continue
-                v=json.loads(gate.read_text());assert v['passed'] and v['commit']==plan['numerical_commits']['v2']
+                v=json.loads(gate.read_text());assert v['passed'] and v['commit']==plan['numerical_commits'][version]
             # Rescan after GPU validation, guarding against external duplicate dispatch.
             if any(r['env']==environment and r['version']==version and r['seed']==seed for r in processes()):continue
             out.mkdir(parents=True,exist_ok=True)
