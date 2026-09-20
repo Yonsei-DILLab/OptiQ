@@ -6,19 +6,19 @@ v2의 legacy explorer와 evaluator 분리 구조를 유지하면서 evaluator의
 보수적으로 바꾸고, 양의 advantage가 큰 행동에 더 큰 MSE 가중치를 준다.
 사용자가 선택한 가중치는 **양의 advantage 자체 w=A**다.
 
-상태 batch 크기256, 상태당 explorer 행동 한 개, evaluator 기준값용 독립 행동16개를 사용한다.
+상태 batch 크기256, 상태당 latent 하나를 뽑아 explorer와 evaluator에 동일하게 넣는다.
 
 \[
 x_b=\operatorname{clip}(G_{exp}(s_b,z_b),-1,1),\qquad
-\tilde a_{bj}\sim\pi_{eval}(\cdot\mid s_b),
+\tilde a_b=\operatorname{clip}(G_{eval}(s_b,z_b),-1,1),
 \]
 \[
 A_b=\min_{k=1,2}Q_k^-(s_b,x_b)
--\frac1{16}\sum_{j=1}^{16}\max_{k=1,2}Q_k^-(s_b,\tilde a_{bj}).
+-\max_{k=1,2}Q_k^-(s_b,\tilde a_b).
 \]
 
-**같은 evaluator 행동에서 twin-max를 취한 뒤16개 sample 평균을 낸다.**
-행동16개 중 Q가 가장 큰 것을 고르거나, critic별 기대값을 구한 뒤 max하지 않는다.
+**동일한 z의 explorer 행동에서 twin-min, evaluator 행동에서 twin-max를 취한다.**
+Evaluator의 독립 샘플이나 sample 평균/기대값은 없다. Min/max는 critic index에만 적용한다.
 두 항 모두 target critic을 사용한다. Live critic은 gate에 사용하지 않는다.
 
 \[
@@ -68,18 +68,18 @@ OT 학습과 환경 data collection을 그대로 담당한다.
 | W&B | OptiQ/legacy_explorer, 별도 v3 group |
 | GPU | Ant0 / Humanoid1 / HalfCheetah2, 최대2run/GPU; GPU3 기존 할당 유지 |
 
-v2 대비 min–max gate와 A 가중치라는 두 요소를 함께 바꾼다. 따라서 성능 차이가
-나더라도 두 요소의 개별 효과를 분리한 ablation으로 해석하지 않는다.
+v2 대비 same-z 비교, min–max gate, A 가중치를 함께 바꾼다. 따라서 성능 차이가
+나더라도 각 요소의 개별 효과를 분리한 ablation으로 해석하지 않는다.
 같은 Q와 sample을 사용하면 min–max A는 min–min A 이하이지만, 실제 return 개선을
 보장하지는 않는다. 초반 critic disagreement로 수용률이0일 수도 있으므로 이를 기록한다.
 
 ## 진단과 검증
 
-기존 acceptance fraction/count, A 범위/평균, Q 기준값, MSE 및 gradient norm에
+기존 acceptance fraction/count, batch 내 A 범위/평균, Q 기준값, MSE 및 gradient norm에
 더해 weight sum/max/accepted mean/ESS, evaluator baseline twin gap,
 동일 sample에서의 counterfactual min–min acceptance를 기록한다.
 
-실행 전 검증은 독립 toy Q에서 min–max 순서, A=0 reject, 가중 MSE와 analytic
+실행 전 검증은 독립 toy Q에서 동일 z의 min–max, sample 기대값 부재, A=0 reject, 가중 MSE와 analytic
 gradient, raw weight scale, explorer/Q gradient 차단, all-reject Adam 불변을 검사한다.
 실제 세 환경에서 policy routing, batch256, full checkpoint와 다음 update 재현도
 확인한다. Strict gate 때문에 short smoke에서 evaluator step0은 허용하되,
@@ -98,3 +98,10 @@ Source/runtime은 서버 `/home/heejoonorm/OptiQ/legacy_monge/explorer_v3/COMMIT
 중앙 인덱스는 `dildata:/data1/heejoonorm/OptiQ/studies/20260920_v3_heejoon_explorer/`다.
 기존 dildata collector가 source/runtime/checkpoint를 회수한다. 키는 기존 승인된
 별도0600 파일에서 읽으며 소스·로그·백업에 포함하지 않는다.
+
+## 정정 이력
+
+최초 commit 6b7c23e9609cbf0bef7ce573411e5f6207a10ff7은 evaluator의16개 독립 sample
+평균을 사용했으나, 사용자가 의도한 식은 동일한 z의 두 행동을 비교하는 식이다.
+평균 기반 snapshot과 잠시 시작된 run은 중단 및 비교 제외 처리하고 보존한다.
+정정본은 새 source commit과 run ID로 random initialization부터 시작한다.

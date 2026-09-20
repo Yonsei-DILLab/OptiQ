@@ -8,10 +8,12 @@ alg:
   evaluator:
     loss: positive_advantage_weighted_action_mse
     advantage_mode: min_max
+    q_samples: 1
+    baseline_sampling: matched_latent
     weight_mode: positive_advantage
     normalization: accepted_count
 
 wandb:
   entity: OptiQ
   project: legacy_explorer
-  group: v3_heejoon_explorer_legacy_N16_M64_T025_MinMax_PositiveAWeight_K16
+  group: v3_heejoon_explorer_legacy_N16_M64_T025_MinMax_PositiveAWeight_SameZ

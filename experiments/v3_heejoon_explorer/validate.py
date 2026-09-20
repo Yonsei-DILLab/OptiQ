@@ -63,12 +63,14 @@ def unit_tests():
     # Momentum already nonzero, then no positive samples: weights AND optimizer unchanged.
     rejected={**t,'accepted':jnp.zeros_like(t['accepted'])}
     skipped,vl,_=fit_evaluator(new,rejected);same_state(new,skipped);assert float(vl)==0.
-    # E[max Q1,Q2] must be used, NOT max(E Q1,E Q2).
+    # Both actions MUST be generated from the same z, with no sample expectation.
     ev=toy_actor(kernel=.4);ex=toy_actor();cr=critic.replace(target_params=jnp.array([[0.,1.],[0.,-1.]]))
     tt=evaluator_teacher(ev,ex,cr,jnp.zeros((4,1)),key)
-    actions=np.asarray(tt['baseline_actions'])[...,0]
-    np.testing.assert_allclose(tt['q_eval'],np.abs(actions).mean(1),rtol=1e-6)
-    assert np.all(np.asarray(tt['q_eval'])>np.abs(actions.mean(1))+1e-3)
+    actions=np.asarray(tt['baseline_actions'])[:,0]
+    np.testing.assert_array_equal(tt['baseline_actions'],latent_actions(ev,jnp.zeros((4,1)),tt['z']))
+    np.testing.assert_array_equal(tt['actions'],latent_actions(ex,jnp.zeros((4,1)),tt['z']))
+    np.testing.assert_allclose(tt['q_eval'],np.abs(actions),rtol=1e-6)
+    np.testing.assert_allclose(tt['advantage'],-np.abs(actions),rtol=1e-6)
     assert np.all(np.asarray(tt['accepted'])==0)
     assert np.all(np.asarray(tt['q_exp']-tt['q_eval_min'])>0)
     assert np.all(np.asarray(tt['advantage'])<=np.asarray(tt['q_exp']-tt['q_eval_min']))
@@ -77,7 +79,8 @@ def unit_tests():
     predicted=latent_actions(ev,jnp.zeros((4,1)),tt['z']);assert predicted.shape==tt['actions'].shape
     assert ExplorerOptiQ.update_actor is OptiQDIME.update_actor
     same_state(ExplorerOptiQ.soft_update_target_actor(.9,explorer,evaluator),evaluator)
-    return dict(strict_positive_gate=True,target_not_live_critic=True,max_before_mc_mean=True,
+    return dict(strict_positive_gate=True,target_not_live_critic=True,same_latent_for_both_q_actions=True,
+        pointwise_q_max_no_expectation=True,
         min_max_advantage=True,raw_advantage_weights=True,weighted_loss_and_gradient_exact=True,
         counterfactual_minmin_acceptance_superset=True,
         accepted_count_loss_normalization=True,explorer_and_target_critic_gradients_zero=True,

@@ -81,7 +81,7 @@ def run(args):
     resolved['roles']=dict(collection='explorer',ot_source='explorer',kde_centers='explorer',
                            evaluation='selective_evaluator',td_action='selective_evaluator',td_q='target_twin_min',
                            extraction_q='live_twin_mean',evaluator_update='positive_advantage_weighted_action_mse',
-                           advantage_mode='target_min_minus_mean_target_max',evaluator_weight='positive_A',
+                           advantage_mode='target_min_minus_target_max_same_z',evaluator_weight='positive_A',
                            evaluator_loss_normalization='accepted_count',
                            extra_td_noise=False,trust_region=False)
     write(out/'config.json',resolved)

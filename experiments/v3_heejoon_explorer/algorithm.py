@@ -9,7 +9,7 @@ from experiments.v1_heejoon_explorer.algorithm import (
     ExplorerOptiQ as EMAExplorerOptiQ, ExplorerPolicy, Paused, continuation_target)
 
 
-Q_SAMPLES = 16
+Q_SAMPLES = 1
 
 
 def latent_actions(state, observations, z):
@@ -24,29 +24,28 @@ def target_min(critic, observations, actions):
 
 @partial(jax.jit,static_argnames=['q_samples'])
 def evaluator_teacher(evaluator,explorer,critic,observations,key,q_samples=Q_SAMPLES):
-    """One explorer action/state; independent K-action evaluator MC baseline.
+    """One matched latent z/state for BOTH explorer and evaluator actions.
 
-    Explorer uses target twin-min; evaluator baseline uses E[target twin-max].
-    Detach the entire teacher, including the
-    evaluator baseline; no actor/critic gradient passes through the acceptance gate.
+    A = target_min(s, G_exp(s,z)) - target_max(s, G_eval(s,z)).
+    No expectation, independent evaluator draw, or action-sample reduction.
+    Detach the entire teacher; gradients only enter evaluator MSE predictions.
     """
+    assert q_samples == 1
     b=observations.shape[0]
     d=explorer.params[f'Dense_{len(explorer.params)-1}']['bias'].shape[0]
-    zk,bk=jax.random.split(key)
+    zk,_=jax.random.split(key)
     z=jax.random.normal(zk,(b,d),dtype=observations.dtype)
     candidate=latent_actions(explorer,observations,z)
-    baseline_z=jax.random.normal(bk,(b,q_samples,d),dtype=observations.dtype)
-    baseline_obs=jnp.repeat(observations,q_samples,axis=0)
-    baseline_actions=latent_actions(evaluator,baseline_obs,baseline_z.reshape(b*q_samples,d))
+    baseline_actions=latent_actions(evaluator,observations,z)
     q_exp=target_min(critic,observations,candidate)
     all_q=critic.apply_fn({'params':critic.target_params,'batch_stats':critic.target_batch_stats},
-                          baseline_obs,baseline_actions,train=False)[...,0]
-    q_eval=all_q.max(axis=0).reshape(b,q_samples)
-    q_eval_min=all_q.min(axis=0).reshape(b,q_samples)
-    baseline=q_eval.mean(axis=1);advantage=q_exp-baseline
+                          observations,baseline_actions,train=False)[...,0]
+    q_eval=all_q.max(axis=0)
+    q_eval_min=all_q.min(axis=0)
+    advantage=q_exp-q_eval
     return jax.tree_util.tree_map(jax.lax.stop_gradient,dict(observations=observations,z=z,
-        actions=candidate,baseline_actions=baseline_actions.reshape(b,q_samples,d),
-        q_exp=q_exp,q_eval_samples=q_eval,q_eval=baseline,q_eval_min=q_eval_min.mean(axis=1),
+        actions=candidate,baseline_actions=baseline_actions,
+        q_exp=q_exp,q_eval=q_eval,q_eval_min=q_eval_min,
         advantage=advantage,weights=jnp.maximum(advantage,0.),
         accepted=(advantage>0).astype(observations.dtype)))
 
@@ -89,8 +88,7 @@ def update_evaluator(evaluator,explorer,critic,observations,key,q_samples=Q_SAMP
         evaluator_weight_sum=t['weights'].sum(),evaluator_weight_max=t['weights'].max(),
         evaluator_accepted_weight_mean=t['weights'].sum()/den,
         evaluator_weight_ess=jnp.square(t['weights'].sum())/jnp.maximum(jnp.square(t['weights']).sum(),1e-20),
-        evaluator_baseline_mc_std=jnp.std(t['q_eval_samples'],axis=1).mean(),
-        evaluator_baseline_mc_se=jnp.std(t['q_eval_samples'],axis=1).mean()/jnp.sqrt(float(q_samples)),
+        evaluator_paired_action_delta_rms=jnp.sqrt(jnp.square(t['actions']-t['baseline_actions']).mean()),
         evaluator_update_applied=(accepted.sum()>0).astype(jnp.float32),
         evaluator_action_change_rms=jnp.sqrt(jnp.square(new_prediction-old_prediction).mean()),
         evaluator_action_boundary_fraction=(jnp.abs(old_prediction)>=1.).mean(),
@@ -127,6 +125,7 @@ class ExplorerOptiQ(EMAExplorerOptiQ):
         assert a.evaluator.loss=='positive_advantage_weighted_action_mse'
         assert a.evaluator.matched_latent and a.evaluator.threshold==0.
         assert a.evaluator.advantage_mode=='min_max'
+        assert a.evaluator.baseline_sampling=='matched_latent'
         assert a.evaluator.weight_mode=='positive_advantage'
         assert a.evaluator.normalization=='accepted_count'
         self.stop_requested=False;self.checkpoint_hook=None

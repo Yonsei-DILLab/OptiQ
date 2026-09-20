@@ -31,9 +31,10 @@
   "wandb_project": "legacy_explorer",
   "schedule": "Existing shared two-per-GPU queue; preserve active jobs, pending v2 then v3 then remaining v1; GPU3 unchanged.",
   "evaluator_update": "positive_advantage_weighted_action_mse",
-  "evaluator_q_samples": 16,
+  "evaluator_q_samples": 1,
   "evaluator_learning_rate": 0.0003,
-  "advantage_mode": "target_min_minus_mean_target_max",
+  "advantage_mode": "target_min_minus_target_max_same_z",
   "evaluator_weight": "positive_A",
-  "normalization": "accepted_count"
+  "normalization": "accepted_count",
+  "baseline_sampling": "matched_latent"
 }
