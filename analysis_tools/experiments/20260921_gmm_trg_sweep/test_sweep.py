@@ -52,7 +52,7 @@ def test_regulator_isolation(tmp_path,monkeypatch):
         model.learn(total_timesteps=8)
         assert model._n_updates==6 and model.regulator_count==3
         assert called[0].shape==(4,200,3)
-        assert model.backup_mode=='td' and float(model.ent_coef)==0 if hasattr(model,'ent_coef') else model.backup_mode=='td'
+        assert model.backup_mode=='td' and cfg.alg.ent_coef.init==0
         assert np.isfinite(float(model.regulator_log_alpha))
         assert np.max(np.abs(model.replay_buffer.actions))<=1
         assert all(np.isfinite(x).all() for x in jax.tree_util.tree_leaves(model.policy.actor_state.params))

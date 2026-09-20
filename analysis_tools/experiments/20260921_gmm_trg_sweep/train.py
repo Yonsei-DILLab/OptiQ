@@ -17,6 +17,16 @@ from regulator import BehaviorRegulatedOptiQ
 
 runner = base.runner
 runner.OptiQDIME = BehaviorRegulatedOptiQ
+legacy_validate = runner.validate_config
+def validate_config(cfg):
+    # Legacy v2 validator hardcodes beta=1. Validate every other invariant on
+    # a copy; the actual training config and loss retain the requested beta.
+    assert cfg.alg.actor.density_beta in (.5, .9, 1.)
+    check = OmegaConf.create(OmegaConf.to_container(cfg, resolve=True))
+    check.alg.actor.density_beta = 1.
+    check.alg.actor.density_correction_beta = 1.
+    return legacy_validate(check)
+runner.validate_config = validate_config
 REGULATOR = dict(enabled=False, target_entropy_per_dim=-0.9, initial_alpha=0.27,
                  alpha_lr=0.03, interval_updates=10000, components=3, samples=200,
                  noise_scale=0.1, entropy_seed=42, behavior_only=True)

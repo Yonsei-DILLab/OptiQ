@@ -104,7 +104,7 @@ stdout_logfile={ROOT}/logs/worker-gpu{gpu}.log
 stdout_logfile_maxbytes=10MB
 stdout_logfile_backups=3
 redirect_stderr=true
-environment=PYTHONUNBUFFERED="1",PYTHONDONTWRITEBYTECODE="1",JAX_PLATFORMS="cpu"
+environment=PYTHONUNBUFFERED="1",PYTHONDONTWRITEBYTECODE="1",JAX_PLATFORMS="cpu",PYTHONPATH="{ROOT}/deps"
 ''')
     subprocess.run(['supervisorctl','reread'],check=True)
     for name in names:subprocess.run(['supervisorctl','update',name],check=True)
@@ -116,6 +116,7 @@ def environment(gpu=None):
         if k.startswith(('WANDB_','_WANDB_','JAX_','XLA_')) or k in {'PYTHONPATH','LD_LIBRARY_PATH','LD_PRELOAD','CUDA_HOME','CUDA_PATH','OPTIQ_CONFIG','OPTIQ_ENV_FILE'}:
             env.pop(k,None)
     env.update(XLA_PYTHON_CLIENT_PREALLOCATE='false',PYTHONNOUSERSITE='1',
+               PYTHONPATH=str(ROOT/'deps'),
                PYTHONUNBUFFERED='1',PYTHONDONTWRITEBYTECODE='1',MUJOCO_GL='egl',
                OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='1',MKL_NUM_THREADS='1',
                WANDB_ENTITY='OptiQ',WANDB_PROJECT='gmm-trg',WANDB_MODE='online',
