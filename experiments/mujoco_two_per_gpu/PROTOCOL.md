@@ -74,3 +74,13 @@ VRAM 여유만으로2배속을 주장하지 않는다. 합산 처리량이 개�
 CAPACITY.json의 환경별 값을1로 내리면 추가 dispatch를 제한할 수 있다. 이미
 돌아가는 run은 자동 kill하지 않는다. 감소가 필요한 경우 추가 run에SIGTERM을
 보내 기존 full checkpoint 저장 경로로 종료시킨 후 재개 대상으로 기록한다.
+
+## v4 extension, 2026-09-20
+
+Add v4_heejoon_explorer source 1786b85c5a6d2c6250b6c8823714d09b2a151062:
+v2 min–mean (mean of 16 target twin-min values) with raw exp(A) accepted-count
+weighted regression. Ant/Humanoid/HalfCheetah, seeds 0–3, 1M steps each.
+Preserve every active run. Dispatch preference is v2 → v3 → v4 → remaining v1.
+Two runs/GPU, assigned environment GPUs 0/1/2, GPU3 unchanged. No environment
+completion dependency. Include v4 in process adoption, GPU preflight, and repaired
+W&B online wrapper. Existing v3 failure recovery is preserved, not repeated.

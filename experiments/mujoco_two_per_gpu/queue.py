@@ -20,7 +20,7 @@ def processes():
             argv=(p/'cmdline').read_bytes().decode().strip('\0').split('\0')
             wrapped=any(Path(x).name=='online_runner.py' for x in argv)
             module=arg(argv,'--module') if wrapped else arg(argv,'-m')
-            if module not in ['experiments.v1_heejoon_explorer.run','experiments.v2_heejoon_explorer.run','experiments.v3_heejoon_explorer.run']:continue
+            if module not in ['experiments.v1_heejoon_explorer.run','experiments.v2_heejoon_explorer.run','experiments.v3_heejoon_explorer.run','experiments.v4_heejoon_explorer.run']:continue
             version=module.split('.')[1].split('_')[0]
             # Read only the relevant key; never emit credentials from process environments.
             cuda=next((v.split('=',1)[1] for v in (p/'environ').read_bytes().decode().split('\0') if v.startswith('CUDA_VISIBLE_DEVICES=')),None)
@@ -114,7 +114,7 @@ def main():
             env['WANDB_API_KEY']=(Path.home()/'.config/optiq-secrets/wandb_api_key').read_text().strip()
             # Keep each new algorithm's committed GPU preflight in the assigned slot.
             gate=roots[version]/'validation_gpu'/environment/'VALIDATION_PASSED.json'
-            if version in ('v2','v3') and not gate.exists():
+            if version in ('v2','v3','v4') and not gate.exists():
                 outval=gate.parent;outval.mkdir(parents=True,exist_ok=True)
                 cmd=['taskset','-c',','.join(map(str,cpus)),plan['python'],'-m',f'experiments.{version}_heejoon_explorer.validate','--device','gpu','--env',environment,'--output',str(outval)]
                 write(root/'CURRENT_GATE.json',dict(env=environment,gpu=gpu,started=time.time(),scheduler_commit=source['commit']))

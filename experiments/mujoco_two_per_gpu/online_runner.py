@@ -45,7 +45,7 @@ def verify_upload(run, step, api_factory, timeout=300, clock=time.monotonic,
 
 def main():
     p=argparse.ArgumentParser()
-    p.add_argument('--module',required=True,choices=['experiments.v3_heejoon_explorer.run'])
+    p.add_argument('--module',required=True,choices=['experiments.v3_heejoon_explorer.run','experiments.v4_heejoon_explorer.run'])
     p.add_argument('--source-root',type=Path,required=True)
     p.add_argument('--env',required=True,choices=['ant','humanoid','halfcheetah'])
     p.add_argument('--seed',type=int,required=True)
