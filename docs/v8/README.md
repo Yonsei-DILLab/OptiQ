@@ -3,6 +3,7 @@
 상태별 fresh Gaussian-likelihood OT + 조건부 SAC 구현이다. 전체 수식과 gradient 경로는
 [ALGORITHM_KO.md](ALGORITHM_KO.md)에 정리했다. GMM40 runner와 RL이 같은 actor core를 호출한다.
 통과한 테스트와 속도 측정 범위는 [VALIDATION_KO.md](VALIDATION_KO.md)에 기록했다.
+NLL 비용의 정당성과 거리 비용 교체의 한계는 [COST_REVIEW_KO.md](COST_REVIEW_KO.md)를 참고한다.
 
 ## 환경
 
@@ -56,7 +57,7 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_PREALLOCATE=false \
 | Teacher 후보 → 사전 재표집 / actor 쿼리 | 256 → 16 / 16 |
 | MLP / actor Adam | 256×2 / 3e-4 |
 | 초기 σ / log σ 범위 / proposal floor | .5 / [-5,1] / .05 |
-| OT min/max iterations / 상대 오차 | 10 / 500 / 1e-3 |
+| OT min/max iterations / 상대 오차 | 10 / 2000 / 1e-3 |
 | OT dimensionless epsilon | 1, 독립 조절값 아님 |
 | Gradient clipping | 기본 없음; `--actor-max-grad-norm 2` 명시 가능 |
 | 평가 표본수 / 기준 seed | 10000 / 20260917 |

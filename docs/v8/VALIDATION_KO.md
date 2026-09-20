@@ -12,7 +12,9 @@ JAX_PLATFORMS=cpu OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
   tests/test_v7_actor.py -q --disable-warnings
 ```
 
-103개 통과. 추가 `tests/test_v8_gmm.py` 6개 통과: 총 109개.
+초기 103개와 추가 `tests/test_v8_gmm.py` 6개가 통과했다.
+아래 수렴 판정 회귀 시험 1개를 추가해 총 110개이며,
+수정 후 transport 4개, actor/GMM 11개를 다시 실행해 모두 통과했다.
 
 - OT를 batch로 푼 결과와 상태마다 따로 푼 결과, teacher 위치의 연속 배정과 P의 일치.
 - 새 행동의 assignment gradient와 수치 미분 일치, 이전 actor/teacher/map의 gradient 차단.
@@ -26,22 +28,45 @@ JAX_PLATFORMS=cpu OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
 ## GPU full-shape preflight
 
 Batch=256, H=4096, M=256→K=16, alpha=1, MLP=256×2,
-Adam=3e-4, clipping 없음, Sinkhorn min/max=10/500, 상대오차 한계=1e-3.
+Adam=3e-4, clipping 없음, Sinkhorn min/max=10/2000, 상대오차 한계=1e-3.
 
-실제 7회 업데이트, actor·Adam·RNG 정확한 재개, 평가 RNG 격리를 확인했다.
-초기 OT는 10회 반복으로 수렴했고 관측한 최대 행 상대오차는 8.94e-7,
-열 상대오차는 7.15e-7이었다. GPU 0–3 모두 정상 조회되었다.
+수정 후 full-shape 검증은 **300회 업데이트 + 정확한 재개 1회**로 강화했다.
+Actor·Adam·RNG 정확한 재개와 평가 RNG 격리를 확인했다.
+마지막 100회 구간의 최대 행 상대오차는 0.000999987,
+열 상대오차는 2.74e-6이었다. GPU 0–3 모두 정상 조회되었다.
 별도 GPU 1에서 실제 runner의 2-step 학습·평가·저장을 완료하고,
 그 checkpoint로 새 디렉터리에서 step 3까지 재개하는 경로도 통과했다.
 
-초기 JIT compilation을 제외한 **시작 구간 4회 업데이트**의 중앙 속도는
-9.43 ms/update였다. 이 숫자는 장기 처리량 추정치가 아니다. 학습 후 Gaussian이
-분리되면 OT 반복 횟수와 시간이 증가할 수 있으므로 실제 `runtime.json`과
-`training.jsonl`의 OT residual/iterations를 함께 확인한다.
+초기 JIT compilation을 제외한 **100-update block 두 개**의 중앙 속도는
+32.71 ms/update였다. 이 숫자는 장기 처리량 추정치가 아니다.
+마지막 block의 lane 평균 OT 반복 횟수는 12.30이었으나 최대는 421회로,
+어려운 lane의 영향이 크다. 학습 후 Gaussian이 분리되면 OT 반복 횟수와 시간이
+증가할 수 있으므로 실제 `runtime.json`과 `training.jsonl`을 함께 확인한다.
 
 검증 산출물은 저장소 밖 `/root/optiq-experiments/v8/validation/`에 보관한다.
 학습 runner는 preflight에 기록된 numerical source SHA256과 현재 소스가 다르면
 시작을 거부한다. 체크포인트도 설정 signature, 전체 optimizer 및 RNG 상태를 검사한다.
+
+## 초기 실행에서 발견한 수렴 판정 오류
+
+첫 실행은 seed 0–3에서 85/94/96/87회 승인 후 수치 검사로 중단됐다.
+내부 반복은 `exp(kernel+f+g)`로 종료를 판정했지만 최종 P는
+`teacher_weight * softmax(kernel+f)`로 반환했다. 수학적으로 같은 식이어도
+float32 반올림 때문에 최종 행 오차가 0.001을 약 1.6e-7–3.4e-7 초과할 수 있었다.
+
+내부 종료와 최종 검사가 **동일한 normalized-plan 함수**를 사용하도록 수정했다.
+허용오차 1e-3은 그대로다. 간단한 2×2 kernel에서 이전 구현의 조기 종료를 재현하는
+회귀 시험을 추가했다. 실패한 실험의 소스·로그·체크포인트는 그대로 보존했다.
+실패 chunk에서 실제로 소요한 시간도 `runtime.json`에 포함하도록 수정했다.
+
+별도 continuation 진단에서 330번째 업데이트는 실제로 500회 반복 안에 수렴하지 않았다.
+같은 actor/teacher/RNG에서 702회에 수렴했으므로 solver 상한만 2000으로 늘렸다.
+목표 비용·epsilon·marginal 허용오차는 그대로다. 이 설정은 full-shape 301-update
+preflight와 정확한 재개 검증을 다시 통과했다.
+별도 상태 이식 진단은 429회까지 성공했으나 최대 1995회를 사용했다.
+그 진단은 임시 logger 오류로 멈췄으며 solver 실패로 해석하지 않는다.
+사용자가 비용 설계 검토를 요청해 추가 연속학습과 100K 재실행은 보류했다.
+아직 2000회 한도가 장기 학습 내내 충분하다고 검증하지 않았다.
 
 ## 범위
 

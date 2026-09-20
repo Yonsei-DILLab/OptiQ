@@ -22,7 +22,7 @@ def main():
     p.add_argument('--eval-samples',type=int,default=10000)
     p.add_argument('--platform',choices=('cpu','cuda'),default='cuda')
     p.add_argument('--resume-checkpoint',type=Path)
-    p.add_argument('--max-iterations',type=int,default=500)
+    p.add_argument('--max-iterations',type=int,default=2000)
     p.add_argument('--min-iterations',type=int,default=10)
     p.add_argument('--relative-tolerance',type=float,default=1e-3)
     p.add_argument('--actor-max-grad-norm',type=float)
@@ -102,8 +102,14 @@ def main():
         for goal in (x for x in goals if x>=start_step):
             while agent.updates<goal and stop['signal'] is None:
                 n=min(args.chunk,goal-agent.updates)
-                started=time.monotonic();info=agent.advance(n);elapsed=time.monotonic()-started
-                total_seconds+=elapsed
+                started=time.monotonic()
+                try:
+                    info=agent.advance(n)
+                finally:
+                    # A rejected chunk can still contain accepted updates.
+                    # Include its elapsed time in the failure record as well.
+                    elapsed=time.monotonic()-started
+                    total_seconds+=elapsed
                 if n in sizes: warm.append(elapsed/n)
                 sizes.add(n)
                 row=dict(step=agent.updates,train_seconds=total_seconds,block_seconds=elapsed,metrics=info)

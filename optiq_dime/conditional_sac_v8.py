@@ -13,7 +13,7 @@ from .gaussian_transport import source_log_density, gaussian_assignment_log_prob
 def prepare_batch(actor_state, observations, key, q_fn, *, num_students=4096,
                   proposal_components=256, proposals_per_component=1,
                   teacher_sampling_mode='stratified', proposal_std=.05,
-                  temperature=.25, max_iterations=500, min_iterations=10,
+                  temperature=.25, max_iterations=2000, min_iterations=10,
                   relative_tolerance=1e-3, actor_samples=16, teacher_resample_count=16,
                   latent_seed=0, student_latents=None, action_scale=1.,
                   shared_source=False):

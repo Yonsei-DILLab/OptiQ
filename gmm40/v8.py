@@ -17,7 +17,7 @@ class GMM40V8(GMM40V7):
     def __init__(self, seed=0, *, batch=256, num_students=4096, proposal_components=256,
                  teacher_resample_count=16, actor_samples=16, proposal_std=.05,
                  temperature=1., latent_seed=0, hidden_dims=(256,256),
-                 max_iterations=500, min_iterations=10, relative_tolerance=1e-3,
+                 max_iterations=2000, min_iterations=10, relative_tolerance=1e-3,
                  actor_max_grad_norm=None):
         super().__init__(seed, batch=batch, num_students=num_students,
             proposal_components=proposal_components, proposals_per_component=1,

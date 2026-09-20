@@ -25,7 +25,7 @@ def gaussian_assignment_log_probs(query_u, source_mu, source_log_std, source_pot
     return jax.nn.log_softmax(densities + source_potential[:, None, :], axis=-1)
 
 
-def fresh_balanced_sinkhorn(log_kernel, teacher_weights, *, max_iterations=500,
+def fresh_balanced_sinkhorn(log_kernel, teacher_weights, *, max_iterations=2000,
                            min_iterations=10, relative_tolerance=1e-3):
     """Solve each batch member independently, initially without a warm start.
 
@@ -51,6 +51,18 @@ def fresh_balanced_sinkhorn(log_kernel, teacher_weights, *, max_iterations=500,
     errors = jnp.full((batch,), jnp.inf, dtype=kernel.dtype)
     steps = jnp.zeros((batch,), dtype=jnp.int32)
 
+    def normalized_plan(potential):
+        # Use exactly the returned column-normalized plan for both stopping and
+        # validation. Reconstructing exp(kernel + f + g) here can differ by an
+        # fp32 rounding unit and stop just outside the final tolerance.
+        log_assignment = jax.nn.log_softmax(kernel + potential[:, :, None], axis=1)
+        plan = weights[:, None, :] * jnp.exp(log_assignment)
+        row, column = plan.sum(-1), plan.sum(-2)
+        row_relative = jnp.max(jnp.abs(row * sources - 1.), axis=-1)
+        column_relative = jnp.max(
+            jnp.abs(column - weights) / jnp.maximum(weights, jnp.finfo(weights.dtype).tiny), axis=-1)
+        return log_assignment, plan, row, column, row_relative, column_relative
+
     def condition(carry):
         iteration, _, _, error, _ = carry
         return (iteration < max_iterations) & ((iteration < min_iterations) | jnp.any(error > relative_tolerance))
@@ -63,9 +75,8 @@ def fresh_balanced_sinkhorn(log_kernel, teacher_weights, *, max_iterations=500,
         # Gauge centering keeps the two scaling factors numerically bounded.
         shift = new_f.mean(-1, keepdims=True)
         new_f, new_g = new_f - shift, new_g + shift
-        log_plan = kernel + new_f[:, :, None] + new_g[:, None, :]
-        row = jnp.exp(logsumexp(log_plan, axis=-1))
-        new_error = jnp.max(jnp.abs(row * sources - 1.), axis=-1)
+        *_, row_relative, column_relative = normalized_plan(new_f)
+        new_error = jnp.maximum(row_relative, column_relative)
         new_error = jnp.where(jnp.isfinite(new_error), new_error, jnp.inf)
         return (count + 1, jnp.where(active[:, None], new_f, f),
                 jnp.where(active[:, None], new_g, g), jnp.where(active, new_error, error),
@@ -73,12 +84,7 @@ def fresh_balanced_sinkhorn(log_kernel, teacher_weights, *, max_iterations=500,
 
     _, f, _, _, steps = jax.lax.while_loop(condition, iteration,
                                            (jnp.asarray(0), initial_f, initial_g, errors, steps))
-    # Same softmax convention as the fresh-action assignment query.
-    log_assignment = jax.nn.log_softmax(kernel + f[:, :, None], axis=1)
-    plan = weights[:, None, :] * jnp.exp(log_assignment)
-    row, column = plan.sum(-1), plan.sum(-2)
-    row_relative = jnp.max(jnp.abs(row * sources - 1.), axis=-1)
-    column_relative = jnp.max(jnp.abs(column - weights) / jnp.maximum(weights, jnp.finfo(weights.dtype).tiny), axis=-1)
+    log_assignment, plan, row, column, row_relative, column_relative = normalized_plan(f)
     finite = jnp.all(jnp.isfinite(plan), axis=(1, 2)) & jnp.all(jnp.isfinite(f), axis=-1)
     valid_weights = jnp.all(weights > 0, axis=-1) & (jnp.abs(weights.sum(-1) - 1.) < 1e-5)
     converged = finite & valid_weights & (row_relative <= relative_tolerance) & (column_relative <= relative_tolerance)

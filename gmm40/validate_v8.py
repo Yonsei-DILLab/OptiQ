@@ -22,7 +22,7 @@ def source_hashes(root=ROOT):
 
 
 def scientific_config(seed=0, *, batch=256, num_students=4096, proposal_components=256,
-                      teacher_resample_count=16, max_iterations=500, min_iterations=10,
+                      teacher_resample_count=16, max_iterations=2000, min_iterations=10,
                       relative_tolerance=1e-3, actor_max_grad_norm=None):
     return dict(seed=seed,batch=batch,num_students=num_students,proposal_components=proposal_components,
         teacher_resample_count=teacher_resample_count,actor_samples=teacher_resample_count,
@@ -42,7 +42,7 @@ def main():
     parser.add_argument('--platform',choices=('cpu','cuda'),default='cuda')
     parser.add_argument('--quick',action='store_true',help='Small CPU-scale implementation check; never a full-shape GPU benchmark')
     parser.add_argument('--seed',type=int,default=0)
-    parser.add_argument('--max-iterations',type=int,default=500)
+    parser.add_argument('--max-iterations',type=int,default=2000)
     parser.add_argument('--min-iterations',type=int,default=10)
     parser.add_argument('--relative-tolerance',type=float,default=1e-3)
     parser.add_argument('--actor-max-grad-norm',type=float)
@@ -70,12 +70,17 @@ def main():
         np.testing.assert_array_equal(data['teacher_component_indices'],expected)
         np.testing.assert_allclose(data['source_importance'],1.)
         times=[]
+        # Full-shape validation must reach nontrivial learned Gaussians; a few
+        # initial updates do not exercise Sinkhorn's tolerance boundary.
+        block_updates=2 if args.quick else 100
         for _ in range(3):
-            started=time.monotonic(); metrics=agent.advance(2); times.append((time.monotonic()-started)/2)
+            started=time.monotonic(); metrics=agent.advance(block_updates)
+            times.append((time.monotonic()-started)/block_updates)
+        report['timed_block_updates']=block_updates
         report['first_block_seconds_per_update']=times[0]
         report['warm_seconds_per_update']=float(np.median(times[1:]))
-        checkpoint=out/'step_0000006.bin';agent.save(checkpoint)
-        report['checkpoint_audit']=checkpoint_audit(checkpoint,6)
+        checkpoint=out/f'step_{agent.updates:07d}.bin';agent.save(checkpoint)
+        report['checkpoint_audit']=checkpoint_audit(checkpoint,agent.updates)
         restored=make_agent(cfg);restored.restore(checkpoint)
         agent.advance(1);restored.advance(1)
         for left,right in zip(jax.tree.leaves(agent.checkpoint()),jax.tree.leaves(restored.checkpoint())):

@@ -10,7 +10,7 @@ alg:
     ot_potential_mode: fresh_sinkhorn
     source_q_eval: min
     sinkhorn_epsilon: 1.0
-    sinkhorn_iterations: 500
+    sinkhorn_iterations: 2000
     ot_min_iterations: 10
     ot_relative_tolerance: 0.001
 output_root: ../optiq-experiments/v8/outputs

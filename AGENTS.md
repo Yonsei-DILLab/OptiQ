@@ -3,7 +3,7 @@
 This checkout is /root/OptiQ-v8, branch v8. User-authorized v8 supersedes historical v7 algorithm instructions below. Implement fresh per-state Gaussian-likelihood OT plus conditional SAC and validate on GMM40 before RL campaigns.
 - Actual actor Gaussians at H=4096 normal latent integration points define C=-alpha log pi_old,i(a|s). Entropic coefficient alpha (dimensionless likelihood epsilon=1).
 - Teacher candidates M=256, one sample per fresh latent Gaussian; W=softmax(Q/alpha-log q), resample K=16 BEFORE OT. Preserve proposal-density and tanh/action-scale corrections. Proposal sigma floor never enters source Gaussian cost or actor density.
-- Solve each state independently from scratch; no persistent dual model/optimizer. Balanced source 1/H, target 1/K; check row and column residuals. Do not silently accept nonconvergence.
+- Solve each state independently from scratch; no persistent dual model/optimizer. Balanced source 1/H, target 1/K; check row and column residuals (min/max 10/2000, relative tolerance 1e-3). Do not silently accept nonconvergence.
 - Sample one source per teacher column of P. Actor uses newly generated actions and conditional SAC loss alpha log pi_i-Q-alpha log Pr_OT(i|a). No extra source importance ratio. Freeze old source Gaussian parameters and solved potentials, retain query-action derivatives.
 - All H source Gaussian frozen forwards are required; actor parameter backward for selected K only. Reuse identical-state forwards in GMM only when exactly equivalent.
 - Preserve plain MLP 256x2, learning rate 3e-4, sigma bounds/init, Q target, prior, evaluation protocol. GMM alpha=1, no unrequested learning-rate/UTD changes.

@@ -42,3 +42,25 @@ def test_unconverged_plan_is_not_labeled_balanced():
     result=fresh_balanced_sinkhorn(kernel,jnp.array([[.9,.1]]),min_iterations=1,max_iterations=1,relative_tolerance=1e-4)
     assert not bool(result['converged'][0])
     assert float(result['row_relative_error'][0])>.1
+
+
+def test_roundoff_at_tolerance_keeps_iterating_until_returned_plan_is_balanced():
+    # Portable small version of the initial GPU campaign's stopping mismatch.
+    # With the old exp(kernel+f+g) criterion on CPU, this stopped after one
+    # iteration but returned row error 0.001000046730041504 > the same 1e-3
+    # tolerance. The actual softmax-normalized plan needs a second iteration.
+    # Some backends round the first step to the other side of the threshold;
+    # either way, an early exit must return a converged plan.
+    kernel=jnp.array([[[0.,0.],[-.1265944540500641,0.]]],dtype=jnp.float32)
+    weights=jnp.full((1,2),.5,dtype=jnp.float32)
+    one=fresh_balanced_sinkhorn(kernel,weights,min_iterations=1,max_iterations=1,
+                               relative_tolerance=1e-3)
+    result=fresh_balanced_sinkhorn(kernel,weights,min_iterations=1,max_iterations=500,
+                                  relative_tolerance=1e-3)
+    assert bool(result['converged'][0])
+    assert int(result['iterations'][0])<500
+    if not bool(one['converged'][0]):
+        assert int(result['iterations'][0])>1
+    assert float(result['row_relative_error'][0])<=1e-3
+    assert float(result['column_relative_error'][0])<=1e-3
+    np.testing.assert_allclose(result['source_mass'],.5,rtol=1e-3,atol=0.)

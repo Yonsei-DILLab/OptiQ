@@ -46,7 +46,7 @@ NLL은 배정 비용이며, actor loss는 teacher NLL 회귀가 아니다.
 
 Replay batch의 상태마다 독립적으로 log-domain Sinkhorn을 새로 푼다. Dual은
 그 solve의 내부 변수이며 별도 네트워크·optimizer·장기 저장 상태가 없다.
-기본 min/max iterations=10/500, 상대 marginal 허용오차=1e-3다. 행과 열을 검사한다.
+기본 min/max iterations=10/2000, 상대 marginal 허용오차=1e-3다. 행과 열을 검사한다.
 미수렴 또는 비유한 업데이트는 actor/Adam/RNG를 보존한 채 거부하고 실행기가 중단한다.
 초기화가 쉬운 상태의 성공만으로 학습 후 모든 상태의 수렴을 가정하지 않는다.
 
