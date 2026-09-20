@@ -46,18 +46,27 @@
   "training_modification": "none; diagnostic branches are discarded",
   "sizes": [
     [
-      16,
-      16
+      128,
+      128
     ],
     [
-      64,
-      64
+      256,
+      256
+    ],
+    [
+      1024,
+      1024
+    ],
+    [
+      2048,
+      2048
     ]
   ],
   "gpus": [
     0,
     1,
-    2
+    2,
+    3
   ],
   "cpu_sets": {
     "0": [
@@ -77,8 +86,15 @@
       5,
       14,
       15
+    ],
+    "3": [
+      6,
+      7,
+      8,
+      9
     ]
   },
-  "extension_of": "1b1c6947d06b11d85df3400d16941ab111e56cef",
-  "size_change_only": true
+  "extension_of": "f3aebce92a3ea84ff6c01fce5b2e6910ee98beee",
+  "size_change_only": true,
+  "task_order": "Rotate size order by seed index to balance GPU workloads"
 }

@@ -24,8 +24,8 @@ Q(a)=0.25\log f(a),\quad a\in[-1,1].
 
 | 항목 | 설정 |
 |---|---|
-| N / M | 추가16×16,64×64 |
-| Seeds | 0,1,2,3, 총8개 run |
+| N / M | 추가128×128,256×256,1024×1024,2048×2048 |
+| Seeds | 0,1,2,3, 총16개 run |
 | 학습 | Random initialization → 20,000 updates |
 | Actor | 원본 v5 256×2 GELU, state0, latent1D IID Gaussian, batch1 |
 | Sigma | 초기0.5, log sigma [-5,1], learned |
@@ -35,10 +35,11 @@ Q(a)=0.25\log f(a),\quad a\in[-1,1].
 | Precision | 원본 JAX float32/default matmul, GMM40의 highest override를 상속하지 않음 |
 | 평가 | 32768 새 latent/noise action histogram,256bins, KDE smoothing 없음 |
 | Fixed probe | 동일한 seed별2048 latent, training RNG와 별도 |
-| 실행 | 31.148.50.247:11717 GPU0–2, GPU당1run, 독립 worker별5K segment |
+| 실행 | 31.148.50.247:11717 GPU0–3, GPU당1run, 독립 worker별5K segment |
 
 기존1b1c6947d06b11d85df3400d16941ab111e56cef의 N64/2048,M4096 실험에 추가한다.
-기존 N64×M4096 대 새 N64×M64는 N 고정/M 변화 비교이며,16×16 대64×64에서는 N과 M이 함께 변한다.
+16×16,64×64 추가 실험 f3aebce92a3ea84ff6c01fce5b2e6910ee98beee도 완료되어 보존한다.
+이번에는 N=M을 함께 늘린다. 기존2048×4096 대 새2048×2048은 N을 고정한 M 변화 비교다.
 기존 크기 표 전체를 재현하는 실험은 아니다. N은 새로운 latent 표본 수이지
 독립적으로 학습되는 network/component head의 개수가 아니다.
 
@@ -95,14 +96,16 @@ alpha_i=sum_j w_j gamma_ij, underused fraction(alpha<0.1/N), usage ESS를 기록
 
 ## 검증과 자원
 
-실행 전 두 N에서 mode gradient 합과 원본 gradient 일치, 유한차분,
+실행 전 네 크기에서 mode gradient 합과 원본 gradient 일치, 유한차분,
 원본3step와 block3step 일치, teacher detach, assignment mass conservation,
 checkpoint 다음 update 일치, 진단 후 actor/Adam/RNG 불변을 검사한다.
 그림의 density는 모두 실제32768 actions의 histogram이며, CDF는 reference와
 component 역할 진단에만 사용한다.
 
-사용자 지시로 GPU0–2 MuJoCo 학습/큐를 취소한 뒤 GPU0에서 사전검증 → GPU0–2에서8개 학습을 실행한다.
-기존 GPU3 실험의 immutable snapshot은 변경하지 않는다.
+기존 MuJoCo는 취소되어 있고, 앞선 두 캠페인 각각8개 run의 완료 및 GPU0–3의 유휴 상태를 확인했다.
+GPU0에서 네 크기를 사전검증한 뒤 GPU0–3에서16개 학습을 실행한다.
+각 GPU는 seed별로 크기를 순환 배정받아 한 크기만 특정 GPU에 몰리지 않게 한다.
+기존 실험의 immutable snapshot은 변경하지 않는다.
 매500step checkpoint,5K segment round robin. Training 시간과 diagnostic 시간을 분리한다.
 각 segment에서 checkpoint/diagnostic을 기록하고 최종 MD와 그림이 embedded된 HTML 보고서를 작성한다. 통계적 결론은
 4seeds의 같은 step을 비교하며, seed0 figure 하나만으로 일반화하지 않는다.

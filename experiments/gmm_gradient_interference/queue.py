@@ -1,4 +1,4 @@
-"""Independent one-run-per-GPU workers; GPU3 remains reserved for the parent study."""
+"""Independent one-run-per-GPU workers; rotated sizes balance the four GPUs."""
 import argparse,fcntl,hashlib,json,os,subprocess,time,threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -25,7 +25,8 @@ def main():
             rc=subprocess.run(prefix+['-m','experiments.gmm_gradient_interference.validate','--out',str(val)],cwd=repo,env=env,stdout=log,stderr=subprocess.STDOUT).returncode
         if rc:write(runtime/'VALIDATION_FAILED.json',dict(exit_code=rc,time=time.time()));return
     v=json.loads((val/'VALIDATION_PASSED.json').read_text());assert v['passed'] and v['commit']==manifest['commit']
-    tasks=[(n,m,seed) for seed in plan['seeds'] for n,m in plan['sizes']]
+    tasks=[(*plan['sizes'][(j+i)%len(plan['sizes'])],seed)
+           for i,seed in enumerate(plan['seeds']) for j in range(len(plan['sizes']))]
     write(runtime/'REGISTERED.json',dict(commit=manifest['commit'],pid=os.getpid(),tasks=[dict(n=n,m=m,seed=s,gpu=plan['gpus'][i%len(plan['gpus'])]) for i,(n,m,s) in enumerate(tasks)]))
     def worker(gpu,assigned):
         prefix,env=setup(gpu);failed=[]

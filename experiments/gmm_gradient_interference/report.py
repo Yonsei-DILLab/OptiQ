@@ -20,7 +20,7 @@ def main():
         '## 실험 설정과 그림 읽는 법','',
         '기존 0917 toy의 세 mode를 그대로 사용한다. 중심 −0.6, 0, 0.6 / 폭0.1 / 동일 질량, action [−1,1], Q=0.25 log f, temperature0.25. Q는 20K updates 동안 고정한다.','',
         '| 항목 | 값 |','|---|---|',f'| 크기 / seeds | {sizes} / seed0–3 |','| Actor | 기존 v5 256×2 GELU, latent1D IID Normal, 초기 sigma0.5, log sigma [−5,1] |','| Update | 원본 Direct GMM marginal NLL, Adam3e−4, batch1, clipping/OT/gradient 수정 없음 |','| Proposal | 원본 conditional squashed Gaussian mixture, teacher-only sigma floor0.05, 정확한 mixture density correction |','| Density | 새 latent·noise로 뽑은 32,768개 action의 histogram, 256 bins, smoothing 없음 |','',
-        '이번 추가 실험은 16×16,64×64이다. 기존 N64×M4096과의 비교는 N64를 고정한 M의 효과를 보여준다. 16×16 대64×64는 N·M이 함께 변하므로 둘의 효과를 분리할 수 없다.','',
+        '이번 추가 실험은 128×128,256×256,1024×1024,2048×2048이다. N·M을 함께 늘리는 비교이므로 둘의 효과를 분리할 수 없다. 기존2048×4096과 새2048×2048 비교에서는 N을 고정하고 M의 효과를 볼 수 있다.','',
         'Mode는 target 중심 사이 경계 −0.3,0.3으로 나눈 basin이다. Mode별 NLL은 원래 w를 그대로 분할하며, 각 mode 질량으로 재정규화하지 않는다. 세 gradient의 합은 원래 gradient다. Histogram TV=1/2 Σ_bin|actor mass−target mass|.','',
         '고정 latent 2048개의 conditional Gaussian이 특정 basin에 확률0.8 이상을 두면 그 mode의 specialist로 분류한다. 나머지는 broad/ambiguous다. 이 확률만 Gaussian CDF로 계산하며 actor density plot은 histogram이다. Tanh(mu)는 대표 위치이며 action 평균이 아니다.','',
         '진단 시 actor·Adam 상태를 복사해 full Adam, zero-gradient momentum control, mode별 Adam, full Adam과 같은 parameter 이동 norm의 mode별 SGD를 각각 한 번 적용한다. 모두 폐기하며 실제 학습 및 RNG는 바꾸지 않는다. Mode별 Adam에서 다른 mode가 악화돼도 이것만으로 실제 full update의 실패라고 결론내리지 않는다.','',
@@ -29,8 +29,10 @@ def main():
     for r,h in rows:lines.append(f'| {r.name} | {h["step"]} | {h["histogram_tv"]:.4f} | {h["specialist_fraction"]:.3f} | {(r/"COMPLETE.json").exists()} |')
     x=np.linspace(-1,1,2001);c=np.array([-.6,0,.6]);norm=(ndtr((1-c)/.1)-ndtr((-1-c)/.1)).mean()
     density=np.exp(-.5*((x[:,None]-c)/.1)**2).mean(1)/(.1*np.sqrt(2*np.pi)*norm)
-    figure,axes=plt.subplots(1,2,figsize=(13,4),sharex=True)
-    for ax,(n,m) in zip(axes,sizes):
+    nrows=(len(sizes)+1)//2
+    figure,axes=plt.subplots(nrows,2,figsize=(13,4*nrows),sharex=True,squeeze=False)
+    for ax in axes.flat[len(sizes):]:ax.set_visible(False)
+    for ax,(n,m) in zip(axes.flat,sizes):
         ax.plot(x,density,'k--',label='Exact target',lw=2)
         for r,h in rows:
             if not r.name.startswith(f'N{n}_M{m}_'):continue
