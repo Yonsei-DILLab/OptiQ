@@ -1,0 +1,44 @@
+# @package _global_
+# v7: latent-to-pre-tanh OT, conditional SAC actor, and SAC soft TD.
+defaults:
+  - /v5/final
+  - _self_
+
+alg:
+  actor:
+    distillation_loss: ot_conditional_sac
+    ot_student_action: latent
+    latent_prior: normal
+    normalize_ot_cost: false
+    # Fixed Gaussian bank, fresh teacher; one persistent semi-dual Adam update.
+    ot_num_latents: 4096
+    ot_latent_seed: ${seed}
+    ot_potential_mode: persistent_dual
+    ot_dual_hidden_dims: [256, 256]
+    ot_dual_learning_rate: 0.0001
+    # Fresh latent for each teacher candidate: 256 components, one draw each.
+    teacher_proposal_components: 256
+    proposals_per_policy_sample: 1
+    proposal_sampling_mode: stratified
+    # W-weighted resampling occurs BEFORE the 4096 x 16 OT solve.
+    # num_policy_samples=16 remains the actor-query count, independent of M=256.
+    # One actor query is selected per compressed teacher slot.
+    ot_teacher_resample_count: 16
+    # Shared fixed temperature for teacher, conditional actor, and soft TD.
+    temperature: 0.25
+    sinkhorn_epsilon: 0.1
+    # Self-inclusive mixture estimate of the marginal policy density in TD.
+    entropy_samples: 16
+  critic:
+    backup_mode: soft_td
+  # No automatic alpha tuning; the backup coefficient follows temperature.
+  ent_coef:
+    type: const
+    init: ${alg.actor.temperature}
+
+output_root: ../optiq-experiments/v7/outputs
+run_name: ${task}-v7-H${alg.actor.ot_num_latents}-K${alg.actor.ot_teacher_resample_count}-conditionalSAC-T${alg.actor.temperature}-s${seed}
+wandb:
+  project: v7
+  group: ${env_name}_v7_latentOT_conditionalSAC_T${alg.actor.temperature}_dual_mu_eval
+  job_type: v7-comparison

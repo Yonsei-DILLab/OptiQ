@@ -1,0 +1,9 @@
+# PointMaze config for DQS
+env_name: PointMaze
+
+episode_length: 200
+eval_episodes: 100
+
+init_temperature: 10.0
+final_temperature: 1.0
+temperature_steps: 250000

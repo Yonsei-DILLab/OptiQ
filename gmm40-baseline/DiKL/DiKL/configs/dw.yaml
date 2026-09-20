@@ -1,0 +1,51 @@
+# target
+name: 'dw'
+e3: true
+n_dim: 2
+n_particles: 4
+
+
+# model
+h_dim: 144
+layer_num: 8
+score_h_dim: 144
+score_layer_num: 4
+
+# diffusive
+Tmin: 1
+Tmax: 30
+start: 0.000001
+end: 0.05
+dsm_scheme: 'linear'
+
+# train
+max_iter: 2000
+check_iter: 20
+lvm_lr: 0.0005
+score_lr: 0.0001
+batch_size: 1024
+grad_norm_clip: 10.0
+grad_estimator: 'msm'
+weight: 'uniform'
+score_iter: 100
+early_stop: True
+
+# posterior sampling
+boundary: 1000.0
+num_langevin_steps: 50
+langevin_step_size: 0.01
+dynamic_step_size: true
+sample_size: 1
+n_is: 20
+ais: 
+    AIS_step: 10 # 1 means IS
+    ais_step_size: 0.01
+    lg_step: 1
+    hmc_step: null
+    lg: true
+
+#save and check
+save_path: './save/'
+val_sample_path: 'energy/val_samples/val_DW4_rerun.npy' # only for visualization, so there is no issue for "feature leakage" 
+verbose: false
+eval_samples: 5000

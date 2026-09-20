@@ -11,12 +11,17 @@ import numpy as np
 from flax.training.train_state import TrainState
 
 from common.type_aliases import ReplayBufferSamplesNp, RLTrainState
-from diffusion.dime import DIME
+from diffusion.dime import DIME, load_state, save_model_state
 
 from .policy import OptiQPolicy
 from .temperature import parse_temperature_schedule, scheduled_temperature
 from .critic_utils import critic_expectation
 from .distillation import conditional_ot_nll, hard_projection_mass_error
+from .conditional_sac import update_actor as update_conditional_sac_actor
+from .conditional_sac_v8 import update_actor as update_gaussian_conditional_sac_actor
+from .persistent_transport import (
+    create_dual_state, update_actor_persistent as update_persistent_conditional_sac_actor,
+)
 from .soft_improvement import sampled_soft_update
 from .proximal import proximal_policy_weights
 from .latent import FiniteMixtureTrainState, stratified_finite_latents
@@ -67,6 +72,36 @@ class OptiQDIME(DIME):
         self.temperature_schedule = parse_temperature_schedule(
             self.cfg.alg.actor, self.backup_mode
         )
+        self.ot_potential_mode = self.cfg.alg.actor.get("ot_potential_mode", "fresh_sinkhorn")
+        self.dual_state = None
+        if self.cfg.alg.actor.get("distillation_loss") == "ot_conditional_sac" and self.ot_potential_mode == "persistent_dual":
+            actor = self.cfg.alg.actor
+            action_dim = self.action_space.shape[0]
+            observation_dim = self.policy.actor_state.params["Dense_0"]["kernel"].shape[0] - action_dim
+            # A separate deterministic key leaves actor, environment and replay RNG unchanged.
+            dual_key = jax.random.fold_in(jax.random.PRNGKey(int(self.seed or 0)), 7024096)
+            self.dual_state = create_dual_state(
+                dual_key, jnp.zeros((1, observation_dim), dtype=jnp.float32),
+                num_sources=int(actor.get("ot_num_latents", 4096)),
+                hidden_dims=tuple(actor.get("ot_dual_hidden_dims", [256, 256])),
+                learning_rate=float(actor.get("ot_dual_learning_rate", 1e-4)),
+            )
+
+    def _save_model(self):
+        super()._save_model()
+        if self.dual_state is not None:
+            save_model_state(self.dual_state, self.model_save_path, "dual_state", self.num_timesteps)
+
+    def load_model(self, path, n_steps_actor, n_steps_critic):
+        if self.dual_state is not None:
+            # An old actor checkpoint without its learned partition is not a persistent-dual resume.
+            dual_path = Path(path) / f"dual_state_{n_steps_actor}.msgpack"
+            if not dual_path.is_file():
+                raise FileNotFoundError(f"Persistent-dual checkpoint requires {dual_path}")
+            restored_dual = load_state(path, "dual_state", n_steps_actor, train_state=self.dual_state)
+        super().load_model(path, n_steps_actor, n_steps_critic)
+        if self.dual_state is not None:
+            self.dual_state = restored_dual
 
     def _sample_action(self, learning_starts, action_noise=None, n_envs=1):
         # Always consume the original actor/warmup RNG sequence first. This hook
@@ -161,14 +196,7 @@ class OptiQDIME(DIME):
                 )
             else:
                 validation_observations = validation_data.observations.numpy()
-        (
-            self.policy.qf_state,
-            self.policy.actor_state,
-            self.policy.target_actor_state,
-            self.ent_coef_state,
-            self.key,
-            log_metrics,
-        ) = self._train(
+        training_result = self._train(
             self.crossq_style,
             self.use_bnstats_from_live_net,
             self.gamma,
@@ -219,7 +247,26 @@ class OptiQDIME(DIME):
             self.backup_mode,
             bool(actor.get("entropy_diagnostics", True)),
             actor.get("ot_student_action", "sample"),
+            int(actor.get("ot_num_latents", 4096)),
+            int(actor.get("ot_teacher_resample_count", 16)),
+            int(actor.get("ot_latent_seed", self.seed or 0)),
+            int(actor.get("teacher_proposal_components", 256)),
+            self.dual_state,
+            self.ot_potential_mode,
+            int(actor.get("ot_min_iterations", 10)),
+            float(actor.get("ot_relative_tolerance", 1e-3)),
         )
+        if self.ot_potential_mode == "persistent_dual" and actor.get("distillation_loss") == "ot_conditional_sac":
+            training_result, self.dual_state = training_result[:-1], training_result[-1]
+        (
+            self.policy.qf_state, self.policy.actor_state, self.policy.target_actor_state,
+            self.ent_coef_state, self.key, log_metrics,
+        ) = training_result
+        if actor.get("distillation_loss") == "ot_gaussian_conditional_sac":
+            if float(log_metrics.get("v8_rejected_updates", 0.)) > 0:
+                if self.model_save_path is not None:
+                    self._save_model()
+                raise RuntimeError("v8 fresh OT or actor update failed validation; actor update was rejected")
         self._n_updates += gradient_steps
         if guard_enabled:
             self.soft_guard_attempts += int(log_metrics["soft_guard_attempts"])
@@ -253,11 +300,20 @@ class OptiQDIME(DIME):
 
         self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
         self.logger.record("train/actor_updates", int(self.policy.actor_state.step))
+        if self.dual_state is not None:
+            self.logger.record("train/dual_updates", int(self.dual_state.step))
         diagnostic_interval = int(self.cfg.get("diagnostic_interval", 0))
         diagnostic_due = diagnostic_interval > 0 and self.num_timesteps % diagnostic_interval == 0
         core_metrics = {"actor_loss", "critic_loss", "current_q_values", "next_q_values",
                         "entrQ_1", "entrQ_2", "ent_coef", "backup_entropy_lower",
                         "backup_entropy_term", "policy_entropy_lower", "actor_std_mean"}
+        if actor.get("distillation_loss") == "ot_conditional_sac":
+            core_metrics.update({"actor_q_term", "actor_entropy_term", "actor_assignment_term",
+                                 "ot_source_mass_tv", "actor_source_importance_max",
+                                 "actor_source_importance_ess_fraction",
+                                 "ot_source_log_importance_second_moment", "ot_source_log_mass_min",
+                                 "actor_gradient_norm", "ot_dual_loss", "ot_dual_gradient_norm",
+                                 "ot_dual_potential_rms", "ot_batch_mean_source_mass_tv"})
         # The exact scalar supplied to the dynamic JIT argument is recorded at
         # every logger flush. The saved config keeps the initial value/schedule.
         log_metrics = dict(log_metrics, **schedule_metrics)
@@ -537,6 +593,12 @@ class OptiQDIME(DIME):
             "soft_proximal_ess_fraction",
             "entropy_diagnostics",
             "ot_student_action",
+            "ot_num_latents",
+            "ot_teacher_resample_count",
+            "ot_latent_seed",
+            "teacher_proposal_components",
+            "ot_potential_mode",
+            "ot_min_iterations",
         ],
     )
     def update_actor(
@@ -568,7 +630,75 @@ class OptiQDIME(DIME):
         soft_proximal_ess_fraction: float = 0.0,
         entropy_diagnostics: bool = True,
         ot_student_action: str = "sample",
+        ot_num_latents: int = 4096,
+        ot_teacher_resample_count: int = 16,
+        ot_latent_seed: int = 0,
+        teacher_proposal_components: int = 256,
+        dual_state=None,
+        ot_potential_mode: str = "fresh_sinkhorn",
+        ot_min_iterations: int = 10,
+        ot_relative_tolerance: float = 1e-3,
     ):
+        if distillation_loss in {"ot_conditional_sac", "ot_gaussian_conditional_sac"}:
+            gaussian_ot = distillation_loss == "ot_gaussian_conditional_sac"
+            if (not semi_implicit or teacher_distribution != "conditional_mixture"
+                    or ot_student_action != ("gaussian" if gaussian_ot else "latent") or normalize_ot_cost
+                    or not density_correction or adaptive_density_beta or include_anchor
+                    or soft_proximal_ess_fraction > 0
+                    or isinstance(actor_state, FiniteMixtureTrainState)):
+                raise ValueError("v7 requires continuous latent OT and the corrected conditional teacher")
+            if source_q_eval not in {"mean", "min"}:
+                raise ValueError("source_q_eval must be mean or min")
+            incoming_key = key
+            key, dropout_key = jax.random.split(key)
+            frozen_q_params, frozen_stats = jax.lax.stop_gradient((qf_state.params, qf_state.batch_stats))
+
+            def current_q(obs, actions):
+                # Frozen critic parameters, live action derivative. The teacher
+                # and actor use the same aggregation and Boltzmann target.
+                batch, count, dimension = actions.shape
+                repeated = jnp.broadcast_to(obs[:, None, :], (batch, count, obs.shape[-1]))
+                prediction = qf_state.apply_fn(
+                    {"params": frozen_q_params, "batch_stats": frozen_stats},
+                    repeated.reshape(batch*count, -1), actions.reshape(batch*count, dimension),
+                    rngs={"dropout": dropout_key}, train=False,
+                ).reshape(2, batch, count, -1)
+                values = critic_expectation(prediction, z_atoms)
+                return values.mean(axis=0) if source_q_eval == "mean" else values.min(axis=0)
+
+            if gaussian_ot:
+                if ot_potential_mode != "fresh_sinkhorn" or dual_state is not None:
+                    raise ValueError("v8 requires a fresh independent OT solve per state; no persistent dual")
+                updated, loss, next_key, metrics = update_gaussian_conditional_sac_actor(
+                    actor_state, observations, key, current_q,
+                    num_students=ot_num_latents, proposal_components=teacher_proposal_components,
+                    proposals_per_component=proposals_per_policy_sample,
+                    teacher_sampling_mode=proposal_sampling_mode, proposal_std=proposal_std,
+                    temperature=temperature, max_iterations=sinkhorn_iterations,
+                    min_iterations=ot_min_iterations, relative_tolerance=ot_relative_tolerance,
+                    actor_samples=num_policy_samples, teacher_resample_count=ot_teacher_resample_count,
+                    latent_seed=ot_latent_seed,
+                )
+                next_key = jnp.where(metrics["actor_update_accepted"] > 0, next_key, incoming_key)
+                return updated, loss, next_key, metrics
+
+            settings = dict(
+                num_students=ot_num_latents, proposal_components=teacher_proposal_components,
+                proposals_per_component=proposals_per_policy_sample,
+                teacher_sampling_mode=proposal_sampling_mode, proposal_std=proposal_std,
+                temperature=temperature, epsilon=sinkhorn_epsilon, iterations=sinkhorn_iterations,
+                actor_samples=num_policy_samples, teacher_resample_count=ot_teacher_resample_count,
+                latent_seed=ot_latent_seed,
+            )
+            if ot_potential_mode == "persistent_dual":
+                if dual_state is None:
+                    raise ValueError("Persistent latent OT requires a dual TrainState")
+                return update_persistent_conditional_sac_actor(
+                    actor_state, dual_state, observations, key, current_q, **settings,
+                )
+            if ot_potential_mode != "fresh_sinkhorn":
+                raise ValueError("Unknown v7 OT potential mode")
+            return update_conditional_sac_actor(actor_state, observations, key, current_q, **settings)
         if ot_student_action not in {"sample", "mean"}:
             raise ValueError("ot_student_action must be sample or mean")
         if ot_student_action == "mean" and (
@@ -1073,6 +1203,12 @@ class OptiQDIME(DIME):
             "backup_mode",
             "entropy_diagnostics",
             "ot_student_action",
+            "ot_num_latents",
+            "ot_teacher_resample_count",
+            "ot_latent_seed",
+            "teacher_proposal_components",
+            "ot_potential_mode",
+            "ot_min_iterations",
         ],
     )
     def _train(
@@ -1127,6 +1263,14 @@ class OptiQDIME(DIME):
         backup_mode=None,
         entropy_diagnostics=True,
         ot_student_action="sample",
+        ot_num_latents=4096,
+        ot_teacher_resample_count=16,
+        ot_latent_seed=0,
+        teacher_proposal_components=256,
+        dual_state=None,
+        ot_potential_mode="fresh_sinkhorn",
+        ot_min_iterations=10,
+        ot_relative_tolerance=1e-3,
     ):
         del n_env_interacts
         backup_mode = backup_mode or ("soft_td" if semi_implicit else "td")
@@ -1192,6 +1336,7 @@ class OptiQDIME(DIME):
         guard_metrics = {}
         guard_attempts = jnp.asarray(0.0)
         guard_accepts = jnp.asarray(0.0)
+        v8_rejected_updates = jnp.asarray(0.0)
         for i in range(gradient_steps):
 
             def slice_batch(array, step=i):
@@ -1226,7 +1371,7 @@ class OptiQDIME(DIME):
             qf_state = cls.soft_update(tau, qf_state)
             if i in policy_delay_indices:
                 old_actor_state = actor_state
-                actor_state, _, key, actor_metrics = cls.update_actor(
+                actor_result = cls.update_actor(
                     actor_state,
                     qf_state,
                     slice_batch(data.observations),
@@ -1255,7 +1400,21 @@ class OptiQDIME(DIME):
                     soft_proximal_ess_fraction,
                     entropy_diagnostics,
                     ot_student_action,
+                    ot_num_latents,
+                    ot_teacher_resample_count,
+                    ot_latent_seed,
+                    teacher_proposal_components,
+                    dual_state,
+                    ot_potential_mode,
+                    ot_min_iterations,
+                    ot_relative_tolerance,
                 )
+                if distillation_loss == "ot_conditional_sac" and ot_potential_mode == "persistent_dual":
+                    actor_state, dual_state, _, key, actor_metrics = actor_result
+                else:
+                    actor_state, _, key, actor_metrics = actor_result
+                if distillation_loss == "ot_gaussian_conditional_sac":
+                    v8_rejected_updates += 1. - actor_metrics["actor_update_accepted"]
                 if soft_guard_enabled:
                     key, guard_key = jax.random.split(key)
                     actor_state, guard_metrics = sampled_soft_update(
@@ -1270,9 +1429,11 @@ class OptiQDIME(DIME):
                     policy_tau, actor_state, target_actor_state
                 )
         log_metrics = {**actor_metrics, **critic_metrics, **guard_metrics}
+        if distillation_loss == "ot_gaussian_conditional_sac":
+            log_metrics["v8_rejected_updates"] = v8_rejected_updates
         if soft_guard_enabled:
             log_metrics.update(soft_guard_attempts=guard_attempts, soft_guard_accepts=guard_accepts)
-        return (
+        result = (
             qf_state,
             actor_state,
             target_actor_state,
@@ -1280,3 +1441,6 @@ class OptiQDIME(DIME):
             key,
             log_metrics,
         )
+        if distillation_loss == "ot_conditional_sac" and ot_potential_mode == "persistent_dual":
+            return (*result, dual_state)
+        return result

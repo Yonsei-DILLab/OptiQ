@@ -1,0 +1,46 @@
+# Defaults for DQS runs
+seed: 0
+wandb_dir: dqs_logs
+
+max_steps: 250000
+replay_buffer_size: 250000
+start_training: 10000
+
+# Eval/log
+eval_episodes: 100
+eval_interval: 10000
+log_interval: 1000
+
+# Training batch and updates
+batch_size: 256
+updates_per_step: 1
+
+# DQS-specific
+sigma_min: 0.00001
+sigma_max: 1.0
+init_temperature: 0.05
+final_temperature: 0.05
+temperature_steps: 250000
+diffusion_scale: 1.0
+
+# Energy function (critic) settings
+energy_fn:
+  mlp_dim: 256
+  num_q: 2
+  discount: 0.99
+  tau: 0.005
+  target_update_period: 1
+  critic_grad_norm_clip: 10.0
+
+# Reward
+reward_scale: 1.0
+
+# UX
+tqdm: true
+debug: false
+
+# Integration steps
+dqs_num_integration_steps: 1000
+
+# Episode length policy (null means use env default if available)
+episode_length: null 

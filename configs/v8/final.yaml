@@ -1,0 +1,21 @@
+# @package _global_
+# State-local Gaussian-likelihood OT and conditional SAC.
+defaults:
+  - /v7/final
+  - _self_
+alg:
+  actor:
+    distillation_loss: ot_gaussian_conditional_sac
+    ot_student_action: gaussian
+    ot_potential_mode: fresh_sinkhorn
+    source_q_eval: min
+    sinkhorn_epsilon: 1.0
+    sinkhorn_iterations: 500
+    ot_min_iterations: 10
+    ot_relative_tolerance: 0.001
+output_root: ../optiq-experiments/v8/outputs
+run_name: ${task}-v8-H${alg.actor.ot_num_latents}-K${alg.actor.ot_teacher_resample_count}-T${alg.actor.temperature}-s${seed}
+wandb:
+  project: v8
+  group: ${env_name}_v8_GaussianOT_conditionalSAC_T${alg.actor.temperature}
+  job_type: v8-comparison

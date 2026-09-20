@@ -1,0 +1,6 @@
+*.ipynb
+save
+*text.txt
+.ipynb_checkpoints
+__pycache__/
+*textdw.txt

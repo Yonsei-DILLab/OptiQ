@@ -1,4 +1,57 @@
+# OptiQ v8 current instructions
+
+This checkout is /root/OptiQ-v8, branch v8. User-authorized v8 supersedes historical v7 algorithm instructions below. Implement fresh per-state Gaussian-likelihood OT plus conditional SAC and validate on GMM40 before RL campaigns.
+- Actual actor Gaussians at H=4096 normal latent integration points define C=-alpha log pi_old,i(a|s). Entropic coefficient alpha (dimensionless likelihood epsilon=1).
+- Teacher candidates M=256, one sample per fresh latent Gaussian; W=softmax(Q/alpha-log q), resample K=16 BEFORE OT. Preserve proposal-density and tanh/action-scale corrections. Proposal sigma floor never enters source Gaussian cost or actor density.
+- Solve each state independently from scratch; no persistent dual model/optimizer. Balanced source 1/H, target 1/K; check row and column residuals. Do not silently accept nonconvergence.
+- Sample one source per teacher column of P. Actor uses newly generated actions and conditional SAC loss alpha log pi_i-Q-alpha log Pr_OT(i|a). No extra source importance ratio. Freeze old source Gaussian parameters and solved potentials, retain query-action derivatives.
+- All H source Gaussian frozen forwards are required; actor parameter backward for selected K only. Reuse identical-state forwards in GMM only when exactly equivalent.
+- Preserve plain MLP 256x2, learning rate 3e-4, sigma bounds/init, Q target, prior, evaluation protocol. GMM alpha=1, no unrequested learning-rate/UTD changes.
+- Core JAX implementation should be reusable for RL; soft TD uses mixture policy density. Preserve historical v7 paths and external baseline original implementations.
+- Store run artifacts outside repo; long GPU runs use supervisor and frozen source. User authorizes GMM experiments. Do not push without explicit instruction.
+
+# Historical instructions (v8 overrides above take precedence)
+
 # OptiQ Experiment Conventions
+
+- This checkout is `/root/OptiQ-v7`, branch `v7`, based on v5 `a5d5e28`.
+  Default entry is `mujoco_v7`; explicit historical profiles remain available.
+  Read `docs/v7/ALGORITHM_KO.md`, `docs/v7/PSEUDOCODE.md`, and
+  `docs/v7/NOTATION_KO.md`. Keep original teacher b_j, normalized W_j,
+  coupling P_ij and row conditional R_ij notation in documentation.
+  At the user's request the canonical objective is restored to
+  `ot_conditional_sac`: source importance times
+  `[T log pi(a|s,z_i) - Q(s,a) - T log Pr(i|a,s)]`.
+  The goal is OT-assigned conditional Boltzmann extraction, not equality to
+  marginal SAC. Explain population source balance and conditional fitting as
+  sufficient recovery conditions, without claiming neural SGD convergence.
+  Keep the ordinary `g(s,z)` MLP, 4096 fixed normal OT integration sites,
+  256 fresh teacher latents/Gaussian centers with one action each (stratified),
+  importance resampling 256 to 16 BEFORE OT, and 4096x16 OT assignments from
+  the persistent state-conditioned dual MLP. Evaluate actor Gaussian outputs
+  only at the selected 16 training latents; do not reinstate full-H mixture
+  actor density. Teacher correction is `softmax(Q/T-log q)` once.
+  Source sampling uses detached `(1/H)/sum_j(P_ij)` without clipping or
+  self-normalization. Freeze map and critic parameters, but retain BOTH Q
+  and assignment gradients through the newly generated actor action.
+  Preserve dual ReLU 256x2->H, zero output init, Adam 1e-4, one dual Adam step
+  per actor step, and the same pre-update potential for actor and analytical
+  `sum_j(P_ij)-1/H` dual gradient. GMM shares f across identical-state lanes;
+  RL needs f(s). Preserve dual parameters and Adam state between updates.
+  Fresh Sinkhorn100 is an explicit solver control; its source-importance<=K
+  bound does not apply to the persistent default. Monitor variance and finite
+  gradients. Teacher sigma floor .05 never enters actor or TD density.
+  Critic uses soft TD with alpha=T and a fresh 16-component self-inclusive
+  marginal density estimate (IDAC path), not the 4096 OT bank density.
+  Collection/evaluation retain the continuous normal latent prior. Preserve
+  v5 LR, UTD, frequency, network, sigma limits and paired epsilon=0 evaluations.
+  Existing conditional GMM and epsilon runs remain records of this objective.
+  Archive the separate marginal-SAC comparison; never silently resume a
+  different objective as the same experiment. See CONDITIONAL_RESTORE_KO.md.
+  Preserve frozen sources, historical artifacts and external baseline original
+  implementations. GMM validation precedes full RL campaigns. Restoration
+  alone authorizes neither new training, a full RL campaign nor a push.
+  The following sections describe historical profiles.
 
 - This checkout is `/root/OptiQ-v5`, branch `v5`. Default entry `mujoco_v5`,
   alias `v5/final`; read `docs/v5/PSEUDOCODE.md` and `docs/v5/CHANGES_KO.md`.

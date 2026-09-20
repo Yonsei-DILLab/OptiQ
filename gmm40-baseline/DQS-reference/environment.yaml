@@ -1,0 +1,38 @@
+name: dqs
+
+channels:
+  - nvidia
+  - conda-forge
+  - menpo
+  - defaults
+
+dependencies:
+  - python=3.10
+  - pre-commit=3.*
+  - pytest=7.*
+
+  # --------- loggers --------- #
+  - wandb
+
+  - glew
+  - mesalib
+  - glfw3
+
+  - pip>=23
+  - pip:
+      - patchelf
+      - rootutils
+      - "jax[cuda12]"
+      - flax
+      - optax
+      - distrax
+      - chex
+      - matplotlib
+      - pillow
+      - pandas
+      - termcolor
+      - omegaconf
+      - gymnasium
+      - gymnasium-robotics
+      - dm_env
+      - dm_control

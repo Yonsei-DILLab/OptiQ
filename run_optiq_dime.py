@@ -1,4 +1,4 @@
-"""Train OptiQ; default: v4 256x2 networks with dual mu-only evaluation."""
+"""Train OptiQ v8; explicit historical configuration names remain supported."""
 
 import json
 import math
@@ -11,7 +11,7 @@ import hydra
 import jax
 import omegaconf
 import wandb
-from omegaconf import DictConfig
+from omegaconf import DictConfig, ListConfig
 from stable_baselines3.common.callbacks import CallbackList
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.logger import configure
@@ -38,6 +38,94 @@ def is_tracked_environment(cfg):
     return cfg.env_name in MUJOCO_ENVS | MYOSUITE_ENVS
 
 
+def v7_algorithm_metadata(cfg):
+    """Distinguish conditional actor entropy from marginal-mixture soft TD."""
+    actor = cfg.alg.actor
+    if actor.get("distillation_loss") != "ot_conditional_sac":
+        return {}
+    return {
+        "algorithm_family": "v7_ot_conditional_sac",
+        "actor_projection": "conditional SAC with OT assignment term; no NLL projection",
+        "actor_objective": "mean(stopgrad((1/H)/sum_j(P_ij)) * (T * log pi_i(a|s) - Q(s,a) - T * log Pr(i|a,s)))",
+        "actor_entropy_coefficient": float(actor.temperature),
+        "actor_entropy_auto_tuning": False,
+        "actor_entropy_estimator": "conditional tanh-Gaussian log density at reparameterized action",
+        "entropy_estimator": "conditional actor log density; IDAC self-inclusive mixture estimate in soft TD",
+        "actor_q_source": "current critic",
+        "actor_q_aggregation": actor.source_q_eval,
+        "teacher_q_aggregation": actor.source_q_eval,
+        "assignment_temperature": float(actor.temperature),
+        "ot_cost": "unnormalized squared distance from normal latent z to teacher pre-tanh v_j",
+        "ot_potential_mode": actor.get("ot_potential_mode", "fresh_sinkhorn"),
+        "ot_recomputed": ("fresh teacher and assignments; one persistent dual Adam step per actor update"
+                          if actor.get("ot_potential_mode") == "persistent_dual" else "fresh Sinkhorn each actor update"),
+        "ot_dual_hidden_dims": list(actor.get("ot_dual_hidden_dims", [256, 256])),
+        "ot_dual_learning_rate": float(actor.get("ot_dual_learning_rate", 1e-4)),
+        "ot_dual_state_persistent": actor.get("ot_potential_mode") == "persistent_dual",
+        "ot_dual_update_order": "actor and dual gradients use the same pre-update potential; actor freezes dual parameters",
+        "ot_source_marginal": "uniform over fixed standard-normal integration points",
+        "ot_source_count": int(actor.get("ot_num_latents", 4096)),
+        "ot_latent_seed": int(actor.get("ot_latent_seed", cfg.seed)),
+        "ot_integration_points": "fixed from seed, shared across states; no actor forward over the full bank",
+        "teacher_proposal_component_count": int(actor.get("teacher_proposal_components", 256)),
+        "teacher_candidate_count": int(actor.get("teacher_proposal_components", 256) * actor.proposals_per_policy_sample),
+        "teacher_sampling_mode": actor.proposal_sampling_mode,
+        "teacher_one_per_latent": actor.proposal_sampling_mode == "stratified" and actor.proposals_per_policy_sample == 1,
+        "teacher_importance_weights": "softmax(Q / temperature - log q)",
+        "teacher_resampled_before_ot": True,
+        "ot_teacher_count": int(actor.get("ot_teacher_resample_count", 16)),
+        "ot_teacher_marginal": "uniform over importance-resampled teacher slots; no second importance weight",
+        "actor_query_count": int(actor.num_policy_samples),
+        "actor_source_selection": "one i sampled from Pr(i|b_tilde_j,s) per compressed teacher slot; no actor forward over full integration bank",
+        "actor_source_prior_correction": "detached (1/H)/sum_j(P_ij) for sampled source i; no clipping or self-normalization",
+        "critic_backup": "soft_td",
+        "backup_entropy_coefficient": float(actor.temperature),
+        "backup_entropy_auto_tuning": False,
+        "backup_entropy_estimator": "IDAC self-inclusive finite-mixture estimate of marginal tanh-policy log density",
+        "backup_entropy_components": int(actor.entropy_samples),
+        "backup_target": "reward + gamma * (1-done) * (min Q_target(s_next,a_next) - T * log pi_mix(a_next|s_next))",
+    }
+
+
+
+def v8_algorithm_metadata(cfg):
+    actor = cfg.alg.actor
+    if actor.get("distillation_loss") != "ot_gaussian_conditional_sac":
+        return {}
+    return dict(
+        algorithm_family="v8_gaussian_OT_conditional_sac",
+        actor_objective="mean[T log pi_i(a|s) - min Q(s,a) - T log Pr_OT(i|a,s)]",
+        actor_projection="conditional SAC; Gaussian NLL is only an OT cost",
+        actor_entropy_coefficient=float(actor.temperature),
+        actor_q_aggregation=actor.source_q_eval, teacher_q_aggregation=actor.source_q_eval,
+        ot_cost="-T log actual frozen actor Gaussian density; includes tanh/action-scale Jacobian",
+        ot_dimensionless_epsilon=1., ot_entropic_coefficient=float(actor.temperature),
+        ot_potential_mode="fresh_sinkhorn", ot_dual_state_persistent=False,
+        ot_source_count=int(actor.ot_num_latents), ot_teacher_count=int(actor.ot_teacher_resample_count),
+        ot_latent_seed=int(actor.ot_latent_seed),
+        ot_recomputed="independent fresh solve for each replay state and actor update",
+        ot_max_iterations=int(actor.sinkhorn_iterations),
+        ot_min_iterations=int(actor.ot_min_iterations),
+        ot_relative_tolerance=float(actor.ot_relative_tolerance),
+        ot_nonconvergence="reject actor/Adam/RNG update and halt training with diagnostic",
+        ot_integration_points="fixed normal coordinates, all H Gaussian outputs recomputed per state",
+        teacher_proposal_component_count=int(actor.teacher_proposal_components),
+        teacher_candidate_count=int(actor.teacher_proposal_components*actor.proposals_per_policy_sample),
+        teacher_importance_weights="softmax(Q/T-log q), reflected once in resampling multiplicity",
+        teacher_resampled_before_ot=True,
+        actor_query_count=int(actor.num_policy_samples), actor_source_importance_correction=False,
+        actor_source_selection="one source per teacher column of converged balanced OT",
+        actor_assignment_action_gradient=True, actor_assignment_parameter_gradient=False,
+        critic_backup="soft_td", backup_entropy_coefficient=float(actor.temperature),
+        backup_entropy_components=int(actor.entropy_samples),
+        backup_entropy_estimator="fresh self-inclusive finite-mixture marginal density estimate",
+    )
+
+
+def algorithm_metadata(cfg):
+    return v8_algorithm_metadata(cfg) or v7_algorithm_metadata(cfg)
+
+
 def validate_config(cfg):
     is_mujoco = is_tracked_environment(cfg)
     if not 0.0 <= float(cfg.alg.get("behavior_uniform_probability", 0.0)) <= 1.0:
@@ -47,6 +135,11 @@ def validate_config(cfg):
     if cfg.env_name.startswith("dm_control/dog-") and cfg.task not in DOG_TASKS:
         raise ValueError(f"Invalid Dog task: {cfg.task}")
     actor = cfg.alg.actor
+    if actor.get("distillation_loss") == "ot_marginal_sac":
+        raise ValueError(
+            "ot_marginal_sac is archived after restoring the conditional objective; "
+            "use its frozen source to reproduce it instead of reinterpreting its configuration"
+        )
     if cfg.get("dual_mu_eval", False):
         if actor.get("type") != "semi_implicit" or actor.get("latent_prior", "normal") != "normal":
             raise ValueError("dual_mu_eval requires a continuous-latent semi-implicit actor")
@@ -105,14 +198,67 @@ def validate_config(cfg):
     if actor.get("teacher_distribution") == "conditional_mixture" and actor.get("type") != "semi_implicit":
         raise ValueError("Conditional mixture teacher requires a semi-implicit actor")
     ot_student_action = actor.get("ot_student_action", "sample")
-    if ot_student_action not in {"sample", "mean"}:
-        raise ValueError("ot_student_action must be sample or mean")
+    if ot_student_action not in {"sample", "mean", "latent", "gaussian"}:
+        raise ValueError("ot_student_action must be sample, mean, latent, or gaussian")
     if ot_student_action == "mean" and (
         actor.get("type") != "semi_implicit"
         or actor.get("teacher_distribution") != "conditional_mixture"
         or actor.get("distillation_loss") != "conditional_ot_nll"
     ):
         raise ValueError("Mean-action OT requires a conditional-mixture teacher and conditional OT NLL")
+    gaussian_sac = actor.get("distillation_loss") == "ot_gaussian_conditional_sac"
+    conditional_sac = actor.get("distillation_loss") in {"ot_conditional_sac", "ot_gaussian_conditional_sac"}
+    if ot_student_action in {"latent", "gaussian"} and not conditional_sac:
+        raise ValueError("Latent OT requires ot_conditional_sac")
+    if conditional_sac:
+        if (
+            actor.get("type") != "semi_implicit"
+            or actor.get("teacher_distribution") != "conditional_mixture"
+            or actor.get("latent_prior", "normal") != "normal"
+            or ot_student_action != ("gaussian" if gaussian_sac else "latent")
+        ):
+            raise ValueError("OT conditional SAC requires normal latent OT and a conditional-mixture actor/teacher")
+        if actor.get("normalize_ot_cost", True):
+            raise ValueError("OT conditional SAC requires its unnormalized specified transport cost")
+        if backup_mode != "soft_td":
+            raise ValueError("OT conditional SAC requires SAC soft TD with fixed entropy coefficient equal to temperature")
+        if actor.get("ot_potential_mode", "fresh_sinkhorn") not in {"fresh_sinkhorn", "persistent_dual"}:
+            raise ValueError("ot_potential_mode must be fresh_sinkhorn or persistent_dual")
+        if gaussian_sac:
+            if actor.get("ot_potential_mode") != "fresh_sinkhorn":
+                raise ValueError("v8 must solve a fresh OT independently for each state")
+            if float(actor.sinkhorn_epsilon) != 1.:
+                raise ValueError("v8 Gaussian-likelihood OT requires dimensionless epsilon=1")
+            if actor.source_q_eval != "min":
+                raise ValueError("v8 uses min of current twin critics for teacher and actor")
+            minimum = actor.get("ot_min_iterations", 10)
+            if int(minimum) != minimum or minimum < 1 or minimum > actor.sinkhorn_iterations:
+                raise ValueError("v8 OT min iterations must be an integer between 1 and max iterations")
+            tolerance = float(actor.get("ot_relative_tolerance", 1e-3))
+            if not math.isfinite(tolerance) or not 0 < tolerance < 1:
+                raise ValueError("v8 OT relative tolerance must be finite and between 0 and 1")
+        dual_lr = float(actor.get("ot_dual_learning_rate", 1e-4))
+        if not math.isfinite(dual_lr) or dual_lr <= 0:
+            raise ValueError("ot_dual_learning_rate must be positive and finite")
+        dual_widths = actor.get("ot_dual_hidden_dims", [256, 256])
+        if not isinstance(dual_widths, (list, tuple, ListConfig)) or not dual_widths:
+            raise ValueError("ot_dual_hidden_dims must be a nonempty sequence of positive integer widths")
+        if any(not math.isfinite(float(width)) or float(width) < 1 or int(width) != float(width)
+               for width in dual_widths):
+            raise ValueError("ot_dual_hidden_dims must contain positive integers")
+        for name, default in (("ot_num_latents", 4096), ("ot_teacher_resample_count", 16),
+                              ("teacher_proposal_components", 256)):
+            value = float(actor.get(name, default))
+            if not math.isfinite(value) or value < 1 or int(value) != value:
+                raise ValueError(f"{name} must be a positive integer")
+        if actor.num_policy_samples != actor.get("ot_teacher_resample_count", 16):
+            raise ValueError("OT conditional SAC needs one actor query per resampled teacher slot: num_policy_samples must equal ot_teacher_resample_count")
+        ot_latent_seed = float(actor.get("ot_latent_seed", cfg.seed))
+        if (
+            not math.isfinite(ot_latent_seed) or int(ot_latent_seed) != ot_latent_seed
+            or not 0 <= ot_latent_seed < 2**32
+        ):
+            raise ValueError("ot_latent_seed must be a uint32 integer")
     if actor.get("type", "implicit") not in {"implicit", "semi_implicit"}:
         raise ValueError("actor.type must be implicit or semi_implicit")
     if actor.get("type", "implicit") == "semi_implicit":
@@ -142,8 +288,10 @@ def validate_config(cfg):
             raise ValueError("v2 uses target critics; crossq_style must be false")
     if actor.sinkhorn_iterations < 1 or not math.isfinite(float(actor.sinkhorn_epsilon)) or actor.sinkhorn_epsilon <= 0:
         raise ValueError("Sinkhorn epsilon and iteration count must be positive")
-    if actor.get("distillation_loss", "pointwise_mse") not in {"pointwise_mse", "conditional_ot_nll"}:
-        raise ValueError("distillation_loss must be pointwise_mse or conditional_ot_nll")
+    if actor.get("distillation_loss", "pointwise_mse") not in {
+        "pointwise_mse", "conditional_ot_nll", "ot_conditional_sac", "ot_gaussian_conditional_sac"
+    }:
+        raise ValueError("Unknown distillation_loss")
     if actor.get("distillation_loss") == "conditional_ot_nll" and actor.get("type") != "semi_implicit":
         raise ValueError("Conditional OT NLL requires a semi-implicit actor")
     if "density_correction_beta" in actor and actor.density_correction_beta != actor.density_beta:
@@ -281,6 +429,8 @@ def initialize_and_run(cfg: DictConfig):
         )
         if is_mujoco:
             wandb_config["runtime"] = provenance()
+        if cfg.alg.actor.get("distillation_loss") in {"ot_conditional_sac", "ot_gaussian_conditional_sac"}:
+            wandb_config["algorithm_semantics"] = algorithm_metadata(cfg)
         run = wandb.init(
             settings=wandb.Settings(_service_wait=300),
             project=cfg.wandb.project,
@@ -314,7 +464,7 @@ def initialize_and_run(cfg: DictConfig):
                 "action_high": model.action_space.high.tolist(),
                 "max_episode_steps": model.get_env().get_attr("spec")[0].max_episode_steps,
                 "replay_actions": "normalized [-1, 1]",
-                "random_proposal_count": cfg.alg.actor.num_policy_samples * (
+                "random_proposal_count": cfg.alg.actor.get("teacher_proposal_components", cfg.alg.actor.num_policy_samples) * (
                     cfg.alg.actor.proposals_per_policy_sample - int(cfg.alg.actor.include_anchor)),
                 "anchor_count": cfg.alg.actor.num_policy_samples * int(cfg.alg.actor.include_anchor),
             }
@@ -351,6 +501,7 @@ def initialize_and_run(cfg: DictConfig):
                         extraction="KL-proximal soft target; ESS selects eta multiplying Q/T and -log pi together",
                         objective_temperature=float(cfg.alg.actor.temperature),
                     )
+                environment_metadata.update(algorithm_metadata(cfg))
             if cfg.get("dual_mu_eval", False):
                 environment_metadata["evaluation"] = {
                     "zero_z": "a=tanh(mu(s,0)); epsilon=0",
@@ -405,7 +556,7 @@ def initialize_and_run(cfg: DictConfig):
                     callback.eval_env.close()
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="mujoco_v5")
+@hydra.main(version_base=None, config_path="configs", config_name="mujoco_v8")
 def main(cfg: DictConfig) -> None:
     try:
         if cfg.use_jit:
