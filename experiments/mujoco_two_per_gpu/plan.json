@@ -5,12 +5,12 @@
   "roots": {
     "v1": "explorer_v1/9b26ade65509",
     "v2": "explorer_v2/947ad432be67",
-    "v3": "explorer_v3/e0e5ddaa5658"
+    "v3": "explorer_v3/46459857236a"
   },
   "numerical_commits": {
     "v1": "9b26ade655097728e12aa63f8c274fe2350729f1",
     "v2": "947ad432be6719654feef20c94f09018faf7100e",
-    "v3": "e0e5ddaa565815401a566faf70e9316a8814a7d0"
+    "v3": "46459857236aeac39d0c25a22485198f4a376200"
   },
   "gpus": {
     "ant": 0,

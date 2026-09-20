@@ -24,7 +24,7 @@
 
 Numerical source는 immutable v1@9b26ade655097728e12aa63f8c274fe2350729f1 및
 v2@947ad432be6719654feef20c94f09018faf7100e를 유지한다.
-v3@e0e5ddaa565815401a566faf70e9316a8814a7d0의12개 run을 추가해 총36개 계획이 된다.
+v3@46459857236aeac39d0c25a22485198f4a376200의12개 run을 추가해 총36개 계획이 된다.
 v3는 동일한 z의 target-min explorer Q에서 target-max evaluator Q를 뺀 A>0일 때
 raw A 가중 action MSE를 사용한다. 상세 수식은 해당 알고리즘 PROTOCOL.md에 있다.
 최초 MC 평균 기반 v3 source(6b7c23e)는 사용자 정정에 따라 종료 및 비교 제외했다.
