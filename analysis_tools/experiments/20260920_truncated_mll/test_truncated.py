@@ -1,0 +1,61 @@
+import sys
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+import train
+import jax
+import jax.numpy as jnp
+import numpy as np
+from scipy.stats import truncnorm
+from optiq_dime.box_gaussian import sample_box, mixture_log_prob, component_log_prob
+from optiq_dime.distillation import direct_gmm_nll
+from optiq_dime.policy import SemiImplicitActor, OptiQPolicy
+
+def test_config_and_import():
+    cfg=train.compose_config(['benchmark=humanoid','wandb.mode=disabled'])
+    assert cfg.alg.actor.log_std_max==-1
+    import optiq_dime.algorithm as a
+    assert str(Path(__file__).parent) in a.__file__
+
+def test_density_normalizes_and_matches_scipy():
+    x=np.linspace(-1,1,20001)
+    for mu,std in [(0,.367879),(.99,.05),(-1,.00673795),(1,.367879)]:
+        ls=jnp.array([[[np.log(std)]]]); m=jnp.array([[[mu]]])
+        got=np.asarray(mixture_log_prob(jnp.array(x[None,:,None]),m,ls))[0]
+        expected=truncnorm.logpdf(x,(-1-mu)/std,(1-mu)/std,loc=mu,scale=std)
+        np.testing.assert_allclose(got,expected,rtol=2e-5,atol=.02)
+        assert abs(np.trapezoid(np.exp(got),x)-1)<2e-4
+
+def test_sampling_bounds_and_moments():
+    for mu,std in [(0,.367879),(.99,.05),(-1,.00673795),(1,.367879)]:
+        samples=np.asarray(sample_box(jax.random.PRNGKey(12),jnp.full((100000,),mu,dtype=jnp.float32),jnp.full((100000,),np.log(std))))
+        assert np.isfinite(samples).all() and samples.min()>=-1 and samples.max()<=1
+        a,b=(-1-mu)/std,(1-mu)/std
+        mean,var=truncnorm.stats(a,b,loc=mu,scale=std,moments='mv')
+        assert abs(samples.mean()-mean)<.01*std
+        assert abs(samples.var()-var)<.01*std**2
+
+def test_nll_normalizer_gradient_and_stops():
+    mu=jnp.array([[[.8],[-.3]]]);ls=jnp.array([[[-2.],[-1.5]]])
+    targets=jnp.array([[[.9],[-.2]]]);w=jnp.array([[.4,.6]])
+    fn=lambda m,l,t,ww:direct_gmm_nll(m,l,t,ww)[0]
+    grads=jax.grad(fn,argnums=(0,1,2,3))(mu,ls,targets,w)
+    assert all(np.isfinite(g).all() for g in grads)
+    assert np.max(np.abs(grads[0]))>0 and np.max(np.abs(grads[1]))>0
+    assert np.all(grads[2]==0) and np.all(grads[3]==0)
+    for arg in [0,1]:
+        vals=[mu,ls,targets,w];delta=jnp.zeros_like(vals[arg]).at[0,0,0].set(.001)
+        plus=vals.copy();minus=vals.copy();plus[arg]+=delta;minus[arg]-=delta
+        fd=(fn(*plus)-fn(*minus))/.002
+        np.testing.assert_allclose(grads[arg][0,0,0],fd,atol=.003,rtol=.003)
+
+def test_actor_and_policy_sampling():
+    from flax.training.train_state import TrainState
+    import optax
+    model=SemiImplicitActor(2,(16,16),-5.,-1.,-1.)
+    obs=jnp.ones((32,3));z=jnp.ones((32,2))
+    params=model.init(jax.random.PRNGKey(4),obs,z)['params']
+    state=TrainState.create(apply_fn=model.apply,params=params,tx=optax.adam(.0003))
+    a=OptiQPolicy.sample_action(state,obs,jax.random.PRNGKey(1))
+    assert np.isfinite(a).all() and np.max(np.abs(a))<=1
+    centers,_=model.apply({'params':params},obs,jnp.zeros_like(z))
+    np.testing.assert_allclose(OptiQPolicy.sample_action(state,obs,jax.random.PRNGKey(1),deterministic=True),centers,atol=1e-6)
