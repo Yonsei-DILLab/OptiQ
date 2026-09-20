@@ -1,0 +1,4 @@
+# Matched-budget audit prompted by supplied GMM40 figure
+Figure explicitly states finite uniform 64-component policy, N=M=64, batch4, T1, fresh teacher, latent skip0, 100000 updates. Exact source/checkpoint for this screenshot has not yet been located.
+Rerun original fixed-z64 toy for 100000 updates, with batch1 and batch4, seeds0/1, same initialization and bank as earlier. Batch4 uses four independent 64-candidate teacher clouds from the SAME fixed bank and averages their original Direct GMM losses. Original model, Adam3e-4, sigma floor, Q=.25 log f and T=.25 preserved (thus Q/T=log f, matching untempered target).
+Record original 5K and later points. Do not overwrite earlier runs. Compare prefix at5K for batch1 to verify exact reproducibility. Batch1 vs batch4 isolates teacher cloud batch; 5K vs100K examines budget. No claims of exact GMM40 replication absent original source manifest.
