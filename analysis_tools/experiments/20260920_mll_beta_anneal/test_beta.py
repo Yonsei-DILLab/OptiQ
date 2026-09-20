@@ -5,6 +5,7 @@ from train_beta import base,compose_config,beta_at_step,BetaAnnealedMLL
 import inspect
 import numpy as np
 import pytest
+import hydra
 from stable_baselines3.common.logger import configure
 
 
@@ -18,6 +19,7 @@ def test_beta_reaches_actual_jitted_learner_and_config_restored(tmp_path,monkeyp
         'alg.batch_size=4','alg.buffer_size=32','alg.learning_starts=2',
         'alg.actor.learning_starts=2','num_eval_episodes=1','eval_interval=10000',
         'checkpoint_interval=0'])
+    cfg=hydra.utils.instantiate(cfg)  # Match the production initialization path.
     monkeypatch.setattr(base.runner,'OptiQDIME',BetaAnnealedMLL)
     model,callbacks=base.runner.create_algorithm(cfg)
     model.set_logger(configure(str(tmp_path/'logs'),['csv']))

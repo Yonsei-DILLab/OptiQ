@@ -25,15 +25,16 @@ def beta_at_step(step):
 class BetaAnnealedMLL(OptiQDIME):
     def train(self,batch_size,gradient_steps):
         actor=self.cfg.alg.actor
-        previous=actor.density_correction_beta
+        previous=(actor.density_correction_beta,actor.density_beta)
         beta=beta_at_step(self.num_timesteps)
-        # density_beta is an OmegaConf interpolation to this field. Pass a
-        # dynamic scalar to the unchanged jitted learner (not a static arg).
+        # Hydra instantiation can resolve the interpolation into a literal.
+        # Set BOTH aliases explicitly; pass a dynamic scalar to the learner.
         actor.density_correction_beta=beta
+        actor.density_beta=beta
         try:
             result=super().train(batch_size,gradient_steps)
         finally:
-            actor.density_correction_beta=previous
+            actor.density_correction_beta,actor.density_beta=previous
         self.logger.record('train/density_beta',beta)
         return result
 

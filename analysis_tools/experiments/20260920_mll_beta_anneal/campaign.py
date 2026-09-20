@@ -30,7 +30,15 @@ def check_source():
 def prepare():
     from omegaconf import OmegaConf
     from train_beta import compose_config
-    assert ROOT.name=='optiq-mll-beta-20260920' and not (ROOT/'plan.json').exists()
+    assert ROOT.name=='optiq-mll-beta-20260920'
+    if (ROOT/'plan.json').exists():
+        # Only a never-launched preparation can be superseded. Retain audit.
+        assert not list((ROOT/'state').glob('*')) and not list((ROOT/'logs').glob('*'))
+        old=json.loads((ROOT/'plan.json').read_text())['commit']
+        for name in ('plan.json','source-hashes.json'):
+            target=ROOT/(name+'.before-'+old)
+            assert not target.exists()
+            (ROOT/name).rename(target)
     assert not git('status','--porcelain')
     for name in ('logs','state','outputs','cache','wandb-cache','validation'):(ROOT/name).mkdir(exist_ok=True)
     jobs=[]
