@@ -1,4 +1,4 @@
-"""Paired zero-latent and stochastic-latent conditional-mean evaluations."""
+"""Paired deterministic/stochastic evaluations using the policy latent prior."""
 import jax
 import numpy as np
 from stable_baselines3.common.evaluation import evaluate_policy
@@ -7,19 +7,44 @@ from stable_baselines3.common.vec_env import sync_envs_normalization
 from .evaluation import MujocoEvalCallback
 
 
+def dual_mu_evaluation_spec(cfg):
+    """Describe the same latent support used by training and action sampling."""
+    finite = cfg.alg.actor.get("latent_prior", "normal") == "finite"
+    deterministic_mode = "fixed_z" if finite else "zero_z"
+    spec = {
+        deterministic_mode: ("z=training_codebook[0]; a=tanh(mu(s,z)); epsilon=0" if finite
+                             else "a=tanh(mu(s,0)); epsilon=0"),
+        "stochastic_z": ("uniform choice from the same fixed training codebook per action; a=tanh(mu(s,z)); epsilon=0" if finite
+                         else "z~N(0,I) per action; a=tanh(mu(s,z)); epsilon=0"),
+        "episodes_per_mode": int(cfg.num_eval_episodes),
+        "legacy_eval_alias": "stochastic_z" if finite else "zero_z",
+        "paired_episode_reset_seeds": True,
+        "rng_isolated_from_collection": True,
+    }
+    if finite:
+        spec.update(latent_components=int(cfg.alg.actor.latent_components),
+                    latent_codebook_seed=int(cfg.alg.actor.latent_codebook_seed))
+    return deterministic_mode, spec
+
+
 class DualMuEvalCallback(MujocoEvalCallback):
     """Both modes use epsilon=0; each episode receives a paired reset seed.
 
     Evaluation RNG is independent of collection and restored even on failure.
-    The legacy `eval/mean_reward` and `returns` refer to zero-z explicitly.
+    For finite policies stochastic-z samples the training codebook; fixed-z uses
+    its first component. The legacy reward aliases stochastic-z for finite
+    policies and zero-z for continuous policies.
     """
 
     MODES = ("zero_z", "stochastic_z")
 
     def __init__(self, eval_env, cfg, directory):
         super().__init__(eval_env, cfg, directory)
-        if cfg.alg.actor.get("type") != "semi_implicit" or cfg.alg.actor.get("latent_prior", "normal") != "normal":
-            raise ValueError("Dual mu evaluation requires a continuous Gaussian latent actor")
+        if cfg.alg.actor.get("type") != "semi_implicit":
+            raise ValueError("Dual mu evaluation requires a semi-implicit actor")
+        self.deterministic_mode, self.evaluation_spec = dual_mu_evaluation_spec(cfg)
+        self.MODES = (self.deterministic_mode, "stochastic_z")
+        self.primary_mode = self.evaluation_spec["legacy_eval_alias"]
         self.training_seed = int(cfg.seed)
         self.histories = {mode: {key: [] for key in
             ("results", "ep_lengths", "env_seeds", "policy_seeds", "successes", "solved_steps")}
@@ -52,7 +77,7 @@ class DualMuEvalCallback(MujocoEvalCallback):
                     self._per_time_is_success_buffer = []
                     reward, length = evaluate_policy(
                         self.model, self.eval_env, n_eval_episodes=1,
-                        deterministic=(mode == "zero_z"), return_episode_rewards=True,
+                        deterministic=(mode == self.deterministic_mode), return_episode_rewards=True,
                         warn=self.warn, callback=self._log_success_callback)
                     rewards.extend(reward)
                     lengths.extend(length)
@@ -85,12 +110,12 @@ class DualMuEvalCallback(MujocoEvalCallback):
                 print(f"Eval {mode}, step={self.num_timesteps}, "
                       f"reward={np.mean(result['results']):.2f}, "
                       f"length={np.mean(result['ep_lengths']):.2f}", flush=True)
-        self.evaluations_results = self.histories["zero_z"]["results"]
-        self.evaluations_length = self.histories["zero_z"]["ep_lengths"]
-        self.last_mean_reward = float(np.mean(current["zero_z"]["results"]))
+        self.evaluations_results = self.histories[self.primary_mode]["results"]
+        self.evaluations_length = self.histories[self.primary_mode]["ep_lengths"]
+        self.last_mean_reward = float(np.mean(current[self.primary_mode]["results"]))
         self.best_mean_reward = max(self.best_mean_reward, self.last_mean_reward)
         self.logger.record("eval/mean_reward", self.last_mean_reward)
-        self.logger.record("eval/mean_ep_length", float(np.mean(current["zero_z"]["ep_lengths"])))
+        self.logger.record("eval/mean_ep_length", float(np.mean(current[self.primary_mode]["ep_lengths"])))
         self.logger.record("time/total_timesteps", self.num_timesteps, exclude="tensorboard")
         self.logger.dump(self.num_timesteps)
         return True

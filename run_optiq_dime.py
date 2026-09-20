@@ -21,7 +21,7 @@ from common.buffers import DMCCompatibleDictReplayBuffer
 from models.actor_critic_evaluation_callback import EvalCallback
 from optiq_dime import OptiQDIME
 from optiq_dime.evaluation import MujocoEvalCallback
-from optiq_dime.dual_evaluation import DualMuEvalCallback
+from optiq_dime.dual_evaluation import DualMuEvalCallback, dual_mu_evaluation_spec
 from optiq_dime.temperature import parse_temperature_schedule
 from optiq_dime.runtime import ROOT, WandbWriter, load_environment, provenance
 
@@ -48,8 +48,8 @@ def validate_config(cfg):
         raise ValueError(f"Invalid Dog task: {cfg.task}")
     actor = cfg.alg.actor
     if cfg.get("dual_mu_eval", False):
-        if actor.get("type") != "semi_implicit" or actor.get("latent_prior", "normal") != "normal":
-            raise ValueError("dual_mu_eval requires a continuous-latent semi-implicit actor")
+        if actor.get("type") != "semi_implicit":
+            raise ValueError("dual_mu_eval requires a semi-implicit actor")
     guard = actor.get("soft_guard", {})
     backup_mode = cfg.alg.critic.get(
         "backup_mode", "soft_td" if actor.get("type") == "semi_implicit" else "td"
@@ -361,14 +361,7 @@ def initialize_and_run(cfg: DictConfig):
                         objective_temperature=float(cfg.alg.actor.temperature),
                     )
             if cfg.get("dual_mu_eval", False):
-                environment_metadata["evaluation"] = {
-                    "zero_z": "a=tanh(mu(s,0)); epsilon=0",
-                    "stochastic_z": "z~N(0,I) per action; a=tanh(mu(s,z)); epsilon=0",
-                    "episodes_per_mode": int(cfg.num_eval_episodes),
-                    "legacy_eval_alias": "zero_z",
-                    "paired_episode_reset_seeds": True,
-                    "rng_isolated_from_collection": True,
-                }
+                _, environment_metadata["evaluation"] = dual_mu_evaluation_spec(cfg)
             run.config.update({"environment": environment_metadata})
             wandb_config["environment"] = environment_metadata
             (Path(cfg.output_root) / "config.json").write_text(json.dumps(wandb_config, indent=2))

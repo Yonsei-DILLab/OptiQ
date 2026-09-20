@@ -1,0 +1,24 @@
+# @package _global_
+defaults:
+  - v5_direct_gmm/final
+  - override /benchmark: humanoid
+  - _self_
+
+alg:
+  actor:
+    temperature: 0.1
+    latent_prior: finite
+    latent_components: 64
+    latent_codebook_seed: 20260911
+    num_policy_samples: 64
+    proposals_per_policy_sample: 1
+
+# Both modes use training's fixed codebook and epsilon=0.
+# eval/mean_reward aliases stochastic_z for the actual finite mixture.
+dual_mu_eval: true
+output_root: ../optiq-experiments/humanoid-direct-gmm-fixed64/outputs
+run_name: humanoid-v5-direct-gmm-fixed64-N64-M64-T${alg.actor.temperature}-s${seed}
+wandb:
+  project: v5-heechan-gmm
+  group: Humanoid-v4_directGMM_fixed64_N64_M64_T0.1_defaultRL
+  job_type: humanoid-direct-gmm-fixed64
