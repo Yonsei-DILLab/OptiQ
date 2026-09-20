@@ -56,6 +56,9 @@ def main():
     manifest=json.loads((package/'SCHEDULER_MANIFEST.json').read_text())
     assert all(hashlib.sha256((package/f).read_bytes()).hexdigest()==h
                for f,h in manifest['files'].items())
+    # The operational package also contains queue.py; do not shadow Python's
+    # standard-library queue when JAX/Torch/W&B import it below.
+    sys.path[:]=[x for x in sys.path if Path(x).resolve()!=package.resolve()]
     sys.path.insert(0,str(a.source_root.resolve()))
     runner=importlib.import_module(a.module)
     original=runner.verify_source()
