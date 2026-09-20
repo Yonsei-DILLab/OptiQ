@@ -21,7 +21,7 @@ for gpu in range(4):
     path=Path('/home/heechan/OptiQ-ops/supervisor/jobs')/(name+'.conf')
     assert not path.exists()
     path.write_text(f'''[program:{name}]
-command=/home/heechan/OptiQ-ops/run-gpu.sh {gpu} --branch v5-direct-gmm /home/heechan/.venv-optiq-mujoco/bin/python -u {HERE}/queue.py {host} {gpu} {root}
+command=/home/heechan/OptiQ-ops/run-gpu.sh {gpu} --branch v5-direct-gmm /home/heechan/.venv-optiq-mujoco/bin/python -u {HERE}/gpu_worker.py {host} {gpu} {root}
 directory={REPO}
 autostart=true
 autorestart=false
