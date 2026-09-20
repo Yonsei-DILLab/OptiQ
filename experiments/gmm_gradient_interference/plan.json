@@ -1,0 +1,14 @@
+{
+  "algorithm": "Direct GMM learned sigma (unchanged 0917 prefix)",
+  "n_values": [64, 2048], "m": 4096, "seeds": [0, 1, 2, 3],
+  "updates": 20000, "segment": 5000, "checkpoint_interval": 500,
+  "diagnostic_steps": [0, 1, 10, 100, 500, 1000, 2000, 5000, 10000, 15000, 20000],
+  "histogram_interval": 1000, "histogram_samples": 32768, "histogram_bins": 256,
+  "fixed_latents": 2048, "purity_threshold": 0.8,
+  "centers": [-0.6, 0.0, 0.6], "width": 0.1, "weights": [0.3333333333333333, 0.3333333333333333, 0.3333333333333333],
+  "temperature": 0.25, "actor_batch": 1, "learning_rate": 0.0003,
+  "gpu": 3, "cpus": [6, 7, 8, 9],
+  "python": "/home/heejoonorm/.venvs/optiq-monge/bin/python",
+  "precision": "parent default float32 (no highest override)",
+  "training_modification": "none; diagnostic branches are discarded"
+}
