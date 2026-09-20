@@ -1,14 +1,14 @@
 # OptiQ v8 current instructions
 
-This checkout is /root/OptiQ-v8, branch v8. User-authorized v8 supersedes historical v7 algorithm instructions below. Implement fresh per-state Gaussian-likelihood OT plus conditional SAC and validate on GMM40 before RL campaigns.
-- Actual actor Gaussians at H=4096 normal latent integration points define C=-alpha log pi_old,i(a|s). Entropic coefficient alpha (dimensionless likelihood epsilon=1).
-- Teacher candidates M=256, one sample per fresh latent Gaussian; W=softmax(Q/alpha-log q), resample K=16 BEFORE OT. Preserve proposal-density and tanh/action-scale corrections. Proposal sigma floor never enters source Gaussian cost or actor density.
-- Solve each state independently from scratch; no persistent dual model/optimizer. Balanced source 1/H, target 1/K; check row and column residuals (min/max 10/2000, relative tolerance 1e-3). Do not silently accept nonconvergence.
-- Sample one source per teacher column of P. Actor uses newly generated actions and conditional SAC loss alpha log pi_i-Q-alpha log Pr_OT(i|a). No extra source importance ratio. Freeze old source Gaussian parameters and solved potentials, retain query-action derivatives.
-- All H source Gaussian frozen forwards are required; actor parameter backward for selected K only. Reuse identical-state forwards in GMM only when exactly equivalent.
-- Preserve plain MLP 256x2, learning rate 3e-4, sigma bounds/init, Q target, prior, evaluation protocol. GMM alpha=1, no unrequested learning-rate/UTD changes.
-- Core JAX implementation should be reusable for RL; soft TD uses mixture policy density. Preserve historical v7 paths and external baseline original implementations.
-- Store run artifacts outside repo; long GPU runs use supervisor and frozen source. User authorizes GMM experiments. Do not push without explicit instruction.
+This checkout is /root/OptiQ-v8, branch v8. The user explicitly selected raw z -> teacher distance: g learns the Gaussian separately. This overrides the earlier Gaussian-NLL-cost v8 prototype as well as historical v7 instructions below.
+- OT source is H=4096 fixed standard-normal latent coordinates z, not g(z)'s mean, Gaussian density, or sampled action. Cost C_ij=||z_i-u_j||^2 in pre-tanh teacher coordinates. Default distance epsilon=.1 is independent of actor/Boltzmann alpha; GMM alpha=1.
+- Teacher candidates M=256, one action per fresh latent Gaussian; W=softmax(Q/alpha-log q), importance resample K=16 BEFORE OT. Preserve full proposal-density and tanh/action-scale corrections. Proposal sigma floor affects only teacher sampling and q.
+- Solve each state independently from scratch; no persistent dual model/optimizer. Balanced source 1/H and teacher 1/K; min/max10/2000, relative tolerance1e-3. Stop/return diagnostics on nonconvergence; do not silently approve it.
+- Sample one source per teacher column. Actor generates a new action at each selected z and minimizes alpha log pi_i - Q - alpha log Pr_OT(i|a). Query Pr_OT must use the SAME raw-z distance and epsilon as the solve, with live action derivative. No extra source importance ratio.
+- No actor forward over all H source coordinates. g is evaluated for 256 teacher Gaussians and 16 selected actor queries; the 4096x16 geometric OT is separate from Gaussian learning.
+- Keep plain MLP256x2, Adam3e-4, sigma bounds/init, normal prior and evaluation protocol. Preserve RL soft TD, v5 learning rates/UTD/frequency and current twin-min Q. Do not claim exact marginal SAC or guaranteed Gaussian conditional representation.
+- Core JAX implementation shared by RL and GMM. Preserve v7 controls, old frozen experiments and external baseline original implementations.
+- Store artifacts outside repo; long GPU runs use supervisor and frozen committed source. User authorizes v8 commit/push and GMM experiments; code/cost/epsilon changes require new run directories and incompatible checkpoint signatures.
 
 # Historical instructions (v8 overrides above take precedence)
 

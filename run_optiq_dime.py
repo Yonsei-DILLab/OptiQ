@@ -90,16 +90,18 @@ def v7_algorithm_metadata(cfg):
 
 def v8_algorithm_metadata(cfg):
     actor = cfg.alg.actor
-    if actor.get("distillation_loss") != "ot_gaussian_conditional_sac":
+    if actor.get("distillation_loss") != "ot_latent_conditional_sac":
         return {}
     return dict(
-        algorithm_family="v8_gaussian_OT_conditional_sac",
+        algorithm_family="v8_fresh_latent_OT_conditional_sac",
         actor_objective="mean[T log pi_i(a|s) - min Q(s,a) - T log Pr_OT(i|a,s)]",
-        actor_projection="conditional SAC; Gaussian NLL is only an OT cost",
+        actor_projection="conditional SAC; raw latent geometry assigns targets separately from Gaussian fitting",
         actor_entropy_coefficient=float(actor.temperature),
         actor_q_aggregation=actor.source_q_eval, teacher_q_aggregation=actor.source_q_eval,
-        ot_cost="-T log actual frozen actor Gaussian density; includes tanh/action-scale Jacobian",
-        ot_dimensionless_epsilon=1., ot_entropic_coefficient=float(actor.temperature),
+        ot_cost="squared Euclidean distance from raw z to pre-tanh teacher u",
+        ot_distance_epsilon=float(actor.sinkhorn_epsilon),
+        ot_entropic_coefficient=float(actor.sinkhorn_epsilon),
+        ot_cost_units="pre-tanh coordinate squared; independent of entropy temperature",
         ot_potential_mode="fresh_sinkhorn", ot_dual_state_persistent=False,
         ot_source_count=int(actor.ot_num_latents), ot_teacher_count=int(actor.ot_teacher_resample_count),
         ot_latent_seed=int(actor.ot_latent_seed),
@@ -108,7 +110,7 @@ def v8_algorithm_metadata(cfg):
         ot_min_iterations=int(actor.ot_min_iterations),
         ot_relative_tolerance=float(actor.ot_relative_tolerance),
         ot_nonconvergence="reject actor/Adam/RNG update and halt training with diagnostic",
-        ot_integration_points="fixed normal coordinates, all H Gaussian outputs recomputed per state",
+        ot_integration_points="fixed normal coordinates; no actor Gaussian forward over H sites",
         teacher_proposal_component_count=int(actor.teacher_proposal_components),
         teacher_candidate_count=int(actor.teacher_proposal_components*actor.proposals_per_policy_sample),
         teacher_importance_weights="softmax(Q/T-log q), reflected once in resampling multiplicity",
@@ -198,24 +200,24 @@ def validate_config(cfg):
     if actor.get("teacher_distribution") == "conditional_mixture" and actor.get("type") != "semi_implicit":
         raise ValueError("Conditional mixture teacher requires a semi-implicit actor")
     ot_student_action = actor.get("ot_student_action", "sample")
-    if ot_student_action not in {"sample", "mean", "latent", "gaussian"}:
-        raise ValueError("ot_student_action must be sample, mean, latent, or gaussian")
+    if ot_student_action not in {"sample", "mean", "latent"}:
+        raise ValueError("ot_student_action must be sample, mean, or latent")
     if ot_student_action == "mean" and (
         actor.get("type") != "semi_implicit"
         or actor.get("teacher_distribution") != "conditional_mixture"
         or actor.get("distillation_loss") != "conditional_ot_nll"
     ):
         raise ValueError("Mean-action OT requires a conditional-mixture teacher and conditional OT NLL")
-    gaussian_sac = actor.get("distillation_loss") == "ot_gaussian_conditional_sac"
-    conditional_sac = actor.get("distillation_loss") in {"ot_conditional_sac", "ot_gaussian_conditional_sac"}
-    if ot_student_action in {"latent", "gaussian"} and not conditional_sac:
+    v8_sac = actor.get("distillation_loss") == "ot_latent_conditional_sac"
+    conditional_sac = actor.get("distillation_loss") in {"ot_conditional_sac", "ot_latent_conditional_sac"}
+    if ot_student_action == "latent" and not conditional_sac:
         raise ValueError("Latent OT requires ot_conditional_sac")
     if conditional_sac:
         if (
             actor.get("type") != "semi_implicit"
             or actor.get("teacher_distribution") != "conditional_mixture"
             or actor.get("latent_prior", "normal") != "normal"
-            or ot_student_action != ("gaussian" if gaussian_sac else "latent")
+            or ot_student_action != "latent"
         ):
             raise ValueError("OT conditional SAC requires normal latent OT and a conditional-mixture actor/teacher")
         if actor.get("normalize_ot_cost", True):
@@ -224,11 +226,9 @@ def validate_config(cfg):
             raise ValueError("OT conditional SAC requires SAC soft TD with fixed entropy coefficient equal to temperature")
         if actor.get("ot_potential_mode", "fresh_sinkhorn") not in {"fresh_sinkhorn", "persistent_dual"}:
             raise ValueError("ot_potential_mode must be fresh_sinkhorn or persistent_dual")
-        if gaussian_sac:
+        if v8_sac:
             if actor.get("ot_potential_mode") != "fresh_sinkhorn":
                 raise ValueError("v8 must solve a fresh OT independently for each state")
-            if float(actor.sinkhorn_epsilon) != 1.:
-                raise ValueError("v8 Gaussian-likelihood OT requires dimensionless epsilon=1")
             if actor.source_q_eval != "min":
                 raise ValueError("v8 uses min of current twin critics for teacher and actor")
             minimum = actor.get("ot_min_iterations", 10)
@@ -289,7 +289,7 @@ def validate_config(cfg):
     if actor.sinkhorn_iterations < 1 or not math.isfinite(float(actor.sinkhorn_epsilon)) or actor.sinkhorn_epsilon <= 0:
         raise ValueError("Sinkhorn epsilon and iteration count must be positive")
     if actor.get("distillation_loss", "pointwise_mse") not in {
-        "pointwise_mse", "conditional_ot_nll", "ot_conditional_sac", "ot_gaussian_conditional_sac"
+        "pointwise_mse", "conditional_ot_nll", "ot_conditional_sac", "ot_latent_conditional_sac"
     }:
         raise ValueError("Unknown distillation_loss")
     if actor.get("distillation_loss") == "conditional_ot_nll" and actor.get("type") != "semi_implicit":
@@ -429,7 +429,7 @@ def initialize_and_run(cfg: DictConfig):
         )
         if is_mujoco:
             wandb_config["runtime"] = provenance()
-        if cfg.alg.actor.get("distillation_loss") in {"ot_conditional_sac", "ot_gaussian_conditional_sac"}:
+        if cfg.alg.actor.get("distillation_loss") in {"ot_conditional_sac", "ot_latent_conditional_sac"}:
             wandb_config["algorithm_semantics"] = algorithm_metadata(cfg)
         run = wandb.init(
             settings=wandb.Settings(_service_wait=300),

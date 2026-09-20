@@ -1,9 +1,9 @@
 # v8 실행 안내
 
-상태별 fresh Gaussian-likelihood OT + 조건부 SAC 구현이다. 전체 수식과 gradient 경로는
+상태별 fresh raw-z 거리 OT + 조건부 SAC 구현이다. 전체 수식과 gradient 경로는
 [ALGORITHM_KO.md](ALGORITHM_KO.md)에 정리했다. GMM40 runner와 RL이 같은 actor core를 호출한다.
 통과한 테스트와 속도 측정 범위는 [VALIDATION_KO.md](VALIDATION_KO.md)에 기록했다.
-NLL 비용의 정당성과 거리 비용 교체의 한계는 [COST_REVIEW_KO.md](COST_REVIEW_KO.md)를 참고한다.
+이전 NLL 비용 검토 및 raw-z 거리 비용 선택의 근거는 [COST_REVIEW_KO.md](COST_REVIEW_KO.md)를 참고한다.
 
 ## 환경
 
@@ -43,7 +43,7 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_PREALLOCATE=false \
   --preflight /tmp/v8-gpu-preflight/preflight.json --out /path/to/results/v8-seed0
 ```
 
-다른 seed는 `--seed`와 출력 경로를 바꾼다. Preflight는 source hash와 solver/clip 설정이
+다른 seed는 `--seed`와 출력 경로를 바꾼다. 거리 epsilon은 `--epsilon 0.1`로 명시할 수 있다. Preflight는 source hash와 solver/clip 설정이
 같으면 seed 간 공유할 수 있지만 실제 실행 GPU에서 CUDA 검증을 먼저 하는 것이 좋다.
 이 인스턴스처럼 장기 작업을 supervisor로 관리하는 환경에서는 위 foreground 명령을
 서비스에 등록한다. 다른 환경에서는 해당 환경의 job scheduler를 사용한다.
@@ -58,7 +58,7 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_PREALLOCATE=false \
 | MLP / actor Adam | 256×2 / 3e-4 |
 | 초기 σ / log σ 범위 / proposal floor | .5 / [-5,1] / .05 |
 | OT min/max iterations / 상대 오차 | 10 / 2000 / 1e-3 |
-| OT dimensionless epsilon | 1, 독립 조절값 아님 |
+| OT 거리 epsilon | .1, alpha와 독립 |
 | Gradient clipping | 기본 없음; `--actor-max-grad-norm 2` 명시 가능 |
 | 평가 표본수 / 기준 seed | 10000 / 20260917 |
 | 평가·전체 checkpoint | 0, 1K, 이후 5K 간격 및 최종 |
@@ -89,6 +89,7 @@ CUDA_VISIBLE_DEVICES=0 OPTIQ_PYTHON=python bash scripts/run_v8.sh 0 benchmark=an
 RL campaign은 GMM 검증 이후 별도로 진행한다. 전체 mixture entropy는 기존 fresh
 16-component self-inclusive density로 근사하며, 조건부 actor loss와 구분한다.
 
-현재 Gaussian을 비용에 쓰므로 H=4096개의 frozen forward가 필요하다.
-GMM identical-state source forward 공유는 정확한 계산 재사용이며 teacher나 OT를 공유하는 것이 아니다.
-RL의 서로 다른 상태에 이 최적화를 적용하지 않는다.
+OT는 고정된 raw z 좌표와 teacher의 pre-tanh 좌표 사이 거리만 사용한다.
+4096개 source에 대한 actor forward는 하지 않는다. Gaussian은 teacher 후보 256개와
+학습에 선택된 latent 16개에서 평가한다. 상태마다 teacher와 OT를 독립적으로 다시 계산한다.
+이전 Gaussian-NLL-cost v8 checkpoint는 objective signature가 달라 재개할 수 없다.

@@ -1,6 +1,7 @@
 """GMM adapter preserves complete state and stops at the first rejected update."""
 import json
 
+from flax import serialization
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -10,6 +11,7 @@ from gmm40 import v8 as adapter
 from gmm40.v7 import GMM40V7
 from gmm40.v8 import GMM40V8, OTConvergenceError
 from gmm40.validate_v7 import checkpoint_audit, tree_error
+from gmm40.validate_v8 import ALGORITHM, COST, scientific_config
 
 
 def assert_same_values(left, right):
@@ -23,7 +25,7 @@ def assert_same_values(left, right):
 def small_agent(**overrides):
     settings = dict(seed=3, batch=2, num_students=16, proposal_components=8,
                     teacher_resample_count=4, actor_samples=4, latent_seed=3,
-                    hidden_dims=(8, 8), max_iterations=100, min_iterations=5,
+                    hidden_dims=(8, 8), max_iterations=2000, min_iterations=5,
                     relative_tolerance=1e-3)
     settings.update(overrides)
     return GMM40V8(**settings)
@@ -34,6 +36,8 @@ def test_full_actor_adam_rng_checkpoint_resume_is_exact(tmp_path, clip):
     original = small_agent(actor_max_grad_norm=clip)
     metrics = original.advance(3)
     assert metrics['actor_updates_attempted'] == metrics['actor_updates_accepted'] == 3.
+    assert metrics['v8_latent_conditional_sac_used'] == 1.
+    assert metrics['ot_source_gaussian_forward_used'] == 0.
     assert original.dual_state is None
     checkpoint = tmp_path / 'v8.bin'
     original.save(checkpoint)
@@ -55,9 +59,15 @@ def test_checkpoint_rejects_v7_or_different_v8_settings(tmp_path):
     current = small_agent()
     checkpoint = tmp_path / 'v8.bin'
     current.save(checkpoint)
-    assert json.loads(current.settings_signature)['version'] == 8
+    signature = json.loads(current.settings_signature)
+    assert signature['version'] == 8
+    assert signature['algorithm'] == ALGORITHM
+    assert signature['cost'] == COST
+    assert signature['epsilon'] == scientific_config()['epsilon'] == .1
+    assert signature['temperature'] == 1.
     for override in ({'latent_seed': 4}, {'actor_max_grad_norm': 2.},
-                     {'relative_tolerance': 2e-3}, {'max_iterations': 101}):
+                     {'relative_tolerance': 2e-3}, {'max_iterations': 101},
+                     {'epsilon': .2}):
         incompatible = small_agent(**override)
         with pytest.raises(ValueError, match='settings/seed mismatch'):
             incompatible.restore(checkpoint)
@@ -69,6 +79,18 @@ def test_checkpoint_rejects_v7_or_different_v8_settings(tmp_path):
     historical.save(old_checkpoint)
     with pytest.raises(ValueError, match='settings/seed mismatch'):
         current.restore(old_checkpoint)
+    # Reproduce the prior Gaussian-cost v8 format with the same actor state.
+    # Version number alone must never allow an algorithm-changing resume.
+    gaussian_signature = dict(signature)
+    for name in ('algorithm', 'cost', 'epsilon'):
+        gaussian_signature.pop(name)
+    gaussian_signature['shared_source'] = True
+    gaussian_checkpoint = dict(current.checkpoint(),
+        settings_signature=json.dumps(gaussian_signature, sort_keys=True))
+    gaussian_path = tmp_path / 'gaussian-cost-v8.bin'
+    gaussian_path.write_bytes(serialization.to_bytes(gaussian_checkpoint))
+    with pytest.raises(ValueError, match='settings/seed mismatch'):
+        current.restore(gaussian_path)
 
 
 @pytest.mark.parametrize('accepted_prefix', [0, 2])

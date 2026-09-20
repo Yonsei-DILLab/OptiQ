@@ -1,12 +1,15 @@
-"""Portable CPU/GPU preflight. This validates implementation, not GMM recovery."""
+"""Portable raw-latent OT v8 preflight; implementation checks, not GMM recovery."""
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
+ALGORITHM = 'raw_latent_ot_conditional_boltzmann'
+COST = 'squared_raw_latent_to_teacher_pretanh'
 DEPENDENCIES = (
     'gmm40/train_v8.py','gmm40/validate_v8.py','gmm40/validate_v7.py','gmm40/evaluation.py',
     'gmm40/v8.py','gmm40/v7.py','gmm40/target.py','gmm40/target_definition.json',
@@ -23,10 +26,10 @@ def source_hashes(root=ROOT):
 
 def scientific_config(seed=0, *, batch=256, num_students=4096, proposal_components=256,
                       teacher_resample_count=16, max_iterations=2000, min_iterations=10,
-                      relative_tolerance=1e-3, actor_max_grad_norm=None):
+                      relative_tolerance=1e-3, actor_max_grad_norm=None, epsilon=.1):
     return dict(seed=seed,batch=batch,num_students=num_students,proposal_components=proposal_components,
         teacher_resample_count=teacher_resample_count,actor_samples=teacher_resample_count,
-        proposal_std=.05,temperature=1.,latent_seed=seed,hidden_dims=[256,256],
+        proposal_std=.05,temperature=1.,epsilon=epsilon,latent_seed=seed,hidden_dims=[256,256],
         max_iterations=max_iterations,min_iterations=min_iterations,
         relative_tolerance=relative_tolerance,actor_max_grad_norm=actor_max_grad_norm)
 
@@ -42,11 +45,15 @@ def main():
     parser.add_argument('--platform',choices=('cpu','cuda'),default='cuda')
     parser.add_argument('--quick',action='store_true',help='Small CPU-scale implementation check; never a full-shape GPU benchmark')
     parser.add_argument('--seed',type=int,default=0)
+    parser.add_argument('--epsilon',type=float,default=.1,
+                        help='Raw latent squared-distance OT regularization; Boltzmann alpha stays1')
     parser.add_argument('--max-iterations',type=int,default=2000)
     parser.add_argument('--min-iterations',type=int,default=10)
     parser.add_argument('--relative-tolerance',type=float,default=1e-3)
     parser.add_argument('--actor-max-grad-norm',type=float)
     args=parser.parse_args()
+    if not math.isfinite(args.epsilon) or args.epsilon <= 0:
+        parser.error('epsilon must be positive and finite')
     os.environ['JAX_PLATFORMS']=args.platform
     os.environ.setdefault('XLA_PYTHON_CLIENT_PREALLOCATE','false')
     import jax
@@ -55,11 +62,13 @@ def main():
     from .validate_v7 import checkpoint_audit
     out=args.out.resolve(); out.mkdir(parents=True,exist_ok=False)
     report=dict(status='running',scope='implementation_validation',requested_platform=args.platform,
+                algorithm=ALGORITHM,cost=COST,
                 quick=args.quick,source_sha256=source_hashes())
     try:
         report['backend']=jax.default_backend()
         cfg=scientific_config(args.seed,max_iterations=args.max_iterations,min_iterations=args.min_iterations,
-            relative_tolerance=args.relative_tolerance,actor_max_grad_norm=args.actor_max_grad_norm)
+            relative_tolerance=args.relative_tolerance,actor_max_grad_norm=args.actor_max_grad_norm,
+            epsilon=args.epsilon)
         if args.quick:
             cfg.update(batch=2,num_students=32,proposal_components=16,teacher_resample_count=4,actor_samples=4)
         report['config']=cfg
@@ -69,13 +78,18 @@ def main():
         expected=np.broadcast_to(np.arange(cfg['proposal_components']),data['teacher_component_indices'].shape)
         np.testing.assert_array_equal(data['teacher_component_indices'],expected)
         np.testing.assert_allclose(data['source_importance'],1.)
+        anchors=np.asarray(data['anchors'][0]);teachers=np.asarray(data['ot_u'][0])
+        expected_cost=((anchors[:,None,:]-teachers[None,:,:])**2).sum(-1)
+        np.testing.assert_allclose(data['cost'][0],expected_cost,rtol=2e-6,atol=2e-5)
         times=[]
-        # Full-shape validation must reach nontrivial learned Gaussians; a few
-        # initial updates do not exercise Sinkhorn's tolerance boundary.
+        # Full-shape validation reaches learned proposals and changing teacher
+        # maps; a few initial updates do not exercise the tolerance boundary.
         block_updates=2 if args.quick else 100
         for _ in range(3):
             started=time.monotonic(); metrics=agent.advance(block_updates)
             times.append((time.monotonic()-started)/block_updates)
+            assert metrics['v8_latent_conditional_sac_used']==1.
+            assert metrics['ot_source_gaussian_forward_used']==0.
         report['timed_block_updates']=block_updates
         report['first_block_seconds_per_update']=times[0]
         report['warm_seconds_per_update']=float(np.median(times[1:]))
@@ -88,6 +102,8 @@ def main():
         before=np.asarray(agent.key).copy(); samples,_=agent.evaluate_samples(128,900000+args.seed)
         assert np.isfinite(samples).all();np.testing.assert_array_equal(before,agent.key)
         report.update(status='passed',teacher_component_ids_each_once=True,teacher_draws_per_component=1,
+            raw_latent_squared_cost_verified=True,
+            source_gaussian_forward_for_ot=False,
             exact_resume_verified=True,evaluation_rng_isolated=True,metrics=metrics,
             full_shape=not args.quick,actual_updates=agent.updates)
         atomic_json(out/'preflight.json',report)

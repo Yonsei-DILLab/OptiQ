@@ -1,5 +1,6 @@
-"""Fixed-Q adapter using the same v8 actor core as the RL route."""
+"""Fixed-Q v8 adapter: raw latent OT and separate conditional Gaussian learning."""
 import json
+import math
 
 import jax
 import jax.numpy as jnp
@@ -16,22 +17,25 @@ class OTConvergenceError(RuntimeError):
 class GMM40V8(GMM40V7):
     def __init__(self, seed=0, *, batch=256, num_students=4096, proposal_components=256,
                  teacher_resample_count=16, actor_samples=16, proposal_std=.05,
-                 temperature=1., latent_seed=0, hidden_dims=(256,256),
+                 temperature=1., epsilon=.1, latent_seed=0, hidden_dims=(256,256),
                  max_iterations=2000, min_iterations=10, relative_tolerance=1e-3,
                  actor_max_grad_norm=None):
+        if not math.isfinite(epsilon) or epsilon <= 0:
+            raise ValueError('epsilon must be positive and finite')
         super().__init__(seed, batch=batch, num_students=num_students,
             proposal_components=proposal_components, proposals_per_component=1,
             teacher_sampling_mode='stratified', proposal_std=proposal_std,
-            temperature=temperature, epsilon=1., iterations=max_iterations,
+            temperature=temperature, epsilon=epsilon, iterations=max_iterations,
             actor_samples=actor_samples, teacher_resample_count=teacher_resample_count,
             latent_seed=latent_seed, hidden_dims=hidden_dims, potential_solver='fresh_sinkhorn',
             actor_max_grad_norm=actor_max_grad_norm, source_importance_correction=False)
-        self.settings.pop('epsilon')
         self.settings.pop('iterations')
         self.settings.pop('source_importance_correction')
         self.settings.update(max_iterations=max_iterations, min_iterations=min_iterations,
-                             relative_tolerance=relative_tolerance, shared_source=True)
+                             relative_tolerance=relative_tolerance)
         self.settings_signature = json.dumps(dict(version=8, seed=seed, batch=batch,
+            algorithm='raw_latent_ot_conditional_boltzmann',
+            cost='squared_raw_latent_to_teacher_pretanh',
             actor_learning_rate=3e-4, actor_initial_sigma=.5, actor_log_std_bounds=[-5.,1.],
             hidden_dims=list(hidden_dims), actor_max_grad_norm=actor_max_grad_norm,
             **self.settings), sort_keys=True)

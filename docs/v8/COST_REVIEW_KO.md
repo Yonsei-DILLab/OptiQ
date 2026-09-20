@@ -1,7 +1,13 @@
 # v8 OT 비용의 수학적 검토
 
-2026-09-20. 사용자의 비용 설계 재검토 요청에 따라 100K 재실행은 보류했다.
-아래는 설계 검토이며 비용 변경이나 새로운 학습 실험을 승인·실행한 기록이 아니다.
+2026-09-20. 아래의 NLL 검토 이후 사용자는 **원래 z → teacher 거리**를 선택했다.
+현재 canonical v8은 C_ij=||z_i-u_j||², 거리 epsilon=.1이며 g(s,z)는 별도로 조건부 SAC
+loss로 Gaussian을 학습한다. g의 평균을 source로 쓰는 방식도 선택하지 않았다.
+OT 배정과 Gaussian 학습을 분리하는 것이 사용자가 정한 설계 목적이다.
+아래 NLL 진단과 fixed-point 논의는 이전 prototype의 기록이며 현재 비용 설명이 아니다.
+기존 Gaussian 분해를 유지하는 특수한 성질은 필수 요건에서 제외했지만,
+일반적인 balanced assignment의 Boltzmann 복원 충분조건과 Gaussian 표현 오차의
+구분은 유지한다. 실제 코드·의사코드는 ALGORITHM_KO.md를 따른다.
 
 ## 현재 비용과 실제 진단
 
@@ -95,14 +101,14 @@ Cost만 clipping, normalization 또는 sigma floor로 변경해도 posterior 동
 일반적으로 달라진다. Cost와 epsilon을 같은 비율로 바꾸면 P는 그대로이므로
 cost/epsilon 대비 문제의 해결이 되지 않는다.
 
-## 현재 판단
+## 당시 검토 판단 (위의 후속 사용자 선택이 우선)
 
 NLL 비용을 수학적으로 틀렸다고 판정할 근거는 없다. 현재 문제의 직접적인 근거는
 매우 큰 비용 대비, 집중된 teacher 표본, 상태마다 fresh solve 및 엄격한 균형 검사다.
 Boltzmann fixed-point 성질을 우선하면 비용을 보존한 수치 solver 개선을 먼저 검토한다.
 기하학적 최소 이동을 우선하면 pre-tanh mean/W2 비용을 별도 비교하되, conditional
 target의 Gaussian 표현 오차와 정확한 mixture를 보존하는지까지 같이 검증해야 한다.
-사용자가 비용 변경을 논의 중이므로 이 검토에서는 cost를 교체하지 않았다.
+이 검토 단계에서는 cost를 교체하지 않았으며, 후속 사용자 선택에 따라 raw-z 거리로 변경했다.
 
 ## 근거 문헌
 

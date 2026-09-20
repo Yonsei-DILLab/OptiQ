@@ -18,7 +18,7 @@ from .temperature import parse_temperature_schedule, scheduled_temperature
 from .critic_utils import critic_expectation
 from .distillation import conditional_ot_nll, hard_projection_mass_error
 from .conditional_sac import update_actor as update_conditional_sac_actor
-from .conditional_sac_v8 import update_actor as update_gaussian_conditional_sac_actor
+from .conditional_sac_v8 import update_actor as update_v8_conditional_sac_actor
 from .persistent_transport import (
     create_dual_state, update_actor_persistent as update_persistent_conditional_sac_actor,
 )
@@ -262,7 +262,7 @@ class OptiQDIME(DIME):
             self.policy.qf_state, self.policy.actor_state, self.policy.target_actor_state,
             self.ent_coef_state, self.key, log_metrics,
         ) = training_result
-        if actor.get("distillation_loss") == "ot_gaussian_conditional_sac":
+        if actor.get("distillation_loss") == "ot_latent_conditional_sac":
             if float(log_metrics.get("v8_rejected_updates", 0.)) > 0:
                 if self.model_save_path is not None:
                     self._save_model()
@@ -639,10 +639,10 @@ class OptiQDIME(DIME):
         ot_min_iterations: int = 10,
         ot_relative_tolerance: float = 1e-3,
     ):
-        if distillation_loss in {"ot_conditional_sac", "ot_gaussian_conditional_sac"}:
-            gaussian_ot = distillation_loss == "ot_gaussian_conditional_sac"
+        if distillation_loss in {"ot_conditional_sac", "ot_latent_conditional_sac"}:
+            v8_ot = distillation_loss == "ot_latent_conditional_sac"
             if (not semi_implicit or teacher_distribution != "conditional_mixture"
-                    or ot_student_action != ("gaussian" if gaussian_ot else "latent") or normalize_ot_cost
+                    or ot_student_action != "latent" or normalize_ot_cost
                     or not density_correction or adaptive_density_beta or include_anchor
                     or soft_proximal_ess_fraction > 0
                     or isinstance(actor_state, FiniteMixtureTrainState)):
@@ -666,15 +666,15 @@ class OptiQDIME(DIME):
                 values = critic_expectation(prediction, z_atoms)
                 return values.mean(axis=0) if source_q_eval == "mean" else values.min(axis=0)
 
-            if gaussian_ot:
+            if v8_ot:
                 if ot_potential_mode != "fresh_sinkhorn" or dual_state is not None:
                     raise ValueError("v8 requires a fresh independent OT solve per state; no persistent dual")
-                updated, loss, next_key, metrics = update_gaussian_conditional_sac_actor(
+                updated, loss, next_key, metrics = update_v8_conditional_sac_actor(
                     actor_state, observations, key, current_q,
                     num_students=ot_num_latents, proposal_components=teacher_proposal_components,
                     proposals_per_component=proposals_per_policy_sample,
                     teacher_sampling_mode=proposal_sampling_mode, proposal_std=proposal_std,
-                    temperature=temperature, max_iterations=sinkhorn_iterations,
+                    temperature=temperature, epsilon=sinkhorn_epsilon, max_iterations=sinkhorn_iterations,
                     min_iterations=ot_min_iterations, relative_tolerance=ot_relative_tolerance,
                     actor_samples=num_policy_samples, teacher_resample_count=ot_teacher_resample_count,
                     latent_seed=ot_latent_seed,
@@ -1413,7 +1413,7 @@ class OptiQDIME(DIME):
                     actor_state, dual_state, _, key, actor_metrics = actor_result
                 else:
                     actor_state, _, key, actor_metrics = actor_result
-                if distillation_loss == "ot_gaussian_conditional_sac":
+                if distillation_loss == "ot_latent_conditional_sac":
                     v8_rejected_updates += 1. - actor_metrics["actor_update_accepted"]
                 if soft_guard_enabled:
                     key, guard_key = jax.random.split(key)
@@ -1429,7 +1429,7 @@ class OptiQDIME(DIME):
                     policy_tau, actor_state, target_actor_state
                 )
         log_metrics = {**actor_metrics, **critic_metrics, **guard_metrics}
-        if distillation_loss == "ot_gaussian_conditional_sac":
+        if distillation_loss == "ot_latent_conditional_sac":
             log_metrics["v8_rejected_updates"] = v8_rejected_updates
         if soft_guard_enabled:
             log_metrics.update(soft_guard_attempts=guard_attempts, soft_guard_accepts=guard_accepts)

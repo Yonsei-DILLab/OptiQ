@@ -16,8 +16,8 @@ def verify(overrides=(), config_name="mujoco_v8"):
         cfg = compose(config_name=config_name, overrides=list(overrides))
     validate_config(cfg)
     a = cfg.alg.actor
-    if a.distillation_loss != "ot_gaussian_conditional_sac":
-        raise ValueError("v8 requires Gaussian-likelihood OT conditional SAC")
+    if a.distillation_loss != "ot_latent_conditional_sac":
+        raise ValueError("v8 requires fresh raw-latent OT conditional SAC")
     if a.proposals_per_policy_sample != 1 or a.proposal_sampling_mode != "stratified":
         raise ValueError("v8 requires one teacher action per fresh Gaussian")
     if cfg.alg.critic.backup_mode != "soft_td" or cfg.alg.critic.n_atoms != 1:

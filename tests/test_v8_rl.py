@@ -13,8 +13,8 @@ from test_v7_rl import actor_arguments, actor_state, linear_critic_state
 
 def arguments():
     args = actor_arguments(actor_state(), linear_critic_state(), aggregation="min", sites=16, pairs=4)
-    args.update(distillation_loss="ot_gaussian_conditional_sac", ot_student_action="gaussian",
-                ot_potential_mode="fresh_sinkhorn", sinkhorn_epsilon=1., sinkhorn_iterations=100,
+    args.update(distillation_loss="ot_latent_conditional_sac", ot_student_action="latent",
+                ot_potential_mode="fresh_sinkhorn", sinkhorn_epsilon=.1, sinkhorn_iterations=2000,
                 proposals_per_policy_sample=1, proposal_sampling_mode="stratified",
                 ot_min_iterations=5, ot_relative_tolerance=1e-3)
     return args
@@ -31,15 +31,15 @@ def test_configuration_is_distinct_and_preserves_soft_td():
     assert cfg.alg.actor.entropy_samples == 16
     assert not metadata["ot_dual_state_persistent"]
     assert not metadata["actor_source_importance_correction"]
-    assert cfg.alg.actor.sinkhorn_epsilon == 1.
+    assert cfg.alg.actor.sinkhorn_epsilon == .1
     assert cfg.alg.ent_coef.init == cfg.alg.actor.temperature
 
 
 @pytest.mark.parametrize("override", ["alg.actor.ot_potential_mode=persistent_dual",
-                                      "alg.actor.sinkhorn_epsilon=0.1",
+                                      "alg.actor.sinkhorn_epsilon=0",
                                       "alg.actor.source_q_eval=mean",
                                       "alg.actor.ot_relative_tolerance=0",
-                                      "alg.actor.ot_min_iterations=501"])
+                                      "alg.actor.ot_min_iterations=1000001"])
 def test_incompatible_v8_configuration_fails(override):
     with pytest.raises(ValueError):
         verify([override])
@@ -52,7 +52,7 @@ def test_route_uses_current_min_q_with_action_gradient_and_per_state_outputs(mon
         captured.update(settings)
         return state, q_fn(obs, actions).sum(), key, {"actor_update_accepted": jnp.asarray(1.), "q": q_fn(obs, actions),
             "dq": jax.grad(lambda a: q_fn(obs, a).sum())(actions)}
-    monkeypatch.setattr(algorithm, "update_gaussian_conditional_sac_actor", inspect_core)
+    monkeypatch.setattr(algorithm, "update_v8_conditional_sac_actor", inspect_core)
     args = arguments()
     result = OptiQDIME.update_actor.__wrapped__(**args)
     p = args["qf_state"].params
@@ -60,8 +60,9 @@ def test_route_uses_current_min_q_with_action_gradient_and_per_state_outputs(mon
     np.testing.assert_allclose(result[3]["q"], heads.min(0))
     expected = np.asarray(p["weights"])[heads.argmin(0)]
     np.testing.assert_allclose(result[3]["dq"], expected)
-    assert captured["max_iterations"] == 100
+    assert captured["max_iterations"] == 2000
     assert captured["relative_tolerance"] == 1e-3
+    assert captured["epsilon"] == .1
     assert "source_potential" not in captured and "dual_state" not in captured
 
 
@@ -80,7 +81,7 @@ def test_actual_rl_actor_update_is_finite_and_has_no_persistent_state():
 def test_rejected_core_update_preserves_rl_entry_rng(monkeypatch):
     def reject(state, obs, key, q_fn, **settings):
         return state, jnp.asarray(0.), key, {"actor_update_accepted": jnp.asarray(0.)}
-    monkeypatch.setattr(algorithm, "update_gaussian_conditional_sac_actor", reject)
+    monkeypatch.setattr(algorithm, "update_v8_conditional_sac_actor", reject)
     args = arguments()
     updated, _, key, _ = OptiQDIME.update_actor.__wrapped__(**args)
     np.testing.assert_array_equal(key, args["key"])

@@ -1,14 +1,15 @@
-"""Fresh-output GMM40 v8 training; preflight and checkpoint provenance required."""
+"""GMM40 v8 raw-latent OT training; exact preflight/checkpoint provenance required."""
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
 import signal
 import time
 
-from .validate_v8 import ROOT, scientific_config, source_hashes
+from .validate_v8 import ROOT, ALGORITHM, COST, scientific_config, source_hashes
 
 
 def main():
@@ -22,6 +23,8 @@ def main():
     p.add_argument('--eval-samples',type=int,default=10000)
     p.add_argument('--platform',choices=('cpu','cuda'),default='cuda')
     p.add_argument('--resume-checkpoint',type=Path)
+    p.add_argument('--epsilon',type=float,default=.1,
+                   help='Raw latent squared-distance OT regularization; Boltzmann alpha stays1')
     p.add_argument('--max-iterations',type=int,default=2000)
     p.add_argument('--min-iterations',type=int,default=10)
     p.add_argument('--relative-tolerance',type=float,default=1e-3)
@@ -31,6 +34,8 @@ def main():
         p.error('Positive step/chunk/evaluation counts required')
     if args.eval_samples<2:
         p.error('At least two evaluation samples required')
+    if not math.isfinite(args.epsilon) or args.epsilon <= 0:
+        p.error('epsilon must be positive and finite')
     os.environ['JAX_PLATFORMS']=args.platform
     os.environ.setdefault('XLA_PYTHON_CLIENT_PREALLOCATE','false')
     import jax
@@ -40,14 +45,17 @@ def main():
     from .evaluation import atomic_json,save_evaluation
     backend=jax.default_backend()  # Explicit CUDA failure cannot silently become CPU training.
     cfg=scientific_config(args.seed,max_iterations=args.max_iterations,min_iterations=args.min_iterations,
-        relative_tolerance=args.relative_tolerance,actor_max_grad_norm=args.actor_max_grad_norm)
+        relative_tolerance=args.relative_tolerance,actor_max_grad_norm=args.actor_max_grad_norm,
+        epsilon=args.epsilon)
     hashes=source_hashes()
     preflight=json.loads(args.preflight.read_text())
     if preflight.get('status')!='passed' or preflight.get('source_sha256')!=hashes:
         raise ValueError('A passing preflight for these exact training sources is required')
+    if preflight.get('algorithm')!=ALGORITHM or preflight.get('cost')!=COST:
+        raise ValueError('A raw-latent OT preflight is required; Gaussian-cost v8 is a different algorithm')
     if args.platform=='cuda' and (preflight.get('backend')!='gpu' or not preflight.get('full_shape')):
         raise ValueError('Run a full-shape CUDA preflight on the destination GPU before training')
-    for name in ('max_iterations','min_iterations','relative_tolerance','actor_max_grad_norm'):
+    for name in ('epsilon','max_iterations','min_iterations','relative_tolerance','actor_max_grad_norm'):
         if preflight['config'][name]!=cfg[name]:
             raise ValueError(f'Preflight setting differs: {name}')
     out=args.out.resolve();out.mkdir(parents=True,exist_ok=False)
@@ -56,7 +64,9 @@ def main():
         shutil.copytree(ROOT/directory,out/'source'/directory,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
     shutil.copytree(ROOT/'docs'/'v8',out/'source'/'docs'/'v8')
     config=dict(version=8,scientific=cfg,requested_updates=args.steps,scope='fixed_Q_training',
-        Q='log p_GMM40(40*tanh(u))',alpha=1.,ot='fresh per-state Gaussian likelihood',
+        algorithm=ALGORITHM,cost=COST,
+        Q='log p_GMM40(40*tanh(u))',alpha=1.,ot='fresh per-state raw latent squared distance',
+        ot_epsilon=args.epsilon,source_gaussian_forward_for_ot=False,
         source_importance_correction=False,persistent_dual=False,backend=backend,
         teacher_resampled_before_ot=True,source_sha256=hashes,preflight=str(args.preflight.resolve()),
         evaluation_samples=args.eval_samples,evaluation_seed=900000+args.seed,
@@ -120,7 +130,7 @@ def main():
             before=np.asarray(agent.key).copy()
             samples,extra=agent.evaluate_samples(args.eval_samples,900000+args.seed)
             np.testing.assert_array_equal(before,agent.key)
-            result=save_evaluation(out,f'v8 Gaussian OT seed {args.seed}',agent.updates,samples,
+            result=save_evaluation(out,f'v8 raw latent OT seed {args.seed}',agent.updates,samples,
                 agent.target,reference,full_reference,dict(info,train_seconds=total_seconds),extra_samples=extra)
             print(json.dumps(dict(event='evaluation',step=agent.updates,coverage=result['mode_coverage'],
                 near=result['high_density_fraction'],mmd2=result['mmd2'],checkpoint=str(checkpoint))),flush=True)

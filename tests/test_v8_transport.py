@@ -2,17 +2,17 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from optiq_dime.gaussian_transport import (
-    fresh_balanced_sinkhorn, source_log_density, gaussian_assignment_log_probs,
-)
+from optiq_dime.gaussian_transport import fresh_balanced_sinkhorn
+from optiq_dime.conditional_sac_v8 import assignment_log_probs
+from optiq_dime.latent_transport import latent_transport_cost
 
 
 def test_independent_fresh_state_solves_match_separate_solves_and_query():
-    mu = jnp.array([[[-.7],[.4],[1.2]], [[.8],[-1.],[.1]]])
-    ls = jnp.log(jnp.array([[[.4],[.7],[.5]], [[.2],[.6],[.9]]]))
+    anchors = jnp.array([[[-.7],[.4],[1.2]], [[.8],[-1.],[.1]]])
     query = jnp.array([[[-.5],[.9]], [[-.3],[1.1]]])
     weights = jnp.array([[.3,.7],[.65,.35]])
-    kernel = source_log_density(query,mu,ls).swapaxes(1,2)
+    epsilon=.7
+    kernel = -latent_transport_cost(anchors,query)/epsilon
     result = fresh_balanced_sinkhorn(kernel,weights,max_iterations=1000,relative_tolerance=1e-4)
     assert np.all(result['converged'])
     np.testing.assert_allclose(result['source_mass'], 1/3, rtol=1e-4)
@@ -20,21 +20,23 @@ def test_independent_fresh_state_solves_match_separate_solves_and_query():
     for b in range(2):
         separate = fresh_balanced_sinkhorn(kernel[b:b+1],weights[b:b+1],max_iterations=1000,relative_tolerance=1e-4)
         np.testing.assert_allclose(result['plan'][b:b+1],separate['plan'],rtol=1e-5,atol=1e-7)
-    log_r = gaussian_assignment_log_probs(query,mu,ls,result['source_potential'])
+    log_r = assignment_log_probs(query,anchors,result['source_potential'],epsilon)
     np.testing.assert_allclose(jnp.exp(log_r).swapaxes(1,2)*weights[:,None],result['plan'],rtol=2e-5,atol=1e-7)
     assert not np.allclose(result['source_potential'][0],result['source_potential'][1])
 
 
-def test_query_gradient_is_live_and_scale_jacobian_cancels_assignment():
-    mu=jnp.array([[[-1.],[1.]]]); ls=jnp.log(jnp.ones_like(mu)*.7)
+def test_raw_query_gradient_is_live_and_uses_independent_epsilon():
+    anchors=jnp.array([[[-1.],[1.]]]);epsilon=.4
     potential=jnp.array([[.2,-.3]]); a=jnp.array([[[.1]]])
-    f=lambda x:gaussian_assignment_log_probs(x,mu,ls,potential)[0,0,0]
+    f=lambda x:assignment_log_probs(x,anchors,potential,epsilon)[0,0,0]
     gradient=jax.grad(f)(a)
     finite_difference=(f(a+1e-3)-f(a-1e-3))/(2e-3)
     np.testing.assert_allclose(gradient.squeeze(),finite_difference,rtol=1e-3)
     assert abs(float(gradient.squeeze()))>.1
-    np.testing.assert_allclose(gaussian_assignment_log_probs(a,mu,ls,potential,40.),
-                               gaussian_assignment_log_probs(a,mu,ls,potential,1.),atol=1e-6)
+    expected=jax.nn.log_softmax(potential[:,None]-(a-anchors.swapaxes(1,2))**2/epsilon,axis=-1)
+    np.testing.assert_allclose(assignment_log_probs(a,anchors,potential,epsilon),expected,atol=1e-6)
+    assert not np.allclose(assignment_log_probs(a,anchors,potential,epsilon),
+                          assignment_log_probs(a,anchors,potential,1.))
 
 
 def test_unconverged_plan_is_not_labeled_balanced():

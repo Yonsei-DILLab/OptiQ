@@ -1,4 +1,4 @@
-"""OptiQ v8: current Gaussian OT, freshly solved per state, conditional SAC."""
+"""OptiQ v8: raw latent-to-teacher OT and a separately learned actor."""
 import math
 from numbers import Real
 
@@ -7,21 +7,34 @@ import jax.numpy as jnp
 
 from .conditional_sac import components, conditional_action_log_prob, stratified_resample
 from .semi_implicit import ConditionalGaussianProposal
-from .gaussian_transport import source_log_density, gaussian_assignment_log_probs, fresh_balanced_sinkhorn
+from .gaussian_transport import fresh_balanced_sinkhorn
+from .latent_transport import latent_transport_cost
+
+
+def assignment_log_probs(query_u, anchors, source_potential, epsilon=.1):
+    """Live query against raw latent sites; potential stores dimensionless f/eps."""
+    cost = latent_transport_cost(anchors, query_u).swapaxes(1, 2)
+    return jax.nn.log_softmax(source_potential[:, None, :] - cost/epsilon, axis=-1)
 
 
 def prepare_batch(actor_state, observations, key, q_fn, *, num_students=4096,
                   proposal_components=256, proposals_per_component=1,
                   teacher_sampling_mode='stratified', proposal_std=.05,
-                  temperature=.25, max_iterations=2000, min_iterations=10,
+                  temperature=.25, epsilon=.1, max_iterations=2000, min_iterations=10,
                   relative_tolerance=1e-3, actor_samples=16, teacher_resample_count=16,
                   latent_seed=0, student_latents=None, action_scale=1.,
                   shared_source=False):
+    """Fresh per-state raw-coordinate maps, then one latent draw per teacher.
+
+    ``shared_source`` is retained for adapter compatibility only. There are no
+    source-Gaussian forwards to share; every lane's teacher and OT stay separate.
+    """
     if min(num_students, proposal_components, proposals_per_component, actor_samples, teacher_resample_count) < 1:
         raise ValueError('Positive sample counts required')
     if actor_samples != teacher_resample_count:
         raise ValueError('One actor query per resampled teacher occurrence required')
-    for name, value in [('temperature', temperature), ('proposal_std', proposal_std), ('action_scale', action_scale)]:
+    for name, value in [('temperature', temperature), ('epsilon', epsilon),
+                        ('proposal_std', proposal_std), ('action_scale', action_scale)]:
         if isinstance(value, Real) and not 0 < value < float('inf'):
             raise ValueError(f'{name} must be finite and positive')
     next_key, source_key, proposal_z_key, proposal_key, resample_key, index_key, noise_key = jax.random.split(key, 7)
@@ -29,8 +42,6 @@ def prepare_batch(actor_state, observations, key, q_fn, *, num_students=4096,
     dimension = actor_state.params['mu']['bias'].shape[0]
     if student_latents is None:
         if latent_seed is None:
-            if shared_source:
-                raise ValueError('Shared GMM source requires a common fixed integration bank')
             anchors = jax.random.normal(source_key, (batch, num_students, dimension))
         else:
             bank = jax.random.normal(jax.random.PRNGKey(latent_seed), (num_students, dimension))
@@ -41,11 +52,6 @@ def prepare_batch(actor_state, observations, key, q_fn, *, num_students=4096,
         anchors = student_latents
     anchors = jax.lax.stop_gradient(anchors)
     frozen_params = jax.lax.stop_gradient(actor_state.params)
-    # Only the fixed-Q adapter requests this exact identical-state optimization.
-    obs_for_source = observations[:1] if shared_source else observations
-    z_for_source = anchors[:1] if shared_source else anchors
-    source_mu, source_ls = components(actor_state, frozen_params, obs_for_source, z_for_source)
-    shared_valid = (jnp.all(observations == observations[:1]) & jnp.all(anchors == anchors[:1])) if shared_source else jnp.asarray(True)
     proposal_z = jax.random.normal(proposal_z_key, (batch, proposal_components, dimension))
     old_mu, old_ls = components(actor_state, frozen_params, observations, proposal_z)
     proposal = ConditionalGaussianProposal(old_mu, old_ls, proposal_std)
@@ -61,7 +67,7 @@ def prepare_batch(actor_state, observations, key, q_fn, *, num_students=4096,
     teacher_finite = jnp.all(jnp.stack([
         jnp.all(jnp.isfinite(value)) for value in
         (teacher_u, teacher_actions, teacher_q, teacher_log_q, log_w,
-         source_mu, source_ls, anchors)
+         old_mu, old_ls, anchors)
     ]))
     teacher_weights = jnp.exp(log_w)
     teacher_valid = (teacher_finite & jnp.all(jnp.isfinite(teacher_weights))
@@ -70,35 +76,36 @@ def prepare_batch(actor_state, observations, key, q_fn, *, num_students=4096,
     indices = stratified_resample(resample_key, jnp.exp(log_w), teacher_resample_count)
     ot_u = jnp.take_along_axis(teacher_u, indices[..., None], axis=1)
     ot_weights = jnp.full(ot_u.shape[:-1], 1/teacher_resample_count)
-    log_kernel = source_log_density(ot_u, source_mu, source_ls, action_scale).swapaxes(1, 2)
+    cost = latent_transport_cost(anchors, ot_u)
+    log_kernel = -cost/epsilon
     ot = fresh_balanced_sinkhorn(log_kernel, ot_weights, max_iterations=max_iterations,
                                 min_iterations=min_iterations, relative_tolerance=relative_tolerance)
     source_indices = jax.random.categorical(index_key, ot['log_assignment'].swapaxes(1, 2), axis=-1)
     actor_z = jnp.take_along_axis(anchors, source_indices[..., None], axis=1)
     source_log_mass = jnp.log(ot['source_mass'])
     data = dict(key=next_key, anchors=anchors, actor_z=actor_z, source_indices=source_indices,
-        actor_noise=jax.random.normal(noise_key, actor_z.shape), source_mu=source_mu,
-        source_log_std=source_ls, source_log_mass=source_log_mass,
+        actor_noise=jax.random.normal(noise_key, actor_z.shape), source_log_mass=source_log_mass,
         source_importance=jnp.ones(source_indices.shape),
         source_log_importance=jnp.zeros(source_indices.shape), source_importance_correction=jnp.asarray(False),
         teacher_u=teacher_u, teacher_actions=teacher_actions, teacher_q=teacher_q,
         teacher_log_q=teacher_log_q, teacher_log_w=log_w, teacher_component_indices=component_indices,
         teacher_indices=indices, ot_u=ot_u, pair_u=ot_u, ot_weights=ot_weights,
         pair_teacher_indices=jnp.broadcast_to(jnp.arange(teacher_resample_count), source_indices.shape),
-        ot=ot, cost=-temperature*log_kernel, shared_source_valid=shared_valid,
+        ot=ot, cost=cost, shared_source_valid=jnp.asarray(True),
         teacher_valid=teacher_valid)
     return jax.lax.stop_gradient(data)
 
 
-def actor_objective(params, actor_state, observations, data, q_fn, *, temperature, action_scale=1.):
+def actor_objective(params, actor_state, observations, data, q_fn, *, temperature,
+                    epsilon=.1, action_scale=1.):
     mu, ls = components(actor_state, params, observations, data['actor_z'])
     u = mu + jnp.exp(ls)*data['actor_noise']
     actions = jnp.tanh(u)
     log_pi = conditional_action_log_prob(u, mu, ls, action_scale)
-    # The query remains differentiable; only the source Gaussian/map is frozen.
-    source_mu, source_ls, potential = jax.lax.stop_gradient(
-        (data['source_mu'], data['source_log_std'], data['ot']['source_potential']))
-    log_assignment = gaussian_assignment_log_probs(u, source_mu, source_ls, potential, action_scale)
+    # g is learned separately: raw z defines the map, not g(z)'s mu or sigma.
+    # The new action query remains differentiable through its pre-tanh position.
+    anchors, potential = jax.lax.stop_gradient((data['anchors'], data['ot']['source_potential']))
+    log_assignment = assignment_log_probs(u, anchors, potential, epsilon)
     selected = jnp.take_along_axis(log_assignment, data['source_indices'][..., None], axis=-1)[..., 0]
     q = q_fn(observations, actions)
     entropy, allocation = temperature*log_pi, -temperature*selected
@@ -113,16 +120,17 @@ def actor_objective(params, actor_state, observations, data, q_fn, *, temperatur
         actor_training_pairs=jnp.asarray(float(u.shape[1])), actor_nll_used=jnp.asarray(0.),
         actor_source_importance_used=jnp.asarray(0.), actor_source_importance_mean=jnp.asarray(1.),
         actor_source_importance_max=jnp.asarray(1.), actor_source_importance_ess_fraction=jnp.asarray(1.),
-        actor_source_log_importance_max=jnp.asarray(0.), v8_gaussian_conditional_sac_used=jnp.asarray(1.))
+        actor_source_log_importance_max=jnp.asarray(0.), v8_latent_conditional_sac_used=jnp.asarray(1.))
 
 
 def update_actor(actor_state, observations, key, q_fn, *, return_batch=False, **settings):
     data = prepare_batch(actor_state, observations, key, q_fn, **settings)
     temperature = settings.get('temperature', .25)
+    epsilon = settings.get('epsilon', .1)
     action_scale = settings.get('action_scale', 1.)
     (loss, metrics), gradients = jax.value_and_grad(actor_objective, has_aux=True)(
         actor_state.params, actor_state, observations, data, q_fn,
-        temperature=temperature, action_scale=action_scale)
+        temperature=temperature, epsilon=epsilon, action_scale=action_scale)
     norm = jnp.sqrt(sum(jnp.sum(g*g) for g in jax.tree.leaves(gradients)))
     proposal = actor_state.apply_gradients(grads=gradients)
     finite = jnp.isfinite(loss) & jnp.isfinite(norm)
@@ -136,6 +144,7 @@ def update_actor(actor_state, observations, key, q_fn, *, return_batch=False, **
         actor_finite=finite.astype(jnp.float32), source_shared_valid=data['shared_source_valid'].astype(jnp.float32),
         teacher_valid=data['teacher_valid'].astype(jnp.float32),
         ot_fresh_solve=jnp.asarray(1.), ot_persistent_dual=jnp.asarray(0.),
+        ot_epsilon=jnp.asarray(epsilon), ot_source_gaussian_forward_used=jnp.asarray(0.),
         ot_converged_fraction=ot['converged'].astype(jnp.float32).mean(),
         ot_row_relative_error=ot['row_relative_error'].max(), ot_col_relative_error=ot['column_relative_error'].max(),
         ot_row_marginal_error=ot['row_error'].max(), ot_col_marginal_error=ot['column_error'].max(),
