@@ -1,5 +1,13 @@
 # OptiQ v5 GMM40 experiments
 
+On `v5-direct-gmm`, `--method direct_gmm` selects the heejoon marginal GMM
+objective with the same v5 teacher and density correction. `--method optiq`
+retains the OT baseline; SAC/DIPO/MEow/MFPO remain available. See
+[the Direct GMM audit](../docs/v5_direct_gmm/AUDIT_KO.md). The two RTX 5090 hosts
+use CUDA PyTorch 2.7.1+cu128 for hardware support, with the original JAX 0.4.33
+core. Historical experiment budgets, permissions and results below are context,
+not instructions to resume or stop new experiments.
+
 Fixed-Q density reconstruction and a separate 100-step navigation task using
 the DiKL seed-0, 40-component Gaussian mixture. The default OptiQ adapter reuses
 the v5 actor, Gaussian proposal, mean-action Sinkhorn assignment and full-row

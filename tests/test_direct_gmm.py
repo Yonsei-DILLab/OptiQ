@@ -1,6 +1,4 @@
 """Independent density/gradient identities and production Direct GMM routing."""
-import inspect
-
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -139,11 +137,12 @@ def test_real_ant_direct_path_keeps_existing_v5_training_and_evaluation(tmp_path
     # Reuse the established real-environment assertions: both heads train,
     # plain TD, no clipping/guard, Gaussian backups and paired mu-only eval.
     import test_v5
-    OptiQDIME.update_actor.clear_cache()
+    original_update = OptiQDIME.update_actor
+    original_update.clear_cache()
     monkeypatch.setattr(algorithm,'sinkhorn',forbidden)
     monkeypatch.setattr(test_v5,'verify',verify)
     try:test_v5.test_real_ant_routes_mean_ot_and_keeps_td_and_paired_evaluation(tmp_path,monkeypatch)
-    finally:OptiQDIME.update_actor.clear_cache()
+    finally:original_update.clear_cache()
 
 
 class QuadraticEnergy:

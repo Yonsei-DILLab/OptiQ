@@ -167,7 +167,7 @@ class OptiQ:
         if self.gradient_axis is not None:
             grad=jax.lax.pmean(grad,self.gradient_axis)
             info={k:(jax.lax.pmax(v,self.gradient_axis) if k in ('sigma_max','ot_row_error','ot_column_error','sigma_row_weight_max')
-                     else jax.lax.pmin(v,self.gradient_axis) if k in ('sigma_min','nll_retained_mass_min','sigma_row_weight_min')
+                     else jax.lax.pmin(v,self.gradient_axis) if k in ('sigma_min','nll_retained_mass_min','sigma_row_weight_min','gmm_component_usage_min')
                      else jax.lax.pmean(v,self.gradient_axis)) for k,v in info.items()}
         state=state.apply_gradients(grads=grad)
         return (state,key),info

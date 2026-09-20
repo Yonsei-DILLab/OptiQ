@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import pickle
+import subprocess
 import time
 
 import numpy as np
@@ -49,6 +50,9 @@ def run_navigation(args):
                       ot_enabled=args.method=='optiq',n=args.n,m=args.m,epsilon=args.epsilon,
                       sinkhorn_iterations=args.sinkhorn_iterations)
     if args.method=='mfpo':config['critic_value_support']=dict(min=-1600,max=1600,atoms=101,clipped_mass_diagnostics_every=1000)
+    config['source_commit']=subprocess.check_output(['git','-C',str(ROOT),'rev-parse','HEAD'],text=True).strip()
+    config['learner_source_sha256']={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in sorted((ROOT/'optiq_dime').glob('*.py'))}
     atomic_json(folder/"config.json",config)
     atomic_json(folder/"status.json",dict(status="initializing",pid=os.getpid(),updates=0))
     try:
