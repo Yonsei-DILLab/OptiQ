@@ -38,6 +38,7 @@ def matrix(ax,a,limit=None,cmap='RdBu_r',annotate=True,positive=False):
 
 def plot_all(runs,figdir):
     groups={(n,m):[r for r in runs if (r['n'],r['m'])==(n,m)] for n,m in SIZES}
+    zlimit=max(float(np.abs(r['diags'][20000]['z']).max()) for r in runs)*1.02
     x=np.linspace(-1,1,2001);rho=sum(np.exp(-.5*((x-c)/.1)**2) for c in [-.6,0,.6])/(3*.1*np.sqrt(2*np.pi));rho=rho  # Normalize the target on [-1,1] below.
     from analyze import cdf
     rho/=float(cdf(1)-cdf(-1))
@@ -64,7 +65,7 @@ def plot_all(runs,figdir):
         for ax,(n,m) in zip(axs.flat,SIZES):
             for r in groups[n,m]:
                 d=r['diags'][20000];order=np.argsort(d['z'][:,0]);y=np.tanh(d[key][:,0]) if key=='mu' else np.exp(d[key][:,0]);ax.plot(d['z'][order,0],y[order],color=COLORS[r['seed']],label=f'seed {r["seed"]}')
-            ax.set(title=title(n,m),xlim=(-3,3),ylim=ylims,xlabel='Fixed latent z',ylabel=ylabel);ax.legend(fontsize=8,ncol=2)
+            ax.set(title=title(n,m),xlim=(-zlimit,zlimit),ylim=ylims,xlabel='Fixed latent z',ylabel=ylabel);ax.legend(fontsize=8,ncol=2)
         finish(fig,figdir/(name+'.png'))
     # Basin-role probabilities for every fixed probe and every seed.
     fig,axs=subplots()
