@@ -16,7 +16,7 @@ from diffusion.dime import DIME
 from .policy import OptiQPolicy
 from .temperature import parse_temperature_schedule, scheduled_temperature
 from .critic_utils import critic_expectation
-from .distillation import conditional_ot_nll, hard_projection_mass_error
+from .distillation import conditional_ot_nll, direct_gmm_nll, hard_projection_mass_error
 from .soft_improvement import sampled_soft_update
 from .proximal import proximal_policy_weights
 from .latent import FiniteMixtureTrainState, stratified_finite_latents
@@ -573,9 +573,14 @@ class OptiQDIME(DIME):
             raise ValueError("ot_student_action must be sample or mean")
         if ot_student_action == "mean" and (
             not semi_implicit or teacher_distribution != "conditional_mixture"
-            or distillation_loss != "conditional_ot_nll"
+            or distillation_loss not in {"conditional_ot_nll", "direct_gmm_nll"}
         ):
             raise ValueError("Mean-action OT requires a conditional-mixture teacher and conditional OT NLL")
+        if distillation_loss == "direct_gmm_nll" and (
+            not semi_implicit or teacher_distribution != "conditional_mixture"
+            or soft_proximal_ess_fraction > 0
+        ):
+            raise ValueError("Direct GMM requires the conditional-mixture teacher without proximal extraction")
         if soft_proximal_ess_fraction > 0 and (
             not isinstance(actor_state, FiniteMixtureTrainState)
             or not semi_implicit or teacher_distribution != "conditional_mixture"
@@ -726,50 +731,56 @@ class OptiQDIME(DIME):
                     soft_proximal_ess_fraction * num_proposals,
                 )
 
-            # v5 assigns each student by its mean action. Keep the original
-            # epsilon draw, Gaussian teacher/density and full-row NLL unchanged.
-            # Earlier profiles keep sample-action OT through the default mode.
-            ot_policy_samples = jnp.tanh(mu) if ot_student_action == "mean" else policy_samples
-            squared_costs = jnp.sum(
-                jnp.square(ot_policy_samples[:, :, None, :] - proposals[:, None, :, :]),
-                axis=-1,
-            )
-            costs = squared_costs / (
-                squared_costs.mean(axis=(-2, -1), keepdims=True) + 1.0e-8
-            ) if normalize_ot_cost else squared_costs
-            transport = jax.lax.stop_gradient(
-                sinkhorn(
-                    costs,
-                    source_weights,
-                    sinkhorn_epsilon,
-                    sinkhorn_iterations,
-                )
-            )
-            row_distribution = transport / jnp.maximum(
-                transport.sum(axis=-1, keepdims=True), 1.0e-20
-            )
-            if transport_target_mode == "argmax":
-                selected_indices = jnp.argmax(row_distribution, axis=-1)
-                selected_actions = jax.vmap(lambda actions, indices: actions[indices])(
-                    proposals, selected_indices
-                )
-            elif transport_target_mode == "barycentric":
-                selected_actions = jnp.einsum(
-                    "bnm,bma->bna", row_distribution, proposals
-                )
+            if distillation_loss == "direct_gmm_nll":
+                # Heejoon's marginal objective: same stopped teacher and RNG,
+                # no action cost, Sinkhorn coupling or uniform row constraint.
+                loss, component_log_probs = direct_gmm_nll(
+                    mu, log_std, proposal_u, source_weights)
             else:
-                raise ValueError(
-                    f"Unknown transport_target_mode: {transport_target_mode}"
+                # v5 assigns each student by its mean action. Keep the original
+                # epsilon draw, Gaussian teacher/density and full-row NLL unchanged.
+                # Earlier profiles keep sample-action OT through the default mode.
+                ot_policy_samples = jnp.tanh(mu) if ot_student_action == "mean" else policy_samples
+                squared_costs = jnp.sum(
+                    jnp.square(ot_policy_samples[:, :, None, :] - proposals[:, None, :, :]),
+                    axis=-1,
                 )
-            selected_actions = jax.lax.stop_gradient(selected_actions)
-            if distillation_loss == "conditional_ot_nll":
-                if not semi_implicit:
-                    raise ValueError("Conditional OT likelihood requires a semi-implicit actor")
-                loss = conditional_ot_nll(mu, log_std, proposal_u, row_distribution)
-            else:
-                loss = jnp.mean(
-                    jnp.sum(jnp.square(raw_actions - selected_actions), axis=-1)
+                costs = squared_costs / (
+                    squared_costs.mean(axis=(-2, -1), keepdims=True) + 1.0e-8
+                ) if normalize_ot_cost else squared_costs
+                transport = jax.lax.stop_gradient(
+                    sinkhorn(
+                        costs,
+                        source_weights,
+                        sinkhorn_epsilon,
+                        sinkhorn_iterations,
+                    )
                 )
+                row_distribution = transport / jnp.maximum(
+                    transport.sum(axis=-1, keepdims=True), 1.0e-20
+                )
+                if transport_target_mode == "argmax":
+                    selected_indices = jnp.argmax(row_distribution, axis=-1)
+                    selected_actions = jax.vmap(lambda actions, indices: actions[indices])(
+                        proposals, selected_indices
+                    )
+                elif transport_target_mode == "barycentric":
+                    selected_actions = jnp.einsum(
+                        "bnm,bma->bna", row_distribution, proposals
+                    )
+                else:
+                    raise ValueError(
+                        f"Unknown transport_target_mode: {transport_target_mode}"
+                    )
+                selected_actions = jax.lax.stop_gradient(selected_actions)
+                if distillation_loss == "conditional_ot_nll":
+                    if not semi_implicit:
+                        raise ValueError("Conditional OT likelihood requires a semi-implicit actor")
+                    loss = conditional_ot_nll(mu, log_std, proposal_u, row_distribution)
+                else:
+                    loss = jnp.mean(
+                        jnp.sum(jnp.square(raw_actions - selected_actions), axis=-1)
+                    )
             source_ess = 1.0 / jnp.sum(jnp.square(source_weights), axis=-1)
             q_only_weights = jax.nn.softmax(q_score, axis=-1)
             q_only_ess = 1.0 / jnp.sum(jnp.square(q_only_weights), axis=-1)
@@ -972,9 +983,6 @@ class OptiQDIME(DIME):
                 "twin_local_improvement_sign_agreement": (
                     twin_local_improvement_sign_agreement
                 ),
-                "selected_delta_l2": jnp.linalg.norm(
-                    policy_samples - selected_actions, axis=-1
-                ).mean(),
                 "policy_spread_l2": jnp.linalg.norm(
                     policy_samples.std(axis=1), axis=-1
                 ).mean(),
@@ -1017,7 +1025,22 @@ class OptiQDIME(DIME):
                     teacher_action_saturation_fraction=jnp.mean(jnp.abs(proposals) > 0.99),
                     teacher_log_density_mean=proposal_log_density.mean(),
                     proposal_std_pretanh=jnp.asarray(0.0 if soft_proximal_ess_fraction > 0 else proposal_std),
-                    temperature=jnp.asarray(temperature), ot_cost_mean=squared_costs.mean(),
+                    temperature=jnp.asarray(temperature),
+                )
+            if distillation_loss == "direct_gmm_nll":
+                responsibilities = jax.nn.softmax(component_log_probs, axis=1)
+                usage = (responsibilities * source_weights[:, None, :]).sum(-1)
+                metrics.update(
+                    gmm_component_ess_fraction=(1. / jnp.square(usage).sum(-1) / num_policy_samples).mean(),
+                    gmm_component_usage_min=usage.min(),
+                    gmm_underused_fraction=(usage < .1 / num_policy_samples).mean(),
+                )
+            else:
+                metrics["selected_delta_l2"] = jnp.linalg.norm(
+                    policy_samples - selected_actions, axis=-1).mean()
+            if semi_implicit and distillation_loss != "direct_gmm_nll":
+                metrics.update(
+                    ot_cost_mean=squared_costs.mean(),
                     ot_row_marginal_error=jnp.abs(transport.sum(axis=-1) - 1.0 / num_policy_samples).mean(),
                     ot_col_marginal_error=jnp.abs(transport.sum(axis=-2) - source_weights).mean(),
                     hard_projection_mass_tv=hard_projection_mass_error(row_distribution, source_weights),
@@ -1189,6 +1212,12 @@ class OptiQDIME(DIME):
                          "ot_row_marginal_error", "ot_col_marginal_error"):
                 actor_metrics[name] = jnp.asarray(0.0)
             actor_metrics["hard_projection_mass_tv"] = jnp.asarray(0.0)
+        if distillation_loss == "direct_gmm_nll":
+            for name in ("selected_delta_l2", "ot_cost_mean", "ot_row_marginal_error",
+                         "ot_col_marginal_error", "hard_projection_mass_tv"):
+                actor_metrics.pop(name, None)
+            for name in ("gmm_component_ess_fraction", "gmm_component_usage_min", "gmm_underused_fraction"):
+                actor_metrics[name] = jnp.asarray(0.0)
         guard_metrics = {}
         guard_attempts = jnp.asarray(0.0)
         guard_accepts = jnp.asarray(0.0)

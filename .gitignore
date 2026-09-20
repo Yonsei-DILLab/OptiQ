@@ -11,3 +11,7 @@ outputs/
 .venv*/
 .pytest_cache/
 .ruff_cache/
+
+# Local GMM40 experiment outputs and separately cloned upstream baselines.
+/gmm40-results/
+/gmm40-baseline/

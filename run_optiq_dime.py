@@ -110,7 +110,7 @@ def validate_config(cfg):
     if ot_student_action == "mean" and (
         actor.get("type") != "semi_implicit"
         or actor.get("teacher_distribution") != "conditional_mixture"
-        or actor.get("distillation_loss") != "conditional_ot_nll"
+        or actor.get("distillation_loss") not in {"conditional_ot_nll", "direct_gmm_nll"}
     ):
         raise ValueError("Mean-action OT requires a conditional-mixture teacher and conditional OT NLL")
     if actor.get("type", "implicit") not in {"implicit", "semi_implicit"}:
@@ -142,10 +142,16 @@ def validate_config(cfg):
             raise ValueError("v2 uses target critics; crossq_style must be false")
     if actor.sinkhorn_iterations < 1 or not math.isfinite(float(actor.sinkhorn_epsilon)) or actor.sinkhorn_epsilon <= 0:
         raise ValueError("Sinkhorn epsilon and iteration count must be positive")
-    if actor.get("distillation_loss", "pointwise_mse") not in {"pointwise_mse", "conditional_ot_nll"}:
-        raise ValueError("distillation_loss must be pointwise_mse or conditional_ot_nll")
+    if actor.get("distillation_loss", "pointwise_mse") not in {"pointwise_mse", "conditional_ot_nll", "direct_gmm_nll"}:
+        raise ValueError("distillation_loss must be pointwise_mse, conditional_ot_nll or direct_gmm_nll")
     if actor.get("distillation_loss") == "conditional_ot_nll" and actor.get("type") != "semi_implicit":
         raise ValueError("Conditional OT NLL requires a semi-implicit actor")
+    if actor.get("distillation_loss") == "direct_gmm_nll" and (
+        actor.get("type") != "semi_implicit"
+        or actor.get("teacher_distribution") != "conditional_mixture"
+        or actor.get("soft_proximal_ess_fraction", 0.) > 0
+    ):
+        raise ValueError("Direct GMM requires the conditional-mixture teacher without proximal extraction")
     if "density_correction_beta" in actor and actor.density_correction_beta != actor.density_beta:
         raise ValueError("density_correction_beta and density_beta must agree")
     if actor.get("learning_starts", cfg.alg.learning_starts) < cfg.alg.learning_starts:
@@ -336,8 +342,11 @@ def initialize_and_run(cfg: DictConfig):
                         "separate Gaussian KDE centered on realized student pre-tanh samples"),
                     teacher_bandwidth_space="pre-tanh", teacher_hard_cutoff=False,
                     backup_policy="current actor", td_smoothing=False,
-                    ot_cost="mean-normalized squared action distance" if cfg.alg.actor.normalize_ot_cost else "squared action distance",
-                    actor_projection=("full OT conditional Gaussian likelihood" if
+                    ot_cost=(None if cfg.alg.actor.distillation_loss == "direct_gmm_nll" else
+                             "mean-normalized squared action distance" if cfg.alg.actor.normalize_ot_cost else "squared action distance"),
+                    actor_projection=("weighted direct GMM marginal likelihood; no OT" if
+                        cfg.alg.actor.distillation_loss == "direct_gmm_nll" else
+                        "full OT conditional Gaussian likelihood" if
                         cfg.alg.actor.distillation_loss == "conditional_ot_nll" else
                         f"{cfg.alg.actor.transport_target_mode} pointwise MSE"),
                     update_acceptance=("sampled soft-value filter; not a global certificate" if
@@ -405,7 +414,7 @@ def initialize_and_run(cfg: DictConfig):
                     callback.eval_env.close()
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="mujoco_v5")
+@hydra.main(version_base=None, config_path="configs", config_name="mujoco_v5_direct_gmm")
 def main(cfg: DictConfig) -> None:
     try:
         if cfg.use_jit:

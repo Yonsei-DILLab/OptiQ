@@ -1,0 +1,17 @@
+# @package _global_
+# Only the actor projection objective differs from canonical v5.
+defaults:
+  - /v5/final
+  - _self_
+
+alg:
+  actor:
+    distillation_loss: direct_gmm_nll
+
+# Inherited OT settings are unused by Direct GMM; retained for v5 comparisons.
+output_root: ../optiq-experiments/v5-direct-gmm/outputs
+run_name: ${task}-v5-direct-gmm-T${alg.actor.temperature}-s${seed}
+wandb:
+  project: v5-direct-gmm
+  group: ${env_name}_v5_direct_gmm_T${alg.actor.temperature}_dual_mu_eval
+  job_type: v5-direct-gmm-comparison

@@ -9,6 +9,22 @@ import jax
 import jax.numpy as jnp
 
 
+def direct_gmm_nll(mu, log_std, teacher_u, weights):
+    """Marginal finite-mixture NLL with detached value-weighted teacher.
+
+    B,N,D conditional parameters; B,M,D candidates; B,M weights.
+    Like conditional_ot_nll, omits the action Jacobian, which is constant
+    for this stopped teacher. No responsibility is detached inside the loss.
+    """
+    u = jax.lax.stop_gradient(teacher_u)
+    w = jax.lax.stop_gradient(weights)
+    ell = (-0.5 * jnp.square((u[:, None] - mu[:, :, None])
+                            * jnp.exp(-log_std[:, :, None]))
+           - log_std[:, :, None] - 0.5 * jnp.log(2 * jnp.pi)).sum(-1)
+    log_mix = jax.scipy.special.logsumexp(ell, axis=1) - jnp.log(mu.shape[1])
+    return -(w * log_mix).sum(-1).mean(), ell
+
+
 def conditional_ot_nll(mu, log_std, teacher_u, row_probabilities):
     """Expected Gaussian NLL, averaged over states and latent components.
 

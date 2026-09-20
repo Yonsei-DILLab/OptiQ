@@ -1,5 +1,18 @@
 # OptiQ Experiment Conventions
 
+- This branch is `v5-direct-gmm`; default entry `mujoco_v5_direct_gmm`, alias
+  `v5_direct_gmm/final`. Read `docs/v5_direct_gmm/AUDIT_KO.md`.
+  Its only algorithm change from v5 is OT conditional NLL -> weighted marginal
+  Direct GMM NLL, ported from heejoon's study at d7c5361. Keep the exact v5
+  teacher, density correction, RNG, collection, TD, optimizer and evaluation.
+  No cost matrix or Sinkhorn runs in Direct GMM. Responsibilities remain in
+  the differentiable logsumexp loss; no uniform component-usage constraint.
+  The historical `mujoco_v5` profile and GMM40 `--method optiq` retain OT.
+  GMM40 `--method direct_gmm` selects the new objective; other baselines come
+  from v5-gmm40 at a2328f4. Do not inherit old study early-stop permissions.
+  Commit source/config/protocol before experiments, record the full SHA,
+  use fresh outputs, and never commit credentials or generated results.
+
 - This checkout is `/root/OptiQ-v5`, branch `v5`. Default entry `mujoco_v5`,
   alias `v5/final`; read `docs/v5/PSEUDOCODE.md` and `docs/v5/CHANGES_KO.md`.
   v5 sets `actor.ot_student_action=mean`: only OT student positions use
