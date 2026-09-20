@@ -3,7 +3,8 @@ import argparse,hashlib,json,shlex,subprocess,time
 from pathlib import Path
 from queue import processes,verify,write
 
-p=argparse.ArgumentParser();p.add_argument('--old-root',type=Path,required=True);p.add_argument('--new-root',type=Path,required=True);a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--old-root',type=Path,required=True);p.add_argument('--new-root',type=Path,required=True)
+p.add_argument('--retry-wandb-startup',nargs='*',default=[]);a=p.parse_args()
 package=Path(__file__).parent;manifest=json.loads((package/'SCHEDULER_MANIFEST.json').read_text())
 assert all(hashlib.sha256((package/f).read_bytes()).hexdigest()==h for f,h in manifest['files'].items())
 plan=json.loads((package/'plan.json').read_text());verify(plan)
@@ -22,7 +23,21 @@ while True:
  time.sleep(2)
 new.mkdir(parents=True,exist_ok=True)
 failed=old/'FAILED_ATTEMPTS.json'
-if failed.exists():write(new/'FAILED_ATTEMPTS.json',json.loads(failed.read_text()))
+failures=json.loads(failed.read_text()) if failed.exists() else {}
+approved=[]
+for key in a.retry_wandb_startup:
+    assert key in ('ant_v3_s1','ant_v3_s2'), 'Only user-requested failed startup runs may be retried'
+    rec=failures[key];out=Path(rec['out']);f=out/'FAILED.json';error=json.loads(f.read_text())
+    assert error['error']=="RuntimeError('W&B upload was not confirmed at step 0')"
+    assert not (out/'resume.zip').exists() and not (out/'progress.json').exists()
+    assert not any(r['out']==str(out) for r in processes())
+    archive=out/'failure_history'/str(int(changed));archive.mkdir(parents=True)
+    f.replace(archive/'FAILED.json');write(archive/'SCHEDULER_ATTEMPT.json',rec)
+    approved.append(dict(key=key,prior_failure=error,source_commit=plan['numerical_commits']['v3'],
+                         start_step=0,wandb_id_preserved=True,archive=str(archive)))
+    del failures[key]
+write(new/'FAILED_ATTEMPTS.json',failures)
+if approved:write(new/'APPROVED_RETRIES.json',approved)
 receipt=dict(time=time.time(),source_commits=plan['numerical_commits'],scheduler_commit=manifest['commit'],previous_root=str(old),previous_scheduler_pid=status['pid'],active_before=before,adopted=processes(),training_signals_sent=False,priority_order=plan['order'])
 write(new/'ACTIVATION.json',receipt)
 command=['python3',str(package/'queue.py'),'--root',str(new)]

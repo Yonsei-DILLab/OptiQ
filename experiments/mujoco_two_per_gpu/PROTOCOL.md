@@ -35,6 +35,33 @@ GPU/CPU/PID를 별도로 저장한다. 원래 W&B ID와 checkpoint provenance는
 Source/queue는 legacy_monge/mujoco_two_per_gpu/COMMIT 아래 저장하며 기존 dildata
 collector가 회수한다. 인증키는 원래의 승인된 별도0600 파일에서만 읽는다.
 
+## 2026-09-20 W&B 시작 확인 실패 복구
+
+v3 Ant seeds1,2는 `verify_online(run,0)`에서50초 제한을 넘겨 실패했다.
+모델 생성 전이어서 replay/checkpoint/학습 step은 없었다. 이후 W&B 서버에는
+확인 값이 올라온 것을 확인했다. Summary write의 가시성에만 의존한 짧은
+health check를 학습 실패로 처리한 운영 오류다.
+
+새 `online_runner.py`는 기존 immutable v3 source를 import하고 오직
+`verify_online`만 교체한다. Probe를 `run.log(...,commit=True)`로 명시적으로
+history에 전송하며 동일 token이 서버에 나타나는지 최대300초간 확인한다.
+`Api.flush()`는 서버 업로드가 아니라 public API 캐시 초기화임을 구분한다.
+Probe는 `ops/*` metric을 사용하여 `env_steps`를 조작하지 않는다.
+알고리즘/optimizer/RNG/target/seed/원래 numerical SHA/W&B ID는 그대로다.
+`LAUNCHER.json`과`ONLINE_HEALTH.jsonl`에 운영 코드 commit과 확인 결과를 기록한다.
+
+`--retry-wandb-startup ant_v3_s1 ant_v3_s2`로 이번 두 startup 실패만 재등록한다.
+실패 기록은 삭제하지 않고 `failure_history/`로 옮기며 기존 scheduler 기록도 보존한다.
+다른 종류의 실패와 중단 run을 자동 재시작하지 않는다. 기존 활성 PID는 그대로
+인계한다. GPU0당2run 제한을 유지하여 빈 slot이 생기면 실패했던 seed를 시작한다.
+아직 시작하지 않은 v3도 새 logging wrapper를 사용한다. 이미 돌아가는 frozen
+process에는 코드를 주입하거나 source 파일을 변경하지 않는다.
+
+검증: mocked delayed visibility65초, 영구 미응답timeout, 일시적 API 오류,
+실제 history commit/no env_steps 변경, 기존 queue 우선순위·중복 방지 검증.
+별도의 `job_type=infrastructure-validation`, `exclude_from_results` W&B run으로
+온라인 업로드도 확인한다. 이 검증은 MuJoCo 비교 seed에 포함하지 않는다.
+
 ## 처리량 비교
 
 변경 전 약120초, 두 번째 run의 warmup 및 compilation이 끝난 뒤 약120초씩

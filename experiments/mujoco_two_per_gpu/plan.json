@@ -103,5 +103,6 @@
   "preserve_gpu": 3,
   "wandb_project": "OptiQ/legacy_explorer",
   "poll_seconds": 10,
-  "tmux_prefix": "mujoco-v123"
+  "tmux_prefix": "mujoco-v123",
+  "online_healthcheck_versions": ["v3"]
 }

@@ -18,8 +18,8 @@ def processes():
         if not p.name.isdigit():continue
         try:
             argv=(p/'cmdline').read_bytes().decode().strip('\0').split('\0')
-            if '-m' not in argv:continue
-            module=arg(argv,'-m')
+            wrapped=any(Path(x).name=='online_runner.py' for x in argv)
+            module=arg(argv,'--module') if wrapped else arg(argv,'-m')
             if module not in ['experiments.v1_heejoon_explorer.run','experiments.v2_heejoon_explorer.run','experiments.v3_heejoon_explorer.run']:continue
             version=module.split('.')[1].split('_')[0]
             # Read only the relevant key; never emit credentials from process environments.
@@ -126,6 +126,10 @@ def main():
             if any(r['env']==environment and r['version']==version and r['seed']==seed for r in processes()):continue
             out.mkdir(parents=True,exist_ok=True)
             cmd=['taskset','-c',','.join(map(str,cpus)),plan['python'],'-m',f'experiments.{version}_heejoon_explorer.run','--env',environment,'--seed',str(seed),'--out',str(out)]
+            if version in plan.get('online_healthcheck_versions',[]):
+                cmd=['taskset','-c',','.join(map(str,cpus)),plan['python'],str(package/'online_runner.py'),
+                     '--module',f'experiments.{version}_heejoon_explorer.run','--source-root',str(repo),
+                     '--env',environment,'--seed',str(seed),'--out',str(out)]
             log=(out/'console.log').open('a');proc=subprocess.Popen(cmd,cwd=repo,env=env,stdout=log,stderr=subprocess.STDOUT)
             metadata=dict(key=key,version=version,env=environment,seed=seed,out=str(out),pid=proc.pid,gpu=gpu,cpus=cpus,started=time.time(),source_commit=plan['numerical_commits'][version],scheduler_commit=source['commit'],max_concurrent_runs_per_gpu=2,resumed=(out/'resume.zip').exists())
             children[key]=(proc,metadata,log);attempted.add(key)
