@@ -1,4 +1,4 @@
-"""Train OptiQ; default: v4 256x2 networks with dual mu-only evaluation."""
+"""Train OptiQ; default: v5 Direct GMM with dual mu-only evaluation."""
 
 import json
 import math

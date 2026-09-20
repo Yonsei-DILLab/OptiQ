@@ -1,6 +1,6 @@
 """Synchronous data parallelism for large fixed-Q OptiQ sample counts.
 
-Each device solves complete, independent N x M OT problems. Gradients are
+Each device solves independent N x M OT or Direct GMM problems. Gradients are
 averaged before one shared Adam step; N, M, effective batch and objective are
 unchanged by sharding. Each replica has its own reproducible RNG stream.
 """

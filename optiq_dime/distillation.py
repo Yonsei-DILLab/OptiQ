@@ -1,6 +1,7 @@
-"""Distribution-aware projection of a stopped OT coupling.
+"""Gaussian distillation against a stopped value-weighted teacher.
 
-The Gaussian conditional log likelihood consumes every column of each OT row.
+The conditional likelihood consumes every column of each OT row; Direct GMM
+instead fits the weighted marginal mixture without a transport coupling.
 The action-space tanh Jacobian is constant with respect to the student parameters
 because teacher pre-tanh values are stopped, so it can be omitted from this loss.
 """

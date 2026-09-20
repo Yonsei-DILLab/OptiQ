@@ -80,7 +80,7 @@ teacher log density는 `log q_F(a)-2 log 40`이다. 이 scale 상수는 softmax�
 heejoon의 다른 scale/학습 budget은 이 adapter에 섞지 않았다.
 
 ```bash
-# 각 서버에서; 환경은 JAX 0.4.33, CUDA PyTorch 2.7.1+cu128 포함
+# 각 서버에서; 기본은 기존 v5와 같은 JAX 0.4.33 / MuJoCo 환경
 source /home/heechan/OptiQ-ops/activate.sh v5-direct-gmm
 python scripts/verify_v5_direct_gmm.py benchmark=ant
 python run_optiq_dime.py benchmark=ant seed=0
@@ -88,6 +88,8 @@ python run_optiq_dime.py benchmark=ant seed=0
 # 동일 seed/N/M/batch/T로 비교; 아래는 실제 학습 명령의 예시다.
 python -m gmm40.run --method direct_gmm --name direct_gmm_s0 --seed 0
 python -m gmm40.run --method optiq --name ot_v5_s0 --seed 0
+# CUDA PyTorch baseline (SAC/DIPO/MEow)은 전용 환경 선택
+source /home/heechan/OptiQ-ops/activate.sh v5-direct-gmm gmm40
 # --method sac / dipo / meow / mfpo도 지원한다.
 # 실제 장시간 실행은 supervisor 및 GPU lock wrapper를 사용한다.
 ```
@@ -108,3 +110,11 @@ GMM40 체크포인트 다음 update 재현을 검증한다.
 
 수식과 구현의 일치 및 짧은 실행 검증은 장기 수렴, 성능 우위 또는 mode coverage의
 보장이 아니다. 그러한 결론에는 여러 seed의 실제 비교 실험이 필요하다.
+
+JAX pmap은 기존 v5의 mujoco 환경(NCCL 2.31.2)에서 두 서버 모두 통과했다.
+CUDA PyTorch 전용 gmm40 환경(NCCL 2.26.2)은 단일 GPU baseline이 정상이나
+pmap 통신 초기화 timeout이 재현되어 병렬 JAX 학습에는 사용하지 않는다.
+두 환경의 JAX/Flax/Optax 버전은 동일하다. `activate.sh`는 Docker에서
+`NCCL_CUMEM_HOST_ENABLE=0`을 기본 적용한다. 이 변수만 바꿔서는 구 환경의
+timeout이 해결되지 않았으며, 특정 NCCL 버전만을 원인으로 확정하지 않는다.
+[NVIDIA의 cuMem/컨테이너 설명](https://docs.nvidia.com/deeplearning/nccl/archives/nccl_2265/user-guide/docs/troubleshooting.html)을 참고했다.

@@ -1,4 +1,23 @@
-# OptiQ v5
+# OptiQ v5 Direct GMM
+
+This branch preserves the v5 teacher, density correction, actor/critic,
+Gaussian collection/TD and evaluation, replacing OT conditional NLL with
+heejoon's weighted marginal GMM NLL. Default entry: `mujoco_v5_direct_gmm`.
+See the [implementation audit](docs/v5_direct_gmm/AUDIT_KO.md) and
+[validation record](docs/v5_direct_gmm/VALIDATION_KO.md).
+
+```bash
+python scripts/verify_v5_direct_gmm.py benchmark=ant
+python run_optiq_dime.py benchmark=ant seed=0
+python -m gmm40.run --method direct_gmm --name direct_gmm_s0 --seed 0
+```
+
+GMM40 comes from v5-gmm40: `--method optiq` retains OT; SAC, DIPO, MEow and
+MFPO remain available. On the Vast hosts, use the original v5 `mujoco` runtime
+for Direct GMM and JAX pmap; select `gmm40` runtime for CUDA PyTorch baselines.
+The audit documents activation commands and the observed NCCL runtime limit.
+
+## Preserved v5 OT reference
 
 v5 assigns OT students using **`tanh(mu(s,z))`**. The teacher still samples
 conditional Gaussians and uses sigma in proposal density correction; full-row
@@ -19,7 +38,7 @@ OPTIQ_PYTHON=/root/.venv-optiq-mujoco/bin/python bash scripts/run_v5.sh 0 --chec
 ```
 
 `--check` validates configuration without training or creating a W&B run.
-`python run_optiq_dime.py` now defaults to `mujoco_v5`. Requested training uses
+`python run_optiq_dime.py --config-name mujoco_v5` selects the preserved v5 OT profile. Requested training uses
 the same launcher without `--check`, managed by supervisor; an uninstalled
 [service template](deploy/supervisor/optiq-v5.conf) is provided. Current Ant runs use
 `OptiQ/v5-jaehoon` with fresh run IDs (explicit `wandb.project=v5-jaehoon`
