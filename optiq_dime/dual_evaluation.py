@@ -10,14 +10,15 @@ from .evaluation import MujocoEvalCallback
 def dual_mu_evaluation_spec(cfg):
     """Describe the same latent support used by training and action sampling."""
     finite = cfg.alg.actor.get("latent_prior", "normal") == "finite"
-    deterministic_mode = "fixed_z" if finite else "zero_z"
+    deterministic_mode = "zero_z"
     spec = {
-        deterministic_mode: ("z=training_codebook[0]; a=tanh(mu(s,z)); epsilon=0" if finite
-                             else "a=tanh(mu(s,0)); epsilon=0"),
+        deterministic_mode: "z=0 vector; a=tanh(mu(s,0)); epsilon=0",
         "stochastic_z": ("uniform choice from the same fixed training codebook per action; a=tanh(mu(s,z)); epsilon=0" if finite
                          else "z~N(0,I) per action; a=tanh(mu(s,z)); epsilon=0"),
         "episodes_per_mode": int(cfg.num_eval_episodes),
-        "legacy_eval_alias": "stochastic_z" if finite else "zero_z",
+        "legacy_eval_alias": "zero_z",
+        "schema_version": 2,
+        "zero_z_role": "out-of-support diagnostic" if finite else "zero-latent diagnostic",
         "paired_episode_reset_seeds": True,
         "rng_isolated_from_collection": True,
     }
@@ -31,9 +32,9 @@ class DualMuEvalCallback(MujocoEvalCallback):
     """Both modes use epsilon=0; each episode receives a paired reset seed.
 
     Evaluation RNG is independent of collection and restored even on failure.
-    For finite policies stochastic-z samples the training codebook; fixed-z uses
-    its first component. The legacy reward aliases stochastic-z for finite
-    policies and zero-z for continuous policies.
+    For finite policies stochastic-z samples the training codebook; zero-z is
+    the literal zero vector (an out-of-support diagnostic). Legacy reward
+    aliases zero-z for both finite and continuous policies.
     """
 
     MODES = ("zero_z", "stochastic_z")
@@ -45,6 +46,7 @@ class DualMuEvalCallback(MujocoEvalCallback):
         self.deterministic_mode, self.evaluation_spec = dual_mu_evaluation_spec(cfg)
         self.MODES = (self.deterministic_mode, "stochastic_z")
         self.primary_mode = self.evaluation_spec["legacy_eval_alias"]
+        self.best_rewards = {mode: -np.inf for mode in self.MODES}
         self.training_seed = int(cfg.seed)
         self.histories = {mode: {key: [] for key in
             ("results", "ep_lengths", "env_seeds", "policy_seeds", "successes", "solved_steps")}
@@ -58,6 +60,7 @@ class DualMuEvalCallback(MujocoEvalCallback):
         policy = self.model.policy
         old_key, old_noise_key = policy.key, policy.noise_key
         old_mu_only = getattr(policy, "evaluation_mu_only", False)
+        old_zero_latent = getattr(policy, "evaluation_zero_latent", False)
         rng = np.random.default_rng(np.random.SeedSequence([
             self.training_seed, self.num_timesteps, 4404]))
         env_seeds = rng.integers(0, 2**30, self.n_eval_episodes)
@@ -66,6 +69,7 @@ class DualMuEvalCallback(MujocoEvalCallback):
         try:
             policy.evaluation_mu_only = True
             for mode in self.MODES:
+                policy.evaluation_zero_latent = mode == "zero_z"
                 rewards, lengths, successes, solved_steps = [], [], [], []
                 for env_seed, policy_seed in zip(env_seeds, policy_seeds):
                     self.eval_env.seed(int(env_seed))
@@ -91,6 +95,7 @@ class DualMuEvalCallback(MujocoEvalCallback):
         finally:
             policy.key, policy.noise_key = old_key, old_noise_key
             policy.evaluation_mu_only = old_mu_only
+            policy.evaluation_zero_latent = old_zero_latent
 
         self.evaluations_timesteps.append(self.num_timesteps)
         for mode, result in current.items():
@@ -98,6 +103,10 @@ class DualMuEvalCallback(MujocoEvalCallback):
             for key, value in result.items():
                 history[key].append(value)
             prefix = f"eval/{mode}"
+            self.best_rewards[mode] = max(self.best_rewards[mode], float(np.mean(result["results"])))
+            self.logger.record(f"{prefix}/best_mean_reward", self.best_rewards[mode])
+            self.logger.record(f"{prefix}/num_episodes", len(result["results"]))
+            self.logger.record(f"{prefix}/std_ep_length", float(np.std(result["ep_lengths"])))
             self.logger.record(f"{prefix}/mean_reward", float(np.mean(result["results"])))
             self.logger.record(f"{prefix}/std_reward", float(np.std(result["results"])))
             self.logger.record(f"{prefix}/mean_ep_length", float(np.mean(result["ep_lengths"])))

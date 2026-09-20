@@ -185,18 +185,22 @@ class OptiQPolicy(BaseJaxPolicy):
         return key
 
     @staticmethod
-    @partial(jax.jit, static_argnames=["deterministic", "sample_conditional_noise"])
+    @partial(jax.jit, static_argnames=["deterministic", "sample_conditional_noise", "evaluation_zero_latent"])
     def sample_action(
         actor_state,
         observations,
         key,
         deterministic=False,
         sample_conditional_noise=True,
+        evaluation_zero_latent=False,
     ):
         if "mu" in actor_state.params:
             latent_key, noise_key = jax.random.split(key)
             shape = (observations.shape[0], actor_state.params["mu"]["bias"].shape[0])
-            if deterministic and isinstance(actor_state, FiniteMixtureTrainState):
+            if evaluation_zero_latent:
+                # Explicit z=0 diagnostic, even when zero is outside finite support.
+                z = jnp.zeros(shape, dtype=observations.dtype)
+            elif deterministic and isinstance(actor_state, FiniteMixtureTrainState):
                 # A reproducible component mean; stochastic evaluation is default.
                 z = jnp.broadcast_to(finite_latent_codes(actor_state, shape[-1], observations.dtype)[0], shape)
             else:
@@ -233,6 +237,7 @@ class OptiQPolicy(BaseJaxPolicy):
             sample_conditional_noise=not bool(
                 getattr(self, "evaluation_mu_only", False)
             ),
+            evaluation_zero_latent=bool(getattr(self, "evaluation_zero_latent", False)),
         )[0]
 
     def reset_noise(self, batch_size: int = 1) -> None:

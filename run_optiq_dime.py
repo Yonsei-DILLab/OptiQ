@@ -9,6 +9,7 @@ import uuid
 
 import hydra
 import jax
+import numpy as np
 import omegaconf
 import wandb
 from omegaconf import DictConfig
@@ -387,6 +388,8 @@ def initialize_and_run(cfg: DictConfig):
                 for mode, history in evaluation.histories.items():
                     values = history["results"][-1]
                     run.summary[f"final_eval_return_{mode}"] = float(sum(values) / len(values))
+                    run.summary[f"final_eval_std_{mode}"] = float(np.std(values))
+                    run.summary[f"best_eval_return_{mode}"] = evaluation.best_rewards[mode]
             artifact = wandb.Artifact(f"optiq-{run.id}", type="experiment")
             artifact.add_file(str(Path(cfg.output_root) / "config.json"))
             artifact.add_dir(str(evaluation.directory), name="evaluation")

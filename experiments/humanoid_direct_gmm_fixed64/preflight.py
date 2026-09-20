@@ -49,14 +49,14 @@ try:
  for head in ['mu','log_std']:assert not np.array_equal(before[head]['kernel'],state.params[head]['kernel'])
  restored=serialization.from_bytes(state,serialization.to_bytes(state));np.testing.assert_array_equal(finite_latent_codes(restored,17),codes)
  assert cb.evaluations_timesteps==[1,4,8] and np.isfinite(cb.evaluations_results).all()
- assert cb.MODES == ('fixed_z','stochastic_z') and cb.primary_mode == 'stochastic_z'
- assert cb.evaluations_results is cb.histories['stochastic_z']['results']
- np.testing.assert_array_equal(cb.histories['fixed_z']['env_seeds'],cb.histories['stochastic_z']['env_seeds'])
- np.testing.assert_array_equal(cb.histories['fixed_z']['policy_seeds'],cb.histories['stochastic_z']['policy_seeds'])
+ assert cb.MODES == ('zero_z','stochastic_z') and cb.primary_mode == 'zero_z'
+ assert cb.evaluations_results is cb.histories['zero_z']['results']
+ np.testing.assert_array_equal(cb.histories['zero_z']['env_seeds'],cb.histories['stochastic_z']['env_seeds'])
+ np.testing.assert_array_equal(cb.histories['zero_z']['policy_seeds'],cb.histories['stochastic_z']['policy_seeds'])
  key,noise=model.policy.key,model.policy.noise_key
  cb.n_calls=12;cb.num_timesteps=12;cb._on_step()
  np.testing.assert_array_equal(model.policy.key,key);np.testing.assert_array_equal(model.policy.noise_key,noise)
- assert not model.policy.evaluation_mu_only
+ assert not model.policy.evaluation_mu_only and not model.policy.evaluation_zero_latent
  import optiq_dime.dual_evaluation as de
  original_evaluate=de.evaluate_policy
  def fail(*args,**kwargs):raise RuntimeError('intentional eval failure')
@@ -67,8 +67,8 @@ try:
   else:raise AssertionError('failure not propagated')
  finally:de.evaluate_policy=original_evaluate
  np.testing.assert_array_equal(model.policy.key,key);np.testing.assert_array_equal(model.policy.noise_key,noise)
- assert not model.policy.evaluation_mu_only
- result=dict(status='PASS',env='Humanoid-v4',batch=256,n=64,m=64,utd=1,actor_updates=6,critic_updates=model._n_updates,fixed_codebook_shape=list(codes.shape),no_sinkhorn=True,finite_evaluations=True,paired_fixed_stochastic=True,evaluation_rng_restored=True,training_defaults_preserved=True)
+ assert not model.policy.evaluation_mu_only and not model.policy.evaluation_zero_latent
+ result=dict(status='PASS',env='Humanoid-v4',batch=256,n=64,m=64,utd=1,actor_updates=6,critic_updates=model._n_updates,fixed_codebook_shape=list(codes.shape),no_sinkhorn=True,finite_evaluations=True,paired_zero_stochastic=True,evaluation_rng_restored=True,training_defaults_preserved=True)
  (out/'result.json').write_text(json.dumps(result,indent=2));print(json.dumps(result),flush=True)
 finally:
  cb.eval_env.close();model.get_env().close();model.logger.close()
