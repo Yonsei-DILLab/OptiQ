@@ -35,7 +35,7 @@ class QueueTests(unittest.TestCase):
     def test_dacer_default_parity(self):
         import train_dacer
         for task in ('ant','humanoid'):
-            cfg=train_dacer.compose_config(task,4,'/tmp/config-only')
+            cfg=train_dacer.compose_config(task,3,'/tmp/config-only')
             self.assertTrue(cfg.dacer.enabled)
             self.assertEqual(cfg.dacer.target_entropy_per_dim,-.9)
             self.assertEqual(cfg.alg.actor.temperature,.25)

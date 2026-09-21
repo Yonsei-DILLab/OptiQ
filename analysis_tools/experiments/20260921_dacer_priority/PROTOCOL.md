@@ -6,9 +6,9 @@ using completed common seed IDs across each environment's two candidates,
 ranking stochastic_z reward over 900000 < steps <= 1000000 (20 x 10 episodes).
 This explicitly supersedes the previous five-seed completion gate.
 
-Run DACER enabled, temperature .25, beta 1, seeds 0..4 in both environments
-first in assignment order. Immediately backfill free GPUs; once all five DACER
-seeds are assigned, beta jobs may overlap the remaining DACER runs. Next run
+Run DACER enabled, temperature .25, beta 1, seeds 0..3 in both environments
+first in assignment order (latest user correction). Immediately backfill free
+GPUs; beta jobs may overlap the remaining DACER runs. Next run
 beta .5/.9 seeds 0..4 at the selected T with DACER disabled. Reuse completed
 beta results; restart interrupted beta attempts fresh for 1M steps, retaining
 the partial attempts. Checkpoints do not contain complete replay/RNG state.
@@ -33,4 +33,9 @@ complete finite 20x10 final evaluation window in both modes. A known W&B
 post-training artifact upload timeout can be imported with an explicit warning
 when these checks pass; retain the original failure record. Report sample SD
 across seeds and seed counts. Compare beta=1 on common completed seeds and
-also show all five seeds for new beta/DACER runs.
+also show all five seeds for new beta runs and four seeds for DACER.
+
+A scheduler-only handoff may adopt live child PIDs after matching their complete
+command lines. Stop only the old controller PID, preserving training processes;
+record the controller commit separately from each run's immutable source commit.
+Adopted processes have no recoverable exit status; verify artifacts on completion.

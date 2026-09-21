@@ -78,6 +78,20 @@ def ordered_pending(jobs):
     return sorted([j for j in jobs if j['status']=='queued'],key=lambda j:(j['priority'],j['seed'],j['beta']))
 
 
+class AdoptedProcess:
+    """Observe an already-running child after a scheduler-only replacement."""
+    def __init__(self, job):
+        self.pid=job['pid']
+        cmd=Path(f'/proc/{self.pid}/cmdline').read_bytes().split(b'\0')
+        actual=[x.decode() for x in cmd if x]
+        assert actual[1:]==job['command'][5:], (self.pid,actual)
+    def poll(self):
+        try:
+            state=Path(f'/proc/{self.pid}/stat').read_text().rsplit(')',1)[1].split()[0]
+        except FileNotFoundError: return 'unavailable_after_scheduler_handoff'
+        return 'unavailable_after_scheduler_handoff' if state=='Z' else None
+
+
 def setup(task):
     sha=old.source()
     old_service=f'trg-temp-beta-20260921-{task}'
@@ -98,7 +112,7 @@ def setup(task):
     selection=select_completed(temperatures,task)
     save(ROOT/f'selection-{task}.json',selection)
     chosen=selection['selected_temperature']
-    jobs=old.job_plan(task,'dacer',(.25,),(1.,))+old.job_plan(task,'beta',(chosen,),(.5,.9))
+    jobs=old.job_plan(task,'dacer',(.25,),(1.,))[:4]+old.job_plan(task,'beta',(chosen,),(.5,.9))
     done={j['name']:j for j in completed if j['stage']=='beta'}
     for job in jobs:
         job.update(status='queued',priority=0 if job['stage']=='dacer' else 1,
@@ -110,7 +124,7 @@ def setup(task):
     manifest=dict(task=task, commit=sha, source=str(REPO), beta_source=str(OLD_SOURCE), beta_commit=OLD_SHA,
         campaign=CAMPAIGN, project='OptiQ/gmm-trg', selection=selection,
         imported_temperature=temperatures, preserved_old_attempts=interrupted,
-        jobs=[j['name'] for j in jobs], workers=4, order='DACER seeds 0..4 then beta .5/.9 seeds 0..4; no completion barrier',
+        jobs=[j['name'] for j in jobs], workers=4, order='DACER seeds 0..3 then beta .5/.9 seeds 0..4; no completion barrier',
         restart_policy='Partial beta attempts preserved, restart fresh 1M; no checkpoint resume', created=time.time())
     save(ROOT/f'manifest-{task}.json',manifest)
     confdir=Path('/home/heechan/OptiQ-ops/supervisor/jobs')
@@ -143,10 +157,15 @@ environment=PYTHONDONTWRITEBYTECODE="1",OMP_NUM_THREADS="2",OPENBLAS_NUM_THREADS
 def run(task):
     lock=(ROOT/f'controller-{task}.lock').open('w'); fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     manifest=json.loads((ROOT/f'manifest-{task}.json').read_text())
-    assert old.source()==manifest['commit']
+    assert old.source()==manifest.get('controller_commit',manifest['commit'])
     jobs=[json.loads((ROOT/'jobs'/(n+'.json')).read_text()) for n in manifest['jobs']]
-    assert not any(j['status']=='running' for j in jobs), 'Interrupted runs require review; refusing duplicate launch'
     pending=ordered_pending(jobs); active={}
+    for job in jobs:
+        if job['status']!='running': continue
+        assert manifest.get('allow_live_adoption'), 'Running jobs require an explicit scheduler handoff'
+        gpu=job['gpu']; assert gpu not in active
+        active[gpu]=(AdoptedProcess(job),job,open(os.devnull,'w'))
+        print(json.dumps(dict(event='adopted',name=job['name'],pid=job['pid'],gpu=gpu)),flush=True)
     while pending or active:
         for gpu,(process,job,log) in list(active.items()):
             code=process.poll()

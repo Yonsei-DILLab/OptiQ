@@ -14,7 +14,7 @@ from stable_baselines3.common.callbacks import BaseCallback
 
 
 def compose_config(task, seed, output):
-    assert task in ('ant', 'humanoid') and seed in range(5)
+    assert task in ('ant', 'humanoid') and seed in range(4)
     cfg = train.compose_config([f'benchmark={task}', f'seed={seed}',
         'alg.actor.temperature=0.25', 'alg.actor.density_beta=1', 'alg.actor.density_correction_beta=1',
         'dacer.enabled=true', f'dacer.noise_scale={0.15 if task == "humanoid" else 0.1}',
