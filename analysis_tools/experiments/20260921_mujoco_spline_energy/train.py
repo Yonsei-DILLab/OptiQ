@@ -138,7 +138,7 @@ def main():
     parser.add_argument("--gamma", type=float, default=.99)
     parser.add_argument("--tau", type=float, default=.005)
     parser.add_argument("--huber-delta", type=float, default=10.)
-    parser.add_argument("--wandb-mode", choices=["online", "offline", "disabled"], default="online")
+    parser.add_argument("--wandb-mode", choices=["online", "offline", "disabled"], default="offline")
     parser.add_argument("--require-gpu", action="store_true")
     args = parser.parse_args()
     if args.total_steps <= args.warmup or args.eval_interval <= 0:
@@ -179,7 +179,7 @@ def main():
                   packages={p: importlib.metadata.version(p) for p in
                             ["jax", "jaxlib", "flax", "optax", "numpy", "gymnasium", "mujoco", "wandb"]})
     atomic_json(args.output / "config.json", config)
-    run = wandb.init(entity=os.getenv("WANDB_ENTITY", "models"),
+    run = wandb.init(entity=os.getenv("WANDB_ENTITY"),
                      project=os.getenv("WANDB_PROJECT", "OptiQ-MuJoCo-Spline-Energy"),
                      group=os.getenv("WANDB_RUN_GROUP", "spline_energy"),
                      job_type="train" if args.total_steps == 1_000_000 else "smoke",

@@ -16,7 +16,6 @@ CAMPAIGN=/scratch2/gsmin2024/research/optiq_mujoco_spline_energy_20260921
 SOURCE="$CAMPAIGN/snapshot"
 EXP="$SOURCE/analysis_tools/experiments/20260921_mujoco_spline_energy"
 PYTHON=/scratch2/gsmin2024/research/optiq_v5_humanoid_density_beta_20260915/.venv/bin/python
-SECRET=/scratch2/gsmin2024/.secrets/optiQ_wandb
 EXPECTED=$($PYTHON -c "import json;print(json.load(open('$CAMPAIGN/manifest/campaign.json'))['git_commit'])")
 test "$(git -C "$SOURCE" rev-parse HEAD)" = "$EXPECTED"
 test -z "$(git -C "$SOURCE" status --porcelain)"
@@ -58,15 +57,11 @@ PY
 trap finish EXIT
 trap 'exit 143' TERM
 trap 'exit 130' INT
-test -f "$SECRET" && test "$(stat -c '%a' "$SECRET")" = 600
 unset WANDB_API_KEY WANDB_ENTITY WANDB_PROJECT WANDB_NAME WANDB_RUN_GROUP WANDB_RUN_ID WANDB_RESUME PYTHONPATH LD_LIBRARY_PATH
-IFS= read -r WANDB_API_KEY < "$SECRET"
-test -n "$WANDB_API_KEY"
-export WANDB_API_KEY WANDB_ENTITY=models WANDB_PROJECT=OptiQ-MuJoCo-Spline-Energy
-export WANDB_RUN_GROUP=spline_energy WANDB_MODE=online
+export WANDB_PROJECT=OptiQ-MuJoCo-Spline-Energy WANDB_RUN_GROUP=spline_energy WANDB_MODE=offline
 export PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 export JAX_PLATFORMS=cuda XLA_PYTHON_CLIENT_PREALLOCATE=false MUJOCO_GL=egl
 export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS="$SLURM_CPUS_PER_TASK" MKL_NUM_THREADS=1
 nvidia-smi --query-gpu=name,uuid,driver_version,memory.total --format=csv,noheader
 cd "$EXP"
-"$PYTHON" -u train.py --env "$ENV_NAME" --seed "$SEED" --output "$OUTPUT" --require-gpu
+"$PYTHON" -u train.py --env "$ENV_NAME" --seed "$SEED" --output "$OUTPUT" --wandb-mode offline --require-gpu

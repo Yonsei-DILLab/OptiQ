@@ -72,9 +72,9 @@ Gaussian sigma, tanh action compression, reward scaling, observation normalizati
 prioritized replay는 사용하지 않습니다. 환경의 실제 action bound와 `[-1,1]`
 사이는 affine map으로 변환합니다.
 
-W&B project는 `gsmin2018` 계정의 personal entity인
-`models/OptiQ-MuJoCo-Spline-Energy`이며, group과 config의 algorithm
-값은 모두 `spline_energy`입니다. 주 지표는 10k environment steps마다 기록하는
+W&B는 외부로 전송하지 않고 각 output directory의 offline run으로만 저장합니다.
+로컬 project는 `OptiQ-MuJoCo-Spline-Energy`, group과 config의 algorithm 값은
+모두 `spline_energy`입니다. 주 지표는 10k environment steps마다 기록하는
 `eval/mean_reward`입니다.
 
 ## 검증

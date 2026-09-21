@@ -52,11 +52,11 @@ episodes at step0 and every10,000 steps, with fixed reset seeds and evaluation
 randomness isolated from collection. Primary metric is `eval/mean_reward`; log
 standard deviation, episode length, return AUC, TD loss, Q, V and gradient norm.
 
-W&B entity/project/group:
-The `gsmin2018` account's personal entity is `models`; use
-`models/OptiQ-MuJoCo-Spline-Energy/spline_energy`. The config field
-`algorithm=spline_energy` supports algorithm grouping; `algorithm_display_name`
-keeps the human-readable `Spline Energy Circuit` label. Preserve final
+W&B runs stay in local offline mode under each output directory; the launcher
+does not load an API key or sync externally. The local project/group are
+`OptiQ-MuJoCo-Spline-Energy/spline_energy`. The config field
+`algorithm=spline_energy` supports grouping; `algorithm_display_name` keeps the
+human-readable `Spline Energy Circuit` label. Preserve final
 and100k-interval checkpoints, configs, evaluation JSONL, raw logs, source hash,
 environment/package/GPU metadata and SLURM IDs.
 
