@@ -11,7 +11,7 @@ from antmaze.evaluation import atomic_json
 from .env import geometry
 
 METHODS=("optiq","sac","meow","sql","mfpo","dipo")
-COLORS={0:"#aaaaaa",1:"#2580b4",2:"#e58437"}
+COLORS={0:"#7d8791",1:"#2580b4",2:"#e58437"}
 
 
 def maze(ax,task):
@@ -33,7 +33,7 @@ def draw_paths(ax,folder,task,label):
     z=np.load(p,allow_pickle=False)
     for path,n,goal in zip(z["xy"],z["lengths"],z["goal_ids"]):
         xy=path[:int(n)+1]
-        ax.plot(xy[:,0],xy[:,1],color=COLORS[int(goal)],alpha=.16 if goal else .065,lw=.65,zorder=3)
+        ax.plot(xy[:,0],xy[:,1],color=COLORS[int(goal)],alpha=.16,lw=.65,zorder=3)
     s=json.loads(p.with_suffix(".json").read_text())
     dominant=(f"{s['successful_routes']['dominant_fraction']:.0%}" if
               s["successful_routes"]["counts"] else "N/A")
@@ -75,13 +75,13 @@ def main():
     if missing and not a.partial:raise RuntimeError(f"Missing completed jobs: {missing}")
     individual=out/"individual";individual.mkdir(exist_ok=True)
     for job,r in complete.items():
-        fig,axes=plt.subplots(1,2,figsize=(8,4.5))
+        fig,axes=plt.subplots(1,2,figsize=(9,5.5))
         for ax,label in zip(axes,("policy-natural","policy-fixed")):
             draw_paths(ax,root/"runs"/job,r["task"],label)
             ax.set_xlabel("Natural reset" if label.endswith("natural") else "Identical full initial state")
-        fig.suptitle(f"{r['task']} · {r['method'].upper()} · seed{r['seed']} · 100k interactions\n100 direct-policy rollouts per panel")
-        fig.text(.5,.012,"Gray: unsuccessful episode · colored: reached goal · star: reference origin",ha="center",fontsize=8)
-        fig.tight_layout(rect=(0,.035,1,1));fig.savefig(individual/f"{job}.png",dpi=180);plt.close(fig)
+        fig.suptitle(f"{r['task']} · {r['method'].upper()} · seed{r['seed']} · 100k interactions\n100 direct-policy rollouts per panel",fontsize=13,y=.985)
+        fig.text(.5,.018,"Gray: unsuccessful episode · colored: reached goal · star: reference origin",ha="center",fontsize=8)
+        fig.tight_layout(rect=(0,.055,1,.91));fig.savefig(individual/f"{job}.png",dpi=180);plt.close(fig)
     for task in m["tasks"]:
         for label in ("policy-natural","policy-fixed"):
             fig,axes=plt.subplots(6,4,figsize=(13,18))
