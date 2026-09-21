@@ -15,7 +15,8 @@ from flax.training.train_state import TrainState
 
 from circuit import log_prob_from_output, q_from_output, sample_from_output
 from algorithms.spline_energy.raw_energy import (
-    ConditionalRawEnergyCircuit, fixed_q_forward_energy_loss, output_from_factors)
+    ConditionalRawEnergyCircuit, StateFreeRawEnergyCircuit,
+    fixed_q_forward_energy_loss, output_from_factors, sample_many_from_single_output)
 from train import make_update
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -33,6 +34,11 @@ def original_gmm():
 def reference_parity():
     original = original_gmm()
     state, _ = original.initialize_circuit(2)  # Successful rank64 / knots129.
+    state_free = StateFreeRawEnergyCircuit(initialization_seed=2)
+    state_free_params = state_free.init(jax.random.PRNGKey(99))["params"]
+    state_free_output = state_free.apply({"params": state_free_params})
+    np.testing.assert_allclose(state_free_output["raw_log_roots"][0], state.params["height"], atol=2e-6)
+    np.testing.assert_allclose(state_free_output["raw_log_leaves"][0], state.params["leaves"], atol=2e-6)
     model = ConditionalRawEnergyCircuit(2, initialization_seed=2, hidden_dims=(16, 16))
     observations = jnp.zeros((96, 3))
     params = model.init(jax.random.PRNGKey(3), observations)["params"]
@@ -70,6 +76,8 @@ def reference_parity():
     expected_samples = original.circuit_sample(state.params, key, len(actions), parallel_root=True)
     actual_samples = sample_from_output(output, key)
     np.testing.assert_allclose(actual_samples, expected_samples, atol=2e-6)
+    many_samples = sample_many_from_single_output(state_free_output, key, len(actions))
+    np.testing.assert_allclose(many_samples, expected_samples, atol=2e-6)
     # With b=pi, copying Direct's teacher from our OWN tied Q is self-imitation.
     logits = q_from_output(output, actions, .25) / .25 - log_prob_from_output(output, actions)
     np.testing.assert_allclose(logits, output["log_partition"], atol=4e-6)

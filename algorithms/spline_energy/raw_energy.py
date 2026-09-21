@@ -80,6 +80,24 @@ class ConditionalRawEnergyCircuit(nn.Module):
         return output_from_factors(roots, leaves, self.temperature)
 
 
+class StateFreeRawEnergyCircuit(nn.Module):
+    """The GMM40 case of the same raw-energy equations, without unused state weights."""
+    action_dim: int = 2
+    rank: int = 64
+    knots: int = 129
+    temperature: float = 1.
+    initialization_seed: int = 0
+
+    @nn.compact
+    def __call__(self):
+        roots0, leaves0 = reference_initial_factors(
+            self.initialization_seed, self.rank, self.action_dim, self.knots)
+        roots = self.param("roots", lambda _key, shape: roots0.reshape(shape), (self.rank,))
+        leaves = self.param("leaves", lambda _key, shape: leaves0.reshape(shape),
+                            (self.rank, self.action_dim, self.knots))
+        return output_from_factors(roots[None], leaves[None], self.temperature)
+
+
 def fixed_q_forward_energy_loss(output, actions, target_log_energy, proposal_log_prob):
     """The original GMM40 generalized-KL estimator, in dimensionless energy.
 
@@ -93,3 +111,32 @@ def fixed_q_forward_energy_loss(output, actions, target_log_energy, proposal_log
     weights = jax.lax.stop_gradient(jnp.exp(target_log_energy - proposal_log_prob))
     energy = mixture_log_value(output["raw_log_roots"], output["raw_log_leaves"], actions)
     return jnp.mean(jnp.exp(output["log_partition"]) - weights * energy)
+
+
+def sample_many_from_single_output(output, key, count):
+    """Draw ``count`` actions from one state's exact normalized circuit."""
+    if count <= 0:
+        raise ValueError("count must be positive")
+    weights = output["log_weights"]
+    leaves = output["log_leaves"]
+    if weights.shape[0] != 1 or leaves.shape[0] != 1:
+        raise ValueError("Expected exactly one state")
+    weights, leaves = jnp.exp(weights[0]), leaves[0]
+    root_key, bin_key, within_key = jax.random.split(key, 3)
+    root_cdf = jnp.cumsum(weights).at[-1].set(1.)
+    root_u = jax.random.uniform(root_key, (count,))
+    roots = jnp.sum(root_cdf[None] <= root_u[:, None], axis=-1).clip(0, weights.shape[0] - 1)
+    selected = leaves[roots]
+    scaled = jnp.exp(selected - selected.max(axis=-1, keepdims=True))
+    areas = .5 * (scaled[..., :-1] + scaled[..., 1:])
+    cdf = jnp.cumsum(areas, axis=-1) / areas.sum(axis=-1, keepdims=True)
+    cdf = cdf.at[..., -1].set(1.)
+    uniform = jax.random.uniform(bin_key, selected.shape[:-1])
+    bins = jnp.sum(cdf <= uniform[..., None], axis=-1).clip(0, areas.shape[-1] - 1)
+    y0 = jnp.take_along_axis(scaled, bins[..., None], axis=-1)[..., 0]
+    y1 = jnp.take_along_axis(scaled, (bins + 1)[..., None], axis=-1)[..., 0]
+    within = jax.random.uniform(within_key, selected.shape[:-1])
+    mass = within * .5 * (y0 + y1)
+    discriminant = jnp.maximum(y0 * y0 + 2. * (y1 - y0) * mass, 0.)
+    fraction = 2. * mass / jnp.maximum(y0 + jnp.sqrt(discriminant), 1e-30)
+    return (-1. + (bins + fraction.clip(0., 1.)) * (2. / areas.shape[-1])).clip(-1., 1.)
