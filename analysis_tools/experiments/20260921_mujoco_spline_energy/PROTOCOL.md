@@ -53,7 +53,7 @@ randomness isolated from collection. Primary metric is `eval/mean_reward`; log
 standard deviation, episode length, return AUC, TD loss, Q, V and gradient norm.
 
 W&B entity/project/group:
-`OptiQ/OptiQ-MuJoCo-Spline-Energy/spline_energy`. The config field
+`gsmin2018/OptiQ-MuJoCo-Spline-Energy/spline_energy`. The config field
 `algorithm=spline_energy` supports algorithm grouping; `algorithm_display_name`
 keeps the human-readable `Spline Energy Circuit` label. Preserve final
 and100k-interval checkpoints, configs, evaluation JSONL, raw logs, source hash,
