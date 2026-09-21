@@ -49,6 +49,11 @@ def run_navigation(args):
         config.update(n=args.n,m=args.m,epsilon=args.epsilon,
                       sinkhorn_iterations=args.sinkhorn_iterations)
     if args.method=='mfpo':config['critic_value_support']=dict(min=-1600,max=1600,atoms=101,clipped_mass_diagnostics_every=1000)
+    if args.method=='sql':
+        from .sql import metadata
+        config.update(metadata(args),temperature=args.temperature,batch_size=args.batch,
+                      temperature_policy='fixed SQL entropy temperature',
+                      q_probe_reference='live single SQL Q',reward_scale=1.,utd=1)
     atomic_json(folder/"config.json",config)
     atomic_json(folder/"status.json",dict(status="initializing",pid=os.getpid(),updates=0))
     try:
@@ -160,10 +165,14 @@ def run_sb3(args,folder):
 def run_custom(args,folder):
     from .navigation_agents import DIPOOnline,MEowOnline,MFPOOnline
     env=GMM40Navigation();env.action_space.seed(args.seed)
-    agent={'dipo':DIPOOnline,'meow':MEowOnline,'mfpo':MFPOOnline}[args.method](env,args.seed,folder)
+    if args.method=='sql':
+        from .sql import SQLOnline,config_from_args
+        agent=SQLOnline(env,args.seed,folder,batch=args.batch,config=config_from_args(args))
+    else:agent={'dipo':DIPOOnline,'meow':MEowOnline,'mfpo':MFPOOnline}[args.method](env,args.seed,folder)
     from .model_sizes import save_sizes
     if args.method=='dipo':save_sizes(folder,actor=agent.agent.actor,critic=agent.agent.critic)
     elif args.method=='meow':save_sizes(folder,joint_flow_QV=agent.agent.policy)
+    elif args.method=='sql':save_sizes(folder,actor=agent.learner.state.actor,critic=agent.learner.state.critic)
     else:save_sizes(folder,actor=agent.agent.actor,divergence=agent.agent.logp_mvel,critic_1=agent.agent.critic_1,critic_2=agent.agent.critic_2)
     if args.method=='meow':
         agent.agent.args.alpha=args.temperature
@@ -178,15 +187,15 @@ def run_custom(args,folder):
         agent.save(folder/'checkpoints'/f'update_{last:07d}.bin')
         with (folder/'checkpoints'/f'update_{last:07d}.environment.pkl').open('wb') as f:
             pickle.dump(dict(observation=obs,env_state=env.state,elapsed=env.elapsed,env_rng=env.np_random.bit_generator.state,action_rng=env.action_space.np_random.bit_generator.state),f)
-        if args.method=='mfpo':
+        if args.method in ('mfpo','sql'):
             import jax
             agent.eval_key=jax.random.PRNGKey(92001)
-            temperature=float(agent.agent.temp.apply_fn({'params':agent.agent.temp.params}))
+            temperature=args.temperature if args.method=='sql' else float(agent.agent.temp.apply_fn({'params':agent.agent.temp.params}))
         else:temperature=args.temperature if args.method=='meow' else None
         try:
             with evaluation_rng():evaluate_navigation(folder,args.name,last,env_steps,agent.act,agent.q,args.eval_episodes,info,temperature=temperature)
         finally:
-            if args.method=='mfpo':agent.eval_key=None
+            if args.method in ('mfpo','sql'):agent.eval_key=None
     snapshot(0,{})
     for t in range(args.steps+args.warmup):
         action=env.action_space.sample() if t<args.warmup else agent.act(obs[None])[0]

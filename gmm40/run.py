@@ -15,7 +15,7 @@ from .evaluation import atomic_json,save_evaluation
 
 def main():
     parser=argparse.ArgumentParser()
-    parser.add_argument("--method",choices=["optiq","sac","dipo","meow","mfpo"],required=True)
+    parser.add_argument("--method",choices=["optiq","sac","dipo","meow","mfpo","sql"],required=True)
     parser.add_argument("--name",required=True)
     parser.add_argument("--steps",type=int,default=100000)
     parser.add_argument("--seed",type=int,default=0)
@@ -42,6 +42,10 @@ def main():
     parser.add_argument("--warmup",type=int,default=5000)
     parser.add_argument("--eval-episodes",type=int,default=1000)
     parser.add_argument("--temperature",type=float,default=None)
+    parser.add_argument("--sql-kernel-particles",type=int,default=16)
+    parser.add_argument("--sql-kernel-update-ratio",type=float,default=.5)
+    parser.add_argument("--sql-value-particles",type=int,default=16)
+    parser.add_argument("--sql-target-update-interval",type=int,default=1000)
     args=parser.parse_args()
     if args.optiq_devices<1 or (args.optiq_devices!=1 and
             (args.method!='optiq' or args.navigation or args.batch%args.optiq_devices)):
@@ -61,12 +65,18 @@ def main():
         args.temperature=.25 if args.navigation and args.method=='optiq' else 1.0
     if not math.isfinite(args.temperature) or args.temperature<=0:
         raise ValueError("Temperature must be positive and finite")
+    if args.method=='sql':
+        from .sql import config_from_args
+        config_from_args(args)
+        if args.batch<=0:raise ValueError('SQL batch must be positive')
+        if args.navigation and args.resume:
+            raise ValueError('Navigation CLI resume is not supported; SQLOnline.restore restores the learner/replay only')
     if args.navigation:
         from .navigation_run import run_navigation
         run_navigation(args)
         return
-    if args.temperature!=1.0 and args.method!='optiq':
-        raise ValueError("Fixed-Q temperature controls are implemented only for OptiQ")
+    if args.temperature!=1.0 and args.method not in ('optiq','sql'):
+        raise ValueError("Fixed-Q temperature controls are implemented only for OptiQ and SQL")
     if args.resume and args.method=='optiq':
         parent_config=json.loads((args.resume.parent.parent/'config.json').read_text())
         if parent_config.get('temperature',1.0)!=args.temperature:
@@ -88,6 +98,9 @@ def main():
     reference=target.sample(args.eval_samples,20260917,bounded=True)
     full_reference=target.sample(args.eval_samples,20260917,bounded=False)
     config=vars(args).copy(); config["resume"]=str(args.resume) if args.resume else None
+    if args.method=='sql':
+        from .sql import metadata
+        config.update(metadata(args))
     if args.method == 'optiq':
         config.update(actor_learning_rate=3e-4,
                       mean_output_init_scale=1e-4 if args.mean_output_init_scale is None else args.mean_output_init_scale,
@@ -128,6 +141,9 @@ def main():
                          mean_output_init_scale=config['mean_output_init_scale'],temperature=args.temperature,
                          nll_top_k=args.nll_top_k,nll_plan_threshold=args.nll_plan_threshold,
                          sigma_row_balance=args.sigma_row_balance,**parallel_args)
+        elif args.method=="sql":
+            from .sql import SQL,config_from_args
+            agent=SQL(target,args.seed,args.batch,config_from_args(args))
         elif args.method=="mfpo":
             from .mfpo import MFPO
             agent=MFPO(target,args.seed,args.batch)

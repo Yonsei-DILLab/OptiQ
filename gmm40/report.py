@@ -23,12 +23,16 @@ def sample_grid(rows,phase):
     if not selected:return False
     from .evaluation import background
     target=Target();reference=target.sample(5000,20260917,bounded=phase=='fixed')
-    fig,axes=plt.subplots(2,3,figsize=(15,10),constrained_layout=True)
+    methods=['optiq','sac','dipo','meow','mfpo']
+    if 'sql' in selected:methods.append('sql')
+    nrows=(len(methods)+3)//3
+    fig,axes=plt.subplots(nrows,3,figsize=(15,5*nrows),constrained_layout=True)
     bounds=40 if phase=='fixed' else 50
     for ax in axes.ravel():background(ax,target);ax.set(xlim=(-bounds,bounds),ylim=(-bounds,bounds))
     axes[0,0].scatter(*reference.T,s=2,alpha=.3,color='#3676b9')
     axes[0,0].set_title('Ground truth | '+('bounded GMM40' if phase=='fixed' else 'original GMM40'))
-    for ax,method in zip(axes.ravel()[1:],['optiq','sac','dipo','meow','mfpo']):
+    for ax in axes.ravel()[1+len(methods):]:ax.set_visible(False)
+    for ax,method in zip(axes.ravel()[1:],methods):
         if method not in selected:
             ax.set_title(method.upper()+' | queued');continue
         row=selected[method];prefix='step' if phase=='fixed' else 'update'

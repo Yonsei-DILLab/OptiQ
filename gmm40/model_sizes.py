@@ -22,5 +22,5 @@ def save_sizes(folder,**networks):
 
 def fixed_sizes(folder,method,agent):
     if method=='mfpo':return save_sizes(folder,actor=agent.state,divergence=agent.divstate)
-    if method=='optiq':return save_sizes(folder,actor=agent.state)
+    if method in ('optiq','sql'):return save_sizes(folder,actor=agent.state)
     return save_sizes(folder,**{'joint_flow_QV' if method=='meow' else 'actor':agent.actor})

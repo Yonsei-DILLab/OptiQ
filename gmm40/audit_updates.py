@@ -45,7 +45,14 @@ def audit(folder):
     groups = {}
     saved_updates = None
 
-    if cfg['method'] in ('optiq', 'mfpo'):
+    if cfg['method']=='sql':
+        state=flax.serialization.msgpack_restore(path.read_bytes())['state']
+        saved_updates=int(state['updates'])
+        for name in (['actor','critic'] if navigation else ['actor']):
+            trainstate=state[name]
+            groups[name]=dict(model_step=int(trainstate['step']),
+                              optimizer_counts=optax_counts(trainstate['opt_state']))
+    elif cfg['method'] in ('optiq', 'mfpo'):
         state = flax.serialization.msgpack_restore(path.read_bytes())
         names = (['actor', 'critic'] if cfg['method'] == 'optiq'
                  else ['actor', 'logp_mvel', 'critic_1', 'critic_2', 'temp']) if navigation else (

@@ -122,6 +122,7 @@ pinned under `gmm40-baseline/`; populate them with
 adapters, with an isolated v5 implementation, rather than a change to TRG RL
 training defaults.
 
-The original Haarnoja SQL source is pinned at `gmm40-baseline/SQL`; see
-[SQL baseline notes](gmm40/SQL_BASELINE.md) for its SVGD implementation and
-legacy runtime requirements. SQL is not connected to the GMM40 runner yet.
+The original Haarnoja SQL source is pinned at `gmm40-baseline/SQL`. Its JAX/Flax
+port runs via `python -m gmm40.run --method sql` for fixed-Q or navigation;
+see [SQL baseline notes](gmm40/SQL_BASELINE.md) for implementation, settings and
+numerical verification.

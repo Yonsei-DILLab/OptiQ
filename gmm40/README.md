@@ -3,7 +3,7 @@
 Fixed-Q density reconstruction and a separate 100-step navigation task using
 the DiKL seed-0, 40-component Gaussian mixture. The default OptiQ adapter reuses
 the v5 actor, Gaussian proposal, mean-action Sinkhorn assignment and full-row
-conditional Gaussian NLL. Baselines include SAC, DIPO, MEow and MFPO.
+conditional Gaussian NLL. Baselines include SAC, DIPO, MEow, MFPO and JAX SQL.
 
 ## Source and algorithm
 
@@ -38,10 +38,10 @@ Their paths are `gmm40-baseline/DiKL`, `gmm40-baseline/DIPO`,
 The upstream files and notices are preserved without modification. DiKL initializes the target,
 including for OptiQ-only runs. Generated results are excluded from Git.
 
-SQL is the original SVGD-based Soft Q-Learning source, with its own legacy
-TensorFlow runtime. It is not yet a `gmm40.run --method sql` adapter. See
-[SQL_BASELINE.md](SQL_BASELINE.md) for implementation paths, original defaults
-and dependency limitations.
+SQL has a JAX/Flax implementation connected to both fixed-Q and navigation
+through `gmm40.run --method sql`. The original TensorFlow source remains pinned
+for reference. See [SQL_BASELINE.md](SQL_BASELINE.md) for equation correspondence,
+defaults, numerical checks and execution commands.
 
 ## Running
 
