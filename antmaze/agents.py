@@ -126,7 +126,9 @@ class MFPO:
         @jax.jit
         def batched_eval(agent, obs):
             keys = jax.random.split(agent.rng, len(obs)+1)
-            actions = jax.vmap(lambda o,k: agent.replace(rng=k).eval_actions(o)[0])(obs, keys[1:])
+            # Native eval_actions() dispatches on a dynamic bool before JIT.
+            # This profile fixes native Q-selection on, so call that exact path.
+            actions = jax.vmap(lambda o,k: agent.replace(rng=k).eval_actions_select(o, agent.eval_candidate_num)[0])(obs, keys[1:])
             return actions, agent.replace(rng=keys[0])
         self.batched_eval = batched_eval
     def act(self, obs):

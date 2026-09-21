@@ -49,9 +49,11 @@ def main():
                 atomic_json(root/"failure.json",dict(job=job,pending_held=True,live_preserved=True))
             atomic_json(root/"jobs"/(job["id"]+".json"),job)
         if not failure:
+            proofs={} if a.smoke else json.loads((root/"preflight.json").read_text())
             for gpu in range(4):
                 if gpu in live: continue
-                pending=next((j for j in jobs if j["status"]=="pending"),None)
+                pending=next((j for j in jobs if j["status"]=="pending" and
+                    (a.smoke or proofs.get(j["method"],{}).get("passed",False))),None)
                 if pending is None: break
                 # Inspect reservation without taking it away from its owner.
                 probe=open(f"/home/heechan/OptiQ-ops/locks/gpu-{gpu}.lock","a")
