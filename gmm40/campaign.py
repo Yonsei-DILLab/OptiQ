@@ -30,9 +30,9 @@ def identity(pid):
     except (FileNotFoundError,ProcessLookupError):return None
 
 
-def prepare(root):
+def prepare(root,plan_path=None):
     source=Path(__file__).resolve().parents[1]
-    plan=read(source/'gmm40/campaign_plan.json')
+    plan=read(plan_path or source/'gmm40/campaign_plan.json')
     commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=source,text=True).strip()
     if subprocess.check_output(['git','status','--porcelain','--untracked-files=no'],cwd=source,text=True).strip():
         raise RuntimeError('Commit the source before preparing the campaign')
@@ -44,12 +44,15 @@ def prepare(root):
     jobs=[]
     for seed in plan['seeds']:
         for method in plan['methods']:
-            name=f'{method}_s{seed}_100k'
+            name=f"{plan.get('job_prefix','')}{method}_s{seed}_100k"
             argv=['--method',method,'--name',name,'--seed',str(seed),'--steps',str(plan['steps']),
                   '--batch',str(plan['batch']),'--temperature',str(plan['temperature']),
                   '--eval-samples',str(plan['eval_samples']),'--width',str(plan['width']),
                   '--depth',str(plan['depth'])]
             if method in ('optiq_trg','optiq'):argv+=['--n',str(plan['optiq_n']),'--m',str(plan['optiq_m'])]
+            if method=='optiq_trg' and 'trg_actor' in plan:
+                argv+=['--trg-log-std-max',str(plan['trg_actor']['log_std_max']),
+                       '--trg-initial-log-std',str(plan['trg_actor']['initial_log_std'])]
             jobs.append(dict(name=name,method=method,seed=seed,args=argv,steps=plan['steps']))
             write(root/'jobs'/f'{name}.json',dict(status='pending',name=name))
     manifest=dict(plan=plan,source=str(source),source_commit=commit,jobs=jobs,created=time.time(),
@@ -60,6 +63,7 @@ def prepare(root):
 
 
 def gate_ready(manifest):
+    if manifest['plan'].get('gate') is None:return True
     gate=Path(manifest['plan']['gate'])
     for seed in range(4):
         job=read(gate/'jobs'/f'humanoid-trg-dacer-T0.25-b1-s{seed}.json',{})
@@ -90,7 +94,13 @@ def preflight(root,manifest):
     for method in plan['methods']:
         if method=='optiq_trg':
             from .optiq_trg import OptiQTRG
-            agent=OptiQTRG(target,n=plan['optiq_n'],m=plan['optiq_m'],batch=plan['batch'])
+            agent=OptiQTRG(target,n=plan['optiq_n'],m=plan['optiq_m'],batch=plan['batch'],
+                           hidden_dims=(plan['width'],)*plan['depth'],temperature=plan['temperature'],
+                           **plan.get('trg_actor',{}))
+            requested=plan.get('trg_actor',dict(log_std_max=-1.,initial_log_std=-1.))
+            assert agent.actor.log_std_min==-5. and agent.actor.log_std_max==requested['log_std_max']
+            assert agent.actor.initial_log_std==requested['initial_log_std']
+            assert agent.actor.mean_output_init_scale==1.
         elif method=='optiq':
             from .optiq import OptiQ
             agent=OptiQ(target,n=plan['optiq_n'],m=plan['optiq_m'],batch=plan['batch'])
@@ -112,7 +122,8 @@ def preflight(root,manifest):
         dest=root/'preflight'/method;dest.mkdir(parents=True,exist_ok=True)
         agent.save(dest/'checkpoint.bin')
         sizes=fixed_sizes(dest,method,agent)
-        checks.append(dict(method=method,updates=2,metrics=info,model_sizes=sizes))
+        checks.append(dict(method=method,updates=2,metrics=info,model_sizes=sizes,
+                           trg_actor=plan.get('trg_actor') if method=='optiq_trg' else None))
         print(json.dumps(checks[-1]),flush=True)
         del agent;gc.collect();jax.clear_caches();torch.cuda.empty_cache()
     write(root/'preflight.json',dict(status='passed',source_commit=manifest['source_commit'],checks=checks,
@@ -133,7 +144,7 @@ def dispatch(root,manifest):
     fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     proof=read(root/'preflight.json',{})
     if proof.get('status')!='passed' or proof.get('source_commit')!=manifest['source_commit']:
-        raise RuntimeError('All six GPU adapters must pass preflight at the frozen commit')
+        raise RuntimeError('All planned GPU adapters must pass preflight at the frozen commit')
     processes={};logs={};jobs=manifest['jobs'];plan=manifest['plan']
     while True:
         states={j['name']:read(root/'jobs'/f"{j['name']}.json") for j in jobs}
@@ -205,8 +216,9 @@ def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('action',choices=['prepare','preflight','run'])
     parser.add_argument('--root',type=Path,required=True)
+    parser.add_argument('--plan',type=Path,help='Committed plan for prepare; otherwise uses campaign_plan.json')
     args=parser.parse_args();root=args.root.resolve();root.mkdir(parents=True,exist_ok=True)
-    manifest=prepare(root) if args.action=='prepare' else read(root/'manifest.json')
+    manifest=prepare(root,args.plan) if args.action=='prepare' else read(root/'manifest.json')
     if not manifest:raise RuntimeError('Prepare the committed campaign first')
     os.environ.update(GMM40_REPO_ROOT=manifest['source'],GMM40_RESULTS_ROOT=str(root/'results'))
     if args.action=='preflight':preflight(root,manifest)

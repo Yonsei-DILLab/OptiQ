@@ -18,15 +18,19 @@ sample_box = importlib.import_module(SOURCE + '.box_gaussian').sample_box
 
 class OptiQTRG(OptiQ):
     def __init__(self, target, seed=0, n=64, m=64, batch=256,
-                 hidden_dims=(256,256), temperature=1.):
+                 hidden_dims=(256,256), temperature=1.,
+                 log_std_max=-1., initial_log_std=-1.):
         if n <= 0 or m <= 0 or m % n or batch <= 0:
             raise ValueError('TRG requires positive batch/N/M and M divisible by N')
         if not math.isfinite(temperature) or temperature <= 0:
             raise ValueError('Temperature must be positive and finite')
+        if not (math.isfinite(log_std_max) and math.isfinite(initial_log_std)
+                and -5. < log_std_max and -5. <= initial_log_std <= log_std_max):
+            raise ValueError('TRG requires -5 < log_std_max and initial log std within bounds')
         self.target, self.n, self.m, self.batch = target, n, m, batch
         self.temperature = temperature
         # GMM40-only mean initialization override; retain the RL sigma defaults.
-        self.actor = Actor(2, tuple(hidden_dims), -5., -1., -1.,
+        self.actor = Actor(2, tuple(hidden_dims), -5., log_std_max, initial_log_std,
                            mean_output_init_scale=1.)
         self.key, init = jax.random.split(jax.random.PRNGKey(seed))
         params = self.actor.init(init, jnp.zeros((1,1)), jnp.zeros((1,2)))['params']

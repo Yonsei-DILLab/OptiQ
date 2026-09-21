@@ -28,6 +28,10 @@ def main():
     parser.add_argument("--depth",type=int,default=2)
     parser.add_argument("--mean-output-init-scale",type=float,default=None,
                         help="Optional OptiQ fixed-Q mean-head variance scale; default 1e-4")
+    parser.add_argument("--trg-log-std-max",type=float,default=-1.,
+                        help="GMM40 TRG-only sigma ablation; lower bound remains -5")
+    parser.add_argument("--trg-initial-log-std",type=float,default=-1.,
+                        help="GMM40 TRG-only initial log sigma, within the configured bounds")
     parser.add_argument("--nll-top-k",type=int,default=None,
                         help="Fixed-Q OptiQ only: retain this many highest-mass OT targets per row in NLL")
     parser.add_argument("--nll-plan-threshold",type=float,default=None,
@@ -47,6 +51,13 @@ def main():
     parser.add_argument("--sql-value-particles",type=int,default=16)
     parser.add_argument("--sql-target-update-interval",type=int,default=1000)
     args=parser.parse_args()
+    if (args.trg_log_std_max, args.trg_initial_log_std) != (-1., -1.) and (
+            args.method != 'optiq_trg' or args.navigation or args.resume):
+        raise ValueError('TRG sigma overrides require a fresh fixed-Q optiq_trg run')
+    if args.method == 'optiq_trg' and not (
+            math.isfinite(args.trg_log_std_max) and math.isfinite(args.trg_initial_log_std)
+            and -5. < args.trg_log_std_max and -5. <= args.trg_initial_log_std <= args.trg_log_std_max):
+        raise ValueError('TRG requires -5 < log_std_max and initial log std within bounds')
     if args.optiq_devices<1 or (args.optiq_devices!=1 and
             (args.method!='optiq' or args.navigation or args.batch%args.optiq_devices)):
         raise ValueError('Parallel devices require fixed-Q OptiQ and an evenly divisible global batch')
@@ -100,7 +111,8 @@ def main():
     full_reference=target.sample(args.eval_samples,20260917,bounded=False)
     config=vars(args).copy(); config["resume"]=str(args.resume) if args.resume else None
     if args.method=='optiq_trg':
-        config.update(actor_learning_rate=3e-4,actor_log_std_bounds=[-5.,-1.],initial_log_std=-1.,
+        config.update(actor_learning_rate=3e-4,actor_log_std_bounds=[-5.,args.trg_log_std_max],
+                      initial_log_std=args.trg_initial_log_std,
                       mean_output_init_scale=1.,
                       latent_mode='random',density_beta=1.,teacher_std_floor=math.exp(-5),
                       loss='direct marginal box-truncated Gaussian mixture NLL',
@@ -154,7 +166,8 @@ def main():
                          sigma_row_balance=args.sigma_row_balance,**parallel_args)
         elif args.method=="optiq_trg":
             from .optiq_trg import OptiQTRG
-            agent=OptiQTRG(target,args.seed,args.n,args.m,args.batch,(args.width,)*args.depth,args.temperature)
+            agent=OptiQTRG(target,args.seed,args.n,args.m,args.batch,(args.width,)*args.depth,args.temperature,
+                           log_std_max=args.trg_log_std_max,initial_log_std=args.trg_initial_log_std)
         elif args.method=="sql":
             from .sql import SQL,config_from_args
             agent=SQL(target,args.seed,args.batch,config_from_args(args))
