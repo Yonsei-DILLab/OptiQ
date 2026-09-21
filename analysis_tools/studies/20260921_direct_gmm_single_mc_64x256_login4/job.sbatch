@@ -6,7 +6,7 @@
 #SBATCH --time=24:00:00
 #SBATCH --no-requeue
 set -euo pipefail
-ROOT=/lustre/hobbit9882/OptiQ-DirectGMM-128x256-T025-20260917/extensions/20260921_single_mc_n64_m256
+ROOT=/scratch2/hobbit9882/OptiQ-SingleQ-N64-M256-K64-T025-20260921
 PY=/scratch2/hobbit9882/.venvs/optiq-mujoco-scalar/bin/python
 cd "$ROOT"
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1

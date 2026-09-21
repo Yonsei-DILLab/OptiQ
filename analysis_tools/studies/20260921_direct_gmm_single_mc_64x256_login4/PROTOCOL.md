@@ -65,10 +65,21 @@ IDs and W&B IDs. Do not silently retry partial training or substitute seeds.
 
 ## Storage
 
-Login4 root: `/lustre/hobbit9882/OptiQ-DirectGMM-128x256-T025-20260917/extensions/20260921_single_mc_n64_m256`.
-This separate extension directory is covered recursively by the existing read-only
-dildata collector; it does not alter the old experiment's numerical files.
-Central run data: `dildata:/data1/heejoonorm/OptiQ/studies/20260917_direct_gmm_128x256_t025/extensions/20260921_single_mc_n64_m256`.
-Central index: `dildata:/data1/heejoonorm/OptiQ/studies/20260921_direct_gmm_single_mc_64x256_login4`.
-Keys, checkpoints, logs and generated records stay outside Git. Runtime metadata
-records the new full commit; baseline source commit remains an explicit build input.
+Initial deployment to Lustre failed before registration or training: the user's1TB
+Lustre soft quota is exceeded (1.001TB, grace expired). No old experiments or
+checkpoints were deleted. Use the shared scratch2 filesystem instead, whose actual
+writeability and user quota are checked before deployment.
+
+Login4 root: `/scratch2/hobbit9882/OptiQ-SingleQ-N64-M256-K64-T025-20260921`.
+Central source/run data and index: `dildata:/data1/heejoonorm/OptiQ/studies/20260921_direct_gmm_single_mc_64x256_login4`.
+A dedicated dildata collector pulls this folder every3minutes using a new
+campaign-scoped read-only rrsync key. The private key stays on dildata; only its
+public key is installed on login4 with forced rrsync -ro, no forwarding or PTY.
+Existing backup keys and collectors remain unchanged. Completed artifact hashes
+are verified centrally. Keys, checkpoints, logs and generated records stay outside
+Git. Runtime metadata records the new full commit; the original SingleQ source
+commit remains an explicit build input. The failed Lustre deployment is not used.
+
+Hardware health probe2302293 reconfirmed that cs-gpu-01 cannot expose a usable CUDA
+device despite advertising5free GPUs. Keep it excluded along with the previously
+identified incompatible nodes. Do not launch CPU fallback training.

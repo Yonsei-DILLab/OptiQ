@@ -1,6 +1,6 @@
 {
   "campaign": "20260921_DirectGMM_SingleQ_MC64_N64_M256_T025_login4",
-  "root": "/lustre/hobbit9882/OptiQ-DirectGMM-128x256-T025-20260917/extensions/20260921_single_mc_n64_m256",
+  "root": "/scratch2/hobbit9882/OptiQ-SingleQ-N64-M256-K64-T025-20260921",
   "python": "/scratch2/hobbit9882/.venvs/optiq-mujoco-scalar/bin/python",
   "source_code_id": "fd918514023ae5ce20a91db53f19801549fd9d249e46e963b643d498834f5f28",
   "config_name": "mujoco_direct_gmm_single_mc",
