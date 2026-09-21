@@ -7,6 +7,11 @@ See [`DIRECT_ALIGNMENT.md`](DIRECT_ALIGNMENT.md) for equations, reference-code
 mapping, the self-imitation issue, and differences from the separate-critic
 Direct implementation. The native one-forward sampler is retained.
 
+The matched five-seed [GMM40 reproduction](GMM40_REFERENCE_RESULT_20260922.md)
+completed with 40/40 modes for every seed, 99.224% mean 3σ mass and mean
+forward KL 0.003259. This validates the restored state-free implementation;
+MuJoCo remains a separate empirical question.
+
 The description below documents the earlier normalized-value parameterization.
 
 `model.py` contains the algorithm's shared state encoder, exact normalized
