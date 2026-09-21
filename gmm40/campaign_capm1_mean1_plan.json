@@ -1,0 +1,35 @@
+{
+  "name": "gmm40-trg-capm1-mean1-100k-4seed-20260921",
+  "job_prefix": "capm1_mean1_",
+  "methods": [
+    "optiq_trg"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "steps": 100000,
+  "batch": 256,
+  "temperature": 1.0,
+  "eval_samples": 10000,
+  "gpus": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "optiq_n": 64,
+  "optiq_m": 64,
+  "width": 256,
+  "depth": 2,
+  "trg_actor": {
+    "log_std_max": -1.0,
+    "initial_log_std": -1.0
+  },
+  "wandb_entity": "OptiQ",
+  "wandb_project": "gmm-trg",
+  "gate": null,
+  "notes": "User-approved GMM40 control: bounds [-5,-1], initial log sigma -1, mean-head variance scale 1 (Xavier uniform). Seeds0..3,100k actor updates. Other settings identical to capm3 mean1: random latent,N=M64,batch256,T1,beta1,Adam3e-4,256x2 GELU. Use idle 5090 slots without interrupting existing jobs. Compared with original 87d5d8f, only mean initialization changes; compared with capm3, upper and initial log sigma change together."
+}
