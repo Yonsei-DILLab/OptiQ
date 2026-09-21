@@ -1,4 +1,4 @@
-"""Four-seed GMM40 summaries and a portable final-results archive."""
+"""Multi-seed GMM40 summaries and a portable final-results archive."""
 import argparse
 import csv
 import hashlib
@@ -47,7 +47,7 @@ def build(root,view='primary',output_dir=None,archive=True):
                                 seed_std=float(np.std([r[key] for r in subset],ddof=1)),
                                 per_seed=[r[key] for r in subset]) for key,_ in METRICS}
     write(out/'results.json',dict(source_commit=manifest['source_commit'],visualization_view=view,plan=plan,per_seed=rows,
-                                 aggregate=groups,dispersion='Sample standard deviation across four training seeds, ddof=1'))
+                                 aggregate=groups,dispersion=f'Sample standard deviation across {len(seeds)} training seeds, ddof=1'))
     with (out/'per_seed.csv').open('w') as f:
         writer=csv.DictWriter(f,fieldnames=list(rows[0]));writer.writeheader();writer.writerows(rows)
     with (out/'summary.csv').open('w') as f:
@@ -68,7 +68,7 @@ def build(root,view='primary',output_dir=None,archive=True):
             ax.fill_between(steps,mean-sd,mean+sd,color=color,alpha=.12)
         ax.set(xlabel='Actor updates',ylabel=label);ax.grid(alpha=.2)
     axes[0,0].legend(fontsize=8)
-    fig.suptitle('GMM40 fixed-Q · T=1 · 4 seeds · mean ± seed SD\n'+view_label)
+    fig.suptitle(f'GMM40 fixed-Q · T=1 · {len(seeds)} seeds · mean ± seed SD\n'+view_label)
     for ext in ('png','pdf'):fig.savefig(out/f'learning_curves.{ext}',dpi=150)
     plt.close(fig)
     fig,axes=plt.subplots(2,3,figsize=(16,10),constrained_layout=True)
@@ -77,7 +77,7 @@ def build(root,view='primary',output_dir=None,archive=True):
                yerr=[groups[m][key]['seed_std'] for m in methods],capsize=3,color=colors)
         ax.set_xticks(range(len(methods)),[LABELS[m] for m in methods],rotation=25,ha='right',fontsize=8)
         ax.set_ylabel(label);ax.grid(axis='y',alpha=.2)
-    fig.suptitle('Final 100k · mean ± seed SD (4 seeds per method)\n'+view_label)
+    fig.suptitle(f'Final 100k · mean ± seed SD ({len(seeds)} seeds per method)\n'+view_label)
     for ext in ('png','pdf'):fig.savefig(out/f'final_metrics.{ext}',dpi=150)
     plt.close(fig)
     target=read(root/'results/target/definition.json');means=np.array(target['means']);std=np.array(target['std'])
@@ -99,8 +99,8 @@ def build(root,view='primary',output_dir=None,archive=True):
     fig.suptitle(view_label+'\nAll saved samples shown · blue: within GT 3σ; orange: outside')
     for ext in ('png','pdf'):fig.savefig(out/f'final_distributions.{ext}',dpi=140)
     plt.close(fig)
-    lines=['# GMM40 100k · 4-seed 비교','',f"소스: `{manifest['source_commit']}`",'',
-           '고정 Q = 원본 GMM40 log density, T=1. 각 방법 seed 0~3, 100,000 actor updates, 평가당 10,000 samples.',
+    lines=[f'# GMM40 100k · {len(seeds)}-seed 비교','',f"소스: `{manifest['source_commit']}`",'',
+           f'고정 Q = 원본 GMM40 log density, T=1. 각 방법 seeds {seeds}, {plan["steps"]:,} actor updates, 평가당 {plan["eval_samples"]:,} samples.',
            '표의 ±는 학습 시드 간 표준편차(ddof=1)입니다. Target 샘플은 평가에서만 사용합니다.',
            view_label, '그림·표·학습곡선은 동일한 평가 모드를 사용합니다. μ-only에서도 latent는 원래 정책의 prior대로 샘플링합니다.','',
            '| Method | Coverage /40 | Within 3σ | MMD² ↓ | SW ↓ | Mass TV ↓ |',

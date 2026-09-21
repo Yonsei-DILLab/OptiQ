@@ -52,3 +52,15 @@ current goal even if near>=90 andcoverage40. Continue existing512x3 NM64
 jobs. Register the four narrow-sigma profiles above with onlyN/M changed to64.
 GPU2/3 start when free after cancellation; GPU0/1 wait for their approved
 512x3 NM64 predecessors to finish. No automatic restart of cancelled work.
+
+Passing NM64 seed0:256x3,mean-init16,log-sigma[-5,-3.5],initial-4,
+teacherfloor.05,N=M64,batch256,T1,Adam3e-4,100k. Original GPU mu-only
+near92.18%,coverage40. Independent CPU random-latent sets (five held-out
+keys,10k each):91.39,91.68,91.68,91.72,91.28%, allcoverage40. Original
+key CPU reproduction92.16% vs GPU92.18%. No filtering or fixed latent.
+Replicate identical config on training seeds1,2,3, committed plan; fills idle
+GPUs after preflight. Original seed0 remains frozen e0f1ba0; do not retrain
+or overwrite it. Final report combines original seed0 with new seeds1..3
+and distinguishes fresh evaluation-key robustness from training-seed variance.
+Report seed-count labels now derive from plan so the3-new-seed subreport
+cannot falsely claim4; the final combined report has4trainingseeds.
