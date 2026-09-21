@@ -1,0 +1,182 @@
+{
+  "rl/actual_64x64_50000.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260919_legacy_monge/remote_3114850247/trg_mode_selection/row_assignment_fd36109/results/actual_64x64_50000.npz",
+    "bytes": 5987947,
+    "sha256": "01b205006435fb9793c2e40ed4cb62c70aeba28f5ae79d57530448c7a0e2ab72"
+  },
+  "rl/actual_64x64_650000.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260919_legacy_monge/remote_3114850247/trg_mode_selection/row_assignment_fd36109/results/actual_64x64_650000.npz",
+    "bytes": 5762569,
+    "sha256": "333e4630e4b50b33a110bd7861809bd2b646da8409affc26d0ae6e7ca3da7e6d"
+  },
+  "rl/SUMMARY.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260919_legacy_monge/remote_3114850247/trg_mode_selection/row_assignment_fd36109/results/SUMMARY.json",
+    "bytes": 7739,
+    "sha256": "9b7da069c6c09ef7333b88b2de6c2e6f4c646b2ad617c979576a7425b49dc273"
+  },
+  "toy/SOURCE_MANIFEST.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/SOURCE_MANIFEST.json",
+    "bytes": 44968,
+    "sha256": "adb8a02ac5327da23fad6a5d175bc402fa75ef1fd6ab88c7dde88e388d74a616"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s0/config.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s0/config.json",
+    "bytes": 816,
+    "sha256": "478a46f3d86ed83a5f7b810d9ee6618ec683203eefd46ea17d2b343ae1270a68"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s0/COMPLETE.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s0/COMPLETE.json",
+    "bytes": 426,
+    "sha256": "88c6abfc971aa796f9877e88d236bcdb27eb88fee6324584251af9b8d023e8dd"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s0/assignments/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s0/assignments/final_independent.npz",
+    "bytes": 49366,
+    "sha256": "4ae49cd76ab614468fc9dfbf6fb11f7b1ce16c008b807604cb099022f065fe2d"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s0/density/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s0/density/final_independent.npz",
+    "bytes": 1130551,
+    "sha256": "dc8a955d4e65c8143b24ecbacd466d59abdc2bc4a0aa015b586fd1b81b7fa768"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s1/config.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s1/config.json",
+    "bytes": 816,
+    "sha256": "e257079e2476bdf4500cbaa5f4ab43ba87d1c40dbc5ed8b2425770ef575b581d"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s1/COMPLETE.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s1/COMPLETE.json",
+    "bytes": 427,
+    "sha256": "24f10b2321922e401a17dedaab2b380bf7bb50f4d2a3b9414a56a0cebd86ca96"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s1/assignments/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s1/assignments/final_independent.npz",
+    "bytes": 49376,
+    "sha256": "4459544dd817dfa468c77b2408a915c91b37fed611c11da21e177702b3c12245"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s1/density/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s1/density/final_independent.npz",
+    "bytes": 1131067,
+    "sha256": "845b13de81fa1a478e8200d5b2b0a07aa121d50eba1f5d50557bb8c1b0efa9dd"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s2/config.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s2/config.json",
+    "bytes": 816,
+    "sha256": "a037d4b1b516a26e2df87e8d999e96c33807e8b2abca0ee4061481e8200de44c"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s2/COMPLETE.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s2/COMPLETE.json",
+    "bytes": 428,
+    "sha256": "9008b680dfcd27c6e526cc150462170d52f72d9ed5ec159fab6a5bc98c136155"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s2/assignments/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s2/assignments/final_independent.npz",
+    "bytes": 49291,
+    "sha256": "bd7228194141d74c184639febf93cd7d3365c85a032e0dc16ccc47146b898118"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s2/density/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s2/density/final_independent.npz",
+    "bytes": 1130352,
+    "sha256": "c71ed653c0071b05fc48f34259a99834d4fb1408424568e06203612887ee11c0"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s3/config.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s3/config.json",
+    "bytes": 816,
+    "sha256": "9a44b379a68a5a3f1dee01833f5dc2d75f20a6372740306863226e31ab31fd95"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s3/COMPLETE.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s3/COMPLETE.json",
+    "bytes": 428,
+    "sha256": "e4b594d6b05fabbe21c1e0493c6bc99ffa44bd0893eb54efef4cb2f764130db8"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s3/assignments/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s3/assignments/final_independent.npz",
+    "bytes": 49286,
+    "sha256": "313eb7f5f03aab3622946c7699365d5bc1b94607c5d0419b5d444b8a85185ebf"
+  },
+  "toy/double_mass_D2_gmm_learned_N256_M1024_s3/density/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/double_mass_D2_gmm_learned_N256_M1024_s3/density/final_independent.npz",
+    "bytes": 1124702,
+    "sha256": "28f16e6b5e5266ad07da0bab8b04ad4646efd0fab6e248a452b6e0fdb54809e2"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s0/config.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s0/config.json",
+    "bytes": 808,
+    "sha256": "4cd0358d42ba4e633ee39f7673f075f1ea5e776d5ea3118049930ea1bae46862"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s0/COMPLETE.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s0/COMPLETE.json",
+    "bytes": 424,
+    "sha256": "5d35ee296d83a595df46993530423a654a8b2e6af030e158f6f9e7289436cebb"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s0/assignments/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s0/assignments/final_independent.npz",
+    "bytes": 49635,
+    "sha256": "e9fbc94a97c12e882b1b41bd74793fd517c4b17e8e1516784b7534cad69ef916"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s0/density/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s0/density/final_independent.npz",
+    "bytes": 1140073,
+    "sha256": "f0cf847024c2954bb956888236a6963d5b0348b307fcf48f8ff53d66c5214dde"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s1/config.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s1/config.json",
+    "bytes": 808,
+    "sha256": "9efe15a37fbf6c928e7186b43cb2a51aa8bd38c246d7bd4a916143fc5dc9ab21"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s1/COMPLETE.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s1/COMPLETE.json",
+    "bytes": 425,
+    "sha256": "29a42cd7bbed9eb8e7945f10a3c8dbcd206b180186515c764a46902306646145"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s1/assignments/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s1/assignments/final_independent.npz",
+    "bytes": 49672,
+    "sha256": "a4067f92fbcc43ae7f5c1e875fbe862e2f505f1e9b7842c9dc69847f2612c058"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s1/density/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s1/density/final_independent.npz",
+    "bytes": 1139135,
+    "sha256": "768a09a9df7ac0bd64c95340093362c2a47c20ccabfa22f75471cedfa8996948"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s2/config.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s2/config.json",
+    "bytes": 808,
+    "sha256": "d03c4198f9336f21a4a9a1682b0af313decf4150858f84ef075cac4dcea41107"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s2/COMPLETE.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s2/COMPLETE.json",
+    "bytes": 425,
+    "sha256": "d834cbb5bc105ad9f57f650bcb87c3bb2fdf429ed0ad6a0e0ee9a6ee083ee727"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s2/assignments/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s2/assignments/final_independent.npz",
+    "bytes": 49639,
+    "sha256": "eae08305691be713510823fa17001471a510a078babdce7f85b46c048da2db80"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s2/density/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s2/density/final_independent.npz",
+    "bytes": 1137825,
+    "sha256": "e8fcb43ea1401f7e57c586af555c8af24b05cdbc8891aa05c728f1376b49899d"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s3/config.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s3/config.json",
+    "bytes": 808,
+    "sha256": "157f27294206d0bc8f7beb76e48b0a0be45d1a0e1a436ba7628dbca569ef43a6"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s3/COMPLETE.json": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s3/COMPLETE.json",
+    "bytes": 424,
+    "sha256": "6ef031bc6af45ac6c1a2cfc6136938f42b053f0f3f5fc326bb09e7b74a5ecb23"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s3/assignments/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s3/assignments/final_independent.npz",
+    "bytes": 49608,
+    "sha256": "8fdf2b643431e29ad677f0fc1db87e9974c7694e594ddec1e949596e1db78e9e"
+  },
+  "toy/tri_mass_D2_gmm_learned_N256_M1024_s3/density/final_independent.npz": {
+    "source": "/data1/heejoonorm/OptiQ/studies/20260918_nonstationary_nd/a08517e_reduced/runs/tri_mass_D2_gmm_learned_N256_M1024_s3/density/final_independent.npz",
+    "bytes": 1138850,
+    "sha256": "e7b89cce22d9e891d129fb6399ecd687330ebadd80ccd908190e15bc194ceead"
+  }
+}
