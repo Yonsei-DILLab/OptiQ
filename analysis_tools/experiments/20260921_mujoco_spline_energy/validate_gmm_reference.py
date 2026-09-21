@@ -127,11 +127,43 @@ def td_path():
             "contextual_final_mse": last, "contextual_updates": 192}
 
 
+def soft_td_path():
+    """The tied circuit's exact soft value is its derived alpha log partition."""
+    model = ConditionalRawEnergyCircuit(2, rank=4, knots=17, hidden_dims=(16, 16))
+    observations = jnp.broadcast_to(jnp.asarray([.2, -.3, .4]), (96, 3))
+    params = model.init(jax.random.PRNGKey(41), observations)["params"]
+    state = TrainState.create(apply_fn=model.apply, params=params, tx=optax.adam(3e-4))
+    actions = jax.random.uniform(jax.random.PRNGKey(42), (96, 2), minval=-.99, maxval=.99)
+    batch = {"obs": observations, "next_obs": observations + .1, "actions": actions,
+             "rewards": jnp.linspace(-1., 1., 96),
+             "not_terminal": (jnp.arange(96) % 3 != 0).astype(jnp.float32)}
+    target_output = model.apply({"params": params}, batch["next_obs"])
+    manual_target = batch["rewards"] + .99 * batch["not_terminal"] * target_output["value"]
+    update = make_update(model, .25, .99, .005, 10., loss_kind="mse", backup_mode="soft")
+    new_state, new_target, metrics = update(state, params, batch)
+    original_q = q_from_output(model.apply({"params": params}, observations), actions, .25)
+    np.testing.assert_allclose(metrics["train/target_mean"], manual_target.mean(), rtol=2e-6)
+    np.testing.assert_allclose(metrics["train/loss"],
+                               jnp.square(original_q - manual_target).mean(), rtol=2e-6)
+    np.testing.assert_allclose(metrics["train/v_mean"],
+                               model.apply({"params": params}, observations)["value"].mean(), rtol=2e-6)
+    target_gradient = jax.grad(lambda p: update(state, p, batch)[2]["train/loss"])(params)
+    target_gradient_max = max(
+        float(jnp.max(jnp.abs(x))) for x in jax.tree_util.tree_leaves(target_gradient))
+    assert target_gradient_max == 0.
+    assert all(np.isfinite(x).all()
+               for x in jax.tree_util.tree_leaves((new_state.params, new_target, metrics)))
+    return {"soft_target_mean": float(manual_target.mean()),
+            "derived_value_mean": float(target_output["value"].mean()),
+            "target_gradient_max": target_gradient_max}
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
     result = {"passed": True, "gmm40_parity": reference_parity(), "td_path": td_path(),
+              "soft_td_path": soft_td_path(),
               "git_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
               "command": sys.argv,
               "source_sha256": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()

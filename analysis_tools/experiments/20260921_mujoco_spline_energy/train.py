@@ -160,9 +160,12 @@ def evaluate(env_name, params, model, seed, episodes):
 
 def main():
     profile_parser = argparse.ArgumentParser(add_help=False)
-    profile_parser.add_argument("--profile", choices=["legacy", "gmm_reference"], default="legacy")
+    profile_parser.add_argument(
+        "--profile", choices=["legacy", "gmm_reference", "gmm_soft"], default="legacy")
     selected, _ = profile_parser.parse_known_args()
     reference = selected.profile == "gmm_reference"
+    raw_reference = selected.profile in {"gmm_reference", "gmm_soft"}
+    soft_reference = selected.profile == "gmm_soft"
     parser = argparse.ArgumentParser(parents=[profile_parser])
     parser.add_argument("--env", choices=ENVS, required=True)
     parser.add_argument("--seed", type=int, required=True)
@@ -174,12 +177,13 @@ def main():
     parser.add_argument("--checkpoint-interval", type=int, default=100_000)
     parser.add_argument("--buffer-size", type=int, default=1_000_000)
     parser.add_argument("--batch-size", type=int, default=256)
-    parser.add_argument("--rank", type=int, default=64 if reference else 16)
-    parser.add_argument("--knots", type=int, default=129 if reference else 33)
+    parser.add_argument("--rank", type=int, default=64 if raw_reference else 16)
+    parser.add_argument("--knots", type=int, default=129 if raw_reference else 33)
     parser.add_argument("--parameterization", choices=["normalized_value", "raw_energy"],
-                        default="raw_energy" if reference else "normalized_value")
-    parser.add_argument("--backup-mode", choices=["soft", "td"], default="td" if reference else "soft")
-    parser.add_argument("--grad-clip", type=float, default=0. if reference else 10.,
+                        default="raw_energy" if raw_reference else "normalized_value")
+    parser.add_argument("--backup-mode", choices=["soft", "td"],
+                        default="soft" if soft_reference or not reference else "td")
+    parser.add_argument("--grad-clip", type=float, default=0. if raw_reference else 10.,
                         help="0 disables clipping, matching GMM40 and Direct GMM/TRG")
     parser.add_argument("--temperature", type=float, default=.25)
     parser.add_argument("--learning-rate", type=float, default=3e-4)
@@ -187,7 +191,7 @@ def main():
     parser.add_argument("--tau", type=float, default=.005)
     parser.add_argument("--huber-delta", type=float, default=10.)
     parser.add_argument("--loss-kind", choices=["huber", "relative_energy", "mse"],
-                        default="mse" if reference else "huber")
+                        default="mse" if raw_reference else "huber")
     parser.add_argument("--energy-scale", type=float, default=10.)
     parser.add_argument("--energy-tail-start", type=float, default=4.)
     parser.add_argument("--wandb-mode", choices=["online", "offline", "disabled"], default="offline")
@@ -195,9 +199,11 @@ def main():
     args = parser.parse_args()
     if args.grad_clip < 0 or not np.isfinite(args.grad_clip):
         raise ValueError("grad-clip must be finite and nonnegative")
-    if reference and (args.parameterization != "raw_energy" or args.loss_kind != "mse"
-                      or args.backup_mode != "td"):
-        raise ValueError("gmm_reference requires raw energy + ordinary TD + MSE")
+    required_backup = "soft" if soft_reference else "td"
+    if raw_reference and (args.parameterization != "raw_energy" or args.loss_kind != "mse"
+                          or args.backup_mode != required_backup):
+        raise ValueError(
+            f"{args.profile} requires raw energy + {required_backup} backup + MSE")
     if args.total_steps <= args.warmup or args.eval_interval <= 0:
         raise ValueError("Training must extend beyond warmup with positive evaluation interval")
     if args.require_gpu and jax.default_backend() != "gpu":
@@ -229,14 +235,20 @@ def main():
     source_root = Path(__file__).resolve().parents[3]
     command = sys.argv
     config = vars(args).copy(); config["output"] = str(config["output"])
-    algorithm = ("spline_energy_gmm_reference" if reference else
-                 ("spline_energy" if args.loss_kind == "huber" else f"spline_energy_{args.loss_kind}"))
+    if soft_reference:
+        algorithm = "spline_energy_gmm_soft"
+    elif reference:
+        algorithm = "spline_energy_gmm_reference"
+    else:
+        algorithm = ("spline_energy" if args.loss_kind == "huber"
+                     else f"spline_energy_{args.loss_kind}")
     config.update(algorithm=algorithm, algorithm_display_name="Spline Energy Circuit",
                   model_equation=("Q=alpha*log_F; pi=F/integral_F; alpha_log_Z_derived"
                                   if args.parameterization == "raw_energy" else "Q=V+alpha*log_pi"),
                   bellman_target=("r+gamma*(1-terminal)*Q_target(s_next,a_current_policy)"
                                   if args.backup_mode == "td" else "r+gamma*(1-terminal)*alpha_log_Z_target"),
-                  reference_direct_commit=("30f4db1cf9929974dacbdbca7c9c5abd5c1bd346" if reference else None),
+                  reference_direct_commit=("30f4db1cf9929974dacbdbca7c9c5abd5c1bd346"
+                                           if raw_reference else None),
                   policy=f"rank-{args.rank} mixture of products of normalized positive linear splines",
                   hidden_dims=[256, 256], updates_per_step=1, behavior_uniform_probability=0.,
                   time_limit_bootstrap=True, observation_dim=obs_dim, action_dim=action_dim,
