@@ -40,3 +40,7 @@ supplement, never relabel full-policy metrics as μ-only. Other baselines retain
 their native generator outputs and are labeled accordingly. Preserve raw metrics,
 training, RL reward evaluation and frozen source. For old frozen campaigns,
 render a separate post-hoc report with reporting-source provenance.
+
+User constraint (2026-09-21, latest): Keep GMM40 OptiQ N=M=64 in this
+parameter search. Do not increase N/M for the coverage/near goal. Existing
+N=M256 results are historical only and do not satisfy the current goal.

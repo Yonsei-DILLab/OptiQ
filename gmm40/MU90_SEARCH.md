@@ -44,3 +44,11 @@ GPU0..3 follow their existing512x3 jobs; predecessor must exit and pass the
 100k audit. The next queue uses its own committed/frozen source and does not
 modify the running architecture controls. Failure blocks its slot, no retries.
 No algorithm, latent distribution, target, coverage metric or filtering changes.
+
+LATEST USER CONSTRAINT supersedes the N/M screen: N=M must remain64.
+The N=M256 architecture jobs and all four pending narrow256 jobs were
+cancelled with frozen logs/configs retained. No256 result counts toward the
+current goal even if near>=90 andcoverage40. Continue existing512x3 NM64
+jobs. Register the four narrow-sigma profiles above with onlyN/M changed to64.
+GPU2/3 start when free after cancellation; GPU0/1 wait for their approved
+512x3 NM64 predecessors to finish. No automatic restart of cancelled work.
