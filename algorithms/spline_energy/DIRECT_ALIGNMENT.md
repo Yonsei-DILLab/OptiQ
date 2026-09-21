@@ -149,3 +149,27 @@ density, sampler and generalized-KL factor gradients with the restored model;
 checks (4); checks the exact ordinary-TD/MSE target and stopped target gradient;
 and runs the actual update on a small deterministic terminal problem. These
 checks establish code/formula agreement, not MuJoCo learning performance.
+
+## Validation measured on 2026-09-22
+
+Code `4290a6a3b76b91705f981038d7f433d85f800db3`, CPU JAX, unchanged existing
+Python environment:
+
+- Original rank64/129-knot GMM40 versus restored raw factors: maximum
+  generalized-KL gradient difference `7.45e-9`; maximum coupled sampler
+  action difference `5.96e-8`. Q, partition and density checks passed.
+- Self-teacher logit range `4.77e-7`, consistent with the constant in (4).
+- The implemented plain-TD target/MSE matched the explicit formula; target
+  parameter gradient was zero.
+- A small terminal contextual regression task decreased MSE from `0.63438`
+  to `0.30393` over 192 updates. This is a gradient-path check, not an RL score.
+
+Receipts and the inspected Direct source files are local under
+`/scratch2/gsmin2024/research/optiq_spline_gmm_reference_20260922/`.
+The initial contextual check used all-zero observations, which together with
+zero output kernels exercised only state-free biases and did not pass its
+50% loss-reduction threshold. The nonzero-context correction retained that
+threshold, learning rate, and update budget; the first outcome is preserved
+in `checks/validation_attempt1.json`.
+
+No new MuJoCo reward measurement or improvement claim accompanies this change.
