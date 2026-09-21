@@ -127,7 +127,7 @@ $$H_{im}=\sum_{j\in C_m}R_{ij},\qquad m_i=\arg\max_m H_{im}.$$
 
 **Double seed 0:** 두 공간적 mode가 두 responsibility 그룹과 잘 맞는다. Teacher 질량도 그룹별 약 50.2%/49.8%다. Student 256개 중 135/121개가 각각의 그룹을 가장 많이 담당한다.
 
-**Tri seed 0:** 왼쪽과 중앙 mode가 하나의 그룹으로 묶인다. Actor histogram에 세 봉우리가 보여도 자동 partition이 반드시 세 개가 되는 것은 아니다. 이 경우 그룹별 teacher 질량은 약 69.8%/30.2%다. 선택된 K=2 partition의 silhouette는 0.334이고 K=3의 0.304보다 높았다. K≥4에서는 작은 그룹이 생겨 크기 조건을 통과하지 못했다.
+**Tri seed 0:** 왼쪽과 중앙 mode가 하나의 그룹으로 묶인다. Actor histogram에 세 봉우리가 보여도 자동 partition이 반드시 세 개가 되는 것은 아니다. 이 경우 그룹별 teacher 질량은 약 69.8%/30.2%다. 선택된 K=2 partition의 silhouette는 0.334다. K=3,…,8에서는 가장 작은 그룹이 candidate 3개로, 최소 11개 조건을 통과하지 못했다. 특히 K=3 cut은 정답 세 봉우리를 나누기보다 작은 별도 그룹을 만든 것이며, raw silhouette도 0.304였다.
 
 ### 성공한 그림만 고르지 않고 네 seed 모두 보기
 
