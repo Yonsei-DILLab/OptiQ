@@ -1,0 +1,29 @@
+{
+  "campaign": "20260921_DirectGMM_SingleQ_MC64_N64_M256_T025_login4",
+  "root": "/lustre/hobbit9882/OptiQ-DirectGMM-128x256-T025-20260917/extensions/20260921_single_mc_n64_m256",
+  "python": "/scratch2/hobbit9882/.venvs/optiq-mujoco-scalar/bin/python",
+  "source_code_id": "fd918514023ae5ce20a91db53f19801549fd9d249e46e963b643d498834f5f28",
+  "config_name": "mujoco_direct_gmm_single_mc",
+  "order": [
+    "humanoid"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "n": 64,
+  "m": 256,
+  "temperature": 0.25,
+  "total_steps": 1000000,
+  "wandb_entity": "OptiQ",
+  "wandb_project": "DirectGMM_heejoon",
+  "wandb_group": "20260921_DirectGMM_SingleQ_MC64_N64_M256_T025_login4",
+  "partitions": "big_suma_rtx3090,base_suma_rtx3090,dell_rtx3090,suma_rtx4090,suma_a6000,gigabyte_a6000,gigabyte_a5000,asus_6000ada,asus_a5000,tyan_a6000",
+  "qos": "big_qos",
+  "excluded_nodes": "cs-gpu-01,node14,node23,node24,node31,node35,node40",
+  "k": 64,
+  "source_commit": "9ac88463efc44cf2a084458c322f6f6ae130d6f9"
+}
