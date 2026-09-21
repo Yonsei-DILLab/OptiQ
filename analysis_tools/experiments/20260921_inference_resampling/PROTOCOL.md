@@ -30,3 +30,13 @@ sigma-head invariance in all three modes, finite normalized actions/weights,
 uniform and additive-Q-shift weight tests, frozen input checksums before/after.
 Keep original logs and artifacts unchanged. Hold GPU locks; use free0,1,3 on199,
 leave unrelated GPU2 work untouched. No automatic retry or hidden fallback.
+
+User follow-up after the three-way comparison: add inference-only best-of64.
+Use the identical9 final actor/critic pairs and same20 reset/policy seeds. Draw
+64 fresh mu actions exactly as mu_q64 does, then select argmax of the same
+current twin-Q mean. No sigma or DACER noise; no learned parameters changed.
+Training temperature remains.25; argmax ranking itself has no temperature.
+Use separate campaign/manifest/output for this follow-up and preserve the
+original three-way result. The shared evaluator now accepts an explicit mode
+list; original frozen evaluation3524ea5 remains unchanged. Extra preflight
+checks best-of64 has selection ESS=1 and nonnegative selected-Q minus mean-Q.

@@ -51,7 +51,8 @@ def main():
     dim = env.action_space.shape[0]
     astate, qstate = policy.actor_state, policy.qf_state
     before = hashlib.sha256(serialization.to_bytes((astate,qstate))).hexdigest()
-    modes = ['mu_one','mu_q64','mu_kde_is64']
+    modes = manifest.get('evaluation_modes',['mu_one','mu_q64','mu_kde_is64'])
+    assert all(m in ['mu_one','mu_q64','mu_kde_is64','mu_best64'] for m in modes)
     episodes = manifest['episodes']
     seed_base = manifest['seed_base']
     reset_seeds = [seed_base+i for i in range(episodes)]
@@ -92,10 +93,14 @@ def main():
             lw = log_weights(q,log_q)
             if mode == 'mu_one':
                 indices = jnp.zeros(len(obs),dtype=jnp.int32)
+            elif mode == 'mu_best64':
+                indices = jnp.argmax(q,axis=-1)
             else:
                 select_keys = jax.vmap(lambda key:jax.random.fold_in(key,3002))(noise_keys)
                 indices = jax.vmap(jax.random.categorical)(select_keys,lw)
             weights = jnp.exp(lw)
+            if mode == 'mu_best64':
+                weights = jax.nn.one_hot(indices,k)
             selected = mu[jnp.arange(len(obs)),indices]
             stats = jnp.stack([1/(weights**2).sum(-1),weights.max(-1),
                                q[jnp.arange(len(obs)),indices]-q.mean(-1),bandwidth_mean],axis=-1)
@@ -107,7 +112,7 @@ def main():
     obs = jnp.asarray(np.broadcast_to(obs,(episodes,len(obs))),dtype=jnp.float32)
     keys = jnp.stack([jax.random.PRNGKey(s) for s in policy_seeds])
     # The baseline must be exactly the existing mu-only evaluator at identical keys.
-    ours,_,_ = steps['mu_one'](astate,qstate,obs,keys)
+    ours,_,_ = make_step('mu_one')(astate,qstate,obs,keys)
     nk = jax.vmap(lambda key:jax.random.split(key)[1])(keys)
     original = jax.vmap(lambda o,key:policy.sample_action(astate,o[None],key,
                         deterministic=False,sample_conditional_noise=False)[0])(obs,nk)
@@ -126,6 +131,9 @@ def main():
         np.testing.assert_array_equal(stats,altstats)
         assert np.isfinite(action).all() and np.isfinite(stats).all()
         assert ((np.asarray(action)>=-1)&(np.asarray(action)<=1)).all()
+        if mode == 'mu_best64':
+            assert (np.asarray(stats[:,2])>=-1e-5).all()
+            np.testing.assert_array_equal(stats[:,:2],np.ones((episodes,2)))
     record=dict(job=job,protocol={k:v for k,v in manifest.items() if k!='jobs'},
                 evaluation_commit=manifest['evaluation_commit'],preflight_passed=True,
                 packages=dict(jax=jax.__version__,gymnasium=gym.__version__),
