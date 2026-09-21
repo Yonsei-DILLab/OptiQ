@@ -184,6 +184,8 @@ $$\mathrm{{TV}}_{{hist}}=\frac12\sum_b|\hat p_b-p_b^*|.$$
 '''+table(['Q','N×M','Direct GMM TV','Selection TV','차이 selection−GMM','Selection 우세 seed'],rows)+r'''
 핵심은 조건별 차이다. 16×16에서는 세 Q 모두 큰 개선이 나타난다. 반면 needle3는 128×256부터 Direct GMM이 평균상 더 좋고, rugged7도 512×512·512×2048에서 Direct GMM이 더 좋다. Comb6는 중간 크기에서 비교 순서가 뒤집힌다. 따라서 mode-selection의 역할을 작은 유한 mixture에서의 학습 보조와, 큰 mixture에서의 불필요한 gradient 제거 가능성으로 나누어 검토할 만하다. 이는 해석 가설이며 원인을 분리한 개입 실험은 아니다.
 
+**Peak 모양과 mode 질량 배분도 구분해야 한다.** Comb6 16×16은 selection으로 histogram TV가 .5231 → .2745로 개선되지만, basin TV는 .0628 → .1254로 오히려 커진다. 좁은 peak를 더 선명하게 만들면서 mode 간 질량 배분은 나빠질 수 있다. “mode selection이 모든 mode의 질량까지 항상 잘 맞춘다”는 해석은 맞지 않는다.
+
 ## 2. 학습 경로와 계산 시간
 
 각 선은 seed 하나다. Training 시간은 기록된 training block 누적 시간(JIT 포함)이며, 진단·평가·I/O·Slurm 대기는 제외한다. 노드와 GPU 부하가 달라 정밀한 속도 benchmark는 아니다. 원본 수치표에는 진단 시간을 따로 적었다.
@@ -193,6 +195,8 @@ $$\mathrm{{TV}}_{{hist}}=\frac12\sum_b|\hat p_b-p_b^*|.$$
 아래는 사전에 고른 **128×128, seed 0, 20K**다. Proposal과 weighted teacher는 batch 128 중 **group 0 하나**이며, actor는 별도의 32,768 samples다. Candidate 128개의 teacher histogram이 울퉁불퉁한 것은 finite sample 효과도 포함한다. 시인성을 위해 이 그림만 공통 80 bins를 썼다. 최종 TV는 원래 512 bins 그대로다.
 '''+fig('teacher_actor','Proposal → importance-weighted teacher → actor. 같은 색/정의로 모든 Q와 방법을 비교한다.')+r'''
 [전체 teacher 수치표](teacher_table.md)는 group 0에 의존하지 않고 128그룹 전체를 사용한다. 한쪽은 “평균 teacher의 TV”, 다른 쪽은 “각 teacher의 TV 평균”이다. 평균 teacher가 정확하다고 매 update 그룹의 teacher까지 정확하다는 뜻은 아니다. 또한 teacher basin TV만으로 within-mode density가 정확하다고 판단하지 않는다.
+
+예를 들어 needle3 512×2048에서는 평균 teacher의 basin TV가 Direct GMM .0005, selection .0006이고, 그룹별 TV 평균도 .0124와 .0125로 가깝다. 반면 actor histogram TV는 .0507과 .0816으로 차이가 난다. 이 최종 시점에서는 **teacher의 basin 질량 편향만으로 actor 차이를 설명하기 어렵다.** Actor update와 학습 경로를 추가로 볼 근거이며, 전체 trajectory의 원인을 확정하는 결과는 아니다.
 
 ## 4. Candidate-level heatmap과 oracle mode 집계의 차이
 
