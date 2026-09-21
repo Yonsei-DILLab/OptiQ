@@ -267,6 +267,13 @@ class OptiQDIME(DIME):
                           "local_anchor_argmax_fraction", "twin_local_delta_correlation",
                           "twin_local_improvement_sign_agreement"}
         for key, value in log_metrics.items():
+            if actor.distillation_loss == 'smem_tr' and key in {
+                'actor_accepted', 'actor_nll_gain', 'actor_kl_bound',
+                'actor_momentum_resets', 'actor_step_fraction', 'teacher_nll_gain',
+                'teacher_kl_bound', 'smem_attempted', 'smem_selected',
+                'source_ess_absolute',
+            }:
+                self.logger.record_mean(f'train/{key}_mean', float(value))
             if diagnostic_interval and not diagnostic_due and key not in core_metrics:
                 continue
             if not actor.include_anchor and key in anchor_metrics:

@@ -362,7 +362,7 @@ def initialize_and_run(cfg: DictConfig):
                     loss_coordinates="pre-tanh; fixed-teacher action Jacobian omitted")
             if cfg.alg.actor.distillation_loss == "smem_tr":
                 environment_metadata.update(
-                    actor_projection="state-conditioned fixed-weight split/merge generalized EM; exact truncated-component KL projection; shared-actor regression",
+                    actor_projection="state-conditioned fixed-weight split/merge generalized EM; exact truncated-component KL projection; backtracked shared-actor EM auxiliary objective",
                     update_acceptance="empirical batch-average joint component KL <= 0.05 and weighted NLL non-increase; atomic rollback",
                     ot_cost="not computed", ot_solver="not used",
                     assignment="GMM posterior responsibility; overlap merge and local-mismatch split",
@@ -393,7 +393,8 @@ def initialize_and_run(cfg: DictConfig):
                 model.logger.dump(model.num_timesteps)
             evaluation = callbacks.callbacks[0]
             run.summary.update({
-                "completed": True, "timesteps": model.num_timesteps,
+                "completed": model.num_timesteps >= int(cfg.total_steps), "timesteps": model.num_timesteps,
+                "stopped_early": model.num_timesteps < int(cfg.total_steps),
                 "updates": model._n_updates,
                 "final_eval_return": float(sum(evaluation.returns[-1]) / len(evaluation.returns[-1])),
                 "last_eval_step": evaluation.evaluations_timesteps[-1],

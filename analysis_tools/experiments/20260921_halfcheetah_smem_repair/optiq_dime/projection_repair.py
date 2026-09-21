@@ -37,6 +37,9 @@ def distill_actor(actor_state, observations, latents, old, fitted, actions, weig
 
         def search(start):
             proposed = start.apply_gradients(grads=grad)
+            finite_state = jnp.all(jnp.stack([
+                jnp.all(jnp.isfinite(x)) for x in jax.tree.leaves((proposed.params, proposed.opt_state))
+            ]))
             delta = jax.tree.map(lambda new, prev: new-prev, proposed.params, current.params)
 
             def body(i, best):
@@ -46,7 +49,7 @@ def distill_actor(actor_state, observations, latents, old, fitted, actions, weig
                     rate = .5**i
                     candidate = jax.tree.map(lambda p, d: p+rate*d, current.params, delta)
                     candidate_nll, kl = evaluate(candidate)
-                    ok = jnp.isfinite(candidate_nll) & jnp.isfinite(kl)
+                    ok = finite_state & jnp.isfinite(candidate_nll) & jnp.isfinite(kl)
                     ok &= (candidate_nll < current_nll) & (kl <= cfg['tr_kl'])
                     return (
                         jax.tree.map(lambda n, p: jnp.where(ok, n, p), candidate, params),
