@@ -105,3 +105,7 @@ GMM40 generalized KL에서 유도한 상대 에너지 loss로 교체하는 실�
 조건부 Q/정책 오차 bound, 확률적 target의 편향, 수치 안정화를
 [`THEORY.md`](algorithms/spline_energy/THEORY.md)에 증명과 함께 기록했습니다.
 이는 현재 MuJoCo 성능 향상이 검증됐다는 뜻은 아닙니다.
+
+[Ant 100k 파일럿 결과](algorithms/spline_energy/PILOT_20260922.md):
+seed 0 최종 보상은 기존 -61.6, 수정본 -34.1이지만 둘 다 음수이며,
+수정본의 TD 오차가 더 컸습니다. 개선이 검증된 기본 알고리즘으로 취급하지 않습니다.

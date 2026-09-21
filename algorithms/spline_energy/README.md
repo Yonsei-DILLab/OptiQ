@@ -30,3 +30,7 @@ replaces Huber regression with a target-relative energy divergence. See
 bounds, stochastic-target bias, numerical continuation, and explicit limits.
 [`energy_bellman.py`](energy_bellman.py) implements the scalar loss and conditional
 bound calculators. The existing 15-run Huber campaign uses its original snapshot.
+
+The [Ant 100k pilot](PILOT_20260922.md) did not establish an improvement:
+returns remained negative and sampled TD errors increased. This remains an
+opt-in research variant, not a replacement for the validated GMM40 reference.

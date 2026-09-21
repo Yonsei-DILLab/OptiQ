@@ -54,6 +54,17 @@ is a representation identity, not an optimality certificate. Selecting a root
 then inverting the positive linear leaves' CDFs samples this same density with
 one state-network forward pass.
 
+A finite-action illustration makes the coverage problem explicit (counting
+measure, rather than the continuous-action measure above). Let gamma=0,
+alpha=.25, two actions have rewards 0 and 1, and an estimated Q assign them
+0 and -100. The Gibbs policy is exactly normalized yet samples the rewarding
+action with probability exp(-400)/(1+exp(-400)). A finite replay set containing
+only the first action has zero Bellman regression error while the unobserved
+action has error 101. Thus exact normalization plus low sampled loss can coexist
+with a poor policy. GMM40's uniform proposal and arbitrary target queries remove
+this particular obstacle; ordinary environment replay does not. This is an
+illustration, not evidence that coverage is the sole cause of the Ant failure.
+
 ## 3. Soft Bellman residual gives conditional performance bounds
 
 Define the ordinary expected soft Bellman operator
