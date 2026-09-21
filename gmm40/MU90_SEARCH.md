@@ -64,3 +64,15 @@ or overwrite it. Final report combines original seed0 with new seeds1..3
 and distinguishes fresh evaluation-key robustness from training-seed variance.
 Report seed-count labels now derive from plan so the3-new-seed subreport
 cannot falsely claim4; the final combined report has4trainingseeds.
+
+User follow-up: test still smaller conditional sigma, since mu(z) can express
+within-mode spread. New matched6-run grid:width256/512,depth3 crossed with
+caps-3.5/-4/-4.5. Hold initial log sigma=-4.75 strictly inside all bounds,
+minimum-5,mean-init16,teacherfloor.05,N=M64,batch256,T1,Adam3e-4,seed0,
+100k. Thecap-3.5 controls distinguish cap effects from changing initialization.
+All six use the same random prior, target and unchanged algorithm. Keep
+teacher exploration floor unchanged. Compare mu-only near AND40/40 coverage,
+mode massTV andMMD; retain fullpolicy as supplement. Do not assume smaller
+sigma must improve because output variance also comes from the spread ofmu.
+Each GPU runs its registered list when free using existing locks. Do not stop
+replication/current experiments. Preflight actualparameters beforeeachrun.
