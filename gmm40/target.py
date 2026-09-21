@@ -13,7 +13,7 @@ import numpy as np
 from scipy.special import logsumexp, ndtr
 
 ROOT = Path(os.environ.get("GMM40_REPO_ROOT", Path(__file__).resolve().parents[1]))
-RESULTS = ROOT / "gmm40-results"
+RESULTS = Path(os.environ.get("GMM40_RESULTS_ROOT", ROOT / "gmm40-results"))
 SCALE = 40.0
 
 

@@ -15,7 +15,7 @@ from .evaluation import atomic_json,save_evaluation
 
 def main():
     parser=argparse.ArgumentParser()
-    parser.add_argument("--method",choices=["optiq","sac","dipo","meow","mfpo","sql"],required=True)
+    parser.add_argument("--method",choices=["optiq","optiq_trg","sac","dipo","meow","mfpo","sql"],required=True)
     parser.add_argument("--name",required=True)
     parser.add_argument("--steps",type=int,default=100000)
     parser.add_argument("--seed",type=int,default=0)
@@ -72,10 +72,11 @@ def main():
         if args.navigation and args.resume:
             raise ValueError('Navigation CLI resume is not supported; SQLOnline.restore restores the learner/replay only')
     if args.navigation:
+        if args.method=='optiq_trg':raise ValueError('optiq_trg is a fixed-Q adapter; use the TRG RL trainer for navigation')
         from .navigation_run import run_navigation
         run_navigation(args)
         return
-    if args.temperature!=1.0 and args.method not in ('optiq','sql'):
+    if args.temperature!=1.0 and args.method not in ('optiq','optiq_trg','sql'):
         raise ValueError("Fixed-Q temperature controls are implemented only for OptiQ and SQL")
     if args.resume and args.method=='optiq':
         parent_config=json.loads((args.resume.parent.parent/'config.json').read_text())
@@ -98,6 +99,12 @@ def main():
     reference=target.sample(args.eval_samples,20260917,bounded=True)
     full_reference=target.sample(args.eval_samples,20260917,bounded=False)
     config=vars(args).copy(); config["resume"]=str(args.resume) if args.resume else None
+    if args.method=='optiq_trg':
+        config.update(actor_learning_rate=3e-4,actor_log_std_bounds=[-5.,-1.],initial_log_std=-1.,
+                      latent_mode='random',density_beta=1.,teacher_std_floor=math.exp(-5),
+                      loss='direct marginal box-truncated Gaussian mixture NLL',
+                      implementation='analysis_tools/experiments/20260920_truncated_mll/optiq_dime')
+    config.update(source_git_commit=os.getenv('GMM40_SOURCE_COMMIT'),campaign=os.getenv('GMM40_CAMPAIGN'))
     if args.method=='sql':
         from .sql import metadata
         config.update(metadata(args))
@@ -129,6 +136,9 @@ def main():
                   training_data="No ground-truth samples; fixed energy queries only",
                   source_sha256={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(Path(__file__).parent.glob("*.py"))})
     atomic_json(folder/"config.json",config)
+    if args.method=='optiq_trg':
+        config['coordinate_convention']='physical x=40*a; box-truncated Gaussian in normalized a with center=tanh(raw_mu)'
+        atomic_json(folder/"config.json",config)
     atomic_json(folder/"status.json",dict(status="initializing",pid=os.getpid(),step=0))
     try:
         if args.method=="optiq":
@@ -141,6 +151,9 @@ def main():
                          mean_output_init_scale=config['mean_output_init_scale'],temperature=args.temperature,
                          nll_top_k=args.nll_top_k,nll_plan_threshold=args.nll_plan_threshold,
                          sigma_row_balance=args.sigma_row_balance,**parallel_args)
+        elif args.method=="optiq_trg":
+            from .optiq_trg import OptiQTRG
+            agent=OptiQTRG(target,args.seed,args.n,args.m,args.batch,(args.width,)*args.depth,args.temperature)
         elif args.method=="sql":
             from .sql import SQL,config_from_args
             agent=SQL(target,args.seed,args.batch,config_from_args(args))

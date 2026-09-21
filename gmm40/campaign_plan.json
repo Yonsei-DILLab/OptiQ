@@ -1,0 +1,18 @@
+{
+  "name": "gmm40-5090-100k-4seed-20260921",
+  "methods": ["optiq_trg", "sac", "dipo", "meow", "mfpo", "sql"],
+  "seeds": [0, 1, 2, 3],
+  "steps": 100000,
+  "batch": 256,
+  "temperature": 1.0,
+  "eval_samples": 10000,
+  "gpus": [0, 1, 2, 3],
+  "optiq_n": 64,
+  "optiq_m": 64,
+  "width": 256,
+  "depth": 2,
+  "wandb_entity": "OptiQ",
+  "wandb_project": "gmm-trg",
+  "gate": "/home/heechan/optiq-experiments/trg-dacer-priority-20260921",
+  "notes": "Fixed-Q density reconstruction; 100k actor updates, not environment steps. Baseline-native architecture/optimizer recipes preserved. DiKL defines the target; it is not a seventh training method."
+}

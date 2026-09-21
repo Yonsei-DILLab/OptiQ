@@ -52,11 +52,11 @@ def audit(folder):
             trainstate=state[name]
             groups[name]=dict(model_step=int(trainstate['step']),
                               optimizer_counts=optax_counts(trainstate['opt_state']))
-    elif cfg['method'] in ('optiq', 'mfpo'):
+    elif cfg['method'] in ('optiq', 'optiq_trg', 'mfpo'):
         state = flax.serialization.msgpack_restore(path.read_bytes())
         names = (['actor', 'critic'] if cfg['method'] == 'optiq'
                  else ['actor', 'logp_mvel', 'critic_1', 'critic_2', 'temp']) if navigation else (
-                 ['state'] if cfg['method'] == 'optiq' else ['state', 'divstate'])
+                 ['state'] if cfg['method'] in ('optiq','optiq_trg') else ['state', 'divstate'])
         saved_updates = state.get('updates')
         for name in names:
             trainstate = state[name]

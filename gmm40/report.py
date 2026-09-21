@@ -23,7 +23,7 @@ def sample_grid(rows,phase):
     if not selected:return False
     from .evaluation import background
     target=Target();reference=target.sample(5000,20260917,bounded=phase=='fixed')
-    methods=['optiq','sac','dipo','meow','mfpo']
+    methods=['optiq_trg' if 'optiq_trg' in selected else 'optiq','sac','dipo','meow','mfpo']
     if 'sql' in selected:methods.append('sql')
     nrows=(len(methods)+3)//3
     fig,axes=plt.subplots(nrows,3,figsize=(15,5*nrows),constrained_layout=True)

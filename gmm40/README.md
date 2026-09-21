@@ -45,6 +45,11 @@ defaults, numerical checks and execution commands.
 
 ## Running
 
+The approved 24-run RTX 5090 fixed-Q campaign is documented in
+[CAMPAIGN_5090.md](CAMPAIGN_5090.md). It selects `--method optiq_trg` for the
+current Direct GMM/TRG algorithm; `--method optiq` below remains historical OT.
+`GMM40_RESULTS_ROOT` can isolate a campaign's artifacts from its frozen source.
+
 ```bash
 # Fixed Q = log p_GMM, T=1: 100K actor updates, one selected GPU.
 CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_PREALLOCATE=false \
