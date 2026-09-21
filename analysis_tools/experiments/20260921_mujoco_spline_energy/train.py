@@ -179,7 +179,7 @@ def main():
                   packages={p: importlib.metadata.version(p) for p in
                             ["jax", "jaxlib", "flax", "optax", "numpy", "gymnasium", "mujoco", "wandb"]})
     atomic_json(args.output / "config.json", config)
-    run = wandb.init(entity=os.getenv("WANDB_ENTITY", "gsmin2018"),
+    run = wandb.init(entity=os.getenv("WANDB_ENTITY", "models"),
                      project=os.getenv("WANDB_PROJECT", "OptiQ-MuJoCo-Spline-Energy"),
                      group=os.getenv("WANDB_RUN_GROUP", "spline_energy"),
                      job_type="train" if args.total_steps == 1_000_000 else "smoke",
