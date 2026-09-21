@@ -106,3 +106,13 @@ full-state identity and checkpoint hashes. It is never included in results.
 Real100k update audit:95k for5k warmup methods,90k forMFPO. Checkpoints50k/100k.
 Completion includes all requested seeds, raw rollouts, per-seed figures,
 aggregate mean±sampleSD tables, source/config provenance and local backups.
+
+Post-training validation independently recomputes return from the saved XY and
+nearest-goal reward, endpoint success, goal fractions and route summaries. It
+checks the final checkpoint SHA256, parameter audit, exact update count, training
+occupancy count, fixed full simulator state and all valid trajectory points.
+Completed controller status is required, including successful process exit.
+Reporting-source SHA/file hashes are separate from frozen training-source SHA.
+After the final report, `python antmaze/collect.py --final-checkpoints --verify`
+copies the audited final policy/critic checkpoints and checks the raw-result
+SHA256 values locally, recording `results/local-integrity.json`.

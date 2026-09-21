@@ -50,6 +50,9 @@ def main():
         fig.tight_layout();fig.savefig(out/"maze_layouts.png",dpi=180);plt.close(fig);return
     m=json.loads((root/"manifest.json").read_text())
     if m["smoke"]:raise ValueError("Preflight is not a learned-policy comparison")
+    from .verify import verify_campaign
+    validation=verify_campaign(root,partial=a.partial)
+    atomic_json(out/"validation.json",validation)
     complete={};missing=[]
     for task in m["tasks"]:
         for method in METHODS:
