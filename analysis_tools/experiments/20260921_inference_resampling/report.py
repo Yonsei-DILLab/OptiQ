@@ -48,6 +48,21 @@ fig.text(.5,.015,'Paired fresh reset seeds · no σ / DACER action noise · KDE 
 fig.tight_layout(rect=(0,.045,1,.94))
 for ext in ['png','pdf']:fig.savefig(r/f'comparison.{ext}',dpi=180)
 (r/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+deltafig,daxs=plt.subplots(1,2,figsize=(10,4.7))
+for ax,task in zip(daxs,['halfcheetah','ant']):
+    d=summary[task]['modes']
+    for x,m,color in [(0,'mu_q64','#247ba0'),(1,'mu_kde_is64','#e4844a')]:
+        vals=np.array(d[m]['per_seed_delta'])
+        ax.scatter(x+np.linspace(-.07,.07,len(vals)),vals,s=40,color=color,zorder=3)
+        ax.errorbar([x],[vals.mean()],yerr=[vals.std(ddof=1)],fmt='D',c='#1a2634',capsize=6,ms=6,zorder=4)
+    ax.axhline(0,c='gray',lw=1,ls='--')
+    ax.set(xticks=[0,1],xticklabels=['Q-resample 64 μ','KDE-corrected 64 μ'],ylabel='Return change from one μ',xlim=(-.5,1.5))
+    ax.set_title(f'{task.title()} · {len(summary[task]["training_seeds"])} training seeds')
+    ax.grid(axis='y',alpha=.2)
+deltafig.suptitle('Paired reward improvement · final 1M checkpoint · T=0.25')
+deltafig.text(.5,.015,'Colored dots: each training seed · black diamond: mean ± seed SD · 20 paired episodes per seed',ha='center',fontsize=9)
+deltafig.tight_layout(rect=(0,.055,1,.93))
+for ext in ['png','pdf']:deltafig.savefig(r/f'paired_improvement.{ext}',dpi=180)
 lines=['완료된 T=.25, beta=1, DACER=true의 최종 1M actor와 critic을 재학습 없이 비교했다. HalfCheetah 5개 학습 seed, Ant 4개 학습 seed마다 동일한 새 reset/policy seed 20개로 평가했다. 기존 마지막100k 평균과는 별도의 최종 체크포인트 재평가다.\n',
 '| 환경 | 평가 | return 평균 ± 학습 seed SD | 기존 대비 Δ | ESS / 후보 수 |',
 '|---|---|---:|---:|---:|']
