@@ -12,6 +12,7 @@ import jax.numpy as jnp
 import numpy as np
 import train
 from optiq_dime import smem_tr as smem
+from optiq_dime.projection_repair import distill_actor as repaired_distill
 
 
 original_distill = smem.distill_actor
@@ -53,25 +54,32 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     smem.distill_actor = traced_distill
-    cfg = train.compose_config(['benchmark=halfcheetah', 'alg.buffer_size=32', 'wandb.activate=false', f'output_root={tempfile.mkdtemp(prefix="smem-audit-")}'], 'smem_tr')
+    cfg = train.compose_config(['benchmark=halfcheetah', 'alg.buffer_size=32', f'output_root={tempfile.mkdtemp(prefix="smem-audit-")}'], 'smem_tr')
     model, callbacks = train.runner.create_algorithm(cfg)
     actor0, critic0 = model.policy.actor_state, model.policy.qf_state
-    update = jax.jit(smem.update_actor, static_argnums=(5, 6, 7, 9, 12))
     records = []
-    for seed in range(3):
-        run = next(args.campaign.glob(f'outputs/halfcheetah-smem_tr-seed{seed}_*'))
-        ckpt = next((run/'checkpoints').iterdir())
-        actor = flax.serialization.from_bytes(actor0, (ckpt/'actor_state_50000.msgpack').read_bytes())
-        critic = flax.serialization.from_bytes(critic0, (ckpt/'critic_state_50000.msgpack').read_bytes())
-        obs = jnp.asarray(np.load(ckpt/'landscape_probe_batch.npz')['observations'][:32])
-        for key_seed in range(2):
-            state, metrics, _ = update(actor, critic, obs, jax.random.PRNGKey(key_seed), jnp.array([-3600.]), 64, 1, 'exact', .006737946999085467, True, 1., .25, 'mean')
-            jax.block_until_ready(state)
-            record = {'seed': seed, 'key_seed': key_seed, 'actor_step': int(actor.step), 'metrics': {k:np.asarray(v).tolist() for k,v in metrics.items()}}
-            records.append(record)
-            print(json.dumps(record), flush=True)
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps({'git_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(), 'job_id':os.environ.get('SLURM_JOB_ID'), 'records':records},indent=2)+'\n')
+    for variant in ['original', 'parameter_regression', 'em_auxiliary']:
+        smem.distill_actor = traced_distill if variant == 'original' else repaired_distill
+        smem.DEFAULTS.update(projection_objective=variant, actor_backtracks=10,
+                             projection_steps=10 if variant == 'original' else 1)
+        update = jax.jit(lambda a,c,o,k: smem.update_actor(a,c,o,k,jnp.array([-3600.]),64,1,'exact',.006737946999085467,True,1.,.25,'mean'))
+        for seed in range(3):
+            run = next(args.campaign.glob(f'outputs/halfcheetah-smem_tr-seed{seed}_*'))
+            ckpt = next((run/'checkpoints').iterdir())
+            actor = flax.serialization.from_bytes(actor0, (ckpt/'actor_state_50000.msgpack').read_bytes())
+            critic = flax.serialization.from_bytes(critic0, (ckpt/'critic_state_50000.msgpack').read_bytes())
+            obs = jnp.asarray(np.load(ckpt/'landscape_probe_batch.npz')['observations'][:32])
+            for key_seed in range(2):
+                state, metrics, _ = update(actor, critic, obs, jax.random.PRNGKey(key_seed))
+                jax.block_until_ready(state)
+                assert all(np.isfinite(x).all() for x in jax.tree.leaves((state,metrics)))
+                assert float(metrics['actor_nll_gain']) >= -2e-6
+                assert float(metrics['actor_kl_bound']) <= .050002
+                record = {'variant':variant, 'seed': seed, 'key_seed': key_seed, 'actor_step': int(actor.step), 'metrics': {k:np.asarray(v).tolist() for k,v in metrics.items()}}
+                records.append(record)
+                print(json.dumps(record), flush=True)
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                args.output.write_text(json.dumps({'git_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(), 'job_id':os.environ.get('SLURM_JOB_ID'), 'records':records},indent=2)+'\n')
     model.get_env().close()
     callbacks.callbacks[0].eval_env.close()
 
