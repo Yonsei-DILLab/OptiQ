@@ -13,6 +13,31 @@ import numpy as np
 from antmaze.evaluation import atomic_json
 
 
+def pack_flax(value):
+    import flax.serialization as fs
+    import jax
+    def encode(x):
+        if hasattr(x,"dtype") and jax.dtypes.issubdtype(x.dtype,jax.dtypes.prng_key):
+            impl=str(jax.random.key_impl(x))
+            return dict(__jax_key__=np.asarray(jax.random.key_data(x)),
+                        impl={"fry":"threefry2x32","urbg":"unsafe_rbg"}.get(impl,impl))
+        return np.asarray(x) if isinstance(x,jax.Array) else x
+    return jax.tree_util.tree_map(encode,fs.to_state_dict(value))
+
+
+def unpack_flax(template,state):
+    import flax.serialization as fs
+    import jax
+    def decode(x):
+        if isinstance(x,dict):
+            if "__jax_key__" in x:return jax.random.wrap_key_data(x["__jax_key__"],impl=x["impl"])
+            return {k:decode(v) for k,v in x.items()}
+        if isinstance(x,list):return [decode(v) for v in x]
+        if isinstance(x,tuple):return tuple(decode(v) for v in x)
+        return x
+    return fs.from_state_dict(template,decode(state))
+
+
 def digest(value):
     import torch
     h=hashlib.sha256()
@@ -42,9 +67,9 @@ def model_state(agent):
             return dict(**common,parameters=m.get_parameters(),
                         variables={n:recursive_getattr(m,n) for n in names})
         p=m.policy
-        return dict(**common,policy={k:fs.to_bytes(getattr(p,k)) for k in
+        return dict(**common,policy={k:pack_flax(getattr(p,k)) for k in
                 ("actor_state","target_actor_state","qf_state","key","noise_key")},
-            model={k:fs.to_bytes(getattr(m,k)) for k in
+            model={k:pack_flax(getattr(m,k)) for k in
                 ("ent_coef_state","key","regulator_log_alpha","regulator_state","regulator_key")},
             regulator={k:copy.deepcopy(getattr(m,k)) for k in
                 ("regulator_next_update","regulator_count","regulator_entropy")},
@@ -52,7 +77,7 @@ def model_state(agent):
     if isinstance(agent,MEOW):
         return dict(updates=agent.updates,policy=agent.policy.state_dict(),
                     target=agent.target.state_dict(),optimizer=agent.optimizer.state_dict())
-    return dict(updates=agent.updates,agent=fs.to_bytes(agent.agent))
+    return dict(updates=agent.updates,agent=pack_flax(agent.agent))
 
 
 def restore_model(agent,state):
@@ -70,14 +95,14 @@ def restore_model(agent,state):
                 for k,v in state["variables"].items():recursive_getattr(m,k).copy_(v)
         else:
             for obj,group in ((m.policy,"policy"),(m,"model")):
-                for k,v in state[group].items():setattr(obj,k,fs.from_bytes(getattr(obj,k),v))
+                for k,v in state[group].items():setattr(obj,k,unpack_flax(getattr(obj,k),v))
             for k,v in state["regulator"].items():setattr(m,k,v)
             m.regulator_rng.bit_generator.state=state["regulator_rng"]
     elif isinstance(agent,MEOW):
         for k in ("policy","target","optimizer"):getattr(agent,k).load_state_dict(state[k])
         agent.updates=state["updates"]
     else:
-        agent.agent=fs.from_bytes(agent.agent,state["agent"]);agent.updates=state["updates"]
+        agent.agent=unpack_flax(agent.agent,state["agent"]);agent.updates=state["updates"]
 
 
 def snapshot(agent,replay,coverage,behavior_rng,evaluator,extra):
@@ -151,5 +176,6 @@ def load(folder,agent,replay,coverage,behavior_rng,evaluator,source_commit,task,
     random.setstate(state["rng"]["python"]);np.random.set_state(state["rng"]["numpy"])
     torch.set_rng_state(state["rng"]["torch"]);torch.cuda.set_rng_state_all(state["rng"]["cuda"])
     restored=snapshot(agent,replay,coverage,behavior_rng,evaluator,state["extra"])
-    assert digest(restored)==proof["state_digest"],"Loaded state differs from saved training state"
+    differences=[k for k in state if digest(state[k])!=digest(restored[k])]
+    assert not differences,f"Loaded state differs from saved training state: {differences}"
     return state["extra"],proof
