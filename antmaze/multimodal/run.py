@@ -1,4 +1,4 @@
-"""Online learned-policy path diversity:100k first, six methods, no early stopping."""
+"""Online learned-policy path diversity with an explicit interaction budget."""
 import argparse
 import hashlib
 import importlib.metadata
@@ -21,6 +21,10 @@ def main():
     p.add_argument("--task",required=True,choices=["v1","v3","v4"])
     p.add_argument("--seed",type=int,required=True);p.add_argument("--output",type=Path,required=True)
     p.add_argument("--smoke",action="store_true")
+    p.add_argument("--steps",type=int,default=100000)
+    p.add_argument("--campaign",default="antmaze-multimodal-100k-20260921")
+    p.add_argument("--eval-interval",type=int,default=5000)
+    p.add_argument("--checkpoint-interval",type=int,default=50000)
     a=p.parse_args();cpus=sorted(os.sched_getaffinity(0));gpu=int(os.environ.get("CAMPAIGN_GPU","0"))
     os.sched_setaffinity(0,cpus[gpu::4] or cpus)
     import torch
@@ -43,21 +47,23 @@ def main():
             agent.config["env_name"]=agent.model.cfg.env_name
     else:agent=dict(dipo=DIPO,meow=MEOW,mfpo=MFPO,sql=SQL)[a.method](env,a.seed,folder)
     initial=parameter_audit(agent);warmup=256 if a.smoke else agent.warmup
-    steps=272 if a.smoke else 100000;interval=steps if a.smoke else 5000
+    steps=272 if a.smoke else a.steps;interval=steps if a.smoke else a.eval_interval
+    if interval<=0 or a.checkpoint_interval<=0:raise ValueError("Intervals must be positive")
+    if steps<=warmup:raise ValueError("Interaction budget must exceed warmup")
     config=dict(method=a.method,task=a.task,seed=a.seed,smoke=a.smoke,source_commit=commit,
-        source_root=str(root),steps=steps,warmup=warmup,batch_size=256,utd=1,native=agent.config,
+        source_root=str(root),steps=steps,campaign=a.campaign,warmup=warmup,batch_size=256,utd=1,native=agent.config,
         environment=geometry(a.task),xml_sha256=env.unwrapped.xml_sha256,
         observation="qpos[:15]+qvel[:14], xy included, no specified-goal conditioning",
         reward="-min distance to any goal; no success bonus/locomotion/control/survival rewards",
         reset="v1 xy uniform[-2,2]^2; v3/v4 fixed origin; default robot pose and zero velocity",
         evaluation="direct learned-policy sampling; no mean/best-of-K/external DACER noise",
         trajectory_episodes_per_reset_mode=100,trajectory_reset_modes=["natural","fixed_full_simulator_state"],
-        interval_eval_episodes=10,eval_interval=interval,
+        interval_eval_episodes=10,eval_interval=interval,checkpoint_interval=a.checkpoint_interval,
         packages={n:importlib.metadata.version(n) for n in ("mujoco","gymnasium","jax","flax","optax","torch","numpy","wandb")})
     atomic_json(folder/"config.json",config)
     import wandb
-    run=wandb.init(project="gmm-trg",entity="OptiQ",name=f"antmaze-{a.task}-{a.method}-s{a.seed}-100k",
-        group=f"antmaze-multimodal-100k-20260921-{a.task}",job_type="multimodal-policy",
+    run=wandb.init(project="gmm-trg",entity="OptiQ",name=f"antmaze-{a.task}-{a.method}-s{a.seed}-{steps//1000}k",
+        group=f"{a.campaign}-{a.task}",job_type="multimodal-policy",
         config=config,dir=str(folder),mode="disabled" if a.smoke else "online",tags=["antmaze","path-diversity",a.method,a.task])
     if not a.smoke:
         atomic_json(folder/"wandb.json",dict(id=run.id,url=run.url))
@@ -89,7 +95,7 @@ def main():
                     step=self.num_timesteps
                     if step<steps and step%interval==0:evaluate(step)
                     elif step%1000==0:log(step,{})
-                    if step<steps and step%50000==0:save(step)
+                    if step<steps and step%a.checkpoint_interval==0:save(step)
                     return True
             agent.model.set_logger(configure(str(folder/"train_log"),["csv"]))
             agent.model.learn(total_timesteps=steps,callback=Callback(),progress_bar=False,log_interval=1)
@@ -106,7 +112,7 @@ def main():
                 obs=env.reset()[0] if t or tr else nxt
                 if step<steps and step%interval==0:evaluate(step)
                 elif step%1000==0:log(step,{f"train/{k}":v for k,v in last_info.items()})
-                if step<steps and step%50000==0:save(step)
+                if step<steps and step%a.checkpoint_interval==0:save(step)
         evaluate(steps);save(steps)
         final=parameter_audit(agent)
         if int(agent.updates)!=steps-warmup:raise RuntimeError("Learner update count mismatch")
