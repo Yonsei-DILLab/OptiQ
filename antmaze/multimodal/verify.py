@@ -38,13 +38,25 @@ def equivalent(expected,actual,where):
 def verify_run(folder,job,source_commit,smoke=False):
     r=json.loads((folder/"result.json").read_text())
     c=json.loads((folder/"config.json").read_text())
-    steps=272 if smoke else 100000
+    steps=272 if smoke else job.get("steps",100000)
     warmup=256 if smoke else (10000 if job["method"]=="mfpo" else 5000)
+    noveld=c.get("profile")=="ddiffpg-dense-noveld"
+    if noveld:
+        steps=8704 if smoke else 100000;warmup=8192
     episodes=2 if smoke else 100
     assert r["completed"] and c["smoke"]==smoke
     assert r["source_commit"]==c["source_commit"]==source_commit
     assert c["steps"]==r["steps"]==steps and c["warmup"]==warmup
-    assert r["updates"]==steps-warmup and c["batch_size"]==256 and c["utd"]==1
+    if noveld:
+        expected_updates=int(np.ceil((steps-warmup)/256))*8
+        assert r["updates"]==c["expected_updates"]==expected_updates
+        assert c["batch_size"]==4096 and c["num_envs"]==256 and c["updates_per_round"]==8
+        assert c["utd"]==8/256 and c["intrinsic"]["coefficient"]==.01
+        rnd=json.loads((folder/"intrinsic-audit.json").read_text())
+        assert rnd["passed"] and rnd["updates"]==expected_updates
+        assert rnd["initial"]["target"]==rnd["final"]["target"]
+        assert rnd["initial"]["predictor"]!=rnd["final"]["predictor"]
+    else:assert r["updates"]==steps-warmup and c["batch_size"]==256 and c["utd"]==1
     for key in ("task","method","seed"):assert c[key]==r[key]==job[key]
     expected_labels={"policy-natural","policy-fixed"}
     if job["method"]=="optiq":expected_labels|={"mu_only-natural","mu_only-fixed"}
@@ -105,15 +117,20 @@ def verify_run(folder,job,source_commit,smoke=False):
         hashes[str(path.with_suffix(".json").relative_to(folder))]=digest(path.with_suffix(".json"))
     for name in ("config.json","result.json","checkpoint.json","parameter-audit.json","training_coverage.npz","history-policy-natural.json"):
         hashes[name]=digest(folder/name)
+    if noveld:hashes["intrinsic-audit.json"]=digest(folder/"intrinsic-audit.json")
     return dict(passed=True,steps=steps,updates=r["updates"],episode_count_per_reset=episodes,sha256=hashes)
 
 
 def verify_campaign(root,partial=False,preflight=False):
     m=json.loads((root/"manifest.json").read_text())
     assert bool(m["smoke"])==preflight
-    expected={(task,method,seed) for task in m["tasks"] for method in METHODS
-              for seed in ([0] if preflight else range(4))}
+    methods=m.get("methods",METHODS);seeds=m.get("seeds",[0] if preflight else list(range(4)))
+    expected={(task,method,seed) for task in m["tasks"] for method in methods for seed in seeds}
     jobs=m["jobs"]
+    if m.get("shard_count",1)>1:
+        all_jobs=m["all_jobs"]
+        assert len(all_jobs)==len(expected) and {(j["task"],j["method"],j["seed"]) for j in all_jobs}==expected
+        expected={(j["task"],j["method"],j["seed"]) for i,j in enumerate(all_jobs) if i%m["shard_count"]==m["shard_index"]}
     assert len(jobs)==len(expected) and {(j["task"],j["method"],j["seed"]) for j in jobs}==expected
     status=json.loads((root/"status.json").read_text())
     states={j["id"]:j["status"] for j in status["jobs"]}

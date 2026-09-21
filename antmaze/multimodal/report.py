@@ -28,7 +28,9 @@ def maze(ax,task):
 
 def draw_paths(ax,folder,task,label):
     maze(ax,task)
-    p=folder/"rollouts"/f"100000-{label}.npz"
+    result=folder/"result.json"
+    steps=json.loads(result.read_text())["steps"] if result.exists() else 100000
+    p=folder/"rollouts"/f"{steps}-{label}.npz"
     if not p.exists():ax.text(.5,.5,"Pending",transform=ax.transAxes,ha="center");return
     z=np.load(p,allow_pickle=False)
     for path,n,goal in zip(z["xy"],z["lengths"],z["goal_ids"]):
@@ -51,23 +53,27 @@ def main():
         fig.suptitle("DDiffPG maze layouts · start ★ · goals G1/G2 · scale4")
         fig.tight_layout();fig.savefig(out/"maze_layouts.png",dpi=180);plt.close(fig);return
     m=json.loads((root/"manifest.json").read_text())
+    if m.get("shard_count",1)>1:raise ValueError("Merge the two server shards before reporting")
+    methods=m.get("methods",METHODS);seeds=m.get("seeds",list(range(4)))
+    specs={j["id"]:j for j in m["jobs"]}
+    budget_label=", ".join(f"{t}={next(j.get('steps',100000) for j in m['jobs'] if j['task']==t)//1000}k" for t in m["tasks"])
     if m["smoke"]:raise ValueError("Preflight is not a learned-policy comparison")
     from .verify import verify_campaign
     validation=verify_campaign(root,partial=a.partial)
     atomic_json(out/"validation.json",validation)
     complete={};missing=[]
     for task in m["tasks"]:
-        for method in METHODS:
-            for seed in range(4):
+        for method in methods:
+            for seed in seeds:
                 job=f"{task}-{method}-s{seed}";d=root/"runs"/job;p=d/"result.json"
                 if job not in validation["verified"] or not p.exists():missing.append(job);continue
                 r=json.loads(p.read_text());c=json.loads((d/"config.json").read_text())
-                assert r["completed"] and r["steps"]==100000 and not c["smoke"]
+                assert r["completed"] and r["steps"]==specs[job].get("steps",100000) and not c["smoke"]
                 assert r["source_commit"]==m["source_commit"]==c["source_commit"]
-                assert r["updates"]==100000-c["warmup"]
+                assert r["updates"]==c.get("expected_updates",r["steps"]-c["warmup"])
                 for label,s in r["summaries"].items():
                     assert s["episodes"]==100
-                    z=np.load(d/"rollouts"/f"100000-{label}.npz",allow_pickle=False)
+                    z=np.load(d/"rollouts"/f"{r['steps']}-{label}.npz",allow_pickle=False)
                     assert len(z["xy"])==100 and np.isfinite(z["returns"]).all()
                     if label.endswith("fixed"):
                         state=z["initial_simulator_state"];np.testing.assert_array_equal(state,np.broadcast_to(state[0],state.shape))
@@ -79,26 +85,26 @@ def main():
         for ax,label in zip(axes,("policy-natural","policy-fixed")):
             draw_paths(ax,root/"runs"/job,r["task"],label)
             ax.set_xlabel("Natural reset" if label.endswith("natural") else "Identical full initial state")
-        fig.suptitle(f"{r['task']} · {r['method'].upper()} · seed{r['seed']} · 100k interactions\n100 direct-policy rollouts per panel",fontsize=13,y=.985)
+        fig.suptitle(f"{r['task']} · {r['method'].upper()} · seed{r['seed']} · {r['steps']//1000}k interactions\n100 direct-policy rollouts per panel",fontsize=13,y=.985)
         fig.text(.5,.018,"Gray: unsuccessful episode · colored: reached goal · star: reference origin",ha="center",fontsize=8)
         fig.tight_layout(rect=(0,.055,1,.91));fig.savefig(individual/f"{job}.png",dpi=180);plt.close(fig)
     for task in m["tasks"]:
         for label in ("policy-natural","policy-fixed"):
-            fig,axes=plt.subplots(6,4,figsize=(13,18))
-            for row,method in enumerate(METHODS):
-                for seed in range(4):
-                    ax=axes[row,seed];job=f"{task}-{method}-s{seed}"
+            fig,axes=plt.subplots(len(methods),len(seeds),figsize=(max(5,3.25*len(seeds)),3*len(methods)),squeeze=False)
+            for row,method in enumerate(methods):
+                for col,seed in enumerate(seeds):
+                    ax=axes[row,col];job=f"{task}-{method}-s{seed}"
                     if job in complete:draw_paths(ax,root/"runs"/job,task,label)
                     else:maze(ax,task);ax.text(.5,.5,"Pending",transform=ax.transAxes,ha="center")
                     ax.set_xlabel(f"{method} · seed {seed}",fontsize=9)
-            fig.suptitle(f"{task} · 100k interactions · {label} · 100 rollouts per INDIVIDUAL policy",fontsize=13)
+            fig.suptitle(f"{task} · {budget_label} interactions · {label} · 100 rollouts per INDIVIDUAL policy",fontsize=13)
             fig.tight_layout();fig.savefig(out/f"trajectories-{task}-{label}.png",dpi=160);plt.close(fig)
-        fig,axes=plt.subplots(6,4,figsize=(13,18))
+        fig,axes=plt.subplots(len(methods),len(seeds),figsize=(max(5,3.25*len(seeds)),3*len(methods)),squeeze=False)
         coverage_max=max([float(np.load(root/"runs"/j/"training_coverage.npz")["counts"].max())
                           for j in complete if j.startswith(task+"-")]+[1.])
-        for row,method in enumerate(METHODS):
-            for seed in range(4):
-                ax=axes[row,seed];job=f"{task}-{method}-s{seed}";maze(ax,task)
+        for row,method in enumerate(methods):
+            for col,seed in enumerate(seeds):
+                ax=axes[row,col];job=f"{task}-{method}-s{seed}";maze(ax,task)
                 if job in complete:
                     z=np.load(root/"runs"/job/"training_coverage.npz",allow_pickle=False)
                     counts=z["counts"].astype(float);counts[counts==0]=np.nan
@@ -107,8 +113,8 @@ def main():
                 ax.set_title(f"{method} · seed {seed}",fontsize=9)
         fig.suptitle(f"{task} · training xy visits · common log color scale 0–{coverage_max:.0f}; evaluation excluded")
         fig.tight_layout();fig.savefig(out/f"coverage-{task}.png",dpi=150);plt.close(fig)
-        fig,axes=plt.subplots(1,4,figsize=(13,4))
-        for seed,ax in enumerate(axes):
+        fig,axes=plt.subplots(1,len(seeds),figsize=(max(5,3.25*len(seeds)),4),squeeze=False)
+        for seed,ax in zip(seeds,axes[0]):
             job=f"{task}-optiq-s{seed}"
             if job in complete:draw_paths(ax,root/"runs"/job,task,"mu_only-fixed")
             else:maze(ax,task)
@@ -117,7 +123,7 @@ def main():
         fig.tight_layout();fig.savefig(out/f"optiq-mu-only-{task}.png",dpi=160);plt.close(fig)
         # One bar per individual trained policy. Fractions include failures.
         fig,axes=plt.subplots(2,1,figsize=(15,8))
-        available=[f"{task}-{method}-s{seed}" for method in METHODS for seed in range(4)
+        available=[f"{task}-{method}-s{seed}" for method in methods for seed in seeds
                    if f"{task}-{method}-s{seed}" in complete]
         if available:
             labels=[j.removeprefix(task+"-") for j in available]
@@ -141,9 +147,9 @@ def main():
         fig.suptitle(f"{task} · same full initial state · each bar is ONE policy")
         fig.tight_layout();fig.savefig(out/f"goal-route-fractions-{task}.png",dpi=170);plt.close(fig)
         fig,axes=plt.subplots(1,3,figsize=(15,4))
-        for method in METHODS:
+        for method in methods:
             histories=[]
-            for seed in range(4):
+            for seed in seeds:
                 path=root/"runs"/f"{task}-{method}-s{seed}"/"history-policy-natural.json"
                 if path.exists():histories.append(json.loads(path.read_text()))
             if not histories:continue
@@ -157,9 +163,9 @@ def main():
         axes[0].legend(fontsize=7)
         fig.suptitle(f"{task} · periodic direct-policy evaluation · training seed mean ± sample SD")
         fig.tight_layout();fig.savefig(out/f"learning-curves-{task}.png",dpi=170);plt.close(fig)
-    fig,axes=plt.subplots(len(m["tasks"]),6,figsize=(18,4*len(m["tasks"])),squeeze=False)
+    fig,axes=plt.subplots(len(m["tasks"]),len(methods),figsize=(3*len(methods),4*len(m["tasks"])),squeeze=False)
     for row,task in enumerate(m["tasks"]):
-        for col,method in enumerate(METHODS):
+        for col,method in enumerate(methods):
             ax=axes[row,col];job=f"{task}-{method}-s0"
             if job in complete:draw_paths(ax,root/"runs"/job,task,"policy-fixed")
             else:maze(ax,task);ax.text(.5,.5,"Pending",transform=ax.transAxes,ha="center")
@@ -168,10 +174,10 @@ def main():
     fig.tight_layout();fig.savefig(out/"seed0-overview.png",dpi=180);plt.close(fig)
     aggregates={};rows=[]
     for task in m["tasks"]:
-        for method in METHODS:
-            records=[complete[f"{task}-{method}-s{s}"]["summaries"]["policy-fixed"] for s in range(4) if f"{task}-{method}-s{s}" in complete]
+        for method in methods:
+            records=[complete[f"{task}-{method}-s{s}"]["summaries"]["policy-fixed"] for s in seeds if f"{task}-{method}-s{s}" in complete]
             if not records:continue
-            row=dict(task=task,method=method,n=len(records),final=len(records)==4)
+            row=dict(task=task,method=method,n=len(records),final=len(records)==len(seeds))
             for name,values in dict(success_rate=[r["success_rate"] for r in records],
                 effective_routes=[r["successful_routes"]["effective_modes"] for r in records],
                 dominant_route_fraction=[r["successful_routes"]["dominant_fraction"] for r in records
@@ -181,7 +187,7 @@ def main():
                               valid_seeds=len(values))
             rows.append(row)
     atomic_json(out/"results.json",dict(source_commit=m["source_commit"],completed=len(complete),missing=missing,aggregate=rows,per_policy=complete))
-    lines=["# AntMaze 다중 목표·경로 비교", "",f"완료 {len(complete)}/{len(m['jobs'])}. 각 정책은100k online interaction 이후 평가했습니다.","",
+    lines=["# AntMaze 다중 목표·경로 비교", "",f"완료 {len(complete)}/{len(m['jobs'])}. 학습 예산: {budget_label} online interactions.","",
         "주 그림은 동일한 전체 시뮬레이터 초기 상태에서 정책을 직접 샘플링한100회 rollout입니다. 각 칸은 한 training seed의 정책이며 시드를 섞지 않았습니다.","",
         "| 미로 | 방법 | 완료seed | 성공률 | 유효 경로 수 | 최다 경로 비중 |","|---|---|---:|---:|---:|---:|"]
     for r in rows:
@@ -189,7 +195,7 @@ def main():
             v=r[k]
             if v["mean"] is None:return "N/A"
             return f"{v['mean']:.3f}"+(f" ± {v['sample_sd']:.3f}" if v["sample_sd"] is not None else "")+(f" (n={v['valid_seeds']})" if v["valid_seeds"]!=r["n"] else "")
-        lines.append(f"| {r['task']} | {r['method']} | {r['n']}/4 | {fmt('success_rate')} | {fmt('effective_routes')} | {fmt('dominant_route_fraction')} |")
+        lines.append(f"| {r['task']} | {r['method']} | {r['n']}/{len(seeds)} | {fmt('success_rate')} | {fmt('effective_routes')} | {fmt('dominant_route_fraction')} |")
     lines += ["","유효 경로 수는 성공 rollout의 경로 범주 엔트로피를 exp한 값입니다. 성공이 없으면0으로 표시하며 mode collapse라고 단정하지 않습니다.",
         "성공 경로가 없는 정책의 최다 경로 비중은 N/A입니다. 이 값의 평균/편차는 성공 경로가 관측된 training seed만으로 계산하고 해당 seed 수를 표시합니다.",
         "경로는 사전에 정의한 통로 횡단으로 분류했습니다. 모든 가능한 homotopy class나 action 분포의 multimodality를 증명하는 값은 아닙니다.",
