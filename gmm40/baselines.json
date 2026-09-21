@@ -1,0 +1,22 @@
+[
+  {
+    "name": "DiKL",
+    "url": "https://github.com/jiajunhe98/DiKL.git",
+    "commit": "b7df982bec4dc83fed65f98feeecdde928089272"
+  },
+  {
+    "name": "DIPO",
+    "url": "https://github.com/BellmanTimeHut/DIPO.git",
+    "commit": "c6d8d1b39d6cea22e7d779e08111dbf974dbb4fc"
+  },
+  {
+    "name": "meow",
+    "url": "https://github.com/ChienFeng-hub/meow.git",
+    "commit": "b786d27aa9b03e4242ee8904ff884b21fe65e2f7"
+  },
+  {
+    "name": "MFPO",
+    "url": "https://github.com/dongxiaoyi-xyz/MFPO.git",
+    "commit": "d8b3977d29d4ef2d315e871337e5826f2eb79eb2"
+  }
+]

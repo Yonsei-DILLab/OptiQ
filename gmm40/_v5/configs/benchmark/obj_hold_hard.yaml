@@ -1,0 +1,4 @@
+# @package _global_
+env_name: myoHandObjHoldRandom-v0
+task: obj-hold-hard
+successful_steps: 5

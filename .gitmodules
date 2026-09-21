@@ -1,0 +1,12 @@
+[submodule "gmm40-baseline/DiKL"]
+	path = gmm40-baseline/DiKL
+	url = https://github.com/jiajunhe98/DiKL.git
+[submodule "gmm40-baseline/DIPO"]
+	path = gmm40-baseline/DIPO
+	url = https://github.com/BellmanTimeHut/DIPO.git
+[submodule "gmm40-baseline/meow"]
+	path = gmm40-baseline/meow
+	url = https://github.com/ChienFeng-hub/meow.git
+[submodule "gmm40-baseline/MFPO"]
+	path = gmm40-baseline/MFPO
+	url = https://github.com/dongxiaoyi-xyz/MFPO.git

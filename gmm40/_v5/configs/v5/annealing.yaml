@@ -1,0 +1,18 @@
+# @package _global_
+defaults:
+  - /v5/final
+  - _self_
+
+alg:
+  actor:
+    temperature: 10.0
+    temperature_schedule:
+      enabled: true
+      final_temperature: 0.25
+      anneal_steps: 40000
+
+output_root: ../optiq-experiments/v5_annealing/outputs
+run_name: ${task}-v5-meanOT-anneal${alg.actor.temperature_schedule.anneal_steps}-p${alg.behavior_uniform_probability}-s${seed}
+wandb:
+  group: ${env_name}_v5_meanOT_anneal${alg.actor.temperature_schedule.anneal_steps}_p${alg.behavior_uniform_probability}_dual_mu_eval
+  job_type: v5-temperature-annealing

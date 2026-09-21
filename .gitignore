@@ -13,3 +13,6 @@ outputs/
 .ruff_cache/
 .DS_Store
 ._*
+
+# Generated GMM40 experiment artifacts.
+/gmm40-results/

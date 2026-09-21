@@ -1,0 +1,9 @@
+# @package _global_
+defaults:
+  - /v5/annealing
+  - _self_
+
+alg:
+  behavior_uniform_probability: 0.1
+
+output_root: ../optiq-experiments/v5_annealing_behavior010/outputs
