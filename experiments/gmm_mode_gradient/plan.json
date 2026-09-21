@@ -1,0 +1,12 @@
+{
+  "sizes": [[16,16],[64,64],[128,128],[256,256],[1024,1024],[2048,2048],[64,4096],[2048,4096]],
+  "methods": ["baseline","mode_only","mode_confidence"],
+  "seeds": [0,1,2,3], "updates": 20000,
+  "diagnostic_steps": [0,1,10,100,500,1000,2000,5000,10000,15000,20000],
+  "root": "/scratch2/hobbit9882/OptiQ-ModeGradient-20260921",
+  "python": "/scratch2/hobbit9882/.venvs/optiq-mujoco-scalar/bin/python",
+  "partitions": "big_suma_rtx3090,base_suma_rtx3090,dell_rtx3090,suma_rtx4090,suma_a6000,gigabyte_a6000,gigabyte_a5000,asus_6000ada,asus_a5000,tyan_a6000",
+  "excluded_nodes": "cs-gpu-01,node14,node23,node24,node31,node35,node40",
+  "qos": "big_qos", "bio_partition":"gigabyte_a6000_bio", "bio_qos":"etc_qos",
+  "general_workers": 5, "bio_workers": 3
+}
