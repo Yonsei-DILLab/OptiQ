@@ -17,6 +17,7 @@ def main():
     p = argparse.ArgumentParser(allow_abbrev=False)
     p.add_argument("--root",type=Path,required=True)
     p.add_argument("--smoke",action="store_true")
+    p.add_argument("--methods",nargs="+",choices=METHODS)
     a=p.parse_args(); root=a.root
     root.mkdir(parents=True,exist_ok=True)
     lock=(root/"controller.lock").open("a")
@@ -25,8 +26,9 @@ def main():
         raise RuntimeError("Campaign already exists; never auto-resume or duplicate launch")
     source=Path(__file__).resolve().parents[1]
     sha=subprocess.check_output(["git","rev-parse","HEAD"],cwd=source,text=True).strip()
+    if a.methods and not a.smoke: raise ValueError("Subset selection is preflight-only")
     jobs=[dict(id=f"{method}-s{seed}",method=method,seed=seed,status="pending")
-          for seed in ([0] if a.smoke else range(4)) for method in METHODS]
+          for seed in ([0] if a.smoke else range(4)) for method in (a.methods or METHODS)]
     manifest=dict(source=str(source),source_commit=sha,smoke=a.smoke,gpus=[0,1,2,3],jobs=jobs,
         project="OptiQ/gmm-trg",group="antmaze-umaze-online-20260921")
     atomic_json(root/"manifest.json",manifest)

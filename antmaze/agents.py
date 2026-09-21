@@ -206,6 +206,13 @@ class SB3:
         if smoke: self.model.learning_starts = 256
         self.warmup = int(self.model.learning_starts)
     def act(self, obs):
+        if self.method == "optiq":
+            # Legacy public predict() keeps only batch element zero. Use the
+            # native batched sampler for paired evaluation of all episodes.
+            p = self.model.policy
+            p.reset_noise()
+            return np.asarray(p.sample_action(p.actor_state, obs, p.noise_key,
+                deterministic=self.mode == "zero_z", sample_conditional_noise=False))
         a, _ = self.model.predict(obs, deterministic=self.mode != "stochastic_z")
         return a
     @property
