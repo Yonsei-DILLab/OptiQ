@@ -1,0 +1,43 @@
+{
+  "name": "gmm40-mu90-screen1-20260921",
+  "steps": 100000,
+  "seed": 0,
+  "batch": 256,
+  "temperature": 1.0,
+  "width": 256,
+  "depth": 2,
+  "eval_samples": 10000,
+  "trg_log_std_max": -2.0,
+  "trg_initial_log_std": -2.5,
+  "trg_teacher_std_floor": 0.05,
+  "profiles": [
+    {
+      "name": "init16_nm64",
+      "mean_output_init_scale": 16,
+      "n": 64,
+      "m": 64,
+      "gpu": 0
+    },
+    {
+      "name": "init256_nm64",
+      "mean_output_init_scale": 256,
+      "n": 64,
+      "m": 64,
+      "gpu": 1
+    },
+    {
+      "name": "init16_nm256",
+      "mean_output_init_scale": 16,
+      "n": 256,
+      "m": 256,
+      "gpu": 2
+    },
+    {
+      "name": "init256_nm256",
+      "mean_output_init_scale": 256,
+      "n": 256,
+      "m": 256,
+      "gpu": 3
+    }
+  ]
+}

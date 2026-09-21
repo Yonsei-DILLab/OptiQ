@@ -27,6 +27,7 @@ def main():
         wb.define_metric('updates')
         wb.define_metric('gmm40/*',step_metric='updates')
         wb.define_metric('train/*',step_metric='updates')
+        wb.define_metric('gmm40_mu/*',step_metric='updates')
     except Exception as exc:
         warnings.append('W&B initialization: '+repr(exc))
         print(warnings[-1],flush=True)
@@ -36,7 +37,10 @@ def main():
         if wb:
             try:
                 wb.config.update(json.loads((folder/'config.json').read_text()),allow_val_change=True)
+                mu_path=folder/'evaluations'/f"step_{result['step']:07d}"/'metrics_mu_only.json'
+                mu=json.loads(mu_path.read_text()) if mu_path.exists() else {}
                 wb.log({'updates':result['step'],
+                    **{'gmm40_mu/'+k:v for k,v in mu.items() if isinstance(v,(int,float))},
                     **{'gmm40/'+k:v for k,v in result.items() if isinstance(v,(int,float)) and k!='step'},
                     **{'train/'+k:v for k,v in result['training'].items() if isinstance(v,(int,float))}})
             except Exception as exc:
@@ -54,6 +58,9 @@ def main():
                 for p in [folder/'config.json',folder/'latest.json',folder/'model_sizes.json',
                           folder/'update_count_audit.json',final/'samples.npy',final/'samples.png']:
                     artifact.add_file(str(p),name=p.name)
+                for name in ['samples_mu_only.npy','metrics_mu_only.json','metrics.json','samples_full_policy.png','visualization.json']:
+                    p=final/name
+                    if p.exists():artifact.add_file(str(p),name=p.name)
                 wb.log_artifact(artifact)
             except Exception as exc:
                 warnings.append('W&B final artifact: '+repr(exc))

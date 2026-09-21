@@ -27,7 +27,7 @@ def main():
     parser.add_argument("--width",type=int,default=256)
     parser.add_argument("--depth",type=int,default=2)
     parser.add_argument("--mean-output-init-scale",type=float,default=None,
-                        help="Optional OptiQ fixed-Q mean-head variance scale; default 1e-4")
+                        help="Fixed-Q mean-head variance scale; OptiQ default 1e-4, TRG default 1")
     parser.add_argument("--trg-log-std-max",type=float,default=-1.,
                         help="GMM40 TRG-only sigma ablation; lower bound remains -5")
     parser.add_argument("--trg-initial-log-std",type=float,default=-1.,
@@ -74,7 +74,7 @@ def main():
             args.nll_top_k is not None or args.nll_plan_threshold is not None):
         raise ValueError('sigma_row_balance requires fixed-Q OptiQ with the original full-row NLL')
     explicit_actor_hparams = args.mean_output_init_scale is not None
-    if explicit_actor_hparams and (args.method != 'optiq' or args.navigation or args.resume):
+    if explicit_actor_hparams and (args.method not in ('optiq','optiq_trg') or args.navigation or args.resume):
         raise ValueError('Actor initialization override currently requires a fresh fixed-Q OptiQ run')
     if args.temperature is None:
         args.temperature=.25 if args.navigation and args.method=='optiq' else 1.0
@@ -117,7 +117,7 @@ def main():
     if args.method=='optiq_trg':
         config.update(actor_learning_rate=3e-4,actor_log_std_bounds=[-5.,args.trg_log_std_max],
                       initial_log_std=args.trg_initial_log_std,
-                      mean_output_init_scale=1.,
+                      mean_output_init_scale=1. if args.mean_output_init_scale is None else args.mean_output_init_scale,
                       latent_mode='random',density_beta=1.,teacher_std_floor=args.trg_teacher_std_floor,
                       loss='direct marginal box-truncated Gaussian mixture NLL',
                       implementation='analysis_tools/experiments/20260920_truncated_mll/optiq_dime')
@@ -172,7 +172,8 @@ def main():
             from .optiq_trg import OptiQTRG
             agent=OptiQTRG(target,args.seed,args.n,args.m,args.batch,(args.width,)*args.depth,args.temperature,
                            log_std_max=args.trg_log_std_max,initial_log_std=args.trg_initial_log_std,
-                           teacher_std_floor=args.trg_teacher_std_floor)
+                           teacher_std_floor=args.trg_teacher_std_floor,
+                           mean_output_init_scale=config['mean_output_init_scale'])
         elif args.method=="sql":
             from .sql import SQL,config_from_args
             agent=SQL(target,args.seed,args.batch,config_from_args(args))

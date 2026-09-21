@@ -54,6 +54,8 @@ def prepare(root,plan_path=None):
             if method=='optiq_trg' and 'trg_actor' in plan:
                 argv+=['--trg-log-std-max',str(plan['trg_actor']['log_std_max']),
                        '--trg-initial-log-std',str(plan['trg_actor']['initial_log_std'])]
+                if 'mean_output_init_scale' in plan['trg_actor']:
+                    argv+=['--mean-output-init-scale',str(plan['trg_actor']['mean_output_init_scale'])]
                 if 'teacher_std_floor' in plan['trg_actor']:
                     argv+=['--trg-teacher-std-floor',str(plan['trg_actor']['teacher_std_floor'])]
             jobs.append(dict(name=name,method=method,seed=seed,args=argv,steps=plan['steps']))
@@ -103,7 +105,7 @@ def preflight(root,manifest):
             requested=plan.get('trg_actor',dict(log_std_max=-1.,initial_log_std=-1.))
             assert agent.actor.log_std_min==-5. and agent.actor.log_std_max==requested['log_std_max']
             assert agent.actor.initial_log_std==requested['initial_log_std']
-            assert agent.actor.mean_output_init_scale==1.
+            assert agent.actor.mean_output_init_scale==requested.get('mean_output_init_scale',1.)
             assert agent.teacher_std_floor==requested.get('teacher_std_floor',math.exp(-5))
         elif method=='optiq':
             from .optiq import OptiQ

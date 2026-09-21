@@ -19,7 +19,8 @@ sample_box = importlib.import_module(SOURCE + '.box_gaussian').sample_box
 class OptiQTRG(OptiQ):
     def __init__(self, target, seed=0, n=64, m=64, batch=256,
                  hidden_dims=(256,256), temperature=1.,
-                 log_std_max=-1., initial_log_std=-1., teacher_std_floor=math.exp(-5)):
+                 log_std_max=-1., initial_log_std=-1., teacher_std_floor=math.exp(-5),
+                 mean_output_init_scale=1.):
         if n <= 0 or m <= 0 or m % n or batch <= 0:
             raise ValueError('TRG requires positive batch/N/M and M divisible by N')
         if not math.isfinite(temperature) or temperature <= 0:
@@ -29,12 +30,14 @@ class OptiQTRG(OptiQ):
             raise ValueError('TRG requires -5 < log_std_max and initial log std within bounds')
         if not math.isfinite(teacher_std_floor) or teacher_std_floor <= 0:
             raise ValueError('Teacher std floor must be positive and finite')
+        if not math.isfinite(mean_output_init_scale) or mean_output_init_scale <= 0:
+            raise ValueError('Mean initialization variance scale must be positive and finite')
         self.teacher_std_floor = float(teacher_std_floor)
         self.target, self.n, self.m, self.batch = target, n, m, batch
         self.temperature = temperature
         # GMM40-only mean initialization override; retain the RL sigma defaults.
         self.actor = Actor(2, tuple(hidden_dims), -5., log_std_max, initial_log_std,
-                           mean_output_init_scale=1.)
+                           mean_output_init_scale=mean_output_init_scale)
         self.key, init = jax.random.split(jax.random.PRNGKey(seed))
         params = self.actor.init(init, jnp.zeros((1,1)), jnp.zeros((1,2)))['params']
         self.state = TrainState.create(apply_fn=self.actor.apply, params=params, tx=optax.adam(3e-4))
