@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=hc-wandb-live
 #SBATCH --partition=dell_cpu
-#SBATCH --qos=big_qos
+#SBATCH --qos=cpu_qos
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
