@@ -24,7 +24,7 @@ BASE_OVERRIDES = [
     'alg.actor.teacher_std_floor=0.006737946999085467',
     'alg.actor.normalize_ot_cost=false', 'alg.actor.entropy_diagnostics=false',
     'alg.optimizer.ac_grad_norm=null', 'alg.behavior_uniform_probability=0.0',
-    'progress_bar=false', 'wandb.project=heejoon-halfcheetah-smem-tr',
+    'progress_bar=false', 'wandb.project=optiq-direct-gmm-trg-vs-smem-tr',
     'wandb.job_type=direct-gmm-vs-smem-tr',
 ]
 
