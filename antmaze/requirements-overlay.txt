@@ -1,0 +1,13 @@
+gymnasium==1.2.3
+gymnasium-robotics==1.4.2
+mujoco==3.3.7
+stable-baselines3==2.7.1
+pettingzoo==1.24.3
+tyro==0.8.14
+docstring-parser==0.16
+shtab==1.7.2
+typeguard==4.4.4
+scikit-learn==1.7.2
+joblib==1.5.1
+threadpoolctl==3.6.0
+ml-collections==1.1.0
