@@ -86,3 +86,17 @@ Do not describe thecap-3 control as a pure cap comparison withinitial-4.75
 runs. Keepmean-init16,teacherfloor.05,randomlatent,batch256,T1,Adam3e-4.
 Use freeGPUs without interrupting prior experiments. Comparefinal100kmu-only
 near,coverage,MMD,massTV; independentlyreevaluate anypassing256x2checkpoint.
+
+256x2 at100k:cap-4/initial-4.75 reached75.70%,40/40;cap-4.5 reached75.19%,40/40.
+Continue these exact checkpoints to a fixed500k budget to test convergence
+with the smaller model. This is a longer-training comparison, not a100k
+reproduction. Keep all learner settings,parameters,Adam state,andRNG state;
+no reset or hyperparameter change. Source100k artifacts stay untouched.
+CLI now accepts exact TRG continuations only when every learner parameter
+matches the saved config; rejectsN/M,seed,width/depth,batch,T,sigma ormean-init
+changes. Evaluation-only schedule extends at50k intervals beyond100k.
+Keep original training source6aee290 in config; record newresume_runner_commit
+andcheckpoint/config hashes. GPU preflight verifies100koptimizerstate and
+bit-identical parameters/optimizer/RNG across a save/restore roundtrip followed
+by another update. SourcealgorithmAST/hashes unchanged. No performance earlystop.
+W&B job_type label is now budget-neutral; steps and names state500k explicitly.

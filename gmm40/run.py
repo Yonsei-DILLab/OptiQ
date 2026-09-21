@@ -13,6 +13,20 @@ from .target import ROOT,RESULTS,Target,initialize_target
 from .evaluation import atomic_json,save_evaluation
 
 
+def validate_trg_resume(args):
+    """An exact continuation keeps every learner setting and checkpoint state."""
+    parent=json.loads((args.resume.parent.parent/'config.json').read_text())
+    expected={k:getattr(args,k) for k in ('method','seed','n','m','batch','width','depth','temperature',
+        'trg_log_std_max','trg_initial_log_std','trg_teacher_std_floor')}
+    expected['mean_output_init_scale']=1. if args.mean_output_init_scale is None else args.mean_output_init_scale
+    for k,v in expected.items():
+        if parent.get(k)!=v:raise ValueError(f'TRG resume {k} must match saved config: {parent.get(k)} != {v}')
+    if parent.get('latent_mode')!='random' or parent.get('density_beta')!=1. or parent.get('actor_learning_rate')!=3e-4:
+        raise ValueError('Unsupported TRG checkpoint protocol')
+    if args.steps<=parent['steps']:raise ValueError('Continuation budget must exceed the original budget')
+    return parent
+
+
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--method",choices=["optiq","optiq_trg","sac","dipo","meow","mfpo","sql"],required=True)
@@ -54,8 +68,8 @@ def main():
     parser.add_argument("--sql-target-update-interval",type=int,default=1000)
     args=parser.parse_args()
     if (args.trg_log_std_max, args.trg_initial_log_std, args.trg_teacher_std_floor) != (-1., -1., math.exp(-5)) and (
-            args.method != 'optiq_trg' or args.navigation or args.resume):
-        raise ValueError('TRG sigma overrides require a fresh fixed-Q optiq_trg run')
+            args.method != 'optiq_trg' or args.navigation):
+        raise ValueError('TRG sigma overrides require fixed-Q optiq_trg; resume settings must match')
     if args.method == 'optiq_trg' and not (
             math.isfinite(args.trg_log_std_max) and math.isfinite(args.trg_initial_log_std)
             and -5. < args.trg_log_std_max and -5. <= args.trg_initial_log_std <= args.trg_log_std_max):
@@ -74,7 +88,7 @@ def main():
             args.nll_top_k is not None or args.nll_plan_threshold is not None):
         raise ValueError('sigma_row_balance requires fixed-Q OptiQ with the original full-row NLL')
     explicit_actor_hparams = args.mean_output_init_scale is not None
-    if explicit_actor_hparams and (args.method not in ('optiq','optiq_trg') or args.navigation or args.resume):
+    if explicit_actor_hparams and (args.method not in ('optiq','optiq_trg') or args.navigation or (args.resume and args.method!='optiq_trg')):
         raise ValueError('Actor initialization override currently requires a fresh fixed-Q OptiQ run')
     if args.temperature is None:
         args.temperature=.25 if args.navigation and args.method=='optiq' else 1.0
@@ -105,6 +119,7 @@ def main():
             raise ValueError('Resume device count must match the saved run')
         if parent_config.get('sigma_row_balance',False)!=args.sigma_row_balance:
             raise ValueError('Resume sigma row balancing must match the saved run')
+    resume_parent=validate_trg_resume(args) if args.resume and args.method=='optiq_trg' else None
     folder=RESULTS/args.name
     folder.mkdir(parents=True,exist_ok=False)
     (folder/"checkpoints").mkdir()
@@ -122,6 +137,12 @@ def main():
                       loss='direct marginal box-truncated Gaussian mixture NLL',
                       implementation='analysis_tools/experiments/20260920_truncated_mll/optiq_dime')
     config.update(source_git_commit=os.getenv('GMM40_SOURCE_COMMIT'),campaign=os.getenv('GMM40_CAMPAIGN'))
+    if resume_parent:
+        config.update(source_git_commit=resume_parent['source_git_commit'],
+            resume_runner_commit=os.getenv('GMM40_RUNNER_COMMIT'),
+            resume_parent_budget=resume_parent['steps'],
+            resume_checkpoint_sha256=hashlib.sha256(args.resume.read_bytes()).hexdigest(),
+            resume_parent_config_sha256=hashlib.sha256((args.resume.parent.parent/'config.json').read_bytes()).hexdigest())
     if args.method=='sql':
         from .sql import metadata
         config.update(metadata(args))
@@ -191,6 +212,7 @@ def main():
             parent_status=args.resume.parent.parent/"status.json"
             if parent_status.exists(): training_seconds=json.loads(parent_status.read_text()).get("train_seconds",0.)
         schedule=[100,500,1000,2500,5000]+list(range(10000,100001,10000))
+        if args.steps>100000:schedule+=list(range(150000,args.steps+1,50000))
         checkpoints=sorted(set([step]+[s for s in schedule if step<s<=args.steps]+[args.steps]))
         for goal in checkpoints:
             while step<goal:
