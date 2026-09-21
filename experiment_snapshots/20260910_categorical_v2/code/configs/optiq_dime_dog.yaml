@@ -1,0 +1,29 @@
+# @package _global_
+defaults:
+  - alg: optiq_dime
+  - setup
+  - _self_
+
+seed: 0
+use_jit: true
+total_steps: 1000000
+task: run
+env_name: dm_control/dog-${task}
+
+# Evaluation follows the supplied OptiQ protocol rather than DIME's old callback cadence.
+eval_interval: 5000
+num_eval_episodes: 10
+eval_at_start: true
+stochastic_eval: true
+
+checkpoint_interval: 0
+output_root: outputs/optiq_dime_dog
+run_name: optiq_dime_dog_${task}_seed${seed}_N16R5_argmax_1m
+
+wandb:
+  entity: online-optiflow
+  project: optiq_dime_dog_n16r5_anchor_t025_2seed_1m
+  group: dog-${task}_optiq-dime
+  job_type: seed-${seed}
+  mode: online
+  activate: true

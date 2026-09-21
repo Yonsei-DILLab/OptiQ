@@ -1,0 +1,4 @@
+# @package _global_
+env_name: HalfCheetah-v4
+task: halfcheetah
+successful_steps: null

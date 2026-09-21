@@ -1,0 +1,8 @@
+{
+  "reason": "Full GMM algorithm module had newer critic imports; retain base critic and transplant only exact GMM update_actor method and GaussianKDE import",
+  "failed_jobs": [
+    2203599,
+    2203600
+  ],
+  "training_started": false
+}

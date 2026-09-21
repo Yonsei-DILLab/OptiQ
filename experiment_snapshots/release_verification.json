@@ -1,0 +1,14 @@
+{
+  "active_source_files_verified": 83,
+  "verified_against": "20260911_batch1_v1/source_hashes.json",
+  "excluded_os_metadata": [
+    "analysis_boltzmann/._frozen.py",
+    "analysis_boltzmann/.___init__.py",
+    "analysis_boltzmann/._problems.py",
+    "analysis_boltzmann/._shared.py",
+    "analysis_boltzmann/._movecar.py"
+  ],
+  "python_files_parsed": 318,
+  "errors": [],
+  "whitespace_note": "Existing trailing whitespace and EOF blank lines in archived source are deliberately preserved for source-hash fidelity."
+}

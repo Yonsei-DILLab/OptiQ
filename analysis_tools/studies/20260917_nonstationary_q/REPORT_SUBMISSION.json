@@ -1,0 +1,13 @@
+{
+  "job_id": "2274033",
+  "command": [
+    "sbatch",
+    "--parsable",
+    "--partition=dell_cpu",
+    "--qos=cpu_qos",
+    "--dependency=afterany:2273898",
+    "--output=/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/logs/report-%j.out",
+    "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/report.sbatch"
+  ],
+  "output": "/lustre/hobbit9882/OptiQ-nonstationary-q-20260917/report"
+}

@@ -1,0 +1,82 @@
+[
+  {
+    "step": 5001,
+    "variant": "baseline",
+    "mean_action_spread": 0.004128315486013889,
+    "pretanh_mean_variance": 1.7422018117940752e-05,
+    "mean_variance_fraction": 8.484845011480502e-06,
+    "sigma_mean": 0.5060349106788635
+  },
+  {
+    "step": 5001,
+    "variant": "meanOT",
+    "mean_action_spread": 0.004092928022146225,
+    "pretanh_mean_variance": 1.7133355868281797e-05,
+    "mean_variance_fraction": 8.343954732481507e-06,
+    "sigma_mean": 0.5060362368822098
+  },
+  {
+    "step": 50000,
+    "variant": "baseline",
+    "mean_action_spread": 0.019271398428827524,
+    "pretanh_mean_variance": 0.0005070617262390442,
+    "mean_variance_fraction": 0.00015213978258543648,
+    "sigma_mean": 0.6602422744035721
+  },
+  {
+    "step": 50000,
+    "variant": "meanOT",
+    "mean_action_spread": 0.281582847237587,
+    "pretanh_mean_variance": 0.1124842893332243,
+    "mean_variance_fraction": 0.03297653794288635,
+    "sigma_mean": 0.6498365998268127
+  },
+  {
+    "step": 100000,
+    "variant": "baseline",
+    "mean_action_spread": 0.021086880937218666,
+    "pretanh_mean_variance": 0.0006013922102283686,
+    "mean_variance_fraction": 0.00017189655045513064,
+    "sigma_mean": 0.6744590550661087
+  },
+  {
+    "step": 100000,
+    "variant": "meanOT",
+    "mean_action_spread": 0.23540766909718513,
+    "pretanh_mean_variance": 0.08354797959327698,
+    "mean_variance_fraction": 0.02344843721948564,
+    "sigma_mean": 0.6593683362007141
+  },
+  {
+    "step": 250000,
+    "variant": "baseline",
+    "mean_action_spread": 0.02069624327123165,
+    "pretanh_mean_variance": 0.0006237536726985127,
+    "mean_variance_fraction": 0.00018539988377597183,
+    "sigma_mean": 0.6654548346996307
+  },
+  {
+    "step": 250000,
+    "variant": "meanOT",
+    "mean_action_spread": 0.31380176544189453,
+    "pretanh_mean_variance": 0.16976526007056236,
+    "mean_variance_fraction": 0.04574325121939182,
+    "sigma_mean": 0.6577954590320587
+  },
+  {
+    "step": 1000000,
+    "variant": "baseline",
+    "mean_action_spread": 0.024531119503080845,
+    "pretanh_mean_variance": 0.0012904749892186373,
+    "mean_variance_fraction": 0.00019869889001711272,
+    "sigma_mean": 0.9175175130367279
+  },
+  {
+    "step": 1000000,
+    "variant": "meanOT",
+    "mean_action_spread": 0.030461706221103668,
+    "pretanh_mean_variance": 0.0021941459854133427,
+    "mean_variance_fraction": 0.00032065635605249554,
+    "sigma_mean": 0.9440470784902573
+  }
+]

@@ -1,0 +1,17 @@
+# Reach-hard and object-hold-hard, seeds 0,1,2: six runs across four GPUs.
+# Install into /etc/supervisor/conf.d after reviewing paths and GPU allocation.
+[program:optiq-no-anchor]
+numprocs=4
+process_name=%(program_name)s-%(process_num)s
+directory=/workspace/OptiQ-critic-dime-no-anchor
+command=/workspace/OptiQ-critic-dime-no-anchor/scripts/supervisor_no_anchor_worker.sh --benchmarks reach_hard,obj_hold_hard --worker %(process_num)s 4
+environment=CUDA_VISIBLE_DEVICES="%(process_num)s",OPTIQ_PYTHON="/workspace/.venv-optiq-no-anchor/bin/python",PROC_NAME="%(program_name)s-%(process_num)s"
+autostart=false
+autorestart=false
+stopsignal=INT
+stopasgroup=true
+killasgroup=true
+stopwaitsecs=60
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+redirect_stderr=true

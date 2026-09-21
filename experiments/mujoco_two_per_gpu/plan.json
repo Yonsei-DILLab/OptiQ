@@ -1,0 +1,129 @@
+{
+  "server": "heejoonorm@31.148.50.247:11717",
+  "base": "/home/heejoonorm/OptiQ/legacy_monge",
+  "python": "/home/heejoonorm/.venvs/optiq-monge/bin/python",
+  "roots": {
+    "v1": "explorer_v1/9b26ade65509",
+    "v2": "explorer_v2/947ad432be67",
+    "v3": "explorer_v3/46459857236a",
+    "v4": "explorer_v4/1786b85c5a6d"
+  },
+  "numerical_commits": {
+    "v1": "9b26ade655097728e12aa63f8c274fe2350729f1",
+    "v2": "947ad432be6719654feef20c94f09018faf7100e",
+    "v3": "46459857236aeac39d0c25a22485198f4a376200",
+    "v4": "1786b85c5a6d2c6250b6c8823714d09b2a151062"
+  },
+  "gpus": {
+    "ant": 0,
+    "humanoid": 1,
+    "halfcheetah": 2
+  },
+  "cpus": {
+    "ant": [
+      [
+        0,
+        1
+      ],
+      [
+        10,
+        11
+      ]
+    ],
+    "humanoid": [
+      [
+        2,
+        3
+      ],
+      [
+        12,
+        13
+      ]
+    ],
+    "halfcheetah": [
+      [
+        4,
+        5
+      ],
+      [
+        14,
+        15
+      ]
+    ]
+  },
+  "order": [
+    [
+      "v2",
+      0
+    ],
+    [
+      "v2",
+      1
+    ],
+    [
+      "v2",
+      2
+    ],
+    [
+      "v2",
+      3
+    ],
+    [
+      "v3",
+      0
+    ],
+    [
+      "v3",
+      1
+    ],
+    [
+      "v3",
+      2
+    ],
+    [
+      "v3",
+      3
+    ],
+    [
+      "v4",
+      0
+    ],
+    [
+      "v4",
+      1
+    ],
+    [
+      "v4",
+      2
+    ],
+    [
+      "v4",
+      3
+    ],
+    [
+      "v1",
+      0
+    ],
+    [
+      "v1",
+      1
+    ],
+    [
+      "v1",
+      2
+    ],
+    [
+      "v1",
+      3
+    ]
+  ],
+  "max_runs_per_gpu": 2,
+  "preserve_gpu": 3,
+  "wandb_project": "OptiQ/legacy_explorer",
+  "poll_seconds": 10,
+  "tmux_prefix": "mujoco-v1234",
+  "online_healthcheck_versions": [
+    "v3",
+    "v4"
+  ]
+}

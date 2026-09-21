@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "conditions": 3,
+  "training_seeds": 4,
+  "all_initial_evaluations_identical": true,
+  "verified_input_files": 12,
+  "input_hashes": {
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed1/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/checkpoints/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/actor_state_1000000.msgpack": "aa1dc6c7525b627899c67c4dc230aa2e29eade783e7c91490c3e796e2310839c",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed1/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/checkpoints/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/critic_state_1000000.msgpack": "b8592c3973266073a6a18fde615f63da233719b7d5c445b8dfc9677d9b197018",
+    "/root/anal/v5_residual_cause_20260913/frozen_actor_tracking/data_seed1.npz": "6c87b0a55e0d704ed92bc97fa31dc1fa5b66a1c4aeeae5c6c86d5f29b6f239ea",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed0/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/checkpoints/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/actor_state_1000000.msgpack": "564f65e3303da6d068a22c1074473e5550ff42702ab25f6c71804b7b6f8afc07",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed0/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/checkpoints/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/critic_state_1000000.msgpack": "0325fb6f32f5f32a14b4c867d4b4863376acf1e72f6dec2a479ac961e82aa611",
+    "/root/anal/v5_residual_cause_20260913/frozen_actor_tracking/data_seed0.npz": "b2ce52ebe27c58e4f4b3461794313de92ca19267e34f96ccdbdd4d9454505a8e",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed3/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/checkpoints/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/actor_state_1000000.msgpack": "88f86dfffc4441f8780f53bd8079e25668d2a7ed40cc7677db052a176273d32e",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed3/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/checkpoints/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/critic_state_1000000.msgpack": "661bcac9b19175b2f075c148d452e21ab96ca8c1bdbc254d055b0663869af5d1",
+    "/root/anal/v5_residual_cause_20260913/frozen_actor_tracking/data_seed3.npz": "2c40ea2ed8e62a4c401218be7ea78e956426d302078e5b78972a600f3ff8da5d",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed2/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/checkpoints/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/actor_state_1000000.msgpack": "9b9fd120cf60831deb2004d74bd330eebcaad02e4b0d0809690e4e4531867fa4",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed2/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/checkpoints/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/critic_state_1000000.msgpack": "16948faf0baffc32a5ca1da1cc6211d1dcbe174df611388172908d46d95f671e",
+    "/root/anal/v5_residual_cause_20260913/frozen_actor_tracking/data_seed2.npz": "b26dd6e2ae46b38995656ea00593612529844eaaf51b6af691e8c3dae47c8e64"
+  },
+  "original_updates": 0,
+  "memory_actor_updates": 6000,
+  "scope": "Fixed learned critic, trajectory-derived state data and fresh Adam shared across three diagnostic objectives. Evaluation semantics are epsilon0 zero-z/sampledz; batched actor_apply/NumPy tanh and normalized Ant actions, mathematically same modes but not bitwise source B1/SB3 inference."
+}

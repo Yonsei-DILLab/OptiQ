@@ -1,0 +1,15 @@
+# @package _global_
+defaults:
+  - mujoco_setting
+  - _self_
+
+# Keep remote mujoco-setting defaults; only collection exploration changes.
+alg:
+  behavior_uniform_probability: 0.1
+
+run_name: ${task}-behavior010-s${seed}
+output_root: outputs/optiq_mujoco_humanoid_behavior010
+wandb:
+  entity: OptiQ
+  project: optiq_mujoco_scalar_h256x3_anchor_gradnorm2_behavior010_4seed_1m
+  group: ${env_name}_h256x3_anchor_stratified_T025_beta1_gradnorm2_behavior010_w5000

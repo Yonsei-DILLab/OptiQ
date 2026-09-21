@@ -1,0 +1,20 @@
+# @package _global_
+defaults:
+  - optiq_dime_no_anchor
+  - override /alg: optiq_scalar_no_anchor
+  - override /benchmark: humanoid
+  - _self_
+
+alg:
+  optimizer:
+    # DIPO-style actor/critic parameter-gradient L2 clipping, before Adam.
+    ac_grad_norm: 2.0
+  actor:
+    # 16 centers x (4 random candidates + 1 anchor) = 80 OT targets.
+    num_policy_samples: 16
+    proposals_per_policy_sample: 5
+    include_anchor: true
+
+output_root: outputs/optiq_mujoco_scalar_no_anchor
+wandb:
+  project: ${oc.env:WANDB_PROJECT,optiq_mujoco_scalar_no_anchor}

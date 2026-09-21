@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "input_hashes": {
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed0/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/checkpoints/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/actor_state_1000000.msgpack": "564f65e3303da6d068a22c1074473e5550ff42702ab25f6c71804b7b6f8afc07",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed0/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/checkpoints/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/critic_state_1000000.msgpack": "0325fb6f32f5f32a14b4c867d4b4863376acf1e72f6dec2a479ac961e82aa611",
+    "/root/anal/v5_residual_cause_20260913/counterfactual/actions_s0_n1000000.npz": "1e2b97fab60cd73842beae240cc16ba15778ae6858c8b58349265a576c5d8fa4",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed1/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/checkpoints/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/actor_state_1000000.msgpack": "aa1dc6c7525b627899c67c4dc230aa2e29eade783e7c91490c3e796e2310839c",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed1/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/checkpoints/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/critic_state_1000000.msgpack": "b8592c3973266073a6a18fde615f63da233719b7d5c445b8dfc9677d9b197018",
+    "/root/anal/v5_residual_cause_20260913/counterfactual/actions_s1_n1000000.npz": "75829ed53b05bf3b3d97ae077137bb55b38e67feac913eff85c6d6b1b9248b77",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed2/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/checkpoints/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/actor_state_1000000.msgpack": "9b9fd120cf60831deb2004d74bd330eebcaad02e4b0d0809690e4e4531867fa4",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed2/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/checkpoints/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/critic_state_1000000.msgpack": "16948faf0baffc32a5ca1da1cc6211d1dcbe174df611388172908d46d95f671e",
+    "/root/anal/v5_residual_cause_20260913/counterfactual/actions_s2_n1000000.npz": "02f85dfb1deb9a7d05a861c6045d756a46db8f0c06da70feae783c10cd487f31",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed3/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/checkpoints/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/actor_state_1000000.msgpack": "88f86dfffc4441f8780f53bd8079e25668d2a7ed40cc7677db052a176273d32e",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed3/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/checkpoints/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/critic_state_1000000.msgpack": "661bcac9b19175b2f075c148d452e21ab96ca8c1bdbc254d055b0663869af5d1",
+    "/root/anal/v5_residual_cause_20260913/counterfactual/actions_s3_n1000000.npz": "e758a6b11be551e59b576c6293e11ff1678da4d1fb22019eae38857962b85bb9"
+  },
+  "environment_evaluation_steps": 1084277,
+  "original_actor_updates": 0,
+  "critic_updates": 0,
+  "states": 16,
+  "scope": "Finite horizon deterministic zero-z epsilon0 value for individual actions. Different value function from noisy continuation critic. Numerical policy uses source B1 and SB3 unscale. Near-identical first actions can give different long trajectories; not proof of noisy-critic approximation error or the original learning-gap cause."
+}

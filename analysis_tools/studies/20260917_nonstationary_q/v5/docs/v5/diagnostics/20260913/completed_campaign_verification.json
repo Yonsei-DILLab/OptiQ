@@ -1,0 +1,96 @@
+{
+  "passed": true,
+  "jobs": 16,
+  "eval_rows_per_mode_per_job": 201,
+  "input_hashes": {
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/state.json": "eb6fb29643c32897393b9ab26e896985f472d3b1ea15ab79bde1c47ec9154f4a",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed0/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/eval/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/evaluations_zero_z.npz": "8ae8f3a0382c356132f34b439fe6c0c8ab254c1a973d3bd0320c3820123b8663",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed0/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/eval/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/evaluations_stochastic_z.npz": "65f7d02584e7db5cac808219b99cdadd11414b46a2d22e3b9fae412fcddf3832",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed0/ant-v4-256x2-meanOT-T0.25-s0_20260913T010637Z_197e3bcf/logs/progress.csv": "3c494d0ffb03a6ce42976c03a254eb184d4e201637be5ed3261d8f49e5e3ad71",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed1/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/eval/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/evaluations_zero_z.npz": "06a766dd62bbe16e4221f26b64ff0416f73995005165f9c717fb1af13a36f0b6",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed1/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/eval/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/evaluations_stochastic_z.npz": "45933b5114f4652013a48c61cefeea09e2b7d4745b52733ba800d9e6c4687637",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed1/ant-v4-256x2-meanOT-T0.25-s1_20260913T010636Z_77e94099/logs/progress.csv": "8008aa960dae6fd5c8d65bf44aa87f2778b1b7f49adfaaefcefb90db3fca8c98",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed2/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/eval/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/evaluations_zero_z.npz": "b142564305e2b08ca57296714b21fa6bc36323a014dbde5d7abea3435b22af18",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed2/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/eval/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/evaluations_stochastic_z.npz": "3938ff629a377a993645563ea120c06b386996f869b28a5639057357805b803f",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed2/ant-v4-256x2-meanOT-T0.25-s2_20260913T010637Z_83aa8da5/logs/progress.csv": "4a07a964d8bf354d987f8a36cbccc373bd965decba33a0eec56ce0a656bdd5bf",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed3/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/eval/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/evaluations_zero_z.npz": "64dbc7639bba26c7b67ed3191b7115224e2a2c7647102648326b31c18378142f",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed3/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/eval/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/evaluations_stochastic_z.npz": "2e9972e6716aaab87175d0184e9a9cc4527c12f76e60760db3794a5cf2128f78",
+    "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed3/ant-v4-256x2-meanOT-T0.25-s3_20260913T010636Z_a13f6af5/logs/progress.csv": "ceaac9c9a1b7cbd58140bee0ea6f635a6cf4dbf3e3c5fbd0505a6222a3f13d79",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/state.json": "1a879c54efee420d745f3606ecfa3186be7dd9ac25b8fa4ee31b3a76e9a6a399",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_fixedT025_seed0/ant-v5-meanOT-256x2-uniform010_fixedT025-s0_20260913T050223Z_c960269b/eval/ant-v5-meanOT-256x2-uniform010_fixedT025-s0_20260913T050223Z_c960269b/evaluations_zero_z.npz": "9590731822b5cecc44c94bc3dd8213dddf2ded81885d8176ef70a9fb009ef0d4",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_fixedT025_seed0/ant-v5-meanOT-256x2-uniform010_fixedT025-s0_20260913T050223Z_c960269b/eval/ant-v5-meanOT-256x2-uniform010_fixedT025-s0_20260913T050223Z_c960269b/evaluations_stochastic_z.npz": "60c0cf24d2ae1bacd7631d586edf34d219672521fe996c811bc9853522bb0bfd",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_fixedT025_seed0/ant-v5-meanOT-256x2-uniform010_fixedT025-s0_20260913T050223Z_c960269b/logs/progress.csv": "97f8bf32682fa2cd7b5d141cfba9abea6ee725fb5aa8e25b6b6e11bd7adf084c",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_fixedT025_seed1/ant-v5-meanOT-256x2-uniform010_fixedT025-s1_20260913T050223Z_ef1a3152/eval/ant-v5-meanOT-256x2-uniform010_fixedT025-s1_20260913T050223Z_ef1a3152/evaluations_zero_z.npz": "9b18682f1178a4c559ebee2eb251833a003ba91140672cac350dc1e02022d891",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_fixedT025_seed1/ant-v5-meanOT-256x2-uniform010_fixedT025-s1_20260913T050223Z_ef1a3152/eval/ant-v5-meanOT-256x2-uniform010_fixedT025-s1_20260913T050223Z_ef1a3152/evaluations_stochastic_z.npz": "a53a1fb807443962d3292e6696ee20d1880c88bf887ed3690fe429dce63b6db8",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_fixedT025_seed1/ant-v5-meanOT-256x2-uniform010_fixedT025-s1_20260913T050223Z_ef1a3152/logs/progress.csv": "68baa3138968e45226b879934238b7818175c9dcd0b2038fa16f918b344ee578",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_fixedT025_seed2/ant-v5-meanOT-256x2-uniform010_fixedT025-s2_20260913T050222Z_84d500ec/eval/ant-v5-meanOT-256x2-uniform010_fixedT025-s2_20260913T050222Z_84d500ec/evaluations_zero_z.npz": "eeb4f3ab296c625b06c29f54baf6486d7cc1709035509cc4e0f8f2f90ee47da8",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_fixedT025_seed2/ant-v5-meanOT-256x2-uniform010_fixedT025-s2_20260913T050222Z_84d500ec/eval/ant-v5-meanOT-256x2-uniform010_fixedT025-s2_20260913T050222Z_84d500ec/evaluations_stochastic_z.npz": "262cce3ef85648483d3cea5626aed221ec8feb469ae6462cade48fa1835fb6e1",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_fixedT025_seed2/ant-v5-meanOT-256x2-uniform010_fixedT025-s2_20260913T050222Z_84d500ec/logs/progress.csv": "38a140a3e531b3971a0239666621d086424594dbba9e49c5ffb4a791409417ab",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_fixedT025_seed3/ant-v5-meanOT-256x2-uniform010_fixedT025-s3_20260913T050223Z_1e687bce/eval/ant-v5-meanOT-256x2-uniform010_fixedT025-s3_20260913T050223Z_1e687bce/evaluations_zero_z.npz": "3ec54c53b31025f025c4041f7149317b82c8b1effa8ea1b87a0c1f9a40f2357a",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_fixedT025_seed3/ant-v5-meanOT-256x2-uniform010_fixedT025-s3_20260913T050223Z_1e687bce/eval/ant-v5-meanOT-256x2-uniform010_fixedT025-s3_20260913T050223Z_1e687bce/evaluations_stochastic_z.npz": "d0684cd1a1485897b738389f9748fd961a62a3e2ca78d66b5a73b452fb38b54b",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_fixedT025_seed3/ant-v5-meanOT-256x2-uniform010_fixedT025-s3_20260913T050223Z_1e687bce/logs/progress.csv": "0f0237b167f4580da148b3e6513dd490bac15a88c4a69565ae502bf082a304b3",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform000_anneal40k_seed0/ant-v5-meanOT-256x2-uniform000_anneal40k-s0_20260913T073640Z_32b8c845/eval/ant-v5-meanOT-256x2-uniform000_anneal40k-s0_20260913T073640Z_32b8c845/evaluations_zero_z.npz": "359bab9b3884c96524cbfc8ace72dab3653fd6ca9d5a394f9180f713be0f73a4",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform000_anneal40k_seed0/ant-v5-meanOT-256x2-uniform000_anneal40k-s0_20260913T073640Z_32b8c845/eval/ant-v5-meanOT-256x2-uniform000_anneal40k-s0_20260913T073640Z_32b8c845/evaluations_stochastic_z.npz": "7f6bbe7e406d25197f185604eec5f654e92feac10eda581e563e0798430e1e9d",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform000_anneal40k_seed0/ant-v5-meanOT-256x2-uniform000_anneal40k-s0_20260913T073640Z_32b8c845/logs/progress.csv": "37abef5cd080063a09c1c7a7623556754fe29cffeabf59cbe3a1c2ec39c03343",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform000_anneal40k_seed1/ant-v5-meanOT-256x2-uniform000_anneal40k-s1_20260913T073640Z_b3be09bd/eval/ant-v5-meanOT-256x2-uniform000_anneal40k-s1_20260913T073640Z_b3be09bd/evaluations_zero_z.npz": "de765264768bdd814becd13f4344723db73128ad81ad82ea48872b899d1ceea5",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform000_anneal40k_seed1/ant-v5-meanOT-256x2-uniform000_anneal40k-s1_20260913T073640Z_b3be09bd/eval/ant-v5-meanOT-256x2-uniform000_anneal40k-s1_20260913T073640Z_b3be09bd/evaluations_stochastic_z.npz": "07d27788234968e1113e9ad1fd2b33bda4151a8e8c14d13fdb63d4273b6837bb",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform000_anneal40k_seed1/ant-v5-meanOT-256x2-uniform000_anneal40k-s1_20260913T073640Z_b3be09bd/logs/progress.csv": "06921ffe25b54f2f0445ed8babb355704f9818d8cc2128c709b42c5bd7f9a5e0",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform000_anneal40k_seed2/ant-v5-meanOT-256x2-uniform000_anneal40k-s2_20260913T073640Z_75c4f2c9/eval/ant-v5-meanOT-256x2-uniform000_anneal40k-s2_20260913T073640Z_75c4f2c9/evaluations_zero_z.npz": "846355eb682495ba4cb6d88fc24e6f8fa6ca79d0b3fa4186e2423fc013150049",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform000_anneal40k_seed2/ant-v5-meanOT-256x2-uniform000_anneal40k-s2_20260913T073640Z_75c4f2c9/eval/ant-v5-meanOT-256x2-uniform000_anneal40k-s2_20260913T073640Z_75c4f2c9/evaluations_stochastic_z.npz": "993a5135a692a8a91320a775749f805bbf143e5f18a88674da3b3f7e067334b6",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform000_anneal40k_seed2/ant-v5-meanOT-256x2-uniform000_anneal40k-s2_20260913T073640Z_75c4f2c9/logs/progress.csv": "738e4aaf1093051d8bd9105cd7f9865948369959ef808a21563855c2f8ebcde6",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform000_anneal40k_seed3/ant-v5-meanOT-256x2-uniform000_anneal40k-s3_20260913T073639Z_25688f8b/eval/ant-v5-meanOT-256x2-uniform000_anneal40k-s3_20260913T073639Z_25688f8b/evaluations_zero_z.npz": "2cea93cbac0f51835d80322dbfbbb1c5e1aa01d3288a1cdd73040968e1245b52",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform000_anneal40k_seed3/ant-v5-meanOT-256x2-uniform000_anneal40k-s3_20260913T073639Z_25688f8b/eval/ant-v5-meanOT-256x2-uniform000_anneal40k-s3_20260913T073639Z_25688f8b/evaluations_stochastic_z.npz": "6ec5cc9909b64d9fe4e1bc0872164327cb415bd7eddb796f67f1d159a32b6570",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform000_anneal40k_seed3/ant-v5-meanOT-256x2-uniform000_anneal40k-s3_20260913T073639Z_25688f8b/logs/progress.csv": "cdfe07833059e3f8903638b3c56407a554da6ad1103f29baed72b537e53ac923",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_anneal40k_seed0/ant-v5-meanOT-256x2-uniform010_anneal40k-s0_20260913T100957Z_b1be86d8/eval/ant-v5-meanOT-256x2-uniform010_anneal40k-s0_20260913T100957Z_b1be86d8/evaluations_zero_z.npz": "4654bd3c467b12db76d9d24c558a6d1a52f263627fb2ea1b4998c5ff470ffaa8",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_anneal40k_seed0/ant-v5-meanOT-256x2-uniform010_anneal40k-s0_20260913T100957Z_b1be86d8/eval/ant-v5-meanOT-256x2-uniform010_anneal40k-s0_20260913T100957Z_b1be86d8/evaluations_stochastic_z.npz": "52b58b8cb8faaffea04d34fdbf2157013993c31aeef1efe84e9024e02f4fe1cd",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_anneal40k_seed0/ant-v5-meanOT-256x2-uniform010_anneal40k-s0_20260913T100957Z_b1be86d8/logs/progress.csv": "f2b70d54322fe81c531d3bba3f14b5e1baf61f98f9cae4b4246e61dbe2097261",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_anneal40k_seed1/ant-v5-meanOT-256x2-uniform010_anneal40k-s1_20260913T100957Z_6695d6d9/eval/ant-v5-meanOT-256x2-uniform010_anneal40k-s1_20260913T100957Z_6695d6d9/evaluations_zero_z.npz": "8773e88b40433a9d3e177bc498fe23079094f004b6f4cc59ecff33961ecfe726",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_anneal40k_seed1/ant-v5-meanOT-256x2-uniform010_anneal40k-s1_20260913T100957Z_6695d6d9/eval/ant-v5-meanOT-256x2-uniform010_anneal40k-s1_20260913T100957Z_6695d6d9/evaluations_stochastic_z.npz": "8bb92e553cb92b03358635db810963d41e7345de52fd4e64a26bb51f45fb899e",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_anneal40k_seed1/ant-v5-meanOT-256x2-uniform010_anneal40k-s1_20260913T100957Z_6695d6d9/logs/progress.csv": "9e7f056679d30ba8df810f295fd37dc3249472f139e7fd80ea124e71ea9408b5",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_anneal40k_seed2/ant-v5-meanOT-256x2-uniform010_anneal40k-s2_20260913T100957Z_964539bb/eval/ant-v5-meanOT-256x2-uniform010_anneal40k-s2_20260913T100957Z_964539bb/evaluations_zero_z.npz": "e4142d350c91ecbf298aad44ff6841e661ad4de300ebb694ad2748c8c788b676",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_anneal40k_seed2/ant-v5-meanOT-256x2-uniform010_anneal40k-s2_20260913T100957Z_964539bb/eval/ant-v5-meanOT-256x2-uniform010_anneal40k-s2_20260913T100957Z_964539bb/evaluations_stochastic_z.npz": "b52be4c16baac006baffcd883180360630002070ed6298c3b649d1ed8e21d867",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_anneal40k_seed2/ant-v5-meanOT-256x2-uniform010_anneal40k-s2_20260913T100957Z_964539bb/logs/progress.csv": "afe9df3e5e551b76ddadd1bef3ed96c294929cc22f00b5857be30f54ea6273d1",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_anneal40k_seed3/ant-v5-meanOT-256x2-uniform010_anneal40k-s3_20260913T100957Z_a53d482d/eval/ant-v5-meanOT-256x2-uniform010_anneal40k-s3_20260913T100957Z_a53d482d/evaluations_zero_z.npz": "50fda832549f75ec7306d3fe418f2b5bdfec171fa8b2b944130247346b8a5fd1",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_anneal40k_seed3/ant-v5-meanOT-256x2-uniform010_anneal40k-s3_20260913T100957Z_a53d482d/eval/ant-v5-meanOT-256x2-uniform010_anneal40k-s3_20260913T100957Z_a53d482d/evaluations_stochastic_z.npz": "b0884c98de948211ade05613a55089fb9b2121aeafb49d37c81bbc71c732e6c2",
+    "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_anneal40k_seed3/ant-v5-meanOT-256x2-uniform010_anneal40k-s3_20260913T100957Z_a53d482d/logs/progress.csv": "b82add78369e3263dc28273765dc5d95d0d673a00e50901ec230025554f935f4"
+  },
+  "dependencies_identical": true,
+  "config_differences_base_to_uniform10": [
+    {
+      "key": "alg.actor.ot_student_action",
+      "baseline": null,
+      "uniform10": "mean"
+    },
+    {
+      "key": "alg.behavior_uniform_probability",
+      "baseline": 0.0,
+      "uniform10": 0.1
+    },
+    {
+      "key": "output_root",
+      "baseline": "/root/optiq-experiments/ant_v4_mean_ot_T025_20260912T235059Z/outputs/ant_v4_meanOT_T0.25_seed0",
+      "uniform10": "/root/optiq-experiments/ant_v5_project_grid_20260913T050043Z/outputs/ant_v5_uniform010_fixedT025_seed0"
+    },
+    {
+      "key": "run_name",
+      "baseline": "ant-v4-256x2-meanOT-T0.25-s0",
+      "uniform10": "ant-v5-meanOT-256x2-uniform010_fixedT025-s0"
+    },
+    {
+      "key": "wandb.group",
+      "baseline": "Ant-v4_v4_meanOT_T0.25_256x2_20260912T235059Z",
+      "uniform10": "Ant-v4_v5_meanOT_exploration_256x2_20260913T045032Z_uniform010_fixedT025"
+    },
+    {
+      "key": "wandb.job_type",
+      "baseline": "v4-comparison",
+      "uniform10": "v5-uniform-collection"
+    },
+    {
+      "key": "wandb.project",
+      "baseline": "v4-test",
+      "uniform10": "v5-test"
+    }
+  ],
+  "scope": "Read-only audit of already authorized completed runs, no new training. Baseline source hard-coded mean OT; new source explicit mean switch and optional schedule. Same learner semantics at fixed temperature except behavior uniform probability; source differs in option plumbing. No causal attribution of original v1-v5 gap."
+}

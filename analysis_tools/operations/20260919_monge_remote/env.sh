@@ -1,0 +1,11 @@
+#!/bin/bash
+set -euo pipefail
+STUDY=/home/heejoonorm/OptiQ/legacy_monge
+PY=/home/heejoonorm/.venvs/optiq-monge/bin/python
+export OPTIQ_BASE="$STUDY/base"
+export PYTHONPATH="$STUDY/pilot:$STUDY/base:$STUDY/base/v5"
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
+export JAX_PLATFORMS=cuda XLA_PYTHON_CLIENT_PREALLOCATE=false PYTHONUNBUFFERED=1
+export JAX_DEFAULT_MATMUL_PRECISION=highest
+export POT_BACKEND_DISABLE_PYTORCH=1 POT_BACKEND_DISABLE_TENSORFLOW=1 POT_BACKEND_DISABLE_CUPY=1
+unset LD_LIBRARY_PATH

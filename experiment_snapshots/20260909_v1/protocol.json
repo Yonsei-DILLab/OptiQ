@@ -1,0 +1,66 @@
+{
+  "base_commit": "7e2da67d2f0988f6f211b635f7311d32a0c8e8c6",
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19
+  ],
+  "pilot_seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "temperature": 0.25,
+  "max_concurrent_gpu_jobs": 2,
+  "frozen_updates": 20000,
+  "movecar_steps": 1000000,
+  "default_preserved": true,
+  "control_is_modified_algorithm": true,
+  "python": "/scratch2/hobbit9882/.venvs/optiq-mujoco-scalar/bin/python",
+  "source_root": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/code",
+  "control_numeric_revision": {
+    "reason": "Original float32 grid check is numerically unreliable and some 257-point grids also fail in float64.",
+    "training_grid": 2056,
+    "training_matmul_precision": "highest",
+    "reference_dtype": "float64",
+    "reference_tolerance": 0.0001,
+    "consecutive_refinements": 2,
+    "gate_tolerance": 0.001,
+    "rerun_all_control_seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "preserve_other_results": true
+  },
+  "active_analysis_seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "expansion_enabled": false,
+  "scope_change_reason": "User requested five-seed analysis instead of continuing twenty-seed expansion"
+}

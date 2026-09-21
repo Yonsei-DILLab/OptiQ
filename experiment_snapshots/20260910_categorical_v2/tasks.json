@@ -1,0 +1,482 @@
+[
+  {
+    "case": "modes2d_8",
+    "seed": 0,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_8_default_seed0/actor_0.msgpack",
+    "initial_sha256": "ef4113a928b6d8cf0cce7762a66f0182c462947c5ff336c5c850e4a6e183562c",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_8_default_seed0"
+  },
+  {
+    "case": "modes2d_8",
+    "seed": 0,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_8_coverage_seed0/actor_0.msgpack",
+    "initial_sha256": "fbcc388f25d213b295cb4a24620e588e3060b6324d4e67464ac0aef866804f93",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_8_coverage_seed0"
+  },
+  {
+    "case": "modes2d_8",
+    "seed": 1,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_8_default_seed1/actor_0.msgpack",
+    "initial_sha256": "14766fc7ce8507bc6b24d9a93801253e06ea314a106933d5eeb89a3c6cf0d2c3",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_8_default_seed1"
+  },
+  {
+    "case": "modes2d_8",
+    "seed": 1,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_8_coverage_seed1/actor_0.msgpack",
+    "initial_sha256": "6ba6c9a824f6bf8ec366b1c9e4cd81fe2787ee0fc669fa5d8e8c4f878b0b2e52",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_8_coverage_seed1"
+  },
+  {
+    "case": "modes2d_8",
+    "seed": 2,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_8_default_seed2/actor_0.msgpack",
+    "initial_sha256": "b5780b531d9d72f31b1968acbd3f908a5e57d0257c4262f5c05d2bca5cc65ae7",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_8_default_seed2"
+  },
+  {
+    "case": "modes2d_8",
+    "seed": 2,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_8_coverage_seed2/actor_0.msgpack",
+    "initial_sha256": "6d27cc427f21db5107321b6f71b4078295a1b63d8b003dd33cb664d0d55849ce",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_8_coverage_seed2"
+  },
+  {
+    "case": "modes2d_8",
+    "seed": 3,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_8_default_seed3/actor_0.msgpack",
+    "initial_sha256": "5736d2e6b7366023334a5b29de0d50c0af87515cd980946e22d8f7873be1cf46",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_8_default_seed3"
+  },
+  {
+    "case": "modes2d_8",
+    "seed": 3,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_8_coverage_seed3/actor_0.msgpack",
+    "initial_sha256": "cd74291d00f0718a19b84b5d6ea005a2761d4244d7e7033b1d3d04d183627c41",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_8_coverage_seed3"
+  },
+  {
+    "case": "modes2d_8",
+    "seed": 4,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_8_default_seed4/actor_0.msgpack",
+    "initial_sha256": "b3a871b415cd5f59f48b66c615aa2c9a18a16b3ede79af6ca5d6317b682107b0",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_8_default_seed4"
+  },
+  {
+    "case": "modes2d_8",
+    "seed": 4,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_8_coverage_seed4/actor_0.msgpack",
+    "initial_sha256": "4a95b638f17fdb319187d4357da829634500fc5027a2e9b4befd845278b6b57a",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_8_coverage_seed4"
+  },
+  {
+    "case": "separable_8",
+    "seed": 0,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_8_default_seed0/actor_0.msgpack",
+    "initial_sha256": "e59e8e53335fbd08849c927a2e975d15bace6e8d6b59b80026931aa46433b30a",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_8_default_seed0"
+  },
+  {
+    "case": "separable_8",
+    "seed": 0,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_8_coverage_seed0/actor_0.msgpack",
+    "initial_sha256": "922269b70215c512f61adf23d414f56acc9a4ac604575998f451eff53226e6f2",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_8_coverage_seed0"
+  },
+  {
+    "case": "separable_8",
+    "seed": 1,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_8_default_seed1/actor_0.msgpack",
+    "initial_sha256": "028a06d6d4620d102c93176c49c1601c8e6af5b19d96b1036ba50e68d6b11c6f",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_8_default_seed1"
+  },
+  {
+    "case": "separable_8",
+    "seed": 1,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_8_coverage_seed1/actor_0.msgpack",
+    "initial_sha256": "aad0e45f6f203fde57811e8975dd720d8bc56ee776fa11a0894784f8ff94e5ae",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_8_coverage_seed1"
+  },
+  {
+    "case": "separable_8",
+    "seed": 2,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_8_default_seed2/actor_0.msgpack",
+    "initial_sha256": "5483c3946fc6d2ac2f086030dd3a560cf059126a83ae2918ea7e6f023aa7ca78",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_8_default_seed2"
+  },
+  {
+    "case": "separable_8",
+    "seed": 2,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_8_coverage_seed2/actor_0.msgpack",
+    "initial_sha256": "a19576d1e8c0457f3d3e7f78dbf5d58107f6b409c1d295e0a61ac9ac1490881b",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_8_coverage_seed2"
+  },
+  {
+    "case": "separable_8",
+    "seed": 3,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_8_default_seed3/actor_0.msgpack",
+    "initial_sha256": "4b046d94d09b93af7a3b5ab7c192ee60ef40f6a4e6da41e49380771ac2964e2e",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_8_default_seed3"
+  },
+  {
+    "case": "separable_8",
+    "seed": 3,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_8_coverage_seed3/actor_0.msgpack",
+    "initial_sha256": "3f5eb6b6c35827733e26624d9f9575c389ad6112466c58b213e175c4b8cd243a",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_8_coverage_seed3"
+  },
+  {
+    "case": "separable_8",
+    "seed": 4,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_8_default_seed4/actor_0.msgpack",
+    "initial_sha256": "7d0cca5fccaf1eef341060b5ac4ceb9c8c0976d19cb1daec1a70e73ac5273da4",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_8_default_seed4"
+  },
+  {
+    "case": "separable_8",
+    "seed": 4,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_8_coverage_seed4/actor_0.msgpack",
+    "initial_sha256": "12ce2fe51191f9ab60814f74d66755953434e2cbc38acb155560783612e73c9f",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_8_coverage_seed4"
+  },
+  {
+    "case": "modes2d_4",
+    "seed": 0,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_4_default_seed0/actor_0.msgpack",
+    "initial_sha256": "ef4113a928b6d8cf0cce7762a66f0182c462947c5ff336c5c850e4a6e183562c",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_4_default_seed0"
+  },
+  {
+    "case": "modes2d_4",
+    "seed": 0,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_4_coverage_seed0/actor_0.msgpack",
+    "initial_sha256": "a1dbbe652dcfedca8b7242b118430d9a587c70dce5c48dad2dd671f3d4d6cefe",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_4_coverage_seed0"
+  },
+  {
+    "case": "modes2d_4",
+    "seed": 1,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_4_default_seed1/actor_0.msgpack",
+    "initial_sha256": "14766fc7ce8507bc6b24d9a93801253e06ea314a106933d5eeb89a3c6cf0d2c3",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_4_default_seed1"
+  },
+  {
+    "case": "modes2d_4",
+    "seed": 1,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_4_coverage_seed1/actor_0.msgpack",
+    "initial_sha256": "585848f9fe83dca1fdf0cfcd7fa5f03953fa75938d9567d4ea2ef158491fcd4f",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_4_coverage_seed1"
+  },
+  {
+    "case": "modes2d_4",
+    "seed": 2,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_4_default_seed2/actor_0.msgpack",
+    "initial_sha256": "b5780b531d9d72f31b1968acbd3f908a5e57d0257c4262f5c05d2bca5cc65ae7",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_4_default_seed2"
+  },
+  {
+    "case": "modes2d_4",
+    "seed": 2,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_4_coverage_seed2/actor_0.msgpack",
+    "initial_sha256": "a392f45aa9914a7d8a97a80ef9538cb34ff1da39e7aff5103b02829e13a95e48",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_4_coverage_seed2"
+  },
+  {
+    "case": "modes2d_4",
+    "seed": 3,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_4_default_seed3/actor_0.msgpack",
+    "initial_sha256": "5736d2e6b7366023334a5b29de0d50c0af87515cd980946e22d8f7873be1cf46",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_4_default_seed3"
+  },
+  {
+    "case": "modes2d_4",
+    "seed": 3,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_4_coverage_seed3/actor_0.msgpack",
+    "initial_sha256": "2e1249089e3d1104c82c0d59a352a9463a0659bf7245e00bc751fcb9206d85e2",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_4_coverage_seed3"
+  },
+  {
+    "case": "modes2d_4",
+    "seed": 4,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_4_default_seed4/actor_0.msgpack",
+    "initial_sha256": "b3a871b415cd5f59f48b66c615aa2c9a18a16b3ede79af6ca5d6317b682107b0",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_4_default_seed4"
+  },
+  {
+    "case": "modes2d_4",
+    "seed": 4,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_modes2d_4_coverage_seed4/actor_0.msgpack",
+    "initial_sha256": "722e07a9b660db5374833329c8291d4b4662056ff6c3a3df1d8a6684f3862dfc",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_modes2d_4_coverage_seed4"
+  },
+  {
+    "case": "separable_4",
+    "seed": 0,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_4_default_seed0/actor_0.msgpack",
+    "initial_sha256": "e49084bdae98311a5df91d461c947c5a2b9b72a6fea48f92301c780a2feda342",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_4_default_seed0"
+  },
+  {
+    "case": "separable_4",
+    "seed": 0,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_4_coverage_seed0/actor_0.msgpack",
+    "initial_sha256": "9d0f659d472fda3daf6ffc494ce11ae41ffa240ae90b566875892b87aee47124",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_4_coverage_seed0"
+  },
+  {
+    "case": "separable_4",
+    "seed": 1,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_4_default_seed1/actor_0.msgpack",
+    "initial_sha256": "818df694080c0077a33f803d33c0cbc7b7d9e95274c61024be29cd093c1ba64d",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_4_default_seed1"
+  },
+  {
+    "case": "separable_4",
+    "seed": 1,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_4_coverage_seed1/actor_0.msgpack",
+    "initial_sha256": "2f5e0f83a10f09a8a1c4cd66671863105a0eac28f65dedcb473d34938c8526fb",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_4_coverage_seed1"
+  },
+  {
+    "case": "separable_4",
+    "seed": 2,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_4_default_seed2/actor_0.msgpack",
+    "initial_sha256": "3b1a77fc863f7c4d26f5bfea04469386de8346dd3859ecdd588addf6fa46ef32",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_4_default_seed2"
+  },
+  {
+    "case": "separable_4",
+    "seed": 2,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_4_coverage_seed2/actor_0.msgpack",
+    "initial_sha256": "3851b1a83cac1573701f8490f89a60cf24312edc80da6d35120de765a935dabc",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_4_coverage_seed2"
+  },
+  {
+    "case": "separable_4",
+    "seed": 3,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_4_default_seed3/actor_0.msgpack",
+    "initial_sha256": "2a7427154d371cf691cfc987807051dd7db5f0bee75ed0585435c68841741b0d",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_4_default_seed3"
+  },
+  {
+    "case": "separable_4",
+    "seed": 3,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_4_coverage_seed3/actor_0.msgpack",
+    "initial_sha256": "6da8ce18b2257d6dc289f80461dca49a05bfc8ea3b57830ec44d08ee3987cb54",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_4_coverage_seed3"
+  },
+  {
+    "case": "separable_4",
+    "seed": 4,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_4_default_seed4/actor_0.msgpack",
+    "initial_sha256": "754160b4e7a27c0c17c373849471e59d19bf862d6a0e7e55afdd697f667f3125",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_4_default_seed4"
+  },
+  {
+    "case": "separable_4",
+    "seed": 4,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_separable_4_coverage_seed4/actor_0.msgpack",
+    "initial_sha256": "f330d26367d40301307451ce989fa289f96730b1fe2088491f4431ed626b2f18",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_separable_4_coverage_seed4"
+  },
+  {
+    "case": "unimodal",
+    "seed": 0,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_unimodal_default_seed0/actor_0.msgpack",
+    "initial_sha256": "eea5ba7c52c0ead9b5be5728154bde7a8a6521e62198975615738be3fbec010e",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_unimodal_default_seed0"
+  },
+  {
+    "case": "unimodal",
+    "seed": 0,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_unimodal_coverage_seed0/actor_0.msgpack",
+    "initial_sha256": "896c453a9342c920a221c79f9ccd0dcb499a5d408e589571e4b0382e1e00196c",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_unimodal_coverage_seed0"
+  },
+  {
+    "case": "unimodal",
+    "seed": 1,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_unimodal_default_seed1/actor_0.msgpack",
+    "initial_sha256": "2d0bccfacc487e1f2797dba479bf2358860d584ea6667c976cb7c1ade2bfdf78",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_unimodal_default_seed1"
+  },
+  {
+    "case": "unimodal",
+    "seed": 1,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_unimodal_coverage_seed1/actor_0.msgpack",
+    "initial_sha256": "aa249aa7bc092c0cd9b144b95fc0dc251de582210d5228a1d7421352f24b90b2",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_unimodal_coverage_seed1"
+  },
+  {
+    "case": "unimodal",
+    "seed": 2,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_unimodal_default_seed2/actor_0.msgpack",
+    "initial_sha256": "0d20767b64cc3bbd8a63d5288cda6d4021bfc84ec70c82733d1ca4fd0979ac0f",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_unimodal_default_seed2"
+  },
+  {
+    "case": "unimodal",
+    "seed": 2,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_unimodal_coverage_seed2/actor_0.msgpack",
+    "initial_sha256": "a5abaf93a3b1c52e6efd1340ac7168f816873341b0c83ef53176b96a6685667d",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_unimodal_coverage_seed2"
+  },
+  {
+    "case": "unimodal",
+    "seed": 3,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_unimodal_default_seed3/actor_0.msgpack",
+    "initial_sha256": "b1fba8c0e5e92f8f383dd8ffe244aa2a924115caf63c04a1f8d13b947b229ed5",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_unimodal_default_seed3"
+  },
+  {
+    "case": "unimodal",
+    "seed": 3,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_unimodal_coverage_seed3/actor_0.msgpack",
+    "initial_sha256": "983a85e68363cb7b14016008b52d6971719bfd8816ce6f83b384c95a1db808b2",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_unimodal_coverage_seed3"
+  },
+  {
+    "case": "unimodal",
+    "seed": 4,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_unimodal_default_seed4/actor_0.msgpack",
+    "initial_sha256": "971b4dcc09170852a520c4c6088f0a83d0a7045c94f3beb1e15b7bc5cb91bbb3",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_unimodal_default_seed4"
+  },
+  {
+    "case": "unimodal",
+    "seed": 4,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_unimodal_coverage_seed4/actor_0.msgpack",
+    "initial_sha256": "7cd6c16d485b654ea3947a966eb03d1a5307c0fdb176bb434b76df75b40dc8c5",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_unimodal_coverage_seed4"
+  },
+  {
+    "case": "asymmetric_1.3_0.08",
+    "seed": 0,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_asymmetric_1.3_0.08_default_seed0/actor_0.msgpack",
+    "initial_sha256": "eea5ba7c52c0ead9b5be5728154bde7a8a6521e62198975615738be3fbec010e",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_asymmetric_1.3_0.08_default_seed0"
+  },
+  {
+    "case": "asymmetric_1.3_0.08",
+    "seed": 0,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_asymmetric_1.3_0.08_coverage_seed0/actor_0.msgpack",
+    "initial_sha256": "54e8106e99f61d40fe27f4dd2c81902bf9350dbbd102aa197a077d63d866dd0b",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_asymmetric_1.3_0.08_coverage_seed0"
+  },
+  {
+    "case": "asymmetric_1.3_0.08",
+    "seed": 1,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_asymmetric_1.3_0.08_default_seed1/actor_0.msgpack",
+    "initial_sha256": "2d0bccfacc487e1f2797dba479bf2358860d584ea6667c976cb7c1ade2bfdf78",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_asymmetric_1.3_0.08_default_seed1"
+  },
+  {
+    "case": "asymmetric_1.3_0.08",
+    "seed": 1,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_asymmetric_1.3_0.08_coverage_seed1/actor_0.msgpack",
+    "initial_sha256": "a2cb3a6ad7ecf05da8bf429ca78020f63f5365bec498b00ee537799facd8b583",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_asymmetric_1.3_0.08_coverage_seed1"
+  },
+  {
+    "case": "asymmetric_1.3_0.08",
+    "seed": 2,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_asymmetric_1.3_0.08_default_seed2/actor_0.msgpack",
+    "initial_sha256": "0d20767b64cc3bbd8a63d5288cda6d4021bfc84ec70c82733d1ca4fd0979ac0f",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_asymmetric_1.3_0.08_default_seed2"
+  },
+  {
+    "case": "asymmetric_1.3_0.08",
+    "seed": 2,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_asymmetric_1.3_0.08_coverage_seed2/actor_0.msgpack",
+    "initial_sha256": "7828bb3229cca355453f810799b6f015d9567165e3e99b1eebc561f11574fb34",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_asymmetric_1.3_0.08_coverage_seed2"
+  },
+  {
+    "case": "asymmetric_1.3_0.08",
+    "seed": 3,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_asymmetric_1.3_0.08_default_seed3/actor_0.msgpack",
+    "initial_sha256": "b1fba8c0e5e92f8f383dd8ffe244aa2a924115caf63c04a1f8d13b947b229ed5",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_asymmetric_1.3_0.08_default_seed3"
+  },
+  {
+    "case": "asymmetric_1.3_0.08",
+    "seed": 3,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_asymmetric_1.3_0.08_coverage_seed3/actor_0.msgpack",
+    "initial_sha256": "693d3b0367c2f0208e8a31aa843f0b0b9eb4ca0248f60a51f7c259039d63af3f",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_asymmetric_1.3_0.08_coverage_seed3"
+  },
+  {
+    "case": "asymmetric_1.3_0.08",
+    "seed": 4,
+    "initialization": "default",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_asymmetric_1.3_0.08_default_seed4/actor_0.msgpack",
+    "initial_sha256": "971b4dcc09170852a520c4c6088f0a83d0a7045c94f3beb1e15b7bc5cb91bbb3",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_asymmetric_1.3_0.08_default_seed4"
+  },
+  {
+    "case": "asymmetric_1.3_0.08",
+    "seed": 4,
+    "initialization": "coverage",
+    "initial_checkpoint": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260909_v1/runs/frozen_asymmetric_1.3_0.08_coverage_seed4/actor_0.msgpack",
+    "initial_sha256": "63dc8fb46f1dd87cbe407fb4526e873a47903aa55cb7465d92cd89fafc35ea63",
+    "out": "/lustre/hobbit9882/OptiQ/outputs/boltzmann_analysis/20260910_categorical_v2/runs/frozen_asymmetric_1.3_0.08_coverage_seed4"
+  }
+]

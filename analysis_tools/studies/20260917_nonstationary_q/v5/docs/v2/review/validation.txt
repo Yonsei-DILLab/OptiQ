@@ -1,0 +1,31 @@
+........................................................................ [ 78%]
+....................                                                     [100%]
+=============================== warnings summary ===============================
+../.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:88
+../.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:88
+../.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:88
+../.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:88
+../.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:88
+../.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:88
+  /workspace/.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:88: PyparsingDeprecationWarning: 'parseString' deprecated - use 'parse_string'
+    parse = parser.parseString(pattern)
+
+../.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:92
+../.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:92
+../.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:92
+../.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:92
+../.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:92
+../.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:92
+  /workspace/.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_fontconfig_pattern.py:92: PyparsingDeprecationWarning: 'resetCache' deprecated - use 'reset_cache'
+    parser.resetCache()
+
+../.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_mathtext.py:45
+  /workspace/.venv-optiq-mujoco/lib/python3.11/site-packages/matplotlib/_mathtext.py:45: PyparsingDeprecationWarning: 'enablePackrat' deprecated - use 'enable_packrat'
+    ParserElement.enablePackrat()
+
+tests/test_semi_implicit.py::test_categorical_backup_shifts_support_by_the_same_entropy_term
+  /workspace/.venv-optiq-mujoco/lib/python3.11/site-packages/jax/_src/linear_util.py:193: DeprecationWarning: Passing arguments 'a', 'a_min' or 'a_max' to jax.numpy.clip is deprecated. Please use 'arr', 'min' or 'max' respectively instead.
+    ans = self.f(*args, **dict(self.params, **kwargs))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+92 passed, 14 warnings in 103.67s (0:01:43)

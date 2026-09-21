@@ -1,0 +1,23 @@
+# @package alg
+defaults:
+  - optiq_dime
+  - _self_
+
+critic:
+  v_min: -3600
+  v_max: 3600
+
+actor:
+  learning_starts: 5000
+  proposals_per_policy_sample: 4  # User-confirmed 16 x 64 OT, all candidates random.
+  proposal_sampling_mode: stratified
+  proposal_std: 0.2
+  proposal_clip: 0.5
+  # Explicit no-anchor request takes precedence over true in the pasted example.
+  include_anchor: false
+  density_correction: true
+  density_correction_beta: 0.1
+  # Compatibility name consumed by the common OptiQDIME training path.
+  density_beta: ${.density_correction_beta}
+  adaptive_density_beta: false
+  distillation_loss: pointwise_mse

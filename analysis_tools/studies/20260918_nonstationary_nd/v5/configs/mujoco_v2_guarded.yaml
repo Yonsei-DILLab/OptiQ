@@ -1,0 +1,5 @@
+# @package _global_
+# Historical compatibility name. Not the final v2.
+defaults:
+  - /archive/v2/guarded
+  - _self_

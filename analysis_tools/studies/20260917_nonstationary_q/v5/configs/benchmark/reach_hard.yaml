@@ -1,0 +1,4 @@
+# @package _global_
+env_name: myoHandReachRandom-v0
+task: reach-hard
+successful_steps: 5
