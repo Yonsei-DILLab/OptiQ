@@ -15,8 +15,8 @@ import numpy as np
 
 VENDOR=Path(__file__).resolve().parent/"vendor"
 MAPS=json.loads((VENDOR/"maps.json").read_text())
-GOALS={"v1":[[-8.,0.]],"v3":[[-12.,12.],[12.,-12.]],"v4":[[-16.,4.],[-16.,-4.]]}
-HORIZONS={"v1":500,"v3":700,"v4":700}
+GOALS={"v1":[[-8.,0.]],"v2":[[8.,0.],[-8.,8.]],"v3":[[-12.,12.],[12.,-12.]],"v4":[[-16.,4.],[-16.,-4.]]}
+HORIZONS={"v1":500,"v2":500,"v3":700,"v4":700}
 SCALE=4.
 
 

@@ -15,6 +15,10 @@ def crossing(path,x,side=-1,last=False):
 
 def route_label(task,path,goal_id):
     if not goal_id:return "failure"
+    if task=="v2":
+        # This maze compares two goals; do not invent multiple homotopy routes.
+        y=crossing(path,4 if goal_id==1 else -4,side=1 if goal_id==1 else -1)
+        return f"G{goal_id}/"+("central-corridor" if y is not None and abs(y)<2 else "unclassified")
     if task=="v1":
         y=crossing(path,-4,last=True)
         return f"G{goal_id}/"+("upper" if y is not None and y>2 else "lower" if y is not None and y< -2 else "unclassified")

@@ -1,4 +1,4 @@
-"""Learned-policy draws only: no best-of-K or external behavior noise."""
+"""Separate native performance evaluation from direct policy draws; no DACER noise."""
 from contextlib import contextmanager
 import numpy as np
 from antmaze.agents import SB3,DIPO,MEOW,MFPO,SQL
@@ -16,9 +16,10 @@ class PolicyView:
             if a.method=="optiq":
                 p=a.model.policy;p.reset_noise()
                 return np.asarray(p.sample_action(p.actor_state,obs,p.noise_key,
-                    deterministic=False,sample_conditional_noise=self.mode=="policy"))
-            return a.model.predict(obs,deterministic=False)[0]
+                    deterministic=self.mode=="zero_z",sample_conditional_noise=self.mode=="policy"))
+            return a.model.predict(obs,deterministic=self.mode=="native")[0]
         if isinstance(a,MFPO):
+            if self.mode=="native":return a.act(obs)
             actions,a.eval_agent=a.eval_agent.eval_actions_sample_batch(obs)
             return np.asarray(actions)
         if isinstance(a,SQL):return a.act(obs)
@@ -26,4 +27,4 @@ class PolicyView:
         with torch.no_grad():
             if isinstance(a,DIPO):return a.agent.actor(torch.as_tensor(obs,device="cuda"),eval=False).cpu().numpy()
             a.policy.eval()
-            return a.policy.sample(len(obs),obs,deterministic=False)[0].cpu().numpy()
+            return a.policy.sample(len(obs),obs,deterministic=self.mode=="native")[0].cpu().numpy()

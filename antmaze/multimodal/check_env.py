@@ -6,7 +6,7 @@ from .analysis import route_label
 
 
 def main():
-    for task in ("v1","v3","v4"):
+    for task in ("v1","v2","v3","v4"):
         a,b=make_env(task,0),make_env(task,0)
         x,_=a.reset(seed=11,options={"fixed_start":True})
         y,_=b.reset(seed=999,options={"fixed_start":True})
@@ -31,7 +31,7 @@ def main():
     assert route_label("v1",np.array([[0,0],[0,-4],[-8,-4],[-8,0]]),1)=="G1/lower"
     assert route_label("v4",np.array([[0,0],[0,4],[-8,4],[-8,8],[-16,8],[-16,4]]),1)=="G1/upper-entry/upper-outer"
     assert route_label("v4",np.array([[0,0],[0,-4],[-8,-4],[-8,0],[-16,0],[-16,-4]]),2)=="G2/lower-entry/middle"
-    print("Passed v1/v3/v4 physics,29D state,goals,dense reward,timeouts,fixed-full-state,route labels")
+    print("Passed v1/v2/v3/v4 physics,29D state,goals,dense reward,timeouts,fixed-full-state,route labels")
 
 
 if __name__=="__main__":main()
