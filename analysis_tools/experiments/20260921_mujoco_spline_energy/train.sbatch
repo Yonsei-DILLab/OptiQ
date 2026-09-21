@@ -56,6 +56,8 @@ PY
   exit "$RC"
 }
 trap finish EXIT
+trap 'exit 143' TERM
+trap 'exit 130' INT
 test -f "$SECRET" && test "$(stat -c '%a' "$SECRET")" = 600
 unset WANDB_API_KEY WANDB_ENTITY WANDB_PROJECT WANDB_NAME WANDB_RUN_GROUP WANDB_RUN_ID WANDB_RESUME PYTHONPATH LD_LIBRARY_PATH
 IFS= read -r WANDB_API_KEY < "$SECRET"
