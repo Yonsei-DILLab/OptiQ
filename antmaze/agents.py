@@ -196,6 +196,9 @@ class SB3:
                 "alg.actor.mean_output_init_scale=1.0", "dacer.enabled=true", "dacer.noise_scale=0.1",
                 f"output_root={folder}"])
             cfg.env_name = "AntMaze_UMaze-v5"; cfg.task = "antmaze"
+            if smoke:
+                cfg.alg.learning_starts = 256
+                cfg.alg.actor.learning_starts = 256
             self.config = OmegaConf.to_container(cfg, resolve=True)
             self.model = module.runner.OptiQDIME("MlpPolicy", env=env, cfg=cfg,
                 model_save_path=str(folder / "checkpoints"), save_every_n_steps=100000)
@@ -226,3 +229,31 @@ class SB3:
             import flax.serialization
             path.write_bytes(flax.serialization.to_bytes(dict(actor=self.model.policy.actor_state,
                 critic=self.model.policy.qf_state)))
+
+
+def parameter_audit(agent):
+    """Verify actual policy and learned-Q parameters, not just update counters."""
+    import hashlib
+    import jax
+    if isinstance(agent, SB3):
+        if agent.method == "optiq":
+            groups = dict(actor=agent.model.policy.actor_state.params, critic=agent.model.policy.qf_state.params)
+        else:
+            groups = dict(actor=list(agent.model.actor.parameters()), critic=list(agent.model.critic.parameters()))
+    elif isinstance(agent, DIPO):
+        groups = dict(actor=list(agent.agent.actor.parameters()), critic=list(agent.agent.critic.parameters()))
+    elif isinstance(agent, MEOW):
+        groups = dict(flow_q_and_policy=list(agent.policy.parameters()))
+    elif isinstance(agent, MFPO):
+        groups = dict(actor=agent.agent.actor.params, critic=agent.agent.critic_1.params)
+    else:
+        groups = dict(actor=agent.inner.learner.state.actor.params, critic=agent.inner.learner.state.critic.params)
+    result = {}
+    for name, params in groups.items():
+        digest = hashlib.sha256(); count = 0
+        for leaf in jax.tree_util.tree_leaves(params):
+            array = np.asarray(leaf.detach().cpu() if hasattr(leaf, "detach") else leaf)
+            if not np.isfinite(array).all(): raise FloatingPointError(f"Nonfinite {name} parameters")
+            digest.update(array.tobytes()); count += array.size
+        result[name] = dict(sha256=digest.hexdigest(), parameters=count)
+    return result

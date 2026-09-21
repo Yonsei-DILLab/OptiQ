@@ -35,13 +35,14 @@ def main():
     if args.method in ("optiq","mfpo","sql"):
         import jax
         if jax.default_backend() != "gpu": raise RuntimeError("JAX GPU required")
-    from .agents import DIPO, MEOW, MFPO, SQL, SB3
+    from .agents import DIPO, MEOW, MFPO, SQL, SB3, parameter_audit
     env = make_env(args.seed)
     if args.method in ("optiq","sac"):
         agent = SB3(args.method, env, args.seed, folder, args.smoke)
     else:
         agent = dict(dipo=DIPO, meow=MEOW, mfpo=MFPO, sql=SQL)[args.method](env,args.seed,folder)
     warmup = 256 if args.smoke else agent.warmup
+    initial_parameters = parameter_audit(agent)
     steps = 272 if args.smoke else 1000000
     interval = steps if args.smoke else 5000
     packages = {n: importlib.metadata.version(n) for n in (
@@ -73,12 +74,13 @@ def main():
         metrics = evaluator.evaluate(agent,step,agent.modes)
         log(step,metrics)
     def save(step):
+        audit = parameter_audit(agent)
         directory=folder/"checkpoints"; directory.mkdir(exist_ok=True)
         path=directory/f"agent_{step}.bin"
         agent.save(path)
         files = list(directory.glob(f"*{step}*"))
         if not files: raise RuntimeError("Checkpoint not written")
-        atomic_json(folder/"checkpoint.json",dict(step=step,files=[dict(name=p.name,size=p.stat().st_size,
+        atomic_json(folder/"checkpoint.json",dict(step=step,parameter_audit=audit,files=[dict(name=p.name,size=p.stat().st_size,
             sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in files]))
     try:
         if not args.smoke: evaluate(0)
@@ -112,6 +114,10 @@ def main():
                 elif step%1000==0: log(step,{f"train/{k}":v for k,v in last_info.items()})
                 if step<steps and step%100000==0: save(step)
         evaluate(steps); save(steps)
+        final_parameters=parameter_audit(agent)
+        if any(final_parameters[k]["sha256"]==v["sha256"] for k,v in initial_parameters.items()):
+            raise RuntimeError("Actor or learned critic did not change")
+        atomic_json(folder/"parameter-audit.json",dict(initial=initial_parameters,final=final_parameters))
         expected=steps-warmup
         if int(agent.updates)!=expected: raise RuntimeError(f"Update audit {agent.updates} != {expected}")
         primary=agent.modes[0]
