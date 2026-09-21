@@ -41,24 +41,17 @@ def verify_run(folder,job,source_commit,smoke=False):
     steps=272 if smoke else job.get("steps",100000)
     warmup=256 if smoke else (10000 if job["method"]=="mfpo" else 5000)
     noveld=c.get("profile")=="ddiffpg-dense-noveld"
-    routefast=c.get("profile")=="ddiffpg-routefast"
     if noveld:
         steps=8704 if smoke else 100000;warmup=8192
-    if routefast:
-        steps=512 if smoke else 100000;warmup=256 if smoke else 8192
     episodes=2 if smoke else 100
     assert r["completed"] and c["smoke"]==smoke
     assert r["source_commit"]==c["source_commit"]==source_commit
     assert c["steps"]==r["steps"]==steps and c["warmup"]==warmup
-    if noveld or routefast:
-        count=8 if routefast else 256
-        expected_updates=int(np.ceil((steps-warmup)/count))*8
+    if noveld:
+        expected_updates=int(np.ceil((steps-warmup)/256))*8
         assert r["updates"]==c["expected_updates"]==expected_updates
-        assert c["batch_size"]==(256 if routefast else 4096) and c["num_envs"]==count and c["updates_per_round"]==8
-        assert c["utd"]==8/count and c["intrinsic"]["coefficient"]==.01
-        if routefast:
-            assert c["assistance"]["curriculum_boundaries"]==[60000,80000]
-            assert c["assistance"]["success_bonus"]==10 and c["assistance"]["wall_clearance"]==.6
+        assert c["batch_size"]==4096 and c["num_envs"]==256 and c["updates_per_round"]==8
+        assert c["utd"]==8/256 and c["intrinsic"]["coefficient"]==.01
         rnd=json.loads((folder/"intrinsic-audit.json").read_text())
         assert rnd["passed"] and rnd["updates"]==expected_updates
         assert rnd["initial"]["target"]==rnd["final"]["target"]
@@ -124,7 +117,7 @@ def verify_run(folder,job,source_commit,smoke=False):
         hashes[str(path.with_suffix(".json").relative_to(folder))]=digest(path.with_suffix(".json"))
     for name in ("config.json","result.json","checkpoint.json","parameter-audit.json","training_coverage.npz","history-policy-natural.json"):
         hashes[name]=digest(folder/name)
-    if noveld or routefast:hashes["intrinsic-audit.json"]=digest(folder/"intrinsic-audit.json")
+    if noveld:hashes["intrinsic-audit.json"]=digest(folder/"intrinsic-audit.json")
     return dict(passed=True,steps=steps,updates=r["updates"],episode_count_per_reset=episodes,sha256=hashes)
 
 

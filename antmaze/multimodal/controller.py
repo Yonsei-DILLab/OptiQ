@@ -19,7 +19,7 @@ def main():
     p.add_argument("--smoke",action="store_true")
     p.add_argument("--methods",nargs="+",choices=METHODS)
     p.add_argument("--tasks",nargs="+",choices=["v1","v3","v4"],default=["v1","v4"])
-    p.add_argument("--profile",choices=["100k","1m","noveld","routefast"],default="100k")
+    p.add_argument("--profile",choices=["100k","1m","noveld"],default="100k")
     p.add_argument("--seeds",nargs="+",type=int,default=[0,1,2,3])
     p.add_argument("--shard-index",type=int,default=0)
     p.add_argument("--shard-count",type=int,default=1)
@@ -33,16 +33,16 @@ def main():
     source=Path(__file__).resolve().parents[2]
     sha=subprocess.check_output(["git","rev-parse","HEAD"],cwd=source,text=True).strip()
     if a.methods and not a.smoke and a.profile=="100k": raise ValueError("Subset selection is preflight-only for the legacy profile")
-    methods=tuple(a.methods or (("optiq","sac","mfpo","meow") if a.profile in ("1m","noveld","routefast") else METHODS))
-    if a.profile in ("1m","noveld","routefast") and set(methods)!={"optiq","sac","mfpo","meow"}:
+    methods=tuple(a.methods or (("optiq","sac","mfpo","meow") if a.profile in ("1m","noveld") else METHODS))
+    if a.profile in ("1m","noveld") and set(methods)!={"optiq","sac","mfpo","meow"}:
         raise ValueError("This campaign contains only the four user-selected methods")
     seeds=[0] if a.smoke else a.seeds
     if len(set(seeds))!=len(seeds) or not set(seeds)<=set(range(4)):raise ValueError("Invalid seed shard")
     budgets={task:(1000000 if a.profile=="1m" else 100000) for task in a.tasks}
     campaign="antmaze-multimodal-1m-20260921" if a.profile=="1m" else "antmaze-multimodal-100k-20260921"
-    if a.profile in ("noveld","routefast"):
+    if a.profile=="noveld":
         assert a.tasks==["v1"] and seeds==[0] and a.shard_count==1
-        campaign=f"antmaze-v1-{a.profile}-100k-s0-20260921"
+        campaign="antmaze-v1-noveld-100k-s0-20260921"
     order=tuple(x for x in ("meow","sac","optiq","mfpo") if x in methods) if a.profile=="1m" else methods
     all_jobs=[dict(id=f"{task}-{method}-s{seed}",task=task,method=method,seed=seed,steps=budgets[task],status="pending")
           for seed in seeds for method in order for task in a.tasks]
@@ -87,9 +87,8 @@ def main():
                     "--steps",str(job["steps"]),"--campaign",campaign,
                     "--eval-interval",str(25000 if a.profile=="1m" else 5000),
                     "--checkpoint-interval",str(100000 if a.profile=="1m" else 50000)]
-                if a.profile in ("noveld","routefast"):
-                    module="route_run" if a.profile=="routefast" else "ddiffpg_run"
-                    cmd=[WRAPPER,str(gpu),"--branch","v5-direct-gmm",PYTHON,"-m",f"antmaze.multimodal.{module}",
+                if a.profile=="noveld":
+                    cmd=[WRAPPER,str(gpu),"--branch","v5-direct-gmm",PYTHON,"-m","antmaze.multimodal.ddiffpg_run",
                         "--task",job["task"],"--method",job["method"],"--seed",str(job["seed"]),
                         "--output",str(root/"runs"/job["id"])]
                 if a.smoke: cmd.append("--smoke")
@@ -106,8 +105,6 @@ def main():
             completed=done,total=len(jobs),jobs=jobs))
         if not live and (failure or done==len(jobs)):
             if not failure: atomic_json(root/"result.json",dict(completed=True,source_commit=sha,jobs=jobs))
-            if not failure and not a.smoke and a.profile=="routefast":
-                subprocess.run([PYTHON,"-m","antmaze.multimodal.route_report","--root",str(root)],cwd=source,check=True)
             return
         time.sleep(2)
 
