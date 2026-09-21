@@ -17,13 +17,16 @@ its Python namespace is `gmm40._v5.optiq_dime`. Shared `common`, `models` and
 its historical actor sigma settings. It does not select the Direct GMM/TRG
 trainer. Active TRG defaults and running frozen snapshots are separate.
 
-New GMM40 `--method optiq_trg` runs use actor log-sigma bounds [-5,1] and
-mean-head init scale 1.0, as requested on 2026-09-21. The lower bound -5,
-teacher floor exp(-5), random latent and optimizer are unchanged. Initial log
-sigma is +1, matching the new upper bound as requested. This is a GMM40 override;
-RL profiles and old frozen campaigns keep
-their recorded settings. Run `python -m gmm40.validate_gmm40_sigma` to check
-the expanded range, density normalization, sampler and actor gradient.
+New GMM40 `--method optiq_trg` runs use actor log-sigma bounds [-5,-1],
+initial log sigma -1, and mean-head init scale 1.0, following the latest
+2026-09-21 request. The earlier upper-bound +1 amendment is superseded.
+Relative to the original frozen campaign, only the mean-head initialization
+changes (variance scale 1e-4 -> 1.0, standard Xavier uniform). Teacher floor
+exp(-5), random latent, N=M64, batch256, T1, architecture and optimizer remain
+unchanged. This mean initialization override applies to GMM40 only; RL profiles
+and old frozen campaigns retain their recorded settings.
+Run `python -m gmm40.validate_gmm40_sigma` to check that only mean-head weights
+change at initialization, and verify sigma clipping, normalization and sampling.
 
 ## Dependencies
 

@@ -1,4 +1,4 @@
-"""Check the GMM40-only sigma/init changes without training a learner."""
+"""Check mean-only GMM40 initialization against unchanged sigma defaults."""
 import json
 import math
 
@@ -22,8 +22,8 @@ def main():
 
     agent = OptiQTRG(Target(), seed=0)
     assert agent.actor.log_std_min == -5
-    assert agent.actor.log_std_max == 1
-    assert agent.actor.initial_log_std == 1
+    assert agent.actor.log_std_max == -1
+    assert agent.actor.initial_log_std == -1
     assert agent.actor.mean_output_init_scale == 1
     assert agent.n == agent.m == 64 and agent.batch == 256
     assert agent.temperature == 1 and agent.updates == 0
@@ -39,20 +39,21 @@ def main():
             actual = actual[k]
         if keys == ['mu','kernel']:
             np.testing.assert_allclose(actual,100*value,rtol=2e-6,atol=1e-7)
-        elif keys == ['log_std','bias']:
-            np.testing.assert_array_equal(actual,jnp.ones_like(actual))
         else:
             np.testing.assert_array_equal(actual,value)
+    np.testing.assert_array_equal(agent.actor.apply({'params':after},obs,z)[1],
+                                  -jnp.ones((1,2)))
     params = {**after, 'log_std': {**after['log_std'], 'bias': jnp.zeros(2)}}
     output = agent.actor.apply({'params':params},obs,z)[1]
-    np.testing.assert_array_equal(output,jnp.zeros((1,2)))
+    np.testing.assert_array_equal(output,-jnp.ones((1,2)))
     def scale_sum(bias):
         p = {**params,'log_std':{**params['log_std'],'bias':bias}}
         return agent.actor.apply({'params':p},obs,z)[1].sum()
-    np.testing.assert_array_equal(jax.grad(scale_sum)(jnp.zeros(2)),jnp.ones(2))
+    np.testing.assert_array_equal(jax.grad(scale_sum)(jnp.zeros(2)),jnp.zeros(2))
+    np.testing.assert_array_equal(jax.grad(scale_sum)(jnp.full(2,-3.)),jnp.ones(2))
     cases = []
     for center in [-1.,0.,1.]:
-        for log_sigma in [-5.,-1.,0.,1.]:
+        for log_sigma in [-5.,-3.,-1.]:
             sigma = math.exp(log_sigma)
             lo,hi = (-1-center)/sigma,(1-center)/sigma
             mass = ndtr(hi)-ndtr(lo)
@@ -75,9 +76,9 @@ def main():
             assert ks<.02,(center,log_sigma,ks)
             cases.append(dict(center=center,log_sigma=log_sigma,normalization=normalization,ks=ks))
     print(json.dumps(dict(status='passed',optimizer_updates=agent.updates,
-        initial_parameter_differences=['mean-head kernel multiplied by 100 (variance scale 1e-4 -> 1)',
-            'log_std bias initialized at the new upper bound +1'],
-        gradient_above_old_cap=[1.,1.],log_sigma_bounds=[-5.,1.],initial_log_sigma=1.,
+        initial_parameter_differences=['mean-head kernel multiplied by 100 (variance scale 1e-4 -> 1)'],
+        gradient_above_cap=[0.,0.],gradient_inside_bounds=[1.,1.],
+        log_sigma_bounds=[-5.,-1.],initial_log_sigma=-1.,mean_output_init_scale=1.,
         teacher_floor=math.exp(-5),cases=cases),indent=2))
 
 

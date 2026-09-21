@@ -24,16 +24,18 @@ sampling, no extra teacher sigma floor, no anchors, OT, clipping or DACER.
 The fixed-Q adapter is `gmm40/optiq_trg.py`; the old `--method optiq` remains
 the historical v5 OT adapter and is not selected by this campaign.
 
-User amendment (2026-09-21): new GMM40 `optiq_trg` runs raise the actor's
-log-sigma upper bound from -1 to +1, initialize log sigma at that upper bound
-(+1; lower bound -5 retained), and change the
-mean-head variance initialization scale from 1e-4 to 1.0. Only these two model
-settings and the explicitly requested matching sigma initialization change.
-Teacher floor exp(-5), fresh latents, N=M64, batch256, T1,
-architecture and optimizer remain as above. Existing frozen runs retain their
-original source and settings. The original box Gaussian routines are unchanged;
-their normalization, samples and gradients are checked over the widened range.
-No changed noise distribution or smooth sigma mapping is introduced.
+Latest user amendment (2026-09-21): new GMM40 `optiq_trg` runs retain actor
+log-sigma bounds [-5,-1] and initial log sigma -1, and change only the mean-head
+variance initialization scale from 1e-4 to 1.0 (standard Xavier uniform).
+This supersedes the unlaunched +1 upper-bound/initialization amendment in
+commit `2bdeb9c`. The original frozen campaign and its displayed seed results
+already use [-5,-1], so their seed variation cannot be attributed to +1.
+Teacher floor exp(-5), fresh latents, N=M64, batch256, T1, architecture,
+optimizer and the original box Gaussian routines remain unchanged. Existing
+frozen runs retain their original source and settings; editing this default
+does not relaunch runs or change the active queue. RL mean-head initialization
+is unchanged. Validation checks that only mean-head weights change under the
+same initialization RNG and that the sigma bounds/initialization are retained.
 
 SAC retains its 256x2 Gaussian actor and LR3e-4. DIPO retains the original
 100-step diffusion network, LR3e-4, 20 action-improvement steps and clipping.
