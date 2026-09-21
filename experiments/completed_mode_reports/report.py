@@ -56,7 +56,7 @@ def render(O,text):
  (O/'report.md').write_text(text)
  # Offline equations are rendered images; Markdown retains original LaTeX.
  def mathimage(m):
-  expr=m[1].replace('\\operatorname','\\mathrm').replace('\\mathbf','\\mathrm')
+  expr=m[1].replace('\\operatorname','\\mathrm').replace('\\mathbf','\\mathrm').replace('\\frac12','\\frac{1}{2}')
   fig_=plt.figure(figsize=(.1,.1));fig_.text(0,0,'$'+expr+'$',fontsize=15);buf=io.BytesIO();fig_.savefig(buf,format='png',dpi=150,bbox_inches='tight',pad_inches=.12,transparent=True);plt.close(fig_)
   return '<div class="math"><img alt="'+html.escape(m[1],quote=True)+'" src="data:image/png;base64,'+base64.b64encode(buf.getvalue()).decode()+'"></div>'
  body=markdown.markdown(re.sub(r'\$\$(.*?)\$\$',mathimage,text,flags=re.S),extensions=['tables','fenced_code'])
