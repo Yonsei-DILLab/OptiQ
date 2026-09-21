@@ -32,7 +32,9 @@ def main():
     env.reset(seed=1);env.data.qpos[:2]=[-8,0]
     _,r,terminal,truncated,info=env.step(np.zeros(8))
     assert terminal and not truncated and info["success"] and r>9.
-    env.reset(seed=2);env.data.qpos[2]=.1
+    # A torso below the floor can bounce back into the healthy band during the
+    # physics step. Use a high airborne state to deterministically test this mask.
+    env.reset(seed=2);env.data.qpos[2]=2.
     _,r,terminal,_,info=env.step(np.zeros(8))
     assert terminal and info["fallen"] and not info["success"]
     env.close();evaluation.close()
