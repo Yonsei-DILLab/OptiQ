@@ -15,7 +15,7 @@ the requested benchmark. Current entry points are in `antmaze.multimodal`.
 |---|---|
 | Server | `vast-heechan-199`, GPUs 0–3 |
 | Training source | `f47cedad3c757f37893fa6de0466882ebb9673e3` |
-| Reporting source | `255f9ec96e4b04a95307168321c3d89adfcab216` |
+| Reporting source | Current committed snapshot recorded in campaign `reporting-source.json` |
 | Git branch | `direct-gmm-trg` |
 | Campaign / supervisor | `antmaze-multimodal-100k-20260921` |
 | Python | `/home/heechan/.venv-optiq-antmaze/bin/python`, Python 3.11.16 |
