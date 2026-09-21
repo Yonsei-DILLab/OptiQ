@@ -10,3 +10,6 @@
 [submodule "gmm40-baseline/MFPO"]
 	path = gmm40-baseline/MFPO
 	url = https://github.com/dongxiaoyi-xyz/MFPO.git
+[submodule "gmm40-baseline/SQL"]
+	path = gmm40-baseline/SQL
+	url = https://github.com/haarnoja/softqlearning.git

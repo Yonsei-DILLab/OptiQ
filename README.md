@@ -116,8 +116,12 @@ Portions of the project are adapted from other repositories:
 ## GMM40 experiments and baseline sources
 
 The imported fixed-Q density and navigation experiments are in
-[`gmm40/`](gmm40/README.md). Original DiKL, DIPO, MEOW and MFPO sources are
+[`gmm40/`](gmm40/README.md). Original DiKL, DIPO, MEOW, MFPO and SVGD-based SQL sources are
 pinned under `gmm40-baseline/`; populate them with
 `git submodule update --init --recursive`. These are the historical v5 GMM40
 adapters, with an isolated v5 implementation, rather than a change to TRG RL
 training defaults.
+
+The original Haarnoja SQL source is pinned at `gmm40-baseline/SQL`; see
+[SQL baseline notes](gmm40/SQL_BASELINE.md) for its SVGD implementation and
+legacy runtime requirements. SQL is not connected to the GMM40 runner yet.

@@ -25,8 +25,8 @@ JAX/JAXlib 0.4.33, Flax 0.9.0, Optax 0.1.7, NumPy 1.26.4 and SciPy 1.11.4.
 The PyTorch agents require a CUDA-enabled PyTorch build; the experiment used
 PyTorch 2.4.1+cu124, whereas the MuJoCo requirements specify CPU PyTorch.
 
-The four original baseline repositories are Git submodules, pinned to the
-revisions in [baselines.json](baselines.json): DiKL, DIPO, MEOW and MFPO.
+The five original baseline repositories are Git submodules, pinned to the
+revisions in [baselines.json](baselines.json): DiKL, DIPO, MEOW, MFPO and SQL.
 After checking out this branch, initialize their source code with:
 
 ```bash
@@ -34,9 +34,14 @@ git submodule update --init --recursive
 ```
 
 Their paths are `gmm40-baseline/DiKL`, `gmm40-baseline/DIPO`,
-`gmm40-baseline/meow`, and `gmm40-baseline/MFPO`. The upstream files are
-unmodified and retain their upstream licenses. DiKL initializes the target,
+`gmm40-baseline/meow`, `gmm40-baseline/MFPO`, and `gmm40-baseline/SQL`.
+The upstream files and notices are preserved without modification. DiKL initializes the target,
 including for OptiQ-only runs. Generated results are excluded from Git.
+
+SQL is the original SVGD-based Soft Q-Learning source, with its own legacy
+TensorFlow runtime. It is not yet a `gmm40.run --method sql` adapter. See
+[SQL_BASELINE.md](SQL_BASELINE.md) for implementation paths, original defaults
+and dependency limitations.
 
 ## Running
 
