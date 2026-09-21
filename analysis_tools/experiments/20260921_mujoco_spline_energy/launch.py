@@ -42,7 +42,8 @@ def main():
         "squeue": capture(["squeue", "-u", os.environ["USER"], "-o",
                             "%.18i %.18P %.12q %.30j %.2t %.10M %.4D %R"]),
     }
-    script = source / "analysis_tools/experiments/20260921_mujoco_spline_energy" / f"{args.stage}.sbatch"
+    script_name = "smoke.sbatch" if args.stage == "smoke" else "train.sbatch"
+    script = source / "analysis_tools/experiments/20260921_mujoco_spline_energy" / script_name
     job_id = capture(["sbatch", "--parsable", str(script)]).strip().split(";")[0]
     record = {"submitted_utc": datetime.now(timezone.utc).isoformat(), "stage": args.stage,
               "job_id": job_id, "source_commit": manifest["git_commit"],
