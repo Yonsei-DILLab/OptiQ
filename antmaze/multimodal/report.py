@@ -58,7 +58,7 @@ def main():
         for method in METHODS:
             for seed in range(4):
                 job=f"{task}-{method}-s{seed}";d=root/"runs"/job;p=d/"result.json"
-                if not p.exists():missing.append(job);continue
+                if job not in validation["verified"] or not p.exists():missing.append(job);continue
                 r=json.loads(p.read_text());c=json.loads((d/"config.json").read_text())
                 assert r["completed"] and r["steps"]==100000 and not c["smoke"]
                 assert r["source_commit"]==m["source_commit"]==c["source_commit"]
