@@ -102,13 +102,9 @@ def main(old, pid):
     assert Path(f'/proc/{pid}/cwd').resolve() == old.resolve()
     assert 'dispatch.py' in Path(f'/proc/{pid}/cmdline').read_bytes().decode()
     parent_start = process(pid)['start']
-    # Stop only the scheduler. Its PTY and all numerical workers remain alive.
-    os.kill(pid, signal.SIGSTOP)
-    for _ in range(100):
-        if process(pid)['state'] in ('T', 't'):
-            break
-        time.sleep(.05)
-    assert process(pid)['state'] in ('T', 't')
+    # PAUSE_QUEUE disables launches but leaves the original parent/PTY alive.
+    # tmux may automatically continue a stopped pane leader, so do not use
+    # SIGSTOP or terminate a session leader while training children are alive.
     previous = read(old/'STATUS.json')
     write(ROOT/'PREVIOUS_STATUS.json', previous)
     running = []
@@ -151,10 +147,11 @@ def main(old, pid):
         status = dict(commit=launch['commit'], controller_pid=os.getpid(), time=time.time(),
                       pending=pending, running=running, finished=finished, old_dispatcher_retired=retired)
         write(ROOT/'STATUS.json', status)
-        write(old/'STATUS.json', dict(commit=old_launch['commit'], time=time.time(),
-            controller=str(ROOT), pending=[{k:r[k] for k in ('env','seed')} for r in pending if r['campaign']=='T025'],
-            running=[r for r in running if r['campaign']=='T025'],
-            finished=[r for r in finished if r['campaign']=='T025']))
+        if retired:
+            write(old/'STATUS.json', dict(commit=old_launch['commit'], time=time.time(),
+                controller=str(ROOT), pending=[{k:r[k] for k in ('env','seed')} for r in pending if r['campaign']=='T025'],
+                running=[r for r in running if r['campaign']=='T025'],
+                finished=[r for r in finished if r['campaign']=='T025']))
         time.sleep(5)
     write(ROOT/'QUEUE_FINISHED.json', dict(commit=launch['commit'], finished=finished, time=time.time()))
 
