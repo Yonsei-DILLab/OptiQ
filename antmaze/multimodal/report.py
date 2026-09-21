@@ -35,8 +35,10 @@ def draw_paths(ax,folder,task,label):
         xy=path[:int(n)+1]
         ax.plot(xy[:,0],xy[:,1],color=COLORS[int(goal)],alpha=.16 if goal else .065,lw=.65,zorder=3)
     s=json.loads(p.with_suffix(".json").read_text())
-    ax.set_title(f"Success {s['success_rate']:.0%} · routes {s['successful_routes']['observed_modes']}\n"
-                 f"dominant {s['successful_routes']['dominant_fraction']:.0%}",fontsize=8)
+    dominant=(f"{s['successful_routes']['dominant_fraction']:.0%}" if
+              s["successful_routes"]["counts"] else "N/A")
+    ax.set_title(f"Success {s['success_rate']:.0%} · successful routes {s['successful_routes']['observed_modes']}\n"
+                 f"dominant route {dominant}",fontsize=8)
 
 
 def main():
@@ -71,6 +73,15 @@ def main():
                         state=z["initial_simulator_state"];np.testing.assert_array_equal(state,np.broadcast_to(state[0],state.shape))
                 complete[job]=r
     if missing and not a.partial:raise RuntimeError(f"Missing completed jobs: {missing}")
+    individual=out/"individual";individual.mkdir(exist_ok=True)
+    for job,r in complete.items():
+        fig,axes=plt.subplots(1,2,figsize=(8,4.5))
+        for ax,label in zip(axes,("policy-natural","policy-fixed")):
+            draw_paths(ax,root/"runs"/job,r["task"],label)
+            ax.set_xlabel("Natural reset" if label.endswith("natural") else "Identical full initial state")
+        fig.suptitle(f"{r['task']} · {r['method'].upper()} · seed{r['seed']} · 100k interactions\n100 direct-policy rollouts per panel")
+        fig.text(.5,.012,"Gray: unsuccessful episode · colored: reached goal · star: reference origin",ha="center",fontsize=8)
+        fig.tight_layout(rect=(0,.035,1,1));fig.savefig(individual/f"{job}.png",dpi=180);plt.close(fig)
     for task in m["tasks"]:
         for label in ("policy-natural","policy-fixed"):
             fig,axes=plt.subplots(6,4,figsize=(13,18))
@@ -163,8 +174,11 @@ def main():
             row=dict(task=task,method=method,n=len(records),final=len(records)==4)
             for name,values in dict(success_rate=[r["success_rate"] for r in records],
                 effective_routes=[r["successful_routes"]["effective_modes"] for r in records],
-                dominant_route_fraction=[r["successful_routes"]["dominant_fraction"] for r in records]).items():
-                row[name]=dict(mean=float(np.mean(values)),sample_sd=float(np.std(values,ddof=1)) if len(values)>1 else None)
+                dominant_route_fraction=[r["successful_routes"]["dominant_fraction"] for r in records
+                                         if r["successful_routes"]["counts"]]).items():
+                row[name]=dict(mean=float(np.mean(values)) if values else None,
+                              sample_sd=float(np.std(values,ddof=1)) if len(values)>1 else None,
+                              valid_seeds=len(values))
             rows.append(row)
     atomic_json(out/"results.json",dict(source_commit=m["source_commit"],completed=len(complete),missing=missing,aggregate=rows,per_policy=complete))
     lines=["# AntMaze 다중 목표·경로 비교", "",f"완료 {len(complete)}/{len(m['jobs'])}. 각 정책은100k online interaction 이후 평가했습니다.","",
@@ -172,9 +186,12 @@ def main():
         "| 미로 | 방법 | 완료seed | 성공률 | 유효 경로 수 | 최다 경로 비중 |","|---|---|---:|---:|---:|---:|"]
     for r in rows:
         def fmt(k):
-            v=r[k];return f"{v['mean']:.3f}"+(f" ± {v['sample_sd']:.3f}" if v["sample_sd"] is not None else "")
+            v=r[k]
+            if v["mean"] is None:return "N/A"
+            return f"{v['mean']:.3f}"+(f" ± {v['sample_sd']:.3f}" if v["sample_sd"] is not None else "")+(f" (n={v['valid_seeds']})" if v["valid_seeds"]!=r["n"] else "")
         lines.append(f"| {r['task']} | {r['method']} | {r['n']}/4 | {fmt('success_rate')} | {fmt('effective_routes')} | {fmt('dominant_route_fraction')} |")
     lines += ["","유효 경로 수는 성공 rollout의 경로 범주 엔트로피를 exp한 값입니다. 성공이 없으면0으로 표시하며 mode collapse라고 단정하지 않습니다.",
+        "성공 경로가 없는 정책의 최다 경로 비중은 N/A입니다. 이 값의 평균/편차는 성공 경로가 관측된 training seed만으로 계산하고 해당 seed 수를 표시합니다.",
         "경로는 사전에 정의한 통로 횡단으로 분류했습니다. 모든 가능한 homotopy class나 action 분포의 multimodality를 증명하는 값은 아닙니다.",
         "v4의 원래 초기 상태 분포는 고정되어 natural/fixed 평가 조건이 같습니다. 두 결과를 독립된200회로 합치지 않습니다.",
         "OptiQ 주 그림은 learned sigma를 포함한 정책 샘플입니다. DACER 외부 행동잡음은 제외하며 μ-only 그림은 별도 보조 자료입니다.",
