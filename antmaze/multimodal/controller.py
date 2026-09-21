@@ -19,7 +19,7 @@ def main():
     p.add_argument("--smoke",action="store_true")
     p.add_argument("--methods",nargs="+",choices=METHODS)
     p.add_argument("--tasks",nargs="+",choices=["v1","v3","v4"],default=["v1","v4"])
-    p.add_argument("--profile",choices=["100k","1m","noveld"],default="100k")
+    p.add_argument("--profile",choices=["100k","1m","noveld","sac-dense"],default="100k")
     p.add_argument("--seeds",nargs="+",type=int,default=[0,1,2,3])
     p.add_argument("--shard-index",type=int,default=0)
     p.add_argument("--shard-count",type=int,default=1)
@@ -43,6 +43,10 @@ def main():
     if a.profile=="noveld":
         assert a.tasks==["v1"] and seeds==[0] and a.shard_count==1
         campaign="antmaze-v1-noveld-100k-s0-20260921"
+    if a.profile=="sac-dense":
+        assert methods==("sac",) and a.tasks==["v1"] and seeds==[0] and a.shard_count==1
+        campaign=root.name
+        budgets={"v1":500000}
     order=tuple(x for x in ("meow","sac","optiq","mfpo") if x in methods) if a.profile=="1m" else methods
     all_jobs=[dict(id=f"{task}-{method}-s{seed}",task=task,method=method,seed=seed,steps=budgets[task],status="pending")
           for seed in seeds for method in order for task in a.tasks]

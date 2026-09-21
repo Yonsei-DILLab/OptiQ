@@ -71,7 +71,8 @@ def main():
     batch=2 if a.smoke else 10;evaluator=Evaluator(folder,a.task,a.seed,batch)
     started=time.monotonic();last_info={}
     def log(step,data):
-        record=dict(env_steps=step,updates=int(agent.updates),seconds=time.monotonic()-started,**data)
+        training={k:v for k,v in env.training_summary().items() if v is not None}
+        record=dict(env_steps=step,updates=int(agent.updates),seconds=time.monotonic()-started,**training,**data)
         if not all(np.isfinite(v) for v in record.values()):raise FloatingPointError(str(record))
         atomic_json(folder/"progress.json",record);run.log(record);print(json.dumps(record),flush=True)
     def evaluate(step):
@@ -128,9 +129,11 @@ def main():
                     f"trajectories/{label}/effective_routes":s["successful_routes"]["effective_modes"],
                     f"trajectories/{label}/dominant_route_fraction":s["successful_routes"]["dominant_fraction"]})
         result=dict(completed=True,source_commit=commit,method=a.method,task=a.task,seed=a.seed,
-            steps=steps,updates=int(agent.updates),seconds=time.monotonic()-started,summaries=summaries)
+            steps=steps,updates=int(agent.updates),seconds=time.monotonic()-started,summaries=summaries,
+            training=env.training_summary())
         atomic_json(folder/"result.json",result)
         run.summary.update(dict(completed=True,steps=steps,updates=int(agent.updates),
+            **env.training_summary(),
             fixed_policy_success=summaries["policy-fixed"]["success_rate"],
             fixed_policy_effective_routes=summaries["policy-fixed"]["successful_routes"]["effective_modes"]))
         print(f"Completed {a.task} {a.method} seed{a.seed}",flush=True)
