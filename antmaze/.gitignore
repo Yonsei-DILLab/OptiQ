@@ -1,0 +1,7 @@
+__pycache__/
+results/
+reference/
+*.log
+ops/*cancellation*.json
+ops/*reallocation*.json
+runtime-lock.txt
