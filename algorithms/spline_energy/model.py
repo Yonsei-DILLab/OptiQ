@@ -65,9 +65,8 @@ class ConditionalSplineCircuit(nn.Module):
         }
 
 
-def log_prob_from_output(output, actions):
-    """Evaluate the exact normalized mixture density on ``[-1, 1]^D``."""
-    leaves = output["log_leaves"]
+def mixture_log_value(log_weights, leaves, actions):
+    """Evaluate a positive sum-product circuit, normalized or unnormalized."""
     bins = leaves.shape[-1] - 1
     u = ((actions + 1.0) * bins / 2.0).clip(0.0, float(bins))
     index = jnp.minimum(jnp.floor(u).astype(jnp.int32), bins - 1)
@@ -78,13 +77,21 @@ def log_prob_from_output(output, actions):
     log_fraction = jnp.log(jnp.maximum(fraction, 1e-30))[:, None, :]
     log_one_minus = jnp.log(jnp.maximum(1.0 - fraction, 1e-30))[:, None, :]
     log_leaf = jnp.logaddexp(left + log_one_minus, right + log_fraction)
-    result = logsumexp(output["log_weights"] + log_leaf.sum(axis=-1), axis=-1)
+    result = logsumexp(log_weights + log_leaf.sum(axis=-1), axis=-1)
     inside = jnp.all((actions >= -1.0) & (actions <= 1.0), axis=-1)
     return jnp.where(inside, result, -jnp.inf)
 
 
+def log_prob_from_output(output, actions):
+    """Evaluate the exact normalized mixture density on ``[-1, 1]^D``."""
+    return mixture_log_value(output["log_weights"], output["log_leaves"], actions)
+
+
 def q_from_output(output, actions, temperature):
-    """The tied energy: Q(s,a) = V(s) + temperature * log pi(a|s)."""
+    """Q=alpha log F for raw energies; legacy V+alpha log pi otherwise."""
+    if "raw_log_roots" in output:
+        return temperature * mixture_log_value(
+            output["raw_log_roots"], output["raw_log_leaves"], actions)
     return output["value"] + temperature * log_prob_from_output(output, actions)
 
 

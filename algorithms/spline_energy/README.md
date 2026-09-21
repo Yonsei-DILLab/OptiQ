@@ -1,5 +1,14 @@
 # Spline Energy
 
+The restored `--profile gmm_reference` uses [`raw_energy.py`](raw_energy.py):
+the GMM40 unnormalized circuit, rank 64 / 129 knots, derived log partition,
+and ordinary TD + MSE checked against Direct GMM/TRG commit `30f4db1`.
+See [`DIRECT_ALIGNMENT.md`](DIRECT_ALIGNMENT.md) for equations, reference-code
+mapping, the self-imitation issue, and differences from the separate-critic
+Direct implementation. The native one-forward sampler is retained.
+
+The description below documents the earlier normalized-value parameterization.
+
 `model.py` contains the algorithm's shared state encoder, exact normalized
 positive-spline policy, tied soft Q function, and one-forward action sampler.
 

@@ -1,5 +1,12 @@
 # spline_energy
 
+현재 수정본은 `--profile gmm_reference`입니다. GMM40 성공본의 unnormalized
+energy 표현과 rank 64 / 129 knots를 복원하고, 최신 Direct GMM/TRG에서 확인한
+ordinary TD + MSE를 연결했습니다. Q와 log-partition은 같은 spline에서 계산하고
+추론은 one-step으로 유지합니다. 수식 대조, 기존 이식본과의 차이 및 적용 한계는
+[`DIRECT_ALIGNMENT.md`](algorithms/spline_energy/DIRECT_ALIGNMENT.md)에 기록했습니다.
+아래 기존 MuJoCo 설정과 실패한 loss 실험은 `legacy` 경로의 기록입니다.
+
 `spline_energy`는 정책과 soft Q를 하나의 정규화 가능한 positive spline
 circuit으로 표현하는 알고리즘입니다. 추론할 때 diffusion, MCMC, action
 optimization, candidate search를 사용하지 않고 상태 네트워크를 한 번 통과한
@@ -29,6 +36,7 @@ policy density, stochastic action을 얻습니다. 행동 샘플링은 root cate
 ## 코드 위치
 
 - 공용 conditional 모델: [`algorithms/spline_energy/model.py`](algorithms/spline_energy/model.py)
+- GMM40 표현을 복원한 conditional 모델: [`raw_energy.py`](algorithms/spline_energy/raw_energy.py)
 - GMM40 성공본: [`benchmarks/gmm40/spline_energy/`](benchmarks/gmm40/spline_energy/)
 - GMM40 핵심 회로: [`benchmarks/gmm40/spline_energy/spline_energy.py`](benchmarks/gmm40/spline_energy/spline_energy.py)
 - 실제 100k 비교 runner: [`benchmarks/gmm40/spline_energy/reference_100k_compare_latest.py`](benchmarks/gmm40/spline_energy/reference_100k_compare_latest.py)
