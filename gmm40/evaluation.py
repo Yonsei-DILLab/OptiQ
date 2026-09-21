@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial.distance import cdist, jensenshannon
 from .target import RESULTS, SCALE
+from .visualization import select_result,select_history,mode_label
 
 
 def atomic_json(path, data):
@@ -82,24 +83,35 @@ def save_evaluation(folder,name,step,samples,target,reference,full_reference,tra
     result=metrics(samples,target,reference,full_reference)
     result.update(method=name,step=step,training=training_info)
     atomic_json(destination/"metrics.json",result)
-    fig,axes=plt.subplots(1,3,figsize=(15,4.7),constrained_layout=True)
-    for ax in axes[:2]: background(ax,target)
-    axes[0].scatter(*reference[:5000].T,s=2,alpha=.25,color="#3676b9")
-    axes[0].set_title("Ground truth | bounded GMM40")
-    axes[1].scatter(*samples[:5000].T,s=2,alpha=.35,color="#dd7932")
-    axes[1].set_title(f"{name} | update {step:,}\n{result['mode_coverage']}/40 components, MMD² {result['mmd2']:.4g}")
-    _,_,rc=assignments(reference,target)
-    axes[2].bar(np.arange(40)-.18,rc/len(reference),width=.36,label="Target",color="#3676b9")
-    axes[2].bar(np.arange(40)+.18,np.asarray(result['mode_counts_3sigma'])/len(samples),width=.36,label=name,color="#dd7932")
-    axes[2].set(xlabel="Nearest component (within 3σ)",ylabel="Sample mass",title=f"SW₂ {result['sliced_wasserstein2']:.3f} | precision {result['high_density_fraction']:.1%}")
-    axes[2].legend()
-    fig.savefig(destination/"samples.png",dpi=140)
-    fig.savefig(destination/"samples.pdf")
-    plt.close(fig)
     if extra_samples:
         for label,values in extra_samples.items():
             np.save(destination/f"samples_{label}.npy",values)
             atomic_json(destination/f"metrics_{label}.json",metrics(values,target,reference,full_reference))
+    # Primary samples.png and its metric labels always use the same selected view.
+    primary,primary_path=select_result(folder,result)
+    views=[('samples',np.load(primary_path),primary,mode_label(primary))]
+    if primary['visualization_mode']=='mu_only':
+        views.append(('samples_full_policy',samples,result,'full stochastic policy (supplement)'))
+    for filename,points,shown,label in views:
+        fig,axes=plt.subplots(1,3,figsize=(15,4.7),constrained_layout=True)
+        for ax in axes[:2]:background(ax,target)
+        axes[0].scatter(*reference.T,s=1,alpha=.25,color="#3676b9")
+        axes[0].set_title("Ground truth | bounded GMM40")
+        _,near,rc=assignments(points,target)
+        for mask,color in ((near,'#2381b4'),(~near,'#e9884f')):
+            axes[1].scatter(*points[mask].T,s=1,alpha=.3,color=color)
+        axes[1].set_title(f"{name} | update {step:,}\n{label}\n{shown['mode_coverage']}/40 components, MMD² {shown['mmd2']:.4g}")
+        _,_,rc=assignments(reference,target)
+        axes[2].bar(np.arange(40)-.18,rc/len(reference),width=.36,label="Target",color="#3676b9")
+        axes[2].bar(np.arange(40)+.18,np.asarray(shown['mode_counts_3sigma'])/len(points),width=.36,label=label,color="#dd7932")
+        axes[2].set(xlabel="Nearest component (within 3σ)",ylabel="Sample mass",title=f"SW₂ {shown['sliced_wasserstein2']:.3f} | near {shown['high_density_fraction']:.1%}")
+        axes[2].legend(fontsize=8)
+        fig.savefig(destination/f"{filename}.png",dpi=140)
+        fig.savefig(destination/f"{filename}.pdf")
+        plt.close(fig)
+    atomic_json(destination/'visualization.json',dict(primary_mode=primary['visualization_mode'],
+        primary_samples=primary_path.name,primary_metrics='metrics_mu_only.json' if primary['visualization_mode']=='mu_only' else 'metrics.json',
+        full_policy_samples='samples.npy',full_policy_metrics='metrics.json'))
     if rollout is not None:
         np.savez_compressed(destination/"generation_rollout.npz",positions=rollout)
         make_rollout(destination/"generation_rollout.gif",rollout,target,name)
@@ -132,12 +144,13 @@ def make_rollout(path,positions,target,name):
 
 def summary_report(folder,name):
     rows=[json.loads(s) for s in (folder/"metrics.jsonl").read_text().splitlines()]
-    lines=[f"# {name}: intermediate results", "", "All checkpoints are retained. Reference samples are evaluation-only.","", "| Updates | Components /40 | MMD² ↓ | SW₂ ↓ | High-density fraction ↑ | Component-mass TV ↓ | Training seconds |", "|---:|---:|---:|---:|---:|---:|---:|"]
+    rows=select_history(folder,rows)
+    lines=[f"# {name}: intermediate results", "", "Primary view: OptiQ μ only (no conditional Gaussian noise); other methods use native outputs. Full-policy metrics remain in metrics.json/jsonl. All checkpoints are retained. Reference samples are evaluation-only.","", "| Updates | Components /40 | MMD² ↓ | SW₂ ↓ | High-density fraction ↑ | Component-mass TV ↓ | Training seconds |", "|---:|---:|---:|---:|---:|---:|---:|"]
     config_path=folder/'config.json'
     cfg=json.loads(config_path.read_text()) if config_path.exists() else {}
     if cfg.get('fixed_q_temperature_control'):
         lines[3:3]=[f"Teacher T={cfg['temperature']:g}: the training Boltzmann target is proportional to p_GMM^(1/T). All metrics and blue samples still use the original T=1 bounded GMM for comparison; these are not fit metrics to the tempered target.", '']
     for r in rows:
         lines.append(f"| {r['step']} | {r['mode_coverage']} | {r['mmd2']:.6f} | {r['sliced_wasserstein2']:.3f} | {r['high_density_fraction']:.3f} | {r['mode_mass_tv']:.3f} | {r['training'].get('train_seconds',0):.1f} |")
-    lines += ["", "MMD² is the unbiased multi-bandwidth RBF estimate and can be slightly negative.", "Coverage: nearest-component-center distance ≤3σ and count ≥ max(10, 10% of matched reference count). This is not an exact count of density local maxima.", "Component-mass TV conditions on samples within 3σ; inspect high-density fraction alongside it.", "Blue: bounded ground-truth samples. Orange: policy samples. Gray contours/black crosses: true target.", "", "[Training evolution](training_evolution.gif)"]
+    lines += ["", "MMD² is the unbiased multi-bandwidth RBF estimate and can be slightly negative.", "Coverage: nearest-component-center distance ≤3σ and count ≥ max(10, 10% of matched reference count). This is not an exact count of density local maxima.", "Component-mass TV conditions on samples within 3σ; inspect high-density fraction alongside it.", "Scatter colors: blue within GT 3σ; orange outside. Gray contours/black crosses: target. The selected primary view matches the table metrics.", "", "[Training evolution](training_evolution.gif)"]
     (folder/"REPORT.md").write_text("\n".join(lines)+"\n")

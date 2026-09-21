@@ -11,6 +11,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from .target import RESULTS,Target
+from .visualization import select_result,select_history,mode_label
 
 
 def sample_grid(rows,phase):
@@ -37,11 +38,13 @@ def sample_grid(rows,phase):
             ax.set_title(method.upper()+' | queued');continue
         row=selected[method];prefix='step' if phase=='fixed' else 'update'
         directory=RESULTS/row['name']/'evaluations'/f"{prefix}_{row['evaluated_updates']:07d}"
-        if phase=='fixed':points=np.load(directory/'samples.npy')
+        if phase=='fixed':
+            selected_result,path=select_result(RESULTS/row['name'],read(RESULTS/row['name']/'latest.json'))
+            points=np.load(path)
         else:
             with np.load(directory/'environment_rollout.npz') as data:points=data['positions'][-1]
-        ax.scatter(*points[:5000].T,s=2,alpha=.35,color='#dd7932')
-        ax.set_title(f"{method.upper()} | {row['evaluated_updates']:,} updates | {row['status']}\nMMD² {row['mmd2']:.4g}, components {row['modes']}/40, precision {row['precision']:.1%}")
+        ax.scatter(*points.T,s=1,alpha=.3,color='#dd7932')
+        ax.set_title(f"{method.upper()} | {row['evaluated_updates']:,} updates | {row['status']}\n{row.get('visualization_mode','native output')} | MMD² {row['mmd2']:.4g}, components {row['modes']}/40, precision {row['precision']:.1%}")
     fig.savefig(RESULTS/f'{phase}_samples_comparison.png',dpi=150);fig.savefig(RESULTS/f'{phase}_samples_comparison.pdf');plt.close(fig)
     return True
 
@@ -75,29 +78,32 @@ def optiq_variant_grid(rows):
             label+=f"\nActor LR={cfg['actor_learning_rate']:g}"
         if cfg.get('mean_output_init_scale',1e-4)!=1e-4:
             label+=f"\nMean-head init variance scale={cfg['mean_output_init_scale']:g}"
-        axes[0,column].scatter(*full[:5000].T,s=2,alpha=.3,color='#dd7932')
-        axes[1,column].scatter(*mu[:5000].T,s=2,alpha=.3,color='#8762a8')
+        axes[1,column].scatter(*full.T,s=1,alpha=.3,color='#dd7932')
+        axes[0,column].scatter(*mu.T,s=1,alpha=.3,color='#8762a8')
         train=result.get('training',{})
         sigma=train.get('sigma_mean');ess=train.get('teacher_ess')
         stats='' if sigma is None or ess is None else f'\nσ={sigma:.3f}, teacher ESS={ess:.2f}'
-        axes[0,column].set_title(f"{label} | {step:,} updates\nFull policy: {result['mode_coverage']}/40, precision {result['high_density_fraction']:.1%}{stats}",fontsize=11)
-        axes[1,column].set_title(f"Conditional means only (diagnostic)\n{means['mode_coverage']}/40, precision {means['high_density_fraction']:.1%}",fontsize=11)
-    fig.suptitle('OptiQ fixed-Q variants | T=1 | orange: full stochastic policy; purple: 40 tanh(μ) only\nGray contours and black crosses: target. The bottom row does not replace the policy evaluation.',fontsize=13)
+        axes[1,column].set_title(f"{label} | {step:,} updates\nFull policy (supplement): {result['mode_coverage']}/40, precision {result['high_density_fraction']:.1%}{stats}",fontsize=11)
+        axes[0,column].set_title(f"{label} | {step:,} updates\nμ only (primary, no conditional σ noise)\n{means['mode_coverage']}/40, precision {means['high_density_fraction']:.1%}",fontsize=11)
+    fig.suptitle('OptiQ fixed-Q variants | T=1 | top: μ only (primary); bottom: full policy (supplement)\nGray contours and black crosses: target. Latent sampling follows each run configuration.',fontsize=13)
     fig.savefig(RESULTS/'optiq_variants_comparison.png',dpi=140)
     fig.savefig(RESULTS/'optiq_variants_comparison.pdf');plt.close(fig)
     return True
 
 
-def history(folder):
+def history(folder,primary=True):
     cfg=read(folder/'config.json',{})
     rows=[]
     if cfg.get('resume'):
         parent=Path(cfg['resume']).parent.parent
-        if parent!=folder:rows=history(parent)
+        if parent!=folder:rows=history(parent,primary=primary)
     file=folder/'metrics.jsonl'
     if file.exists():rows += [json.loads(line) for line in file.read_text().splitlines() if line.strip()]
     by_step={row.get('step',row.get('updates')):row for row in rows}
-    return [by_step[key] for key in sorted(by_step)]
+    records=[by_step[key] for key in sorted(by_step)]
+    if primary and cfg.get('method') in ('optiq','optiq_trg') and not cfg.get('navigation'):
+        records=select_history(folder,records)
+    return records
 
 
 def navigation_control_report(series_by_run):
@@ -164,7 +170,8 @@ def _refresh_unlocked():
         phase='navigation' if navigation else 'fixed'
         step=result.get('step',result.get('updates',0))
         training=result.get('training',{})
-        row=dict(name=job['name'],phase=phase,method=job['method'],status=state.get('status','queued'),
+        if result and phase=='fixed':result,_=select_result(folder,result)
+        row=dict(name=job['name'],phase=phase,method=job['method'],status=state.get('status','queued'),visualization_mode=result.get('visualization_mode','native_policy'),
                  role=job.get('comparison_role','baseline_or_prior_control'),
                  updates=state.get('step',state.get('updates',0)),evaluated_updates=step,budget=job['steps'],
                  temperature=cfg.get('temperature'),modes=result.get('mode_coverage'),mmd2=result.get('mmd2'),
@@ -180,6 +187,7 @@ def _refresh_unlocked():
            'Earlier 10K runs are retained as historical stages; 100K continuations include their training history.',
            'Validation and invalid adapters are excluded from comparisons, but remain on disk.',
            '', 'Fixed-Q primary baselines use T=1. Explicit temperature controls target p_GMM^(1/T), but their evaluation reference remains the original T=1 GMM; they are excluded from the T=1 variant grid. Moving Q: OptiQ starts at T=.25 and is judged using Q spread, actual proposal ESS, and rollouts.',
+           'Fixed-Q visualization default: OptiQ μ-only outputs; other methods retain their native generator outputs. Tables and curves use the same selected metrics. Raw full-policy evaluations remain separately saved.',
            'Coverage alone is insufficient: inspect high-density fraction and MMD alongside it.',
            'Coverage counts 40 component centers, not mathematical density maxima. Numerical search found 36 strict local maxima; this auxiliary result does not replace the primary metric.',
            'Navigation terminal distributions are an empirical diagnostic, not a guaranteed Boltzmann target.',
@@ -213,7 +221,7 @@ def _refresh_unlocked():
                       '', '![Navigation control curves](navigation_control_curves.png)', ''])
     if optiq_variant_grid(rows):
         lines.extend(['## OptiQ variants','',
-                      'Top: full stochastic policy. Bottom: conditional means only, a diagnostic that does not replace the actual policy distribution.',
+                      'Top: μ only (primary); bottom: full stochastic policy (supplement). Each row uses its own matching metrics.',
                       'Each panel displays its evaluated update count; unfinished runs are not final results.',
                       '', '![OptiQ variants](optiq_variants_comparison.png)',''])
     lines.extend(['## Fixed-Q compute at the latest published evaluation','',
@@ -233,8 +241,9 @@ def _refresh_unlocked():
         path=f"{row['name']}/evaluations/{prefix}_{row['evaluated_updates']:07d}"
         picture='terminal_and_paths.png' if row['phase']=='navigation' else 'samples.png'
         animation='environment_rollout.gif' if row['phase']=='navigation' else 'generation_rollout.gif'
-        lines.append(f"- {row['name']}: [plot]({path}/{picture}), [rollout]({path}/{animation}), [metrics]({path}/metrics.json), [evolution]({row['name']}/training_evolution.gif)")
-        cards.append(f'<article><h2>{html.escape(row["name"])}</h2><p>{row["status"]}; evaluated {row["evaluated_updates"]:,} updates</p><a href="{path}/{picture}"><img src="{path}/{picture}"></a><p><a href="{path}/{animation}">Rollout</a> · <a href="{path}/metrics.json">Metrics</a> · <a href="{row["name"]}/training_evolution.gif">Training evolution</a></p></article>')
+        lines.append(f"- {row['name']}: [plot]({path}/{picture}), [rollout]({path}/{animation}), [metrics]({path}/{'metrics_mu_only.json' if row['visualization_mode']=='mu_only' else 'metrics.json'}), [evolution]({row['name']}/training_evolution.gif)")
+        metric_file='metrics_mu_only.json' if row['visualization_mode']=='mu_only' else 'metrics.json'
+        cards.append(f'<article><h2>{html.escape(row["name"])}</h2><p>{row["status"]}; evaluated {row["evaluated_updates"]:,} updates</p><a href="{path}/{picture}"><img src="{path}/{picture}"></a><p><a href="{path}/{animation}">Rollout</a> · <a href="{path}/{metric_file}">Metrics</a> · <a href="{row["name"]}/training_evolution.gif">Training evolution</a></p></article>')
     (RESULTS/'COMPARISON.md').write_text('\n'.join(lines)+'\n')
     if rows:
         with (RESULTS/'comparison.csv').open('w') as f:

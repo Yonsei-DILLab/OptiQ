@@ -31,3 +31,12 @@ requested ablations may override these bounds in their own experiment profiles;
 do not promote ablation bounds to defaults based on their results. Preserve
 running/frozen snapshots. The requested Ant/Humanoid 20k cap 0 versus -2
 comparison is an explicit experiment-only exception.
+
+User visualization default (2026-09-21): OptiQ GMM figures use μ-only action
+outputs with conditional Gaussian noise removed, retaining each run's original
+fixed/random latent prior. Near/coverage/MMD labels, tables and curves must use
+the same μ-only samples. Keep full-policy σ-noise results as a clearly labeled
+supplement, never relabel full-policy metrics as μ-only. Other baselines retain
+their native generator outputs and are labeled accordingly. Preserve raw metrics,
+training, RL reward evaluation and frozen source. For old frozen campaigns,
+render a separate post-hoc report with reporting-source provenance.

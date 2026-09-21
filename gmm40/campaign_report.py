@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .campaign import read,write,verified
+from .visualization import select_result,select_history,mode_label
 
 METRICS=[('mode_coverage','Covered components ↑'),('high_density_fraction','Within GT 3σ ↑'),
          ('mmd2','MMD² ↓'),('sliced_wasserstein2','Sliced Wasserstein ↓'),
@@ -19,19 +20,22 @@ METRICS=[('mode_coverage','Covered components ↑'),('high_density_fraction','Wi
 LABELS=dict(optiq_trg='OptiQ Direct GMM/TRG',optiq='OptiQ v5 OT',sac='SAC',dipo='DIPO',meow='MEOW',mfpo='MFPO',sql='SQL (JAX SVGD)')
 
 
-def build(root):
+def build(root,view='primary',output_dir=None,archive=True):
     manifest=read(root/'manifest.json');plan=manifest['plan'];jobs=manifest['jobs']
     if not all(verified(root,j) for j in jobs):raise RuntimeError('Every approved run must finish and pass update-count auditing')
-    out=root/'summary';out.mkdir(exist_ok=True)
+    out=Path(output_dir) if output_dir is not None else root/'summary'
+    out.mkdir(parents=True,exist_ok=True)
+    view_label='Primary: OptiQ μ only; other methods native outputs' if view=='primary' else 'Supplement: full stochastic policies'
     methods=plan['methods'];seeds=plan['seeds'];runs={};rows=[];groups={}
     for job in jobs:
         folder=root/'results'/job['name']
         history=[json.loads(line) for line in (folder/'metrics.jsonl').read_text().splitlines() if line.strip()]
         by_step={r['step']:r for r in history};history=[by_step[s] for s in sorted(by_step)]
-        latest=read(folder/'latest.json')
+        latest,sample_path=select_result(folder,read(folder/'latest.json'),view)
+        history=select_history(folder,history,view)
         assert latest['step']==plan['steps']
-        runs[(job['method'],job['seed'])]=dict(folder=folder,history=history,latest=latest)
-        rows.append(dict(method=job['method'],seed=job['seed'],updates=latest['step'],
+        runs[(job['method'],job['seed'])]=dict(folder=folder,history=history,latest=latest,sample_path=sample_path)
+        rows.append(dict(method=job['method'],seed=job['seed'],updates=latest['step'],visualization_mode=latest['visualization_mode'],
             **{key:latest[key] for key,_ in METRICS},
             Q_evaluations=latest['training'].get('Q_evaluations'),
             train_seconds=latest['training'].get('train_seconds'),
@@ -42,7 +46,7 @@ def build(root):
         groups[method]={key:dict(mean=float(np.mean([r[key] for r in subset])),
                                 seed_std=float(np.std([r[key] for r in subset],ddof=1)),
                                 per_seed=[r[key] for r in subset]) for key,_ in METRICS}
-    write(out/'results.json',dict(source_commit=manifest['source_commit'],plan=plan,per_seed=rows,
+    write(out/'results.json',dict(source_commit=manifest['source_commit'],visualization_view=view,plan=plan,per_seed=rows,
                                  aggregate=groups,dispersion='Sample standard deviation across four training seeds, ddof=1'))
     with (out/'per_seed.csv').open('w') as f:
         writer=csv.DictWriter(f,fieldnames=list(rows[0]));writer.writeheader();writer.writerows(rows)
@@ -64,7 +68,7 @@ def build(root):
             ax.fill_between(steps,mean-sd,mean+sd,color=color,alpha=.12)
         ax.set(xlabel='Actor updates',ylabel=label);ax.grid(alpha=.2)
     axes[0,0].legend(fontsize=8)
-    fig.suptitle('GMM40 fixed-Q · T=1 · 4 training seeds · mean ± seed SD')
+    fig.suptitle('GMM40 fixed-Q · T=1 · 4 seeds · mean ± seed SD\n'+view_label)
     for ext in ('png','pdf'):fig.savefig(out/f'learning_curves.{ext}',dpi=150)
     plt.close(fig)
     fig,axes=plt.subplots(2,3,figsize=(16,10),constrained_layout=True)
@@ -73,7 +77,7 @@ def build(root):
                yerr=[groups[m][key]['seed_std'] for m in methods],capsize=3,color=colors)
         ax.set_xticks(range(len(methods)),[LABELS[m] for m in methods],rotation=25,ha='right',fontsize=8)
         ax.set_ylabel(label);ax.grid(axis='y',alpha=.2)
-    fig.suptitle('Final 100k · mean ± seed SD (4 seeds per method)')
+    fig.suptitle('Final 100k · mean ± seed SD (4 seeds per method)\n'+view_label)
     for ext in ('png','pdf'):fig.savefig(out/f'final_metrics.{ext}',dpi=150)
     plt.close(fig)
     target=read(root/'results/target/definition.json');means=np.array(target['means']);std=np.array(target['std'])
@@ -82,19 +86,23 @@ def build(root):
     for r,seed in enumerate(seeds):
         for c,method in enumerate(methods):
             ax=axes[r,c];run=runs[(method,seed)];latest=run['latest']
-            samples=np.load(run['folder']/'evaluations'/f"step_{plan['steps']:07d}"/'samples.npy')
+            samples=np.load(run['sample_path'])
             assert len(samples)==plan['eval_samples'] and np.isfinite(samples).all()
-            ax.scatter(*samples[:5000].T,s=1,alpha=.25,color='#dd7932')
+            near=(((samples[:,None,:]-means)/std[None,:,None])**2).sum(-1).min(-1)<=9
+            assert np.isclose(near.mean(),latest['high_density_fraction'])
+            for mask,color in ((near,'#2381b4'),(~near,'#e9884f')):
+                ax.scatter(*samples[mask].T,s=1,alpha=.3,color=color)
             ax.scatter(*means.T,marker='+',color='black',s=15)
             for center,sigma in zip(means,std):ax.plot(center[0]+3*sigma*np.cos(theta),center[1]+3*sigma*np.sin(theta),color='gray',lw=.4,ls='--')
             ax.set(xlim=(-42,42),ylim=(-42,42),aspect='equal',
-                title=f"{LABELS[method]} · seed {seed}\ncoverage {latest['mode_coverage']}/40 · near {latest['high_density_fraction']:.1%}")
-    fig.suptitle('Final stochastic policy samples · first 5,000 shown, all 10,000 saved per run')
+                title=f"{LABELS[method]} · seed {seed} · {mode_label(latest)}\ncoverage {latest['mode_coverage']}/40 · near {latest['high_density_fraction']:.1%}")
+    fig.suptitle(view_label+'\nAll saved samples shown · blue: within GT 3σ; orange: outside')
     for ext in ('png','pdf'):fig.savefig(out/f'final_distributions.{ext}',dpi=140)
     plt.close(fig)
     lines=['# GMM40 100k · 4-seed 비교','',f"소스: `{manifest['source_commit']}`",'',
            '고정 Q = 원본 GMM40 log density, T=1. 각 방법 seed 0~3, 100,000 actor updates, 평가당 10,000 samples.',
-           '표의 ±는 학습 시드 간 표준편차(ddof=1)입니다. Target 샘플은 평가에서만 사용합니다.','',
+           '표의 ±는 학습 시드 간 표준편차(ddof=1)입니다. Target 샘플은 평가에서만 사용합니다.',
+           view_label, '그림·표·학습곡선은 동일한 평가 모드를 사용합니다. μ-only에서도 latent는 원래 정책의 prior대로 샘플링합니다.','',
            '| Method | Coverage /40 | Within 3σ | MMD² ↓ | SW ↓ | Mass TV ↓ |',
            '|---|---:|---:|---:|---:|---:|']
     for method in methods:
@@ -117,6 +125,9 @@ def build(root):
               'GMM component coverage는 density의 실제 local maxima 개수와 같지 않습니다.','',
               '![학습곡선](learning_curves.png)','![최종지표](final_metrics.png)','![최종분포](final_distributions.png)']
     (out/'REPORT_KO.md').write_text('\n'.join(lines)+'\n')
+    if view=='primary':
+        build(root,view='full_policy',output_dir=out/'full_policy',archive=False)
+    if not archive:return
     archive=root/'final-results.tar.gz';temp=root/'final-results.tar.gz.tmp'
     with tarfile.open(temp,'w:gz') as tar:
         for p in [root/'manifest.json',root/'preflight.json',out,root/'results/target']:
@@ -126,6 +137,9 @@ def build(root):
             for name in ['config.json','status.json','latest.json','metrics.jsonl','model_sizes.json','update_count_audit.json','wandb_status.json']:
                 p=folder/name
                 if p.exists():tar.add(p,arcname=str(p.relative_to(root)))
+            # Preserve intermediate mu-only metrics so primary curves can be reproduced locally.
+            for p in sorted((folder/'evaluations').glob('*/metrics_mu_only.json')):
+                if p.parent!=final:tar.add(p,arcname=str(p.relative_to(root)))
             for p in [final,folder/'checkpoints'/f"step_{plan['steps']:07d}.bin"]:
                 tar.add(p,arcname=str(p.relative_to(root)))
     temp.replace(archive)
@@ -139,4 +153,9 @@ def build(root):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--root',type=Path,required=True)
-    build(parser.parse_args().root.resolve())
+    parser.add_argument('--view',choices=['primary','full_policy'],default='primary')
+    parser.add_argument('--output-dir',type=Path)
+    parser.add_argument('--visualization-only',action='store_true',help='Write a separate report without replacing the training archive/result')
+    args=parser.parse_args()
+    if args.visualization_only and args.output_dir is None:parser.error('--visualization-only requires --output-dir')
+    build(args.root.resolve(),args.view,args.output_dir,not args.visualization_only)
