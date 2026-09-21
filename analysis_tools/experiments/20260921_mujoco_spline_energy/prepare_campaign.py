@@ -19,8 +19,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--campaign", type=Path, required=True)
     args = parser.parse_args()
-    if git("branch", "--show-current") != "heejoon":
-        raise RuntimeError("AGENTS.md requires experiment commits on branch heejoon")
+    if git("branch", "--show-current") != "spline_energy":
+        raise RuntimeError("Prepare this campaign from the spline_energy branch")
     if git("status", "--porcelain"):
         raise RuntimeError("Commit the exact source/config/launcher before freezing")
     if args.campaign.exists():
@@ -36,7 +36,7 @@ def main():
              for i, env in enumerate(ENVS) for seed in range(3)]
     record = {"created_utc": datetime.now(timezone.utc).isoformat(),
               "project_name": "OptiQ MuJoCo Spline Energy", "git_commit": commit,
-              "git_branch": "heejoon", "environments": ENVS, "seeds": [0, 1, 2],
+              "git_branch": "spline_energy", "environments": ENVS, "seeds": [0, 1, 2],
               "total_runs": 15, "total_steps_per_run": 1_000_000,
               "hypothesis": "one state-conditioned spline circuit can jointly represent Q,V,policy with exact one-forward sampling",
               "baseline": "existing Direct GMM/TRG MuJoCo protocol; not retrained in this launch",
@@ -50,4 +50,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

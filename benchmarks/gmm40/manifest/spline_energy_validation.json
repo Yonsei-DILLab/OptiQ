@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "analytic_integral_relative_error": 4.0717640370502295e-10,
+  "sampler_coarse_tv": 0.013175350206438452,
+  "sample_count": 65536,
+  "updates": [
+    {
+      "estimated_target_partition": 1.2123024463653564,
+      "grad_norm": 0.112149678170681,
+      "loss": 2.5831778049468994,
+      "source_ess": 41.400577545166016
+    },
+    {
+      "estimated_target_partition": 1.0481059551239014,
+      "grad_norm": 0.10096463561058044,
+      "loss": 2.3732919692993164,
+      "source_ess": 45.23051834106445
+    },
+    {
+      "estimated_target_partition": 0.780411958694458,
+      "grad_norm": 0.08952425420284271,
+      "loss": 2.01013445854187,
+      "source_ess": 32.52187728881836
+    }
+  ],
+  "source_sha256": {
+    "spline_energy.py": "8d168d1d238e21edc2a262bf421290fd71032a398142ef7f04549b81c6917420",
+    "validate_spline_energy.py": "c377d1ecf87566ed575e025c9f551b0f5c3ab14f45173e14a19bfe649378613d"
+  }
+}

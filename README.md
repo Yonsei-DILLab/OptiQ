@@ -1,10 +1,15 @@
-# OptiQ experiments (`heejoon`)
+# OptiQ Spline Energy
 
-This branch preserves the current Boltzmann-backup, frozen-Q and GMM40 experiment
-implementation and historical campaign source snapshots. See
-[CURRENT_EXPERIMENTS.md](CURRENT_EXPERIMENTS.md) for the exact source versions,
-protocols, verification and lab-storage locations. The original DIME and MuJoCo
-documentation follows below.
+The `spline_energy` branch adds a state-conditioned positive-spline circuit that
+defines the policy and soft Q in one model and samples actions in one forward
+pass. The standalone implementation is in
+[`algorithms/spline_energy`](algorithms/spline_energy); the five-task MuJoCo
+training protocol is in
+[`analysis_tools/experiments/20260921_mujoco_spline_energy`](analysis_tools/experiments/20260921_mujoco_spline_energy).
+The original 40-mode toy implementation and measured five-seed result are in
+[`benchmarks/gmm40/spline_energy`](benchmarks/gmm40/spline_energy).
+
+Historical OptiQ, DIME, and experiment sources remain below for reproducibility.
 
 ## Scalar-critic ablation (`mujoco-setting`)
 

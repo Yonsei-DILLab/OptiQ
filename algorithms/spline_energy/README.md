@@ -1,0 +1,25 @@
+# Spline Energy
+
+`model.py` contains the algorithm's shared state encoder, exact normalized
+positive-spline policy, tied soft Q function, and one-forward action sampler.
+
+For a state `s`, the circuit outputs a scalar `V(s)`, mixture weights `w_r(s)`,
+and normalized one-dimensional positive linear splines `f_rd(a_d | s)`:
+
+```text
+pi(a | s) = sum_r w_r(s) prod_d f_rd(a_d | s)
+Q(s, a)   = V(s) + alpha log pi(a | s)
+```
+
+Consequently, `integral exp(Q(s,a) / alpha) da = exp(V(s) / alpha)` exactly on
+the normalized action box. `sample_action` uses a categorical root CDF and
+parallel analytic inverse CDFs for the selected spline leaves. It performs one
+network forward pass and has no diffusion loop, MCMC, optimization, or action
+candidate search at inference time.
+
+The committed MuJoCo training and validation harness is under
+`analysis_tools/experiments/20260921_mujoco_spline_energy/`.
+
+The original state-free GMM40 implementation, exact 100k comparison runner,
+target definition, and five-seed measurements are under
+`benchmarks/gmm40/spline_energy/`.
