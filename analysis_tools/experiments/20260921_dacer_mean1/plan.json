@@ -1,0 +1,13 @@
+{
+  "campaign": "trg-dacer-mean1-20260921",
+  "host": "vast-heechan-199",
+  "gpus": [0, 1, 2, 3],
+  "jobs": [
+    {"task": "halfcheetah", "seed": 0},
+    {"task": "halfcheetah", "seed": 1},
+    {"task": "ant", "seed": 0},
+    {"task": "ant", "seed": 1},
+    {"task": "ant", "seed": 2},
+    {"task": "ant", "seed": 3}
+  ]
+}
