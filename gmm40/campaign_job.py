@@ -11,7 +11,7 @@ from .evaluation import atomic_json
 
 
 def main():
-    parser=argparse.ArgumentParser(add_help=False)
+    parser=argparse.ArgumentParser(add_help=False,allow_abbrev=False)
     parser.add_argument('--name',required=True)
     parser.add_argument('--method',required=True)
     parser.add_argument('--seed',type=int,default=0)

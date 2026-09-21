@@ -36,3 +36,13 @@ a Korean report and a SHA256-addressed portable final-results archive.
 Compare with the original frozen `87d5d8f` results only with both changes
 disclosed: mean initialization 1e-4 -> 1 and upper/initial log sigma -1 -> -3.
 This comparison cannot isolate either mean initialization or the sigma cap.
+
+Logging correction after registration: the original campaign wrapper accepted
+abbreviated CLI options, misreading `--n`/`--m` as `--name`/`--method` before
+calling the fully specified training parser. Training configs and local results
+are correct, but W&B names/configs/history need repair. The wrapper now disables
+abbreviations for future sources. The launched frozen source remains unchanged.
+`repair_campaign_wandb.py --root <root>` waits for each run to finish, resumes
+its original W&B ID, restores the true config/name and all saved evaluations,
+uploads final artifacts and verifies the remote summary. It records its own
+post-launch source commit in a separate sidecar. It never restarts a learner.
