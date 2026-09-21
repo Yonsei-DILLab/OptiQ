@@ -1,0 +1,82 @@
+{
+  "sizes": [
+    [
+      16,
+      16
+    ],
+    [
+      64,
+      64
+    ],
+    [
+      64,
+      256
+    ],
+    [
+      128,
+      128
+    ],
+    [
+      128,
+      256
+    ],
+    [
+      512,
+      512
+    ],
+    [
+      512,
+      2048
+    ]
+  ],
+  "methods": [
+    "baseline",
+    "mode_only"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "updates": 20000,
+  "diagnostic_steps": [
+    0,
+    1,
+    10,
+    100,
+    500,
+    1000,
+    2000,
+    5000,
+    10000,
+    15000,
+    20000
+  ],
+  "root": "/scratch2/hobbit9882/OptiQ-SingleQ-N64-M256-K64-T025-20260921/extensions/mode_selection_frozen_b128_20260921",
+  "python": "/scratch2/hobbit9882/.venvs/optiq-mujoco-scalar/bin/python",
+  "partitions": "big_suma_rtx3090,base_suma_rtx3090,dell_rtx3090,suma_rtx4090,suma_a6000,gigabyte_a6000,gigabyte_a5000,asus_6000ada,asus_a5000,tyan_a6000",
+  "excluded_nodes": "cs-gpu-01,node14,node23,node24,node31,node35,node40",
+  "qos": "big_qos",
+  "bio_partition": "gigabyte_a6000_bio",
+  "bio_qos": "etc_qos",
+  "general_workers": 12,
+  "bio_workers": 0,
+  "batch_size": 128,
+  "max_parallel_pairs": 8388608,
+  "metric_names": [
+    "common_pre_tanh_nll",
+    "batch_gradient_norm",
+    "confidence_mean_diagnostic_only",
+    "retained_mass_mean",
+    "teacher_ess_mean",
+    "teacher_wmax_mean",
+    "assigned_mode_fraction_0_to_Kminus1"
+  ],
+  "landscapes": [
+    "needle3",
+    "comb6",
+    "rugged7"
+  ],
+  "expected_runs": 168
+}
