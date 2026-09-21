@@ -18,6 +18,7 @@ PYTHON=/scratch2/gsmin2024/research/optiq_v5_humanoid_density_beta_20260915/.ven
 EXPECTED=$($PYTHON -c "import json;print(json.load(open('$CAMPAIGN/manifest/campaign.json'))['git_commit'])")
 test "$(git -C "$SOURCE" rev-parse HEAD)" = "$EXPECTED"
 test -z "$(git -C "$SOURCE" status --porcelain)"
+unset PYTHONPATH LD_LIBRARY_PATH
 export PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 export JAX_PLATFORMS=cuda XLA_PYTHON_CLIENT_PREALLOCATE=false MUJOCO_GL=egl
 export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS="$SLURM_CPUS_PER_TASK" MKL_NUM_THREADS=1
