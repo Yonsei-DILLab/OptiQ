@@ -20,3 +20,14 @@ latent keys before declaring the user goal achieved. If no profile passes,
 use evidence to register another committed parameter-only round; do not
 reinterpret success as partial coverage or full-policy instead ofmu-only.
 Actual successes and failures are both preserved and reported.
+
+User additions: matched 256x3 and 512x3 controls, four profiles each (seed0,
+100k). Change only width/depth from the four 256x2 profiles above. Each GPU
+waits for its verified 256x2 predecessor to exit, then runs256x3 and512x3;
+there is no all-GPU barrier. The queue acquires the existing run-gpu lock,
+performs a two-update GPU preflight with the actual hidden dimensions, then
+trains once. Failed/incomplete predecessors or jobs block that GPU queue and
+write a failure sidecar; no learner restart, overwrite, or early termination.
+Queue service/source/config is committed and frozen before registration.
+CPU checks validate both architectures and matched settings before queuing;
+GPU preflight is deferred until the corresponding GPU is free.

@@ -24,9 +24,9 @@ def unchanged_algorithm(source):
     return checks
 
 
-def prepare(root,source):
+def prepare(root,source,plan_path=None):
     assert not subprocess.check_output(['git','status','--porcelain'],cwd=source,text=True).strip()
-    plan=read(source/'gmm40/mu90_screen_plan.json');sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=source,text=True).strip()
+    plan=read(plan_path or source/'gmm40/mu90_screen_plan.json');sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=source,text=True).strip()
     if (root/'manifest.json').exists():
         m=read(root/'manifest.json');assert m['source_commit']==sha and m['plan']==plan;return
     jobs=[]
@@ -49,9 +49,11 @@ def preflight(root,m):
     target=initialize_target();checks=[];p=m['plan']
     for spec in p['profiles']:
         a=OptiQTRG(target,n=spec['n'],m=spec['m'],batch=p['batch'],
+            hidden_dims=(p['width'],)*p['depth'],temperature=p['temperature'],
             log_std_max=p['trg_log_std_max'],initial_log_std=p['trg_initial_log_std'],
             teacher_std_floor=p['trg_teacher_std_floor'],mean_output_init_scale=spec['mean_output_init_scale'])
         assert a.actor.mean_output_init_scale==spec['mean_output_init_scale']
+        assert tuple(a.actor.hidden_dims)==(p['width'],)*p['depth']
         info=a.advance(2);x,_,extra=a.evaluate_samples(128,937)
         assert a.updates==2 and np.isfinite(x).all() and np.max(np.abs(x))<=40
         assert np.isfinite(extra['mu_only']).all() and all(np.isfinite(v) for v in info.values())
