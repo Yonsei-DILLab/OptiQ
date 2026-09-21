@@ -23,3 +23,10 @@ The committed MuJoCo training and validation harness is under
 The original state-free GMM40 implementation, exact 100k comparison runner,
 target definition, and five-seed measurements are under
 `benchmarks/gmm40/spline_energy/`.
+
+The opt-in `--loss-kind relative_energy` trainer keeps this model unchanged and
+replaces Huber regression with a target-relative energy divergence. See
+[`THEORY.md`](THEORY.md) for its GMM40 derivation, Bellman residual/performance
+bounds, stochastic-target bias, numerical continuation, and explicit limits.
+[`energy_bellman.py`](energy_bellman.py) implements the scalar loss and conditional
+bound calculators. The existing 15-run Huber campaign uses its original snapshot.

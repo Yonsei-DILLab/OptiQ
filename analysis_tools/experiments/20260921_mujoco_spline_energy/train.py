@@ -23,6 +23,7 @@ import wandb
 
 from circuit import (ConditionalSplineCircuit, log_prob_from_output,
                      q_from_output, sample_action)
+from algorithms.spline_energy.energy_bellman import relative_energy_loss
 
 ENVS = ["Hopper-v4", "Walker2d-v4", "HalfCheetah-v4", "Ant-v4", "Humanoid-v4"]
 
@@ -51,7 +52,10 @@ class ReplayBuffer:
                 "not_terminal": self.not_terminal[i]}
 
 
-def make_update(model, temperature, gamma, tau, huber_delta):
+def make_update(model, temperature, gamma, tau, huber_delta,
+                loss_kind="huber", energy_scale=10., energy_tail_start=4.):
+    if loss_kind not in {"huber", "relative_energy"}:
+        raise ValueError(loss_kind)
     @jax.jit
     def update(state, target_params, batch):
         target_output = model.apply({"params": target_params}, batch["next_obs"])
@@ -61,7 +65,10 @@ def make_update(model, temperature, gamma, tau, huber_delta):
             output = model.apply({"params": params}, batch["obs"])
             logp = log_prob_from_output(output, batch["actions"])
             q = output["value"] + temperature * logp
-            loss = optax.huber_loss(q, target, delta=huber_delta).mean()
+            if loss_kind == "relative_energy":
+                loss = relative_energy_loss(q - target, energy_scale, energy_tail_start).mean()
+            else:
+                loss = optax.huber_loss(q, target, delta=huber_delta).mean()
             return loss, (q, output["value"], logp)
         (loss, (q, value, logp)), grads = jax.value_and_grad(loss_fn, has_aux=True)(state.params)
         grad_norm = optax.global_norm(grads)
@@ -72,6 +79,14 @@ def make_update(model, temperature, gamma, tau, huber_delta):
                    "train/target_mean": target.mean(),
                    "train/abs_td": jnp.abs(q - target).mean(),
                    "train/grad_norm_preclip": grad_norm}
+        if loss_kind == "relative_energy":
+            # Sample diagnostics only: none is a global Bellman certificate.
+            metrics.update({
+                "train/sampled_abs_td_max": jnp.max(jnp.abs(q - target)),
+                "train/sampled_td_over_fraction": jnp.mean(q > target),
+                "train/energy_tail_fraction": jnp.mean(
+                    q - target > energy_scale * energy_tail_start),
+            })
         return state, target_params, metrics
     return update
 
@@ -138,6 +153,9 @@ def main():
     parser.add_argument("--gamma", type=float, default=.99)
     parser.add_argument("--tau", type=float, default=.005)
     parser.add_argument("--huber-delta", type=float, default=10.)
+    parser.add_argument("--loss-kind", choices=["huber", "relative_energy"], default="huber")
+    parser.add_argument("--energy-scale", type=float, default=10.)
+    parser.add_argument("--energy-tail-start", type=float, default=4.)
     parser.add_argument("--wandb-mode", choices=["online", "offline", "disabled"], default="offline")
     parser.add_argument("--require-gpu", action="store_true")
     args = parser.parse_args()
@@ -160,14 +178,16 @@ def main():
     optimizer = optax.chain(optax.clip_by_global_norm(10.), optax.adam(args.learning_rate))
     state = TrainState.create(apply_fn=model.apply, params=params, tx=optimizer)
     target_params = params
-    update = make_update(model, args.temperature, args.gamma, args.tau, args.huber_delta)
+    update = make_update(model, args.temperature, args.gamma, args.tau, args.huber_delta,
+                         args.loss_kind, args.energy_scale, args.energy_tail_start)
     replay = ReplayBuffer(args.buffer_size, obs_dim, action_dim, args.seed + 101)
     source_root = Path(__file__).resolve().parents[3]
     command = sys.argv
     config = vars(args).copy(); config["output"] = str(config["output"])
-    config.update(algorithm="spline_energy", algorithm_display_name="Spline Energy Circuit",
+    algorithm = "spline_energy" if args.loss_kind == "huber" else "spline_energy_relative_energy"
+    config.update(algorithm=algorithm, algorithm_display_name="Spline Energy Circuit",
                   model_equation="Q=V+alpha*log_pi",
-                  policy="rank-16 mixture of products of normalized positive linear splines",
+                  policy=f"rank-{args.rank} mixture of products of normalized positive linear splines",
                   hidden_dims=[256, 256], updates_per_step=1, behavior_uniform_probability=0.,
                   time_limit_bootstrap=True, observation_dim=obs_dim, action_dim=action_dim,
                   trainable_parameters=sum(x.size for x in jax.tree_util.tree_leaves(params)),
@@ -183,7 +203,7 @@ def main():
                      project=os.getenv("WANDB_PROJECT", "OptiQ-MuJoCo-Spline-Energy"),
                      group=os.getenv("WANDB_RUN_GROUP", "spline_energy"),
                      job_type="train" if args.total_steps == 1_000_000 else "smoke",
-                     name=f"{args.env}-spline-energy-s{args.seed}", mode=args.wandb_mode,
+                     name=f"{args.env}-{algorithm}-s{args.seed}", mode=args.wandb_mode,
                      dir=str(args.output), config=config,
                      id=hashlib.sha256(str(args.output).encode()).hexdigest()[:12], resume="never",
                      settings=wandb.Settings(init_timeout=180))

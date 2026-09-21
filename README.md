@@ -96,3 +96,12 @@ JAX_PLATFORMS=cpu python validate.py
 
 GMM40의 측정 결과는 표현력과 one-shot sampler를 검증합니다. 고차원
 state-conditioned TD 학습의 성능은 별도의 MuJoCo 실험 결과로 판단해야 합니다.
+
+## GMM40 에너지 loss를 잇는 확장
+
+`--loss-kind relative_energy`는 모델을 바꾸지 않고 Huber TD loss만
+GMM40 generalized KL에서 유도한 상대 에너지 loss로 교체하는 실험 옵션입니다.
+정규화·one-step sampler는 동일합니다. 결정론적 Bellman 해의 보존,
+조건부 Q/정책 오차 bound, 확률적 target의 편향, 수치 안정화를
+[`THEORY.md`](algorithms/spline_energy/THEORY.md)에 증명과 함께 기록했습니다.
+이는 현재 MuJoCo 성능 향상이 검증됐다는 뜻은 아닙니다.
