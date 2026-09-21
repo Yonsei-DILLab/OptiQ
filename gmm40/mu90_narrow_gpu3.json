@@ -1,0 +1,22 @@
+{
+  "name": "gmm40-mu90-narrow-512x3-capm3p5-20260921",
+  "steps": 100000,
+  "seed": 0,
+  "batch": 256,
+  "temperature": 1.0,
+  "width": 512,
+  "depth": 3,
+  "eval_samples": 10000,
+  "trg_log_std_max": -3.5,
+  "trg_initial_log_std": -4.0,
+  "trg_teacher_std_floor": 0.05,
+  "profiles": [
+    {
+      "name": "init16_nm256",
+      "mean_output_init_scale": 16,
+      "n": 256,
+      "m": 256,
+      "gpu": 3
+    }
+  ]
+}

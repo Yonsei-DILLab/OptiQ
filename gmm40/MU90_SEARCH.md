@@ -31,3 +31,16 @@ write a failure sidecar; no learner restart, overwrite, or early termination.
 Queue service/source/config is committed and frozen before registration.
 CPU checks validate both architectures and matched settings before queuing;
 GPU preflight is deferred until the corresponding GPU is free.
+
+Screen1 completed: init16,N=M256 reached40/40 but mu-only near76.74%;
+init256 was worse (64.75%,39/40 withN=M256). The init16,N=M256 actor
+sigma mean was.0723, max.1353, vs target normalized sigma.0328.
+Follow-up: retain init16,N=M256,teacherfloor.05 and compare256x3/512x3
+crossed with log-sigma caps-3/-3.5; initial valuescap-.5 (-3.5/-4).
+All other parameters and100k budget unchanged, seed0. This tests whether a
+narrower conditional family reduces between-mode mu mass while retaining
+coverage; it is a hypothesis, not an established causal conclusion.
+GPU0..3 follow their existing512x3 jobs; predecessor must exit and pass the
+100k audit. The next queue uses its own committed/frozen source and does not
+modify the running architecture controls. Failure blocks its slot, no retries.
+No algorithm, latent distribution, target, coverage metric or filtering changes.
