@@ -21,7 +21,7 @@ def main():
     try:
         import wandb
         wb=wandb.init(entity='OptiQ',project='gmm-trg',group=os.environ['GMM40_CAMPAIGN'],
-            name=args.name,job_type='gmm40-fixed-q-100k',tags=['gmm40','fixed-q',args.method],
+            name=args.name,job_type='gmm40-fixed-q',tags=['gmm40','fixed-q',args.method],
             config=dict(method=args.method,seed=args.seed,source_commit=os.environ['GMM40_SOURCE_COMMIT']),
             dir=os.environ['GMM40_WANDB_DIR'])
         wb.define_metric('updates')

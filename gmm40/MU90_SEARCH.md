@@ -99,4 +99,15 @@ Keep original training source6aee290 in config; record newresume_runner_commit
 andcheckpoint/config hashes. GPU preflight verifies100koptimizerstate and
 bit-identical parameters/optimizer/RNG across a save/restore roundtrip followed
 by another update. SourcealgorithmAST/hashes unchanged. No performance earlystop.
-W&B job_type label is now budget-neutral; steps and names state500k explicitly.
+The frozen a661b78 runner retained the legacy W&B job_type label containing100k; names and config.steps correctly stated500k. After both runs finished, only their W&B metadata was corrected to budget-neutral gmm40-fixed-q. The mutable runner now uses that label for future runs; frozen source and histories remain unchanged.
+
+Final 256x2 continuation results (seed0,500k; mu-only,10,000 randomlatent samples):
+- cap-4,initial-4.75: near90.66%,coverage40/40; five new latent keys90.02–90.92%,all40/40.
+- cap-4.5,initial-4.75: near91.05%,coverage40/40; five new latent keys90.72–91.63%,all40/40.
+Both optimizer audits confirm500,000 updates. This meets the existence goal at256x2,
+but not at100k, and does not establish stability across training seeds.
+Full-policy supplemental near:cap-4=89.89%,cap-4.5=90.88%;both40/40.
+All registered NM64 searches and continuations are finished; cancelled NM256 jobs
+remain cancelled. Checkpoints,configs,samples,metrics and reports archived locally
+under artifacts/gmm40_mu90_search. Algorithm update/sample AST and inherited
+TRG source hashes match the original algorithm. No RL defaults were changed.
