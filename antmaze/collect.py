@@ -6,7 +6,7 @@ import subprocess
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument("--campaign",default="antmaze-umaze-online-20260921")
+    p=argparse.ArgumentParser();p.add_argument("--campaign",default="antmaze-multimodal-100k-20260921")
     p.add_argument("--host",default="vast-heechan-199")
     p.add_argument("--output",type=Path,default=Path(__file__).resolve().parent/"results")
     a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
