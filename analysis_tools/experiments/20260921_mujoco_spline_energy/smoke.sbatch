@@ -2,10 +2,11 @@
 #SBATCH --job-name=spline-mj-smoke
 #SBATCH --partition=base_suma_rtx3090,dell_rtx3090,suma_rtx4090,suma_a6000,gigabyte_a6000,gigabyte_a5000,asus_6000ada,tyan_a6000,asus_a5000
 #SBATCH --qos=base_qos
+#SBATCH --exclude=node24,node48,cs-gpu-01
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=32G
-#SBATCH --time=00:30:00
+#SBATCH --mem=16G
+#SBATCH --time=00:10:00
 #SBATCH --output=/scratch2/gsmin2024/research/optiq_mujoco_spline_energy_20260921/logs/smoke-%j.out
 #SBATCH --error=/scratch2/gsmin2024/research/optiq_mujoco_spline_energy_20260921/logs/smoke-%j.err
 

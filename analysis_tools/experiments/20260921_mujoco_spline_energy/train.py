@@ -165,7 +165,8 @@ def main():
     source_root = Path(__file__).resolve().parents[3]
     command = sys.argv
     config = vars(args).copy(); config["output"] = str(config["output"])
-    config.update(algorithm="Spline Energy Circuit", model_equation="Q=V+alpha*log_pi",
+    config.update(algorithm="spline_energy", algorithm_display_name="Spline Energy Circuit",
+                  model_equation="Q=V+alpha*log_pi",
                   policy="rank-16 mixture of products of normalized positive linear splines",
                   hidden_dims=[256, 256], updates_per_step=1, behavior_uniform_probability=0.,
                   time_limit_bootstrap=True, observation_dim=obs_dim, action_dim=action_dim,
@@ -180,7 +181,7 @@ def main():
     atomic_json(args.output / "config.json", config)
     run = wandb.init(entity=os.getenv("WANDB_ENTITY", "OptiQ"),
                      project=os.getenv("WANDB_PROJECT", "OptiQ-MuJoCo-Spline-Energy"),
-                     group=os.getenv("WANDB_RUN_GROUP", "spline-energy-circuit-v1"),
+                     group=os.getenv("WANDB_RUN_GROUP", "spline_energy"),
                      job_type="train" if args.total_steps == 1_000_000 else "smoke",
                      name=f"{args.env}-spline-energy-s{args.seed}", mode=args.wandb_mode,
                      dir=str(args.output), config=config,

@@ -3,6 +3,7 @@
 #SBATCH --array=0-14%15
 #SBATCH --partition=big_suma_rtx3090,suma_rtx4090,suma_a6000,gigabyte_a6000,gigabyte_a5000,asus_6000ada,tyan_a6000,asus_a5000
 #SBATCH --qos=big_qos
+#SBATCH --exclude=node24,node48,cs-gpu-01
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
@@ -60,10 +61,10 @@ unset WANDB_API_KEY WANDB_ENTITY WANDB_PROJECT WANDB_NAME WANDB_RUN_GROUP WANDB_
 IFS= read -r WANDB_API_KEY < "$SECRET"
 test -n "$WANDB_API_KEY"
 export WANDB_API_KEY WANDB_ENTITY=OptiQ WANDB_PROJECT=OptiQ-MuJoCo-Spline-Energy
-export WANDB_RUN_GROUP=spline-energy-circuit-v1 WANDB_MODE=online
+export WANDB_RUN_GROUP=spline_energy WANDB_MODE=online
 export PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 export JAX_PLATFORMS=cuda XLA_PYTHON_CLIENT_PREALLOCATE=false MUJOCO_GL=egl
 export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS="$SLURM_CPUS_PER_TASK" MKL_NUM_THREADS=1
 nvidia-smi --query-gpu=name,uuid,driver_version,memory.total --format=csv,noheader
 cd "$EXP"
-exec "$PYTHON" -u train.py --env "$ENV_NAME" --seed "$SEED" --output "$OUTPUT" --require-gpu
+"$PYTHON" -u train.py --env "$ENV_NAME" --seed "$SEED" --output "$OUTPUT" --require-gpu
