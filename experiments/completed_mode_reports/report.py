@@ -14,6 +14,7 @@ fsizes=[(16,16),(64,64),(64,256),(128,128),(128,256),(512,512),(512,2048)]
 bsizes=[(16,16),(64,64),(128,128),(256,256),(1024,1024),(2048,2048),(64,4096),(2048,4096)]
 stamp=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y-%m-%d %H:%M KST')
 plt.rcParams.update({'font.size':10,'axes.spines.top':False,'axes.spines.right':False,'figure.facecolor':'white','savefig.facecolor':'white'})
+assignment_cmap=plt.get_cmap('magma').copy();assignment_cmap.set_bad('black')
 def npz(p):
  with np.load(p) as f:return {k:f[k] for k in f.files}
 def load(name,B):
@@ -111,7 +112,7 @@ for sorted_ in [False,True]:
   for col,L in enumerate(Ls):
    d=f[(L,*rep,m,0)]['d'];J=d['joint'];mass=J.sum(1);R=np.divide(J,mass[:,None],out=np.zeros_like(J),where=mass[:,None]>0)
    if sorted_:R=R[np.argsort(d['training_mu'][:,0])][:,np.argsort(d['candidates'])]
-   im=axs[row,col].imshow(np.ma.masked_less_equal(R,0),origin='lower',aspect='auto',interpolation='nearest',norm=LogNorm(1e-5,1),cmap='magma');axs[row,col].set(title=f'{L} | {labels[m]}',xlabel='Candidate index',ylabel='Student index')
+   im=axs[row,col].imshow(np.ma.masked_less_equal(R,0),origin='lower',aspect='auto',interpolation='nearest',norm=LogNorm(1e-5,1),cmap=assignment_cmap);axs[row,col].set(title=f'{L} | {labels[m]}',xlabel='Candidate index',ylabel='Student index')
  fig_.colorbar(im,ax=axs.ravel().tolist(),label='Conditional row mass R');fig_.suptitle('128 x 128 | seed 0 | 20K | group 0 | '+('rows/columns sorted by action' if sorted_ else 'original sampling order'));figsave(O,'assignment_'+('sorted' if sorted_ else 'raw'),fig_)
 fig_,axs=plt.subplots(2,3,figsize=(16,6),layout='constrained')
 for row,m in enumerate(['baseline','mode_only']):
