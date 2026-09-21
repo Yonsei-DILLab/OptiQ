@@ -76,3 +76,13 @@ mode massTV andMMD; retain fullpolicy as supplement. Do not assume smaller
 sigma must improve because output variance also comes from the spread ofmu.
 Each GPU runs its registered list when free using existing locks. Do not stop
 replication/current experiments. Preflight actualparameters beforeeachrun.
+
+Latest user request: reproduce the result with256x2 ifpossible. Four fresh
+seed0,100k,256x2 NM64 runs: primary cap-4.5/initial-4.75 matches the successful
+512x3 small-sigma run exceptnetworksize. Controls cap-4/initial-4.75 and
+cap-3.5/initial-4.75 match the new small-sigma grid. Additional cap-3/initial-3.5
+matches the95.22%,40/40 256x3 seed0 configuration exceptnetworkdepth.
+Do not describe thecap-3 control as a pure cap comparison withinitial-4.75
+runs. Keepmean-init16,teacherfloor.05,randomlatent,batch256,T1,Adam3e-4.
+Use freeGPUs without interrupting prior experiments. Comparefinal100kmu-only
+near,coverage,MMD,massTV; independentlyreevaluate anypassing256x2checkpoint.

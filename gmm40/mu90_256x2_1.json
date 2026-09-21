@@ -1,0 +1,22 @@
+{
+  "name": "gmm40-mu90-repro-256x2-capm4p0-20260921",
+  "steps": 100000,
+  "seed": 0,
+  "batch": 256,
+  "temperature": 1.0,
+  "width": 256,
+  "depth": 2,
+  "eval_samples": 10000,
+  "trg_log_std_max": -4.0,
+  "trg_initial_log_std": -4.75,
+  "trg_teacher_std_floor": 0.05,
+  "profiles": [
+    {
+      "name": "init16_nm64",
+      "mean_output_init_scale": 16,
+      "n": 64,
+      "m": 64,
+      "gpu": 3
+    }
+  ]
+}
