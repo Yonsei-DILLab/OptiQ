@@ -7,9 +7,10 @@
 #SBATCH --signal=USR1@120
 #SBATCH --no-requeue
 set -euo pipefail
-cd /scratch2/hobbit9882/OptiQ-ModeGradient-20260921
+cd /scratch2/hobbit9882/OptiQ-SingleQ-N64-M256-K64-T025-20260921/extensions/mode_gradient_20260921
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
 export XLA_PYTHON_CLIENT_PREALLOCATE=false JAX_PLATFORMS=cuda PYTHONUNBUFFERED=1 MPLBACKEND=Agg
 unset LD_LIBRARY_PATH PYTHONPATH JAX_DEFAULT_MATMUL_PRECISION
 PY=/scratch2/hobbit9882/.venvs/optiq-mujoco-scalar/bin/python
+if [ "$1" = validate ]; then export JAX_PLATFORMS=cpu; fi
 exec srun --cpu-bind=cores "$PY" -m experiments.gmm_mode_gradient."$1"

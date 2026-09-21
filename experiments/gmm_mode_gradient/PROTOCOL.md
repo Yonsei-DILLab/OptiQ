@@ -77,11 +77,20 @@ Adam의 이전 momentum도 유지한다. 따라서 '다른 mode가 움직이지 
 1) posterior mass conservation / H 정규화, mode-output Jacobian을 명시적으로 골라 VJP한 결과와
    surrogate gradient 일치; teacher·posterior·confidence stop-gradient 확인.
 2) baseline의 원본step/block 일치; fixed-coefficient 유한차분; checkpoint+Adam+RNG 재개일치.
-3) 세크기16×16,64×4096,2048×2048 GPU 검증, 세방법의 짧은 학습/진단 확인.
+3) 세크기16×16,64×4096,2048×2048 CPU 수식 검증, 각 GPU worker의 세방법 실제 GPU 짧은 학습 확인.
 검증이 통과한 뒤 독립 worker가 atomic task claim으로96runs를 나누어 실행한다.
+사용 계정은 etc_qos 권한이 없어 bio파티션은 사용하지 않는다. CPU 수식 검증 후 big_qos GPU worker8개를 등록한다.
 Validation dependency만 사용하고 개별 조건 간 completion gate는 없다.
 Lustre 기존quota를 피해서 scratch2 사용; 기존MuJoCo/held jobs 건드리지 않음.
 매500updates checkpoint, SIGTERM/SIGUSR1에서 최근block까지 저장. 재개는 같은 commit만 허용.
 Run ID,SlurmID,노드,GPU,시각,source hash를 보관. 작은 toy이므로 별도 W&B run은 만들지 않음.
 dildata에 immutable 소스와 완료체크포인트·histogram·진단·보고서를 저장한다.
 MD 및 이미지 내장HTML 보고서는 동일 self-contained 형식으로 주기적으로 갱신한다.
+
+## 저장 경로와 기존 작업 분리
+
+기존 승인된 login4→dildata 읽기 전용 백업 연결을 재사용하기 위해, compute source/runtime은
+`/scratch2/hobbit9882/OptiQ-SingleQ-N64-M256-K64-T025-20260921/extensions/mode_gradient_20260921`의
+별도 새 폴더에 둔다. 상위 MuJoCo의 실행 코드·queue·설정은 수정하지 않는다.
+Dildata의 독립 collector가 이 하위 폴더만 새 study 디렉터리로 회수하며 기존 collector의 종료와 무관하다.
+첫fff685a는 etc_qos 제출 거절로 어떤 학습도 시작하지 않았다. 그 snapshot은 보존한다.

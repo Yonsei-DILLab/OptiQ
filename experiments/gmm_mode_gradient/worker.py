@@ -6,6 +6,12 @@ from .run import write,verify
 ROOT=bootstrap.ROOT;OUT=ROOT/'runtime';PLAN=json.loads((Path(__file__).parent/'plan.json').read_text())
 def main():
     source=verify();assert json.loads((OUT/'VALIDATION.json').read_text())['passed']
+    from .core import initialize,engine,jax,np
+    assert jax.default_backend()=='gpu' and len(jax.devices())==1
+    for method in PLAN['methods']:
+        state,key=initialize(0);state,key,metrics=engine(16,16,method)['step'](state,key)
+        assert np.isfinite(np.asarray(metrics)).all()
+    write(OUT/'logs'/('GPU_VALIDATED_'+os.environ.get('SLURM_JOB_ID','local')+'.json'),dict(passed=True,devices=[str(x) for x in jax.devices()],commit=source['commit']))
     jobs=[(n,m,s,method) for s in PLAN['seeds'] for n,m in PLAN['sizes'] for method in PLAN['methods']]
     for n,m,seed,method in jobs:
         name=f'{method}_N{n}_M{m}_s{seed}';dest=OUT/'runs'/name;dest.mkdir(parents=True,exist_ok=True)
