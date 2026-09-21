@@ -81,7 +81,9 @@ def reference_parity():
 
 def td_path():
     model = ConditionalRawEnergyCircuit(1, rank=4, knots=17, hidden_dims=(16, 16))
-    observations = jnp.zeros((128, 2))
+    # A nonzero context exercises the state encoder. With both zero context
+    # and zero head kernels, only the state-free output biases can move.
+    observations = jnp.broadcast_to(jnp.asarray([.2, -.3]), (128, 2))
     params = model.init(jax.random.PRNGKey(5), observations)["params"]
     state = TrainState.create(apply_fn=model.apply, params=params, tx=optax.adam(3e-4))
     actions = jnp.linspace(-.99, .99, 128)[:, None]
