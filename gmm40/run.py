@@ -100,7 +100,8 @@ def main():
     full_reference=target.sample(args.eval_samples,20260917,bounded=False)
     config=vars(args).copy(); config["resume"]=str(args.resume) if args.resume else None
     if args.method=='optiq_trg':
-        config.update(actor_learning_rate=3e-4,actor_log_std_bounds=[-5.,-1.],initial_log_std=-1.,
+        config.update(actor_learning_rate=3e-4,actor_log_std_bounds=[-5.,1.],initial_log_std=1.,
+                      mean_output_init_scale=1.,
                       latent_mode='random',density_beta=1.,teacher_std_floor=math.exp(-5),
                       loss='direct marginal box-truncated Gaussian mixture NLL',
                       implementation='analysis_tools/experiments/20260920_truncated_mll/optiq_dime')

@@ -25,7 +25,9 @@ class OptiQTRG(OptiQ):
             raise ValueError('Temperature must be positive and finite')
         self.target, self.n, self.m, self.batch = target, n, m, batch
         self.temperature = temperature
-        self.actor = Actor(2, tuple(hidden_dims), -5., -1., -1.)
+        # GMM40-only override: initialize sigma at the expanded upper bound.
+        self.actor = Actor(2, tuple(hidden_dims), -5., 1., 1.,
+                           mean_output_init_scale=1.)
         self.key, init = jax.random.split(jax.random.PRNGKey(seed))
         params = self.actor.init(init, jnp.zeros((1,1)), jnp.zeros((1,2)))['params']
         self.state = TrainState.create(apply_fn=self.actor.apply, params=params, tx=optax.adam(3e-4))

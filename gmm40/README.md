@@ -17,6 +17,14 @@ its Python namespace is `gmm40._v5.optiq_dime`. Shared `common`, `models` and
 its historical actor sigma settings. It does not select the Direct GMM/TRG
 trainer. Active TRG defaults and running frozen snapshots are separate.
 
+New GMM40 `--method optiq_trg` runs use actor log-sigma bounds [-5,1] and
+mean-head init scale 1.0, as requested on 2026-09-21. The lower bound -5,
+teacher floor exp(-5), random latent and optimizer are unchanged. Initial log
+sigma is +1, matching the new upper bound as requested. This is a GMM40 override;
+RL profiles and old frozen campaigns keep
+their recorded settings. Run `python -m gmm40.validate_gmm40_sigma` to check
+the expanded range, density normalization, sampler and actor gradient.
+
 ## Dependencies
 
 Use the repository's Python 3.11 / JAX environment (`requirements-mujoco.in`)

@@ -102,7 +102,16 @@ def build(root):
         for key in ('mode_coverage','high_density_fraction','mmd2','sliced_wasserstein2','mode_mass_tv'):
             metric=groups[method][key];cells.append(f"{metric['mean']:.5g} ± {metric['seed_std']:.3g}")
         lines.append('| '+' | '.join(cells)+' |')
-    lines += ['', 'OptiQ는 현재 box-truncated Direct GMM NLL, N=M64, random latent, 256×2, log σ[-5,-1]입니다.',
+    optiq_note=''
+    if 'optiq_trg' in methods:
+        cfg=read(runs[('optiq_trg',seeds[0])]['folder']/'config.json')
+        bounds=cfg['actor_log_std_bounds']
+        upper='상한 없음' if bounds[1] is None else str(bounds[1])
+        optiq_note=(f"OptiQ는 box-truncated Direct GMM NLL, N={cfg['n']}, M={cfg['m']}, "
+            f"{cfg['latent_mode']} latent, {cfg['width']}×{cfg['depth']}, "
+            f"log σ 하한 {bounds[0]}, {upper}, mean-head init scale "
+            f"{cfg.get('mean_output_init_scale') or 1e-4}입니다.")
+    lines += ['', optiq_note,
               '다른 baseline은 기존 native architecture와 optimizer를 유지했습니다. 모든 방법의 batch는 256입니다.',
               '동일 update 수 비교이며 Q 질의량과 계산량은 다릅니다. `per_seed.csv`의 Q_evaluations, train_seconds, parameters를 함께 보세요.',
               'GMM component coverage는 density의 실제 local maxima 개수와 같지 않습니다.','',

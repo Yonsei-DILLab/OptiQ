@@ -17,12 +17,23 @@ evaluation samples, and 100k actor updates. Evaluation schedule is 0, 100, 500,
 1000, 2500, 5000, then every 10k. Reference samples only enter evaluation.
 Training seeds are 0..3; the evaluation RNG never advances the learner RNG.
 
-OptiQ uses the current `20260920_truncated_mll/optiq_dime` actor, proposal and
+The original frozen campaign at `87d5d8f` uses the `20260920_truncated_mll/optiq_dime` actor, proposal and
 direct marginal NLL, with 256x2 GELU layers, fresh random latents, N=M64,
 log sigma [-5,-1], initial -1, LR3e-4, beta1 density correction, exact mixture
 sampling, no extra teacher sigma floor, no anchors, OT, clipping or DACER.
 The fixed-Q adapter is `gmm40/optiq_trg.py`; the old `--method optiq` remains
 the historical v5 OT adapter and is not selected by this campaign.
+
+User amendment (2026-09-21): new GMM40 `optiq_trg` runs raise the actor's
+log-sigma upper bound from -1 to +1, initialize log sigma at that upper bound
+(+1; lower bound -5 retained), and change the
+mean-head variance initialization scale from 1e-4 to 1.0. Only these two model
+settings and the explicitly requested matching sigma initialization change.
+Teacher floor exp(-5), fresh latents, N=M64, batch256, T1,
+architecture and optimizer remain as above. Existing frozen runs retain their
+original source and settings. The original box Gaussian routines are unchanged;
+their normalization, samples and gradients are checked over the widened range.
+No changed noise distribution or smooth sigma mapping is introduced.
 
 SAC retains its 256x2 Gaussian actor and LR3e-4. DIPO retains the original
 100-step diffusion network, LR3e-4, 20 action-improvement steps and clipping.
