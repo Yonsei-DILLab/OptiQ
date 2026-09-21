@@ -1,0 +1,42 @@
+# @package _global_
+defaults:
+  - /mujoco_v5
+  - _self_
+alg:
+  actor:
+    distillation_loss: direct_gmm_nll
+    num_policy_samples: 64
+    proposals_per_policy_sample: 1
+    proposal_sampling_mode: exact
+    temperature: 0.25
+    log_std_min: -5.0
+    log_std_max: -1.0
+    initial_log_std: -1.0
+    teacher_std_floor: 0.006737946999085467
+    normalize_ot_cost: false
+    entropy_diagnostics: false
+  optimizer:
+    ac_grad_norm: null
+  behavior_uniform_probability: 0.0
+  critic:
+    n_critics: 1
+    backup_samples: 64
+progress_bar: false
+output_root: ./outputs
+run_name: ${task}-DirectGMM-TRG-SingleQ-MC64-N64-M64-T025-s${seed}
+wandb:
+  entity: OptiQ
+  project: DirectGMM_heejoon
+  group: 20260921_TRG_SingleQ_MC64_N64_M64_T025
+  job_type: trg-single-q-mc
+experiment:
+  method: truncated_marginal_nll
+  distribution: box_truncated_gaussian
+  center_transform: tanh
+  bounded_mu: true
+  ot: false
+  resampling: false
+  components: 64
+  candidates: 64
+  backup_samples: 64
+  teacher_extra_floor: false

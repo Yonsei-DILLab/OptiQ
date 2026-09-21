@@ -1,0 +1,21 @@
+# @package _global_
+defaults:
+  - /v5/final
+  - _self_
+
+alg:
+  actor:
+    temperature: 0.5
+    num_policy_samples: 16
+    proposals_per_policy_sample: 4
+    distillation_loss: direct_gmm_nll
+output_root: /workspace/DirectGMM/outputs
+run_name: ${task}-DirectGMM-T0.5-N16-M64-s${seed}
+progress_bar: false
+wandb:
+  activate: true
+  mode: online
+  entity: OptiQ
+  project: DirectGMM_heejoon
+  group: 20260917_DirectGMM_T0.5_N16_M64
+  job_type: direct-gmm-mujoco

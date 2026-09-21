@@ -1,0 +1,13 @@
+# @package _global_
+defaults:
+  - /v5/final
+  - _self_
+
+alg:
+  behavior_uniform_probability: 0.1
+
+output_root: ../optiq-experiments/v5_behavior010/outputs
+run_name: ${task}-v5-meanOT-behavior010-T${alg.actor.temperature}-s${seed}
+wandb:
+  group: ${env_name}_v5_meanOT_behavior010_T${alg.actor.temperature}_dual_mu_eval
+  job_type: v5-uniform-collection

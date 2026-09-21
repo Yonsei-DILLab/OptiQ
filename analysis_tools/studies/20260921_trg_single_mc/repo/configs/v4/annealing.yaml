@@ -1,0 +1,20 @@
+# @package _global_
+defaults:
+  - /v4/final
+  - _self_
+
+alg:
+  behavior_uniform_probability: 0.0
+  actor:
+    temperature: 10.0
+    temperature_schedule:
+      enabled: true
+      final_temperature: 0.25
+      anneal_steps: 40000
+
+output_root: ../optiq-experiments/v4_annealing/outputs
+run_name: ${task}-v4-anneal${alg.actor.temperature_schedule.anneal_steps}-p${alg.behavior_uniform_probability}-s${seed}
+wandb:
+  project: v4-test
+  group: ${env_name}_v4_anneal${alg.actor.temperature_schedule.anneal_steps}_p${alg.behavior_uniform_probability}_dual_mu_eval
+  job_type: v4-temperature-annealing
