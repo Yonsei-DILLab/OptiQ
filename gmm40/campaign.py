@@ -5,6 +5,7 @@ import fcntl
 import gc
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -53,6 +54,8 @@ def prepare(root,plan_path=None):
             if method=='optiq_trg' and 'trg_actor' in plan:
                 argv+=['--trg-log-std-max',str(plan['trg_actor']['log_std_max']),
                        '--trg-initial-log-std',str(plan['trg_actor']['initial_log_std'])]
+                if 'teacher_std_floor' in plan['trg_actor']:
+                    argv+=['--trg-teacher-std-floor',str(plan['trg_actor']['teacher_std_floor'])]
             jobs.append(dict(name=name,method=method,seed=seed,args=argv,steps=plan['steps']))
             write(root/'jobs'/f'{name}.json',dict(status='pending',name=name))
     manifest=dict(plan=plan,source=str(source),source_commit=commit,jobs=jobs,created=time.time(),
@@ -101,6 +104,7 @@ def preflight(root,manifest):
             assert agent.actor.log_std_min==-5. and agent.actor.log_std_max==requested['log_std_max']
             assert agent.actor.initial_log_std==requested['initial_log_std']
             assert agent.actor.mean_output_init_scale==1.
+            assert agent.teacher_std_floor==requested.get('teacher_std_floor',math.exp(-5))
         elif method=='optiq':
             from .optiq import OptiQ
             agent=OptiQ(target,n=plan['optiq_n'],m=plan['optiq_m'],batch=plan['batch'])

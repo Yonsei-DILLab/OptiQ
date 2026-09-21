@@ -32,6 +32,8 @@ def main():
                         help="GMM40 TRG-only sigma ablation; lower bound remains -5")
     parser.add_argument("--trg-initial-log-std",type=float,default=-1.,
                         help="GMM40 TRG-only initial log sigma, within the configured bounds")
+    parser.add_argument("--trg-teacher-std-floor",type=float,default=math.exp(-5),
+                        help="GMM40 TRG teacher-only std floor, shared by sampling and proposal density")
     parser.add_argument("--nll-top-k",type=int,default=None,
                         help="Fixed-Q OptiQ only: retain this many highest-mass OT targets per row in NLL")
     parser.add_argument("--nll-plan-threshold",type=float,default=None,
@@ -51,13 +53,15 @@ def main():
     parser.add_argument("--sql-value-particles",type=int,default=16)
     parser.add_argument("--sql-target-update-interval",type=int,default=1000)
     args=parser.parse_args()
-    if (args.trg_log_std_max, args.trg_initial_log_std) != (-1., -1.) and (
+    if (args.trg_log_std_max, args.trg_initial_log_std, args.trg_teacher_std_floor) != (-1., -1., math.exp(-5)) and (
             args.method != 'optiq_trg' or args.navigation or args.resume):
         raise ValueError('TRG sigma overrides require a fresh fixed-Q optiq_trg run')
     if args.method == 'optiq_trg' and not (
             math.isfinite(args.trg_log_std_max) and math.isfinite(args.trg_initial_log_std)
             and -5. < args.trg_log_std_max and -5. <= args.trg_initial_log_std <= args.trg_log_std_max):
         raise ValueError('TRG requires -5 < log_std_max and initial log std within bounds')
+    if not math.isfinite(args.trg_teacher_std_floor) or args.trg_teacher_std_floor <= 0:
+        raise ValueError('Teacher std floor must be positive and finite')
     if args.optiq_devices<1 or (args.optiq_devices!=1 and
             (args.method!='optiq' or args.navigation or args.batch%args.optiq_devices)):
         raise ValueError('Parallel devices require fixed-Q OptiQ and an evenly divisible global batch')
@@ -114,7 +118,7 @@ def main():
         config.update(actor_learning_rate=3e-4,actor_log_std_bounds=[-5.,args.trg_log_std_max],
                       initial_log_std=args.trg_initial_log_std,
                       mean_output_init_scale=1.,
-                      latent_mode='random',density_beta=1.,teacher_std_floor=math.exp(-5),
+                      latent_mode='random',density_beta=1.,teacher_std_floor=args.trg_teacher_std_floor,
                       loss='direct marginal box-truncated Gaussian mixture NLL',
                       implementation='analysis_tools/experiments/20260920_truncated_mll/optiq_dime')
     config.update(source_git_commit=os.getenv('GMM40_SOURCE_COMMIT'),campaign=os.getenv('GMM40_CAMPAIGN'))
@@ -167,7 +171,8 @@ def main():
         elif args.method=="optiq_trg":
             from .optiq_trg import OptiQTRG
             agent=OptiQTRG(target,args.seed,args.n,args.m,args.batch,(args.width,)*args.depth,args.temperature,
-                           log_std_max=args.trg_log_std_max,initial_log_std=args.trg_initial_log_std)
+                           log_std_max=args.trg_log_std_max,initial_log_std=args.trg_initial_log_std,
+                           teacher_std_floor=args.trg_teacher_std_floor)
         elif args.method=="sql":
             from .sql import SQL,config_from_args
             agent=SQL(target,args.seed,args.batch,config_from_args(args))

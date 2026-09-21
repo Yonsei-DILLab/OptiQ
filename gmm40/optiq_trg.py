@@ -19,7 +19,7 @@ sample_box = importlib.import_module(SOURCE + '.box_gaussian').sample_box
 class OptiQTRG(OptiQ):
     def __init__(self, target, seed=0, n=64, m=64, batch=256,
                  hidden_dims=(256,256), temperature=1.,
-                 log_std_max=-1., initial_log_std=-1.):
+                 log_std_max=-1., initial_log_std=-1., teacher_std_floor=math.exp(-5)):
         if n <= 0 or m <= 0 or m % n or batch <= 0:
             raise ValueError('TRG requires positive batch/N/M and M divisible by N')
         if not math.isfinite(temperature) or temperature <= 0:
@@ -27,6 +27,9 @@ class OptiQTRG(OptiQ):
         if not (math.isfinite(log_std_max) and math.isfinite(initial_log_std)
                 and -5. < log_std_max and -5. <= initial_log_std <= log_std_max):
             raise ValueError('TRG requires -5 < log_std_max and initial log std within bounds')
+        if not math.isfinite(teacher_std_floor) or teacher_std_floor <= 0:
+            raise ValueError('Teacher std floor must be positive and finite')
+        self.teacher_std_floor = float(teacher_std_floor)
         self.target, self.n, self.m, self.batch = target, n, m, batch
         self.temperature = temperature
         # GMM40-only mean initialization override; retain the RL sigma defaults.
@@ -47,7 +50,7 @@ class OptiQTRG(OptiQ):
         def loss(params):
             mu, ls = state.apply_fn({'params':params}, obs, z)
             mu, ls = mu.reshape(self.batch,self.n,2), ls.reshape(self.batch,self.n,2)
-            proposal = Proposal(jax.lax.stop_gradient(mu), jax.lax.stop_gradient(ls), math.exp(-5))
+            proposal = Proposal(jax.lax.stop_gradient(mu), jax.lax.stop_gradient(ls), self.teacher_std_floor)
             actions, _, _ = proposal.sample(pk, self.m//self.n, 'exact')
             actions = jax.lax.stop_gradient(actions)
             # Physical-coordinate density differs by a constant, canceled by softmax.

@@ -1,0 +1,36 @@
+{
+  "name": "gmm40-trg-oldinit-fresh-100k-4seed-20260921",
+  "job_prefix": "oldinit_fresh_",
+  "methods": [
+    "optiq_trg"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "steps": 100000,
+  "batch": 256,
+  "temperature": 1.0,
+  "eval_samples": 10000,
+  "gpus": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "optiq_n": 64,
+  "optiq_m": 64,
+  "width": 256,
+  "depth": 2,
+  "trg_actor": {
+    "log_std_max": 1.0,
+    "initial_log_std": -0.6931471805599453,
+    "teacher_std_floor": 0.05
+  },
+  "wandb_entity": "OptiQ",
+  "wandb_project": "gmm-trg",
+  "gate": null,
+  "notes": "User-approved older initialization/exploration profile on the CURRENT box-truncated TRG policy, not a tanh-Gaussian policy. Mean-head scale1, log sigma[-5,+1], initial sigma0.5(log=-0.693147), teacher-only std floor0.05. Fresh random latent in train/eval. Seeds0..3,100k actor updates,N=M64,batch256,T1,beta1,256x2 GELU,Adam3e-4 unchanged. Preserve existing queues and use free5090 slots. Three sigma settings change together; not an isolated causal ablation or exact old tanh-policy reproduction."
+}
