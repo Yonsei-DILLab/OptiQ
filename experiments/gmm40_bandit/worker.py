@@ -5,6 +5,9 @@ from .evaluate import atomic_json
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);p.add_argument('--gpu',required=True);p.add_argument('--phase',choices=['preflight','train'],required=True);p.add_argument('--wandb',action='store_true');a=p.parse_args()
+    if hasattr(os,'sched_getaffinity'):
+        cpus=sorted(os.sched_getaffinity(0));start=(int(a.gpu)*8)%len(cpus)
+        os.sched_setaffinity(0,cpus[start:start+8] or cpus[:8])
     prov=json.loads((a.output/'provenance.json').read_text());commit=prov['source_commit']
     queue=a.output/('preflight_queue.json' if a.phase=='preflight' else 'queue.json')
     lock=a.output/'queue.lock';(a.output/'logs').mkdir(exist_ok=True)
