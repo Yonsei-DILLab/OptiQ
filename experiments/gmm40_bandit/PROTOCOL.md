@@ -8,7 +8,7 @@ One state, terminal reward, no learned critic: $r(a)=Q^\star(a)=\log p^\star(a)$
 
 Original target: DiKL GMM40, seed 0, 2 dimensions, 40 equal Gaussian components, centers uniform in [-40,40]², coordinate std softplus(1). Every learner receives an energy-only interface. Ground-truth samples and responsibilities appear only in evaluation. No supervised warm start, target initialization, or true-mode assignment is allowed.
 
-Bounded actors use physical actions $a=50u$, $u\in[-1,1]^2$. Their mathematical optimum is the target conditioned on that box. We report its exact omitted mass and evaluate all methods against the full original target. Legacy/Monge are natively unbounded. This small support difference is explicit; the box must not be silently shrunk to [-40,40]².
+Bounded actors use physical actions $a=50u$, $u\in[-1,1]^2$. Their mathematical optimum is the target conditioned on that box. We report its exact omitted mass and evaluate all methods against the full original target.  This small support difference is explicit; the box must not be silently shrunk to [-40,40]².
 
 ## Implemented comparisons
 
@@ -17,18 +17,15 @@ Bounded actors use physical actions $a=50u$, $u\in[-1,1]^2$. Their mathematical 
 | trg64 | Current TRG Direct GMM | 64×64 | 32 | box-truncated Gaussian, log sigma [-5,-1], initial exp(-1), 256×2 GELU |
 | trg256 | Current TRG Direct GMM | 256×1024 | 32 | same as trg64 |
 | v5_gmm | Direct marginal GMM NLL | 256×1024 | 32 | v5 squashed Gaussian, log sigma [-5,1], initial 0.5 |
-| v5_ot | v5 conditional OT NLL | 256×1024 | 32 | same actor/initialization/proposal as v5_gmm; epsilon .1, 100 Sinkhorn iterations |
-| legacy | Legacy rowwise argmax MSE | 2048×2048 | 1 | successful native 512×5 recipe, Gaussian-grid latent, unbounded KDE |
-| monge | Empirical Monge MSE | 256×1024 | 1 | systematic weighted teacher quantization to N atoms, exact NxN assignment |
 | sac | Squashed Gaussian SAC actor | — | 256 | reverse KL; alpha 1; 256×2 ReLU |
 | sql | Amortized SVGD | 16 kernel particles | 256 | pinned JAX port, 8 fixed/8 updated particles; original bounded score |
 | meow | MEow flow Q/V regression | — | 256 | upstream flow architecture; not SAC-NF |
 | dipo | DIPO diffusion | 100 denoising steps | 256 | 20 action-improvement gradient steps; Q-driven comparator, no exact-MaxEnt claim |
 | mfpo | MFPO MeanFlow | 2 sampling steps | 256 | upstream velocity/divergence learner; 16/32 teacher particles |
 
-44 runs: 11 conditions × seeds 0–3. 100K updates each. Existing recipes retained except explicit oracle adaptation, physical scale, and batch32 for the four NLL conditions to keep the largest matrices practical. NLL batch means independent candidate clouds, not distinct states. LR 3e-4 except MEow 1e-3 and legacy/Monge 1e-4 after 50K. Legacy KDE std 8→1 and mean-normalized OT epsilon .01→.0001 over 15K, 300 Sinkhorn iterations. Monge solves the quantized equal-mass empirical problem, not exact transport to arbitrary M weighted atoms.
+32 runs: 8 conditions × seeds 0–3. 100K updates each. Existing recipes retained except explicit oracle adaptation, physical scale, and batch32 for the three NLL conditions to keep the largest matrices practical. NLL batch means independent candidate clouds, not distinct states. LR 3e-4 except MEow 1e-3.
 
-The architecture and training-compute budgets differ. The v5_gmm/v5_ot pair is a controlled loss comparison. Other comparisons are method/recipe comparisons. Plot quality against updates, measured training wall clock, and number of Q evaluations. DIPO uses Q gradients; count each action-energy point per gradient call. Initial buffer actions and uniform proposals are not ground-truth samples.
+The architecture and training-compute budgets differ. These are method/recipe comparisons; the OT loss ablation was removed at user request. Plot quality against updates, measured training wall clock, and number of Q evaluations. DIPO uses Q gradients; count each action-energy point per gradient call. Initial buffer actions and uniform proposals are not ground-truth samples.
 
 Source adapters are imported from direct-gmm-trg@36aab085bcfe8219997e1bc21e3ad8fe55f266b0. Legacy recipes are from heejoon. Upstream submodules are pinned in Git. Missing IDAC/PMOE/CPQL/SAC-NF fixed-Q adapters are not fabricated for this run. SQL is a port and DIPO/MEow/MFPO are fixed-Q adaptations, not full reproductions of original RL results.
 
@@ -55,3 +52,7 @@ Before training: commit source/config/launcher/protocol to heejoon and record th
 Each condition runs a 20-update GPU preflight at its actual shape. Failed methods are blocked and reported; no silent substitution. Four GPU workers then claim independent jobs. SIGTERM saves state at the next block boundary. Atomic checkpoint each 1K, full optimizer and RNG retained; single latest checkpoint per run bounds disk. 2GiB free-space guard. Store immutable code separately from outputs; back up to dildata. No credentials in archives, Git or report.
 
 Run prepare.py once, then launch.sh in tmux. New endpoint: 38.49.42.46:60616, user heejoonorm, instance52027696, RTX5090×4. No prior experiment on a different Vast host is resumed.
+
+## Scope correction, 2026-09-22
+
+User requested no OT comparisons. v5 OT, legacy rowwise argmax and Monge were removed from this campaign. Their campaign-specific results, checkpoints and figures must be deleted, including backup copies. Earlier studies are outside this deletion. Original numerical source remains immutable for continuing non-OT runs; the scope amendment commit is recorded separately in deployment metadata.

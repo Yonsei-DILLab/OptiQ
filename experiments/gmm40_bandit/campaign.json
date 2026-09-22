@@ -35,27 +35,6 @@
       "batch": 32
     },
     {
-      "name": "v5_ot",
-      "method": "optiq",
-      "n": 256,
-      "m": 1024,
-      "batch": 32
-    },
-    {
-      "name": "legacy",
-      "method": "legacy",
-      "n": 2048,
-      "m": 2048,
-      "batch": 1
-    },
-    {
-      "name": "monge",
-      "method": "monge",
-      "n": 256,
-      "m": 1024,
-      "batch": 1
-    },
-    {
       "name": "sac",
       "method": "sac",
       "n": 0,
