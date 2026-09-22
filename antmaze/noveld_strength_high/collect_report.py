@@ -2,7 +2,8 @@
 import argparse
 from pathlib import Path
 from antmaze.noveld_strength import collect_report as report
-from .campaign import NAME, COEFFICIENTS
+NAME='antmaze-v3-optiq-noveld-high-100k-s0-20260922'
+COEFFICIENTS=(50.,100.)
 
 
 def main():

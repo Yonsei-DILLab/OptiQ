@@ -2,7 +2,11 @@
 import argparse
 from pathlib import Path
 from antmaze.noveld_strength import collect_report as report
-from .campaign import NAME, COEFFICIENTS, job_id
+NAME='antmaze-v4-optiq-noveld-high-100k-s0-20260922'
+COEFFICIENTS=(50.,100.)
+
+
+def job_id(coefficient):return 'v4-optiq-c'+format(coefficient,'g').replace('.','p')+'-s0'
 
 
 def main():
