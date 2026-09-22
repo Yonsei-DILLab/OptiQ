@@ -87,7 +87,7 @@ def render(root,configs,rows):
     def save(fig,name):
         fig.savefig(out/(name+'.png'),dpi=180);fig.savefig(out/(name+'.pdf'));plt.close(fig)
     for reset in ('fixed','natural'):
-        fig,axes=plt.subplots(2,4,figsize=(14,8.3))
+        fig,axes=plt.subplots(2,len(rows),figsize=(3.5*len(rows),9.8),squeeze=False)
         for ri,mode in enumerate(('native','policy')):
             for ci,(c,row) in enumerate(zip(configs,rows)):
                 ax=axes[ri,ci];maze(ax,c);s=row['summaries'][mode+'-'+reset]
@@ -101,8 +101,9 @@ def render(root,configs,rows):
         fig.legend(handles=[Line2D([0],[0],color=COLORS[g],label=l) for g,l in ((1,'Goal 1'),(2,'Goal 2'),(0,'Failed'))],
             loc='lower center',ncol=3,frameon=False,bbox_to_anchor=(.5,.016))
         fig.text(.5,.003,'No external DACER noise or NovelD reward in evaluation. Each column is one independently trained policy.',ha='center',fontsize=8)
-        fig.tight_layout(rect=(0,.065,1,.925));save(fig,'trajectories-'+reset)
-    fig,axes=plt.subplots(1,4,figsize=(14,4.4))
+        fig.subplots_adjust(left=.055,right=.99,bottom=.10,top=.86,wspace=.10,hspace=.32)
+        save(fig,'trajectories-'+reset)
+    fig,axes=plt.subplots(1,len(rows),figsize=(3.5*len(rows),4.4))
     maximum=max(np.load(root/'runs'/r['job']/'training_coverage.npz')['counts'].max() for r in rows)
     for ax,c,row in zip(axes,configs,rows):
         maze(ax,c);z=np.load(root/'runs'/row['job']/'training_coverage.npz');counts=z['counts'].astype(float);counts[counts==0]=np.nan
@@ -134,7 +135,7 @@ def render(root,configs,rows):
     fig.tight_layout(rect=(0,0,1,.93));save(fig,'reward-scale')
     lines=['# AntMaze v3 OptiQ NovelD coefficient: 100k',
         '',f'학습 소스: `{TRAINING_SHA}`. 각 계수당 학습 seed 0 하나. 100k 환경 step, 95k learner/RND update.',
-        '기본값은 0.01을 유지하고 이번 네 실행만 계수 0.1/1/5/10을 적용했다. 나머지 설정 및 초기 모델/RND는 동일하다.',
+        '기본값은 0.01을 유지하고 이번 실행만 계수 '+', '.join(format(r['coefficient'],'g') for r in rows)+'을 적용했다. 나머지 설정 및 초기 모델/RND는 동일하다.',
         '', '고정된 동일 전체 초기 상태에서 각 정책 100회 평가. native는 random-z μ-only, policy는 random-z + conditional sigma다. 평가에 외부 DACER 잡음/NovelD 보상을 넣지 않는다.',
         'natural/fixed는 이 환경에서 같은 시작 분포이므로 합쳐 200개의 독립 초기 상태처럼 해석하지 않는다.',
         '', '| 계수 | 학습 G1/G2 도달 | 최초 G1/G2 step | 학습 최소 G1/G2 거리(m) | μ-only 성공 | full-policy 성공 | full-policy G1/G2 | 방문 bin |',
