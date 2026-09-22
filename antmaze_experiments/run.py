@@ -165,8 +165,11 @@ def main():
     import wandb
     run = wandb.init(entity='OptiQ',project='gmm-trg',group=CAMPAIGN,
         name=f'{a.task}-{a.method}-sparse-s0-env256-b4096-{BUDGETS[a.task]//1000000}m',dir=str(folder),config=config,
-        mode='disabled' if a.preflight else 'online')
-    if not a.preflight: write(folder/'wandb.json',dict(id=run.id,url=run.url))
+        mode='disabled' if a.preflight else os.environ.get('WANDB_MODE','online'))
+    if not a.preflight:
+        offline=os.environ.get('WANDB_MODE','online')=='offline'
+        write(folder/'wandb.json',dict(id=run.id,url=None if offline else run.url,
+            mode='offline' if offline else 'online',sync_pending=offline))
     rng=np.random.default_rng(0);step=0;started=time.monotonic();next_eval=250000
     timing=dict(collection=0.,learner=0.,evaluation=0.,checkpoint=0.)
     xy=np.empty((budget,2),np.float32);successes=[];episodes=0;info={}
