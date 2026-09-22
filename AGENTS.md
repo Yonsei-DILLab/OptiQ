@@ -44,3 +44,5 @@ render a separate post-hoc report with reporting-source provenance.
 User constraint (2026-09-21, latest): Keep GMM40 OptiQ N=M=64 in this
 parameter search. Do not increase N/M for the coverage/near goal. Existing
 N=M256 results are historical only and do not satisfy the current goal.
+
+User experiment selection (2026-09-22): Future AntMaze comparisons use OptiQ, SAC, DIPO, and MFPO; MEOW runs/queues were cancelled. The requested fresh NovelD10 v1-v4 seed0 1M campaign should evaluate every250k and save the full checkpoint only at final1M. The latest instruction holds new training until saved-checkpoint trajectories have been inspected to assess coefficient10. Preserve cancelled-run logs/checkpoints and do not relaunch older campaigns.
