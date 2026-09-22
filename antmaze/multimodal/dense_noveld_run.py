@@ -26,6 +26,10 @@ def main():
     p.add_argument("--steps",type=int,default=1000000)
     p.add_argument("--smoke",action="store_true")
     p.add_argument("--resume",type=Path)
+    p.add_argument("--noveld-coefficient",type=float,default=.01)
+    p.add_argument("--campaign-name",default=CAMPAIGN)
+    p.add_argument("--run-name")
+    p.add_argument("--profile",default="dense-noveld-1m")
     a=p.parse_args();seed=0
     cpus=sorted(os.sched_getaffinity(0));gpu=int(os.environ.get("CAMPAIGN_GPU","0"))
     os.sched_setaffinity(0,cpus[gpu::4] or cpus)
@@ -46,7 +50,7 @@ def main():
     agent=SB3(a.method,env,seed,folder,smoke=a.smoke) if a.method in ("optiq","sac") else dict(meow=MEOW,mfpo=MFPO)[a.method](env,seed,folder)
     warmup=256 if a.smoke else agent.warmup
     steps=a.steps;assert steps>warmup
-    intrinsic=NovelD(29,seed)
+    intrinsic=NovelD(29,seed,coefficient=a.noveld_coefficient)
     replay=Replay(1000000,seed,intrinsic,device="cpu" if a.method=="optiq" else "cuda",dictionary=a.method=="mfpo")
     if isinstance(agent,SB3):
         from stable_baselines3.common.logger import configure
@@ -62,7 +66,7 @@ def main():
     def rnd_hash(net):return resume.digest(net.state_dict())
     initial=parameter_audit(agent)
     initial_rnd=dict(predictor=rnd_hash(intrinsic.predictor),target=rnd_hash(intrinsic.target))
-    config=dict(profile="dense-noveld-1m",method=a.method,task=a.task,seed=seed,smoke=a.smoke,
+    config=dict(profile=a.profile,method=a.method,task=a.task,seed=seed,smoke=a.smoke,
         source_commit=commit,source_root=str(root),steps=steps,warmup=warmup,batch_size=256,
         num_envs=1,utd=1,expected_updates=steps-warmup,native=agent.config,intrinsic=intrinsic.config,
         environment=geometry(a.task),xml_sha256=env.unwrapped.xml_sha256,
@@ -87,8 +91,8 @@ def main():
     from antmaze.evaluation import isolated_rng
     import wandb
     with isolated_rng(18372):
-        run=wandb.init(project="gmm-trg",entity="OptiQ",name=f"antmaze-{a.task}-{a.method}-dense-noveld-s0-1m",
-            group=CAMPAIGN,job_type="multimodal-policy",config=config,dir=str(folder),
+        run=wandb.init(project="gmm-trg",entity="OptiQ",name=a.run_name or f"antmaze-{a.task}-{a.method}-dense-noveld-s0-1m",
+            group=a.campaign_name,job_type="multimodal-policy",config=config,dir=str(folder),
             mode="disabled" if a.smoke else "online",tags=["antmaze","noveld","dense",a.task,a.method,"utd1"])
     if not a.smoke:
         atomic_json(folder/"wandb.json",dict(id=run.id,url=run.url))

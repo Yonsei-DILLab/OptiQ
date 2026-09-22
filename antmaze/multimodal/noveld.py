@@ -9,7 +9,10 @@ from torch import nn
 
 
 class NovelD:
-    def __init__(self, observation_dim, seed):
+    def __init__(self, observation_dim, seed, coefficient=.01):
+        if not np.isfinite(coefficient) or coefficient < 0:
+            raise ValueError('NovelD coefficient must be finite and nonnegative')
+        self.coefficient = float(coefficient)
         # RND initialization must not displace the policy initialization RNG.
         with torch.random.fork_rng(devices=[torch.cuda.current_device()]):
             torch.manual_seed(seed + 93107)
@@ -24,7 +27,7 @@ class NovelD:
             self.target.requires_grad_(False)
         self.optimizer=torch.optim.AdamW(self.predictor.parameters(),lr=1e-4)
         self.updates=0;self.metrics={}
-        self.config=dict(type="noveld",coefficient=.01,novelty_discount=.5,normalize=False,
+        self.config=dict(type="noveld",coefficient=self.coefficient,novelty_discount=.5,normalize=False,
             positional_encoding=True,frequency_bands=10,learning_rate=1e-4,gradient_clip=1.,
             upstream_commit="7edd06c4799abbab0f8fa534c21deb56253b018e")
 
@@ -43,7 +46,7 @@ class NovelD:
             target=self.target(encoded)
             novelty=torch.linalg.vector_norm(prediction-target,dim=1)
             n,nnxt=novelty.chunk(2)
-            bonus=.01*torch.clamp(nnxt-.5*n,min=0)
+            bonus=self.coefficient*torch.clamp(nnxt-.5*n,min=0)
         loss=torch.nn.functional.mse_loss(prediction,target)
         self.optimizer.zero_grad(set_to_none=True);loss.backward()
         grad=torch.nn.utils.clip_grad_norm_(self.predictor.parameters(),1.)

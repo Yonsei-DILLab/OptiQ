@@ -60,23 +60,25 @@ def equivalent(expected,actual,path="result"):
     else:assert expected==actual,path
 
 
-def verify_run(folder,allow_smoke=False):
+def verify_run(folder,allow_smoke=False,*,expected_source=TRAINING_SHA,
+               expected_steps=1000000,expected_profile="dense-noveld-1m",
+               expected_coefficient=.01):
     """Check actual replay rewards/checkpoints and recompute rollout outcomes."""
     import torch
     digest=state_digest
     folder=Path(folder);c=read(folder/"config.json");r=read(folder/"result.json")
-    assert c["source_commit"]==r["source_commit"]==TRAINING_SHA
+    assert c["source_commit"]==r["source_commit"]==expected_source
     assert not c["smoke"] or allow_smoke,"Smoke data cannot be reported as production"
     steps=c["steps"];episodes=2 if c["smoke"] else 100
     assert r["completed"] and r["steps"]==steps
-    if not c["smoke"]:assert steps==1000000
-    assert c["profile"]=="dense-noveld-1m" and c["seed"]==0
+    if not c["smoke"]:assert steps==expected_steps
+    assert c["profile"]==expected_profile and c["seed"]==0
     assert c["task"] in TASKS and c["method"] in METHODS
     for k in ("task","method","seed"):assert r[k]==c[k]
     expected_warmup=256 if c["smoke"] else (10000 if c["method"]=="mfpo" else 5000)
     assert c["warmup"]==expected_warmup and r["updates"]==steps-expected_warmup
     assert c["batch_size"]==256 and c["utd"]==1 and c["num_envs"]==1
-    assert c["intrinsic"]["type"]=="noveld" and c["intrinsic"]["coefficient"]==.01
+    assert c["intrinsic"]["type"]=="noveld" and c["intrinsic"]["coefficient"]==expected_coefficient
     assert c["intrinsic"]["novelty_discount"]==.5 and not c["intrinsic"]["normalize"]
     assert c["reward"]=="environment=-nearest goal distance; learner adds NovelD; evaluation excludes NovelD"
     goals=np.asarray(GOALS[c["task"]]);np.testing.assert_array_equal(c["environment"]["goals"],goals)
@@ -92,7 +94,7 @@ def verify_run(folder,allow_smoke=False):
     assert intrinsic["initial"]["predictor"]!=intrinsic["final"]["predictor"]
     checkpoint=folder/"resume"/f"step_{steps:010d}"
     proof=read(checkpoint/"manifest.json");equivalent(proof,read(folder/"checkpoint.json"))
-    assert proof["step"]==steps and proof["updates"]==r["updates"] and proof["source_commit"]==TRAINING_SHA
+    assert proof["step"]==steps and proof["updates"]==r["updates"] and proof["source_commit"]==expected_source
     hashes={}
     for name,spec in proof["files"].items():
         p=checkpoint/name;assert p.stat().st_size==spec["bytes"] and file_hash(p)==spec["sha256"]
@@ -100,7 +102,8 @@ def verify_run(folder,allow_smoke=False):
     state=torch.load(checkpoint/"state.pt",map_location="cpu",weights_only=False)
     assert digest(state)==proof["state_digest"]
     assert state["model"]["updates"]==state["intrinsic"]["updates"]==r["updates"]
-    assert state["extra"]["source_commit"]==TRAINING_SHA
+    assert state["extra"]["source_commit"]==expected_source
+    assert state["intrinsic"]["config"]==c["intrinsic"]
     assert state["extra"]["method"]==c["method"] and state["extra"]["task"]==c["task"]
     assert digest(state["intrinsic"]["target"])==intrinsic["final"]["target"]
     assert digest(state["intrinsic"]["predictor"])==intrinsic["final"]["predictor"]
@@ -161,7 +164,7 @@ def verify_run(folder,allow_smoke=False):
         if not c["smoke"]:assert [v["step"] for v in h]==list(range(0,steps+1,25000))
         assert all(v["episodes"]==(2 if c["smoke"] else 10) and np.isfinite(v["mean_return"]) for v in h)
     return dict(passed=True,smoke=c["smoke"],steps=steps,updates=r["updates"],
-        training_source_commit=TRAINING_SHA,checkpoint_complete=True,replay_rewards_verified=len(data["rewards"]),
+        training_source_commit=expected_source,checkpoint_complete=True,replay_rewards_verified=len(data["rewards"]),
         full_state_digest=proof["state_digest"],sha256=hashes)
 
 
