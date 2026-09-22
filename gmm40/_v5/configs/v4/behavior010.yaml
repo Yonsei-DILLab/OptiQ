@@ -1,0 +1,16 @@
+# @package _global_
+defaults:
+  - /v4/final
+  - _self_
+
+# After the existing warmup, replace the whole collected action with
+# probability .1 by Uniform(action_space). The executed action enters replay.
+alg:
+  behavior_uniform_probability: 0.1
+
+output_root: ../optiq-experiments/v4_behavior010/outputs
+run_name: ${task}-v4-behavior010-T${alg.actor.temperature}-s${seed}
+wandb:
+  project: v4-test
+  group: ${env_name}_v4_behavior010_T${alg.actor.temperature}_dual_mu_eval
+  job_type: v4-uniform-collection

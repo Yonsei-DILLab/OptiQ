@@ -1,0 +1,94 @@
+{
+  "campaign": "20260922_gmm40_bandit",
+  "alpha": 1.0,
+  "scale": 50.0,
+  "steps": 100000,
+  "eval_samples": 32768,
+  "swd_directions": 128,
+  "coverage_threshold": 0.25,
+  "seeds": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "conditions": [
+    {
+      "name": "trg64",
+      "method": "optiq_trg",
+      "n": 64,
+      "m": 64,
+      "batch": 32
+    },
+    {
+      "name": "trg256",
+      "method": "optiq_trg",
+      "n": 256,
+      "m": 1024,
+      "batch": 32
+    },
+    {
+      "name": "v5_gmm",
+      "method": "v5_gmm",
+      "n": 256,
+      "m": 1024,
+      "batch": 32
+    },
+    {
+      "name": "v5_ot",
+      "method": "optiq",
+      "n": 256,
+      "m": 1024,
+      "batch": 32
+    },
+    {
+      "name": "legacy",
+      "method": "legacy",
+      "n": 2048,
+      "m": 2048,
+      "batch": 1
+    },
+    {
+      "name": "monge",
+      "method": "monge",
+      "n": 256,
+      "m": 1024,
+      "batch": 1
+    },
+    {
+      "name": "sac",
+      "method": "sac",
+      "n": 0,
+      "m": 0,
+      "batch": 256
+    },
+    {
+      "name": "sql",
+      "method": "sql",
+      "n": 0,
+      "m": 0,
+      "batch": 256
+    },
+    {
+      "name": "meow",
+      "method": "meow",
+      "n": 0,
+      "m": 0,
+      "batch": 256
+    },
+    {
+      "name": "dipo",
+      "method": "dipo",
+      "n": 0,
+      "m": 0,
+      "batch": 256
+    },
+    {
+      "name": "mfpo",
+      "method": "mfpo",
+      "n": 0,
+      "m": 0,
+      "batch": 256
+    }
+  ]
+}

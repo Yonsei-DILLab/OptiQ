@@ -1,0 +1,12 @@
+jax[cuda12]==0.6.2
+flax==0.10.4
+optax==0.2.4
+stable-baselines3==2.7.0
+gymnasium==1.2.0
+numpy==2.2.6
+scipy==1.15.3
+matplotlib==3.10.6
+wandb==0.29.0
+einops==0.8.1
+markdown==3.8.2
+pytest==8.4.2

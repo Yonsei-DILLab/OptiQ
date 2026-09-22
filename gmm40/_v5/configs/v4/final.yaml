@@ -1,0 +1,21 @@
+# @package _global_
+defaults:
+  - /v3/final
+  - _self_
+
+alg:
+  actor:
+    hidden_dims: [256, 256]
+  critic:
+    hs: [256, 256]
+
+# Each scheduled evaluation runs BOTH modes, num_eval_episodes per mode.
+dual_mu_eval: true
+mu_only_eval: true
+stochastic_eval: true
+output_root: ../optiq-experiments/v4/outputs
+run_name: ${task}-v4-T${alg.actor.temperature}-s${seed}
+wandb:
+  project: v4_test
+  group: ${env_name}_v4_T${alg.actor.temperature}_dual_mu_eval
+  job_type: v4-comparison
