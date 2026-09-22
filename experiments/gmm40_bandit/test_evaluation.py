@@ -13,7 +13,7 @@ def test_soft_component_mass_and_remote_samples():
 
 def test_swd_identity_permutation_translation():
     rng=np.random.default_rng(1);x=rng.normal(size=(512,2))
-    assert sliced_w2(x,x[::-1])==0
+    assert sliced_w2(x,x[::-1])<1e-14  # BLAS summation ordering, float64 roundoff
     dirs=np.random.default_rng(451).normal(size=(128,2));dirs/=np.linalg.norm(dirs,axis=1,keepdims=True)
     v=np.array([1.,2.])
     np.testing.assert_allclose(sliced_w2(x,x+v),np.sqrt(np.mean((dirs@v)**2)),rtol=1e-12)
