@@ -11,7 +11,7 @@ def main():
     target=initialize_target()
     jobs=[dict(condition=c['name'],seed=s,status='pending') for c in cfg['conditions'] for s in cfg['seeds']]
     if (a.output/'queue.json').exists():raise RuntimeError('Queue already exists; do not overwrite')
-    files={str(p.relative_to(Path.cwd())):hashlib.sha256(p.read_bytes()).hexdigest() for folder in ('experiments/gmm40_bandit','gmm40','common','models','benchmarks/gmm40') for p in Path(folder).rglob('*') if p.is_file() and '__pycache__' not in str(p)}
+    files={p.as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for folder in ('experiments/gmm40_bandit','gmm40','common','models','benchmarks/gmm40') for p in Path(folder).rglob('*') if p.is_file() and '__pycache__' not in str(p)}
     atomic_json(a.output/'provenance.json',dict(source_commit=a.commit,source_sha256=files,campaign=cfg,target_outside_mass=target.metadata['outside_mass']))
     atomic_json(a.output/'queue.json',jobs)
     atomic_json(a.output/'preflight_queue.json',[dict(condition=c['name'],seed=0,status='pending') for c in cfg['conditions']])
