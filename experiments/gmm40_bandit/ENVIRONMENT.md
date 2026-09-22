@@ -5,3 +5,9 @@ JAX and PyTorch use separate environments because their bundled CUDA package con
 Set `GMM40_PYTHON` to the JAX interpreter and `GMM40_TORCH_PYTHON` to the Torch interpreter. Both run from the identical committed code snapshot. The launcher uses one subprocess per run, one worker per visible GPU. No ports or external services are opened. Use tmux as requested in the experiment workflow.
 
 CPU unit validation (2026-09-22): Python3.12/JAX0.6.2/Flax0.10.4/Optax0.2.4/Torch2.7.1; 12 numerical checks passed before GPU preflight. This is not a GPU-speed measurement. GPU package freezes and preflight measurements are authoritative for experiment execution.
+
+Deployment dependency correction (2026-09-22): MEow imports Gymnasium through
+its upstream toy utility package even in the oracle-bandit adapter. Add
+Gymnasium1.2.0 to the Torch environment before retrying its preflight. This is
+an import dependency correction; the running numerical snapshot remains
+68f9925450d7b338afe19a7bcb28d3be98690a6c. Record the dependency commit separately.

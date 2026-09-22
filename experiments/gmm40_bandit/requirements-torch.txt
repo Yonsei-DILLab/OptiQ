@@ -5,3 +5,4 @@ wandb==0.29.0
 markdown==3.8.2
 pytest==8.4.2
 einops==0.8.1
+gymnasium==1.2.0
