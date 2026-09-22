@@ -20,7 +20,7 @@ CAMPAIGN="antmaze-dense-noveld-1m-s0-20260922"
 
 def main():
     p=argparse.ArgumentParser(allow_abbrev=False)
-    p.add_argument("--method",required=True,choices=["optiq","sac","meow","mfpo"])
+    p.add_argument("--method",required=True,choices=["optiq","sac","dipo","mfpo","meow"])
     p.add_argument("--task",required=True,choices=["v1","v2","v3","v4"])
     p.add_argument("--output",type=Path,required=True)
     p.add_argument("--steps",type=int,default=1000000)
@@ -30,7 +30,10 @@ def main():
     p.add_argument("--campaign-name",default=CAMPAIGN)
     p.add_argument("--run-name")
     p.add_argument("--profile",default="dense-noveld-1m")
+    p.add_argument("--eval-interval",type=int,default=25000)
+    p.add_argument("--checkpoint-interval",type=int,default=100000,help="0 saves only the final full state")
     a=p.parse_args();seed=0
+    assert a.eval_interval>0 and a.checkpoint_interval>=0
     cpus=sorted(os.sched_getaffinity(0));gpu=int(os.environ.get("CAMPAIGN_GPU","0"))
     os.sched_setaffinity(0,cpus[gpu::4] or cpus)
     import torch
@@ -40,14 +43,14 @@ def main():
     if a.method in ("optiq","mfpo"):
         import jax
         assert jax.default_backend()=="gpu"
-    from antmaze.agents import SB3,MEOW,MFPO,parameter_audit
+    from antmaze.agents import SB3,DIPO,MEOW,MFPO,parameter_audit
     from .noveld import NovelD,Replay
     folder=a.output;folder.mkdir(parents=True,exist_ok=False)
     root=Path(__file__).resolve().parents[2]
     commit=subprocess.check_output(["git","rev-parse","HEAD"],cwd=root,text=True).strip()
     assert not subprocess.check_output(["git","status","--porcelain","--untracked-files=no"],cwd=root,text=True).strip()
     env=Coverage(make_env(a.task,seed));obs,_=env.reset(seed=seed)
-    agent=SB3(a.method,env,seed,folder,smoke=a.smoke) if a.method in ("optiq","sac") else dict(meow=MEOW,mfpo=MFPO)[a.method](env,seed,folder)
+    agent=SB3(a.method,env,seed,folder,smoke=a.smoke) if a.method in ("optiq","sac") else dict(dipo=DIPO,meow=MEOW,mfpo=MFPO)[a.method](env,seed,folder)
     warmup=256 if a.smoke else agent.warmup
     steps=a.steps;assert steps>warmup
     intrinsic=NovelD(29,seed,coefficient=a.noveld_coefficient)
@@ -60,6 +63,9 @@ def main():
         if a.method=="optiq":
             agent.model.cfg.env_name=f"DDiffPG-{a.task}-dense-noveld-port"
             agent.config["env_name"]=agent.model.cfg.env_name
+    elif isinstance(agent,DIPO):
+        from .dipo_replay import DIPOReplay
+        agent.memory=agent.agent.memory=DIPOReplay(replay)
     else:agent.buffer=replay
     evaluator=Evaluator(folder,a.task,seed,batch=2 if a.smoke else 10)
     behavior_rng=np.random.default_rng(seed+40821)
@@ -72,10 +78,10 @@ def main():
         environment=geometry(a.task),xml_sha256=env.unwrapped.xml_sha256,
         reward="environment=-nearest goal distance; learner adds NovelD; evaluation excludes NovelD",
         reward_provenance="MaxEntDP D.2 dense distance penalty + user-requested DDiffPG NovelD; not exact unpublished MaxEntDP AntMaze reproduction",
-        eval_modes=dict(native="SAC tanh(mu); MFPO Q-best-of10; MEOW center-prior; OptiQ random-z mu-only",
+        eval_modes=dict(native="SAC tanh(mu); MFPO Q-best-of10; MEOW center-prior; OptiQ random-z mu-only"+("; DIPO random initial noise, reverse noise off" if a.method=="dipo" else ""),
             policy="direct stochastic policy including conditional sigma for OptiQ; no external DACER noise",
             zero_z="OptiQ z=0, mu-only"),
-        eval_interval=25000,checkpoint_interval=100000,trajectory_episodes_per_reset_mode=100,
+        eval_interval=a.eval_interval,checkpoint_interval=a.checkpoint_interval,trajectory_episodes_per_reset_mode=100,
         resume_from=str(a.resume) if a.resume else None,
         packages={n:importlib.metadata.version(n) for n in ("mujoco","gymnasium","jax","flax","optax","torch","numpy","wandb")})
     if a.resume:
@@ -143,14 +149,15 @@ def main():
             next_obs,r,term,trunc,info=env.step(act)
             assert r==-info["distance"]
             replay.add_batch(obs[None],act[None],np.array([r]),next_obs[None],np.array([term]))
+            if isinstance(agent,DIPO):agent.dmemory.append(obs,act)
             obs=env.reset()[0] if term or trunc else next_obs
             step+=1;timing["collection"]+=time.monotonic()-t
             if isinstance(agent,SB3):
                 agent.model.num_timesteps=step;agent.model._current_progress_remaining=1-step/steps
             if step>warmup:
                 t=time.monotonic();update();timing["learner"]+=time.monotonic()-t
-            if not a.smoke and step%25000==0 and step<steps:evaluate()
-            if step%100000==0 and step<steps:save()
+            if not a.smoke and step%a.eval_interval==0 and step<steps:evaluate()
+            if a.checkpoint_interval and step%a.checkpoint_interval==0 and step<steps:save()
             if step%1000==0 or step==steps:log()
         assert agent.updates==intrinsic.updates==steps-warmup
         evaluate();save()

@@ -46,3 +46,9 @@ parameter search. Do not increase N/M for the coverage/near goal. Existing
 N=M256 results are historical only and do not satisfy the current goal.
 
 User experiment selection (2026-09-22): Future AntMaze comparisons use OptiQ, SAC, DIPO, and MFPO; MEOW runs/queues were cancelled. The requested fresh NovelD10 v1-v4 seed0 1M campaign should evaluate every250k and save the full checkpoint only at final1M. The latest instruction holds new training until saved-checkpoint trajectories have been inspected to assess coefficient10. Preserve cancelled-run logs/checkpoints and do not relaunch older campaigns.
+
+User selection (2026-09-22, latest): v1 stays at NovelD 0.01; add only DIPO
+seed0 for 1M interactions, evaluating every250k and saving the full checkpoint
+only at final1M. Keep original OptiQ/SAC/MFPO v1 controls. Investigate literature
+and existing settings before deciding coefficient studies for v2/v3/v4. Do not
+launch the held all-maze coefficient10 campaign, ERIR, xy novelty or new shaping.

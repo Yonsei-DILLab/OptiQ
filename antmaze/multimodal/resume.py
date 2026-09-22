@@ -55,7 +55,7 @@ def digest(value):
 
 
 def model_state(agent):
-    from antmaze.agents import SB3,MEOW
+    from antmaze.agents import SB3,DIPO,MEOW
     import flax.serialization as fs
     if isinstance(agent,SB3):
         m=agent.model
@@ -74,6 +74,14 @@ def model_state(agent):
             regulator={k:copy.deepcopy(getattr(m,k)) for k in
                 ("regulator_next_update","regulator_count","regulator_entropy")},
             regulator_rng=copy.deepcopy(m.regulator_rng.bit_generator.state))
+    if isinstance(agent,DIPO):
+        d=agent.dmemory;n=d.capacity if d.full else d.idx
+        return dict(updates=agent.updates,step=agent.agent.step,
+            parameters={k:getattr(agent.agent,k).state_dict() for k in
+                ("actor","actor_target","critic","critic_target","actor_optimizer","critic_optimizer")},
+            noise_ratio={k:getattr(agent.agent,k).noise_ratio for k in ("actor","actor_target")},
+            diffusion_memory=dict(capacity=d.capacity,idx=d.idx,full=d.full,
+                states=d.states[:n].copy(),best_actions=d.best_actions[:n].copy()))
     if isinstance(agent,MEOW):
         return dict(updates=agent.updates,policy=agent.policy.state_dict(),
                     target=agent.target.state_dict(),optimizer=agent.optimizer.state_dict())
@@ -81,7 +89,7 @@ def model_state(agent):
 
 
 def restore_model(agent,state):
-    from antmaze.agents import SB3,MEOW
+    from antmaze.agents import SB3,DIPO,MEOW
     import flax.serialization as fs
     if isinstance(agent,SB3):
         m=agent.model
@@ -98,6 +106,13 @@ def restore_model(agent,state):
                 for k,v in state[group].items():setattr(obj,k,unpack_flax(getattr(obj,k),v))
             for k,v in state["regulator"].items():setattr(m,k,v)
             m.regulator_rng.bit_generator.state=state["regulator_rng"]
+    elif isinstance(agent,DIPO):
+        for k,v in state["parameters"].items():getattr(agent.agent,k).load_state_dict(v)
+        for k,v in state["noise_ratio"].items():getattr(agent.agent,k).noise_ratio=v
+        agent.updates=state["updates"];agent.agent.step=state["step"]
+        d=agent.dmemory;s=state["diffusion_memory"];assert d.capacity==s["capacity"]
+        d.idx=s["idx"];d.full=s["full"];n=d.capacity if d.full else d.idx
+        d.states[:n]=s["states"];d.best_actions[:n]=s["best_actions"]
     elif isinstance(agent,MEOW):
         for k in ("policy","target","optimizer"):getattr(agent,k).load_state_dict(state[k])
         agent.updates=state["updates"]

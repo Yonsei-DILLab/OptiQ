@@ -12,7 +12,7 @@ METHODS=("optiq","sac","meow","mfpo")
 TASKS=("v1","v2","v3","v4")
 GOALS={"v1":[[-8.,0.]],"v2":[[8.,0.],[-8.,8.]],"v3":[[-12.,12.],[12.,-12.]],"v4":[[-16.,4.],[-16.,-4.]]}
 COLORS={0:"#89939c",1:"#2282b5",2:"#ec8c34"}
-LINES={"optiq":"#168882","sac":"#c26330","meow":"#9270af","mfpo":"#4261a2"}
+LINES={"optiq":"#168882","sac":"#c26330","meow":"#9270af","dipo":"#9270af","mfpo":"#4261a2"}
 
 
 def read(path):return json.loads(Path(path).read_text())
@@ -73,7 +73,7 @@ def verify_run(folder,allow_smoke=False,*,expected_source=TRAINING_SHA,
     assert r["completed"] and r["steps"]==steps
     if not c["smoke"]:assert steps==expected_steps
     assert c["profile"]==expected_profile and c["seed"]==0
-    assert c["task"] in TASKS and c["method"] in METHODS
+    assert c["task"] in TASKS and c["method"] in (*METHODS,"dipo")
     for k in ("task","method","seed"):assert r[k]==c[k]
     expected_warmup=256 if c["smoke"] else (10000 if c["method"]=="mfpo" else 5000)
     assert c["warmup"]==expected_warmup and r["updates"]==steps-expected_warmup
@@ -102,6 +102,13 @@ def verify_run(folder,allow_smoke=False,*,expected_source=TRAINING_SHA,
     state=torch.load(checkpoint/"state.pt",map_location="cpu",weights_only=False)
     assert digest(state)==proof["state_digest"]
     assert state["model"]["updates"]==state["intrinsic"]["updates"]==r["updates"]
+    if c["method"]=="dipo":
+        dm=state["model"]["diffusion_memory"]
+        assert state["model"]["step"]==r["updates"]
+        assert dm["capacity"]==1000000 and dm["idx"]==steps%1000000 and dm["full"]==(steps>=1000000)
+        assert dm["states"].shape==(min(steps,1000000),29)
+        assert dm["best_actions"].shape==(min(steps,1000000),8)
+        assert np.isfinite(dm["best_actions"]).all() and np.max(np.abs(dm["best_actions"]))<=1.00001
     assert state["extra"]["source_commit"]==expected_source
     assert state["intrinsic"]["config"]==c["intrinsic"]
     assert state["extra"]["method"]==c["method"] and state["extra"]["task"]==c["task"]
@@ -113,6 +120,7 @@ def verify_run(folder,allow_smoke=False,*,expected_source=TRAINING_SHA,
         assert proof["replay_size"]==state["replay"]["size"]==len(data["rewards"])==min(steps,1000000)
         assert state["replay"]["position"]==steps%1000000 and state["replay"]["capacity"]==1000000
         assert all(np.isfinite(v).all() for v in data.values())
+        if c["method"]=="dipo":np.testing.assert_array_equal(state["model"]["diffusion_memory"]["states"],data["observations"])
         # All stored transitions, including terminal transitions: no intrinsic
         # reward, simulator reset observations, or locomotion reward in replay.
         distances=np.linalg.norm(data["next_observations"][:,:2,None]-goals.T[None,:,:],axis=1)
@@ -161,7 +169,11 @@ def verify_run(folder,allow_smoke=False,*,expected_source=TRAINING_SHA,
         hashes[str(path.relative_to(folder))]=file_hash(path)
     for mode in ("native","policy"):
         h=read(folder/f"history-{mode}-natural.json")
-        if not c["smoke"]:assert [v["step"] for v in h]==list(range(0,steps+1,25000))
+        if not c["smoke"]:
+            assert [v["step"] for v in h]==list(range(0,steps,c["eval_interval"]))+[steps]
+            expected_saves=list(range(c["checkpoint_interval"],steps,c["checkpoint_interval"])) if c["checkpoint_interval"] else []
+            assert sorted(p.name for p in (folder/"resume").glob("step_*") if p.is_dir() and not p.name.endswith(".tmp")) in (
+                [f"step_{v:010d}" for v in expected_saves+[steps]], [f"step_{steps:010d}"])
         assert all(v["episodes"]==(2 if c["smoke"] else 10) and np.isfinite(v["mean_return"]) for v in h)
     return dict(passed=True,smoke=c["smoke"],steps=steps,updates=r["updates"],
         training_source_commit=expected_source,checkpoint_complete=True,replay_rewards_verified=len(data["rewards"]),
@@ -208,7 +220,7 @@ def render(root,complete,allow_smoke=False):
                         observed_routes=s["successful_routes"]["observed_modes"],effective_routes=s["successful_routes"]["effective_modes"],
                         dominant_route_fraction=dom,goal1=s["goal_fractions"]["1"],goal2=s["goal_fractions"].get("2"),
                         training_successes=r["training"]["training_successes"],first_training_success=r["training"]["first_success_step"]))
-            meaning="Direct stochastic policy draws" if mode=="policy" else "Native evaluation: SAC mean / MFPO Q-best-of10 / MEOW prior center / OptiQ random-z mean"
+            meaning="Direct stochastic policy draws" if mode=="policy" else "Native evaluation: SAC mean / MFPO Q-best-of10 / OptiQ random-z mean / "+("DIPO reverse noise off" if "dipo" in METHODS else "MEOW prior center")
             fig.suptitle(f"{meaning}\n{suffix} · {reset} start",fontsize=11)
             fig.text(.5,.013,"Gray: failed rollout · blue/orange: reached G1/G2 · no extra DACER noise or NovelD reward in evaluation",ha="center",fontsize=8)
             fig.tight_layout(rect=(0,.032,1,.952));fig.savefig(out/f"trajectories-{mode}-{reset}.png",dpi=180)
@@ -282,10 +294,10 @@ def render(root,complete,allow_smoke=False):
             first=r["training"]["first_success_step"]
             lines.append(f"| {task} | {method} | {s['success_rate']:.1%} | {n['success_rate']:.1%} | {s['successful_routes']['observed_modes']} | {dom} | {first if first is not None else '없음'} |")
     lines.extend(["","성공률은 동일한 전체 초기 상태에서 최종 정책을100회 평가한 값입니다. 실패 episode도 분모에 포함합니다. 성공이 없으면 경로 수는0이며, 이를 mode collapse의 증거로 단정하지 않습니다.",
-        "Native: SAC tanh(mu), MFPO Q-best-of10, MEOW prior-center, OptiQ random-z mu-only. v2/v3/v4의 원래 시작 상태가 고정되어 natural/fixed를 독립된200회처럼 합산하지 않습니다.",
+        "Native: SAC tanh(mu), MFPO Q-best-of10, OptiQ random-z mu-only, "+("DIPO random initial noise + reverse noise off." if "dipo" in METHODS else "MEOW prior-center.")+" v2/v3/v4의 원래 시작 상태가 고정되어 natural/fixed를 독립된200회처럼 합산하지 않습니다.",
         "v2는 주로 두 목표 선택을 비교합니다. 경로 범주는 미리 정의한 통로 횡단 기준이며 모든 homotopy class 또는 action distribution의 multimodality 증명은 아닙니다.",
         "각 정책은 단일 training seed이므로 seed 간 평균·표준편차나 알고리즘 일반 성능 우열을 주장하지 않습니다. MaxEntDP의 dense 보상 설명에 DDiffPG NovelD를 추가한 사용자 지정 조건입니다.",
-        "모델/최적화 설정은 각 방법의 기존 기본값을 유지했습니다. OptiQ/SAC는256x2, MFPO는256x3, MEOW는 native flow 구조입니다. NovelD는 공통이며 OptiQ는 승인된 DACER 행동 탐색도 사용합니다.",
+        "모델/최적화 설정은 각 방법의 기존 기본값을 유지했습니다. OptiQ/SAC는256x2, MFPO는256x3, "+("DIPO는 native 256x3 Mish diffusion 구조입니다." if "dipo" in METHODS else "MEOW는 native flow 구조입니다.")+" NovelD는 공통이며 OptiQ는 승인된 DACER 행동 탐색도 사용합니다.",
         "![직접 정책 궤적](trajectories-policy-fixed.png)","![기본 평가 궤적](trajectories-native-fixed.png)"])
     (out/"REPORT_KO.md").write_text("\n".join(lines)+"\n")
 

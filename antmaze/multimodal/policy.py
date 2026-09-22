@@ -25,6 +25,6 @@ class PolicyView:
         if isinstance(a,SQL):return a.act(obs)
         import torch
         with torch.no_grad():
-            if isinstance(a,DIPO):return a.agent.actor(torch.as_tensor(obs,device="cuda"),eval=False).cpu().numpy()
+            if isinstance(a,DIPO):return a.agent.actor(torch.as_tensor(obs,device="cuda"),eval=self.mode=="native").cpu().numpy()
             a.policy.eval()
             return a.policy.sample(len(obs),obs,deterministic=self.mode=="native")[0].cpu().numpy()
