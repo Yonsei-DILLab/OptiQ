@@ -93,6 +93,13 @@ def vector(task, count, seed, asynchronous=True, fixed=False):
                     for i in range(count)]
     if asynchronous:
         # Construct before initializing CUDA; workers execute CPU MuJoCo only.
+        import resource
+        soft,hard=resource.getrlimit(resource.RLIMIT_NOFILE)
+        required=max(4096,count*8+512)
+        if soft<required:
+            if hard!=resource.RLIM_INFINITY and hard<required:
+                raise RuntimeError(f'256-env execution requires file limit>={required}; hard limit={hard}')
+            resource.setrlimit(resource.RLIMIT_NOFILE,(required,hard))
         return gym.vector.AsyncVectorEnv(constructors, context='fork')
     return gym.vector.SyncVectorEnv(constructors)
 
