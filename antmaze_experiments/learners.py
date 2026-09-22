@@ -7,7 +7,7 @@ import sys
 import copy
 import numpy as np
 import torch
-from .settings import BUDGETS, DIPO_DENSE_V_MIN
+from .settings import BUDGETS, NUM_ENVS, UPDATES, WARMUP, total_budget
 
 ROOT = Path(__file__).resolve().parents[1]
 BATCH = 4096
@@ -24,12 +24,14 @@ class Native:
         import gym
         with initialize_config_dir(config_dir=str(ROOT/'antmaze/ddiffpg/cfg'), version_base=None):
             cfg = compose(config_name='default', overrides=[f'algo={method}_algo',
-                f'env.name=antmaze-{task}', 'seed=0', 'num_envs=64', 'algo.update_times=2'])
+                f'env.name=antmaze-{task}', 'seed=0'])
         cfg = preprocess_cfg(cfg, if_ddiffpg=False)
         assert cfg.max_step == BUDGETS[task]
-        cfg.env.reward_type = 'dense'
-        if method == 'dipo': cfg.algo.v_min = DIPO_DENSE_V_MIN
-        cfg.env.env_kwargs = gym.spec('antmaze-' + task).kwargs
+        assert cfg.num_envs == NUM_ENVS and cfg.algo.update_times == UPDATES
+        assert cfg.algo.batch_size == BATCH and cfg.algo.warm_up * NUM_ENVS == WARMUP
+        assert cfg.env.reward_type == 'sparse'
+        cfg.env.env_kwargs = dict(gym.spec('antmaze-' + task).kwargs,
+            reward_type=cfg.env.reward_type, random_init=cfg.env.random_init)
         self.config = OmegaConf.to_container(cfg, resolve=True)
         proxy = SimpleNamespace(observation_space=spaces[0], action_space=spaces[1],
             max_episode_length=500 if task in ('v1', 'v2') else 700)
@@ -57,7 +59,7 @@ class Native:
 
     def update(self, step):
         info = self.agent.update_net(self.replay)
-        self.updates += 2
+        self.updates += UPDATES
         return info
 
     def record_collection(self, obs, reward, done):
@@ -118,7 +120,7 @@ class JaxLearner:
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
         self.method, self.updates = method, 0
-        self.budget = BUDGETS[task]
+        self.budget = total_budget(task)
         self.replay = ReplayBuffer(1000000, (29,), 8, device='cuda')
         self.intrinsic = IntrinsicM((29,), env_name='antmaze-'+task,
                                    normalize=False, pos_enc=True, L=10)
@@ -132,11 +134,11 @@ class JaxLearner:
             cfg = module.compose_config(['benchmark=ant', 'seed=0',
                 'alg.actor.mean_output_init_scale=1.0', 'dacer.enabled=true',
                 'dacer.noise_scale=0.1', f'output_root={folder}'])
-            cfg.env_name = 'DDiffPG-' + task + '-upstream-dense'
+            cfg.env_name = 'DDiffPG-' + task + '-upstream-sparse'
             cfg.task = 'antmaze'
             cfg.alg.batch_size = BATCH
-            cfg.alg.learning_starts = 8192
-            cfg.alg.actor.learning_starts = 8192
+            cfg.alg.learning_starts = WARMUP
+            cfg.alg.actor.learning_starts = WARMUP
             # Constructor does not collect data. Common scheduler controls updates.
             self.model = module.runner.OptiQDIME('MlpPolicy',
                 env=SpaceOnlyEnv.create(spaces), cfg=cfg,
@@ -184,7 +186,7 @@ class JaxLearner:
 
     def update(self, step):
         info = {}
-        for _ in range(2):
+        for _ in range(UPDATES):
             if self.method == 'optiq':
                 m = self.model
                 m.num_timesteps = step

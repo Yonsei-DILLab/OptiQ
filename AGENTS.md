@@ -89,3 +89,15 @@ Dense DIPO requires negative critic support; document this compatibility overrid
 MaxEntDP uses dense distance reward and reports1M trajectories, but its public
 source does not establish an AntMaze NovelD setting. Do not describe .01 or
 our parallel/batch/update profile as MaxEntDP defaults.
+
+User reversal (2026-09-23, newest): stop dense campaign and restart all16
+OptiQ/SAC/DIPO/MFPO v1-v4 seed0 policies using original DDiffPG sparse reward
+and NovelD.01, with256 parallel environments. Check official repo and actual
+environment defaults before launch. SAC/DIPO native batch4096/update_times8/
+warm_up32/replay1M are the shared data/update profile; preserve native models/LRs.
+Restore DIPO support[0,5]. Original budgets v1/v2 3M,v3 4M,v4 5M; original global
+counter excludes warmup and stops strictly above max_step. Retain user's
+eval250k/final-only full save. Independent backfill on8 GPUs, no completion
+barriers. Cancelled dense/sparse64/older queues stay cancelled, data preserved.
+Upstream159 files remain unchanged; see antmaze_experiments/PROTOCOL.md for
+verified environment settings and adapter/runtime/evaluation exceptions.

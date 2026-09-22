@@ -1,4 +1,4 @@
-"""64 official Gym environments, equal transition/update/batch budgets."""
+"""256 official Gym environments with native sparse baseline accounting."""
 import argparse
 import hashlib
 import json
@@ -10,7 +10,8 @@ import time
 import traceback
 import numpy as np
 
-from .settings import CAMPAIGN, BUDGETS, REWARD
+from .settings import (CAMPAIGN, BUDGETS, REWARD, NUM_ENVS, EVAL_NUM_ENVS, UPDATES, WARMUP,
+                       PREFLIGHT_STEPS, total_budget, expected_updates)
 
 
 def write(path, value):
@@ -24,7 +25,7 @@ def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
     from .envs import vector, transition
     from .learners import evaluation_rng
     label = f'{mode}-' + ('fixed' if fixed else 'natural')
-    count = min(10, episodes)
+    count = min(EVAL_NUM_ENVS, episodes)
     destination = folder/'evaluations'/f'{step:010d}'/label
     destination.mkdir(parents=True, exist_ok=True)
     paths, returns, goals, lengths, starts = [], [], [], [], []
@@ -104,13 +105,20 @@ def checkpoint(learner, env, obs, folder, step, rng, config):
     target_goals=np.asarray(reference.physics_env.target_goal).reshape(-1,2)
     reference.close()
     positions=loaded['replay']['buf_next_obs'][:,:2].numpy()
-    expected=-np.linalg.norm(positions[:,None,:]-target_goals[None,:,:],axis=-1).min(axis=1)
+    distances=np.linalg.norm(positions[:,None,:]-target_goals[None,:,:],axis=-1)
+    expected=np.zeros(len(positions),np.float32)
+    for goal in reversed(target_goals):
+        reached=np.linalg.norm(positions-goal,axis=-1)<=.5
+        expected[reached]=20 if tuple(goal)==(-8,8) else 10
     actual=loaded['replay']['buf_reward'].numpy().ravel()
-    assert np.allclose(actual,expected,rtol=2e-6,atol=2e-5)
+    assert np.isin(actual,[0,10,20]).all()
+    # Float32 replay coordinates can round a point across the success threshold.
+    boundary=np.min(np.abs(distances-.5),axis=1)<2e-5
+    assert np.array_equal(actual[~boundary],expected[~boundary])
     proof = dict(path=path.name,sha256=digest,bytes=path.stat().st_size,
         steps=step,updates=learner.updates,replay_count=memory.cur_capacity,
         simulator_count=len(loaded['env_states']),readback_verified=True,
-        dense_replay_verified=True,dense_max_error=float(np.max(np.abs(actual-expected))))
+        sparse_replay_verified=True,threshold_roundoff_rows=int(boundary.sum()))
     write(folder/'checkpoint-verification.json',proof)
     return proof
 
@@ -130,7 +138,7 @@ def main():
     os.sched_setaffinity(0,cpus[gpu::4] or cpus)
     # Fork workers before importing torch/JAX or initializing a GPU context.
     from .envs import vector, transition
-    env = vector(a.task,64,seed=0)
+    env = vector(a.task,NUM_ENVS,seed=0)
     obs = env.reset()
     import torch
     torch.set_num_threads(1);torch.manual_seed(0)
@@ -140,28 +148,30 @@ def main():
     learner = (Native if a.method in ('sac','dipo') else JaxLearner)(
         a.method,(env.single_observation_space,env.single_action_space),a.task,folder)
     initial = audit(learner)
-    budget = 8320 if a.preflight else BUDGETS[a.task]
-    warmup = 8192
+    budget = PREFLIGHT_STEPS if a.preflight else total_budget(a.task)
+    warmup = WARMUP
     config = dict(source_commit=source,upstream_commit='7edd06c4799abbab0f8fa534c21deb56253b018e',
         method=a.method,task=a.task,seed=0,preflight=a.preflight,steps=budget,
-        num_envs=64,batch_size=4096,updates_per_vector_step=2,updates_per_transition=1/32,
-        expected_updates=(budget-warmup)//32,warmup_transitions=warmup,
+        num_envs=NUM_ENVS,batch_size=4096,updates_per_vector_step=UPDATES,updates_per_transition=1/32,
+        expected_updates=expected_updates(budget),warmup_transitions=warmup,
+        upstream_max_step=BUDGETS[a.task],native_global_steps=budget-warmup,
         reward=REWARD,noveld_coefficient=.01,
         native=learner.config,random_init=a.task=='v1',eval_interval=250000,
-        checkpoint='final only',step_definition='sum of all 64 environment transitions, including warmup',
+        eval_num_envs=EVAL_NUM_ENVS,interim_eval_episodes=EVAL_NUM_ENVS,
+        checkpoint='final only',step_definition='step includes warmup; global_steps excludes warmup as upstream; stop global_steps>max_step',
         evaluation='policy: direct draws, no extra exploration noise; native: SAC mean, MFPO Q-best-of10, OptiQ random-z mu-only, DIPO native diffusion',
         runtime=dict(python=os.sys.version,torch=torch.__version__,numpy=np.__version__))
     write(folder/'config.json',config)
     import wandb
     run = wandb.init(entity='OptiQ',project='gmm-trg',group=CAMPAIGN,
-        name=f'{a.task}-{a.method}-dense-s0-env64-b4096-{BUDGETS[a.task]//1000000}m',dir=str(folder),config=config,
+        name=f'{a.task}-{a.method}-sparse-s0-env256-b4096-{BUDGETS[a.task]//1000000}m',dir=str(folder),config=config,
         mode='disabled' if a.preflight else 'online')
     if not a.preflight: write(folder/'wandb.json',dict(id=run.id,url=run.url))
     rng=np.random.default_rng(0);step=0;started=time.monotonic();next_eval=250000
     timing=dict(collection=0.,learner=0.,evaluation=0.,checkpoint=0.)
     xy=np.empty((budget,2),np.float32);successes=[];episodes=0;info={}
     def progress():
-        record=dict(step=step,updates=learner.updates,rnd_updates=learner.intrinsic.update_step,
+        record=dict(step=step,global_steps=max(0,step-warmup),updates=learner.updates,rnd_updates=learner.intrinsic.update_step,
             seconds=time.monotonic()-started,episodes=episodes,successes=len(successes),
             **{f'seconds/{k}':v for k,v in timing.items()})
         write(folder/'progress.json',record);print(json.dumps(record),flush=True)
@@ -169,25 +179,25 @@ def main():
     try:
         while step<budget:
             t=time.monotonic()
-            action=rng.uniform(-1,1,(64,8)).astype(np.float32) if step<warmup else learner.act(obs)
-            assert action.shape==(64,8) and np.isfinite(action).all()
+            action=rng.uniform(-1,1,(NUM_ENVS,8)).astype(np.float32) if step<warmup else learner.act(obs)
+            assert action.shape==(NUM_ENVS,8) and np.isfinite(action).all()
             nxt,reward,done,infos=env.step(np.clip(action,-1,1))
             final,terminal=transition(nxt,done,infos)
             if isinstance(learner,Native): learner.record_collection(obs,reward,done)
             learner.store(obs,action,reward,final,terminal)
-            xy[step:step+64]=final[:,:2]
+            xy[step:step+NUM_ENVS]=final[:,:2]
             for i,entry in enumerate(infos):
                 if done[i]: episodes+=1
                 if entry.get('success',0): successes.append(dict(step=step+i+1,env=i,goal=int(entry['success'])))
-            obs=nxt;step+=64;timing['collection']+=time.monotonic()-t
+            obs=nxt;step+=NUM_ENVS;timing['collection']+=time.monotonic()-t
             if step>warmup:
                 t=time.monotonic();info=learner.update(step);timing['learner']+=time.monotonic()-t
                 assert all(np.isfinite(float(v)) for v in info.values()), info
-                assert learner.updates==learner.intrinsic.update_step==(step-warmup)//32
+                assert learner.updates==learner.intrinsic.update_step==expected_updates(step)
             if step>=next_eval and step<budget:
                 t=time.monotonic()
                 for mode in ('native','policy'):
-                    s=evaluate(learner,a.task,folder,step,10,mode)
+                    s=evaluate(learner,a.task,folder,step,EVAL_NUM_ENVS,mode)
                     run.log({f'eval/{mode}/success_rate':s['success_rate'],
                              f'eval/{mode}/return':s['mean_return']},step=step)
                 timing['evaluation']+=time.monotonic()-t
@@ -210,7 +220,7 @@ def main():
                 summaries[label]=evaluate(learner,a.task,folder,step,2 if a.preflight else 100,mode,fixed)
                 timing['evaluation']+=time.monotonic()-t
         result=dict(completed=True,source_commit=source,method=a.method,task=a.task,
-            steps=step,updates=learner.updates,rnd_updates=learner.intrinsic.update_step,
+            steps=step,global_steps=step-warmup,updates=learner.updates,rnd_updates=learner.intrinsic.update_step,
             summaries=summaries,checkpoint=proof,timing=timing,seconds=time.monotonic()-started,
             training_successes=len(successes),training_episodes=episodes)
         write(folder/'result.json',result)

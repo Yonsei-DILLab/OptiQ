@@ -1,4 +1,4 @@
-"""Dense reward and bookkeeping over unchanged upstream physics and resets."""
+"""Bookkeeping only: upstream sparse reward, physics and resets unchanged."""
 from functools import partial
 from pathlib import Path
 import sys
@@ -70,23 +70,16 @@ class Recorded(gym.Wrapper):
         return np.asarray(obs, np.float32)
 
     def step(self, action):
-        obs, sparse_reward, done, info = self.env.step(action)
+        obs, reward, done, info = self.env.step(action)
         self.length += 1
-        assert sparse_reward in (0, 10, 20), sparse_reward
-        goals = np.asarray(self.physics_env.target_goal, dtype=np.float64).reshape(-1,2)
-        distance = float(np.linalg.norm(np.asarray(obs[:2])-goals, axis=1).min())
-        reward = -distance
-        assert np.isfinite(reward)
-        info = dict(info, xy=np.asarray(obs[:2], np.float32), episode_length=self.length,
-                    distance=distance, upstream_sparse_reward=float(sparse_reward))
+        assert reward in (0, 10, 20), reward
+        info = dict(info, xy=np.asarray(obs[:2], np.float32), episode_length=self.length)
         return np.asarray(obs, np.float32), reward, done, info
 
 
 def make_one(task, seed, fixed=False):
     # Upstream preprocess_cfg explicitly enables random starts only on v1.
-    # The upstream flag alone does not change its reward implementation.
-    # Recorded replaces that scalar after the real upstream physics step.
-    env = gym.make('antmaze-' + task, reward_type='dense', random_init=task == 'v1')
+    env = gym.make('antmaze-' + task, reward_type='sparse', random_init=task == 'v1')
     env.seed(seed)
     # Gym0.23 Env.seed is a no-op beneath D4RL's ProxyEnv. Seed the actual
     # MuJoCo environment RNG used by the original reset_model implementation.

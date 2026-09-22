@@ -1,89 +1,109 @@
-# Official AntMaze, 64 environments, four learners
+# Official DDiffPG sparse AntMaze:256 environments, four learners
 
-User approval: 2026-09-23. Stop old v1 DIPO. Fresh seed0 v1/v2/v3/v4,
-OptiQ/SAC/DIPO/MFPO, 16 policies, eight GPUs. The user explicitly selected
-64 environments per policy and batch4096 for all four methods.
+Latest user approval2026-09-23: stop dense running/pending jobs and restart all16
+policies fresh with original sparse reward, NovelD and256 parallel environments.
+Methods OptiQ/SAC/DIPO/MFPO, v1-v4, seed0, eight GPUs. MEOW/DDiffPG itself are not
+added. Preserve all cancelled source/logs/data; never resume old campaigns.
 
-The complete unmodified DDiffPG source is in `antmaze/` at upstream commit
-7edd06c4799abbab0f8fa534c21deb56253b018e. These adapters are outside that tree.
-Use actual MuJoCo2.1/mujoco-py2.1.2.14/Gym0.23.1, no modern-physics port.
-Original map/low-gear XML/29D observation/termination remain unchanged.
-Latest user correction replaces sparse goal reward with negative Euclidean distance
-from the post-step xy to the nearest goal, with no added sparse bonus. The external
-Recorded wrapper performs this change; the upstream reward_type flag alone does not.
-NovelD .01 is inherited from DDiffPG, not a documented MaxEntDP dense default.
-MaxEntDP Appendix D.2 reports dense distance reward and trajectories at1M; its
-public repository lacks the online AntMaze-specific settings and NovelD/RND code.
-This is an adapted DDiffPG comparison, not an exact MaxEntDP reproduction.
-v1 uses random_init=True, as upstream preprocess_cfg; v2-v4 use False.
-NovelD is imported from upstream: .01*max(n(next)-.5*n(current),0), no normalization,
-full observation with xy positional encoding10 bands, original RND/AdamW1e-4/clip1.
+## Original source audit
 
-## Equal data and update budgets
+Official https://github.com/supersglzc/ddiffpg HEAD was rechecked as
+7edd06c4799abbab0f8fa534c21deb56253b018e. antmaze/ contains its159 unchanged files.
+Check with python analysis_tools/verify_antmaze_upstream.py.
 
-All methods: batch4096, replay1M, 64 simultaneous CPU environments, one GPU learner.
-Collect64 transitions and perform2 actor/critic/RND updates. This preserves original
-DDiffPG 256-env/8-update ratio: 1/32 optimizer updates per collected transition,
-128 replay samples drawn per new transition after warmup. Both OptiQ and MFPO now
-use this common ratio, not their old UTD1/batch256 settings. Model architecture,
-learning rates, objectives, entropy and target-update rules remain method-native.
+- ddiffpg/cfg/default.yaml: num_envs256, eval_num_envs20, sparse, NovelD,
+  normalizeFalse, positional encodingTrue/L10, diffusion5steps/actionLR.03/20updates.
+- ddiffpg/cfg/algo/{sac,dipo}_algo.yaml: batch4096,replay1M,horizon1,nstep1,
+  update_times8,warm_up32,gamma.99,tau.05. Do not use the base actor_critic batch8192:
+  the selected method configs override it with4096.
+- Actor/critic AdamW LR3e-4/5e-4,max_grad_norm1,obs/value normalizationFalse,
+  reward_scale1,handle_timeoutTrue. SAC automatic entropy uses alphaLR.005.
+- DIPO critic DistributionalDoubleQ support[0,5],51atoms, restored exactly.
+  Native5-step diffusion,20action-gradient steps, mixed exploration std.05-.6,
+  target std.8 clipped to.2. No dense-specific support override remains.
+- ddiffpg/utils/intrinsic.py: .01*max(n(next)-.5*n(current),0), RNDL2error,
+  full29D observation with xy Fourier encoding, AdamW1e-4,clip1. Original imported
+  code is used. Replay stores only sparse environment rewards; bonus is recomputed
+  for each learner minibatch and RND is updated once per learner update.
+- DDiffPG's own algorithm has warm_up500 and a trajectory/cluster replay. It is
+  not among these four methods. We use the repo's SAC/DIPO baseline warmup32 and
+  replay1M consistently for the four compared methods.
 
-Warmup8192 transitions for all, equal to original32 vector steps times256 environments.
-Per-maze interaction budgets follow upstream preprocess_cfg: v1/v2 3M,
-v3 4M, v4 5M. Four algorithms total60M transitions. Warmup is included in each
-budget. v1/v2:46,875 vector steps and93,494 learner/RND updates; v3:62,500
-and124,744; v4:78,125 and155,994. Unlike the original runner, warmup is counted
-and there is no endpoint overshoot. Replay capacity stays1M and wraps normally.
+## Original environment
 
-SAC/DIPO use original AgentSAC/AgentDIPO and native batch4096 configs, with
-update_times=2. SAC/DIPO actor/critic AdamW3e-4/5e-4,tau.05,gamma.99; original
-network sizes retained. DIPO uses original5-step diffusion and20 action-gradient
-steps, distributional critic, native mixed exploration noise.
-Dense compatibility override: extend DIPO critic support from[0,5] to[-6000,5],
-keeping51 atoms and all optimizer/network settings. Positive-only support would
-project negative terminal targets onto0. The conservative lower endpoint covers
-large discounted distance penalties; it is not a tuned optimum. A CPU projection
-test checks negative terminal targets are represented, and real GPU preflight
-checks finite learning. MFPO already has negative support and retains its defaults. It is not the old
-100-step external DIPO implementation. SAC uses native automatic entropy tuning.
-OptiQ uses TRG direct-GMM,256x2GELU,T.25,beta1,random latent,N=M64,log_sigma[-5,-1],
-initial-1,mean-head scale1,DACER=true,noise_scale.1,target_entropy_per_dim-.9,
-alpha.27,alpha_lr.03,10k learner-update interval. Diagnostic state count stays256.
-MFPO uses native256x3,2 flow steps,native objective/optimizers/config.
+Use original MuJoCo2.1/mujoco_py environment and XML/maps; no physics port.
+MuJoCo timestep.02, frame_skip5, RK4, actuator gear30, maze cell scale4,
+29D qpos/qvel observation and8D actions in[-1,1]. No goal vector is appended
+because original registrations set eval=True even for training; that flag also
+makes goal arrival terminal. Base Ant locomotion rewards/fall-done are discarded
+by the original GoalReachingEnv, not newly added here. Time limits remain.
 
-## Collection and evaluation
+| Maze | Goal xy | Goal reward | Horizon | Reset | Native max_step |
+|---|---|---|---|---|---|
+| v1 |(-8,0)|10|500|xy uniform[-2,2], original pose/zero velocity|3M|
+| v2 |(-8,8);(8,0)|20;10|500|fixed original state|3M|
+| v3 |(-12,12);(12,-12)|10;10|700|fixed original state|4M|
+| v4 |(-16,4);(-16,-4)|10;10|700|fixed original state|5M|
 
-Gym AsyncVectorEnv runs64 MuJoCo CPU workers. Policies draw independent batched
-randomness. Thread counts1 and per-GPU CPU affinity limit oversubscription.
-The two servers have different CPU quotas; measure actual throughput, do not
-claim64x acceleration. Env workers are forked before CUDA initializes.
-The bookkeeping wrapper preserves terminal_observation before Gym auto-reset,
-bootstraps across time limits, and records true terminal positions for NovelD.
-No extra shaping or reset/success/goal modification is added.
+Arrival radius<=.5; reward0 otherwise. v2's two goals deliberately retain the
+original unequal payoffs. v1 uses low_gear_ant.xml; v2-v4 low_gear_ant_4g.xml.
+preprocess_cfg changes v1 random_init toTrue even though default.yaml saysFalse.
 
-Evaluation every250k threshold after the current64-transition batch, e.g.
-250048,500032,750016,1000000, continuing to each maze's3M/4M/5M endpoint. Interim native/direct-policy10 episodes; final100 per mode for
-natural and identical full-state starts. OptiQ also gets zero_z. Rollouts retain
-failures and per-policy identity. Direct policy includes SAC policy noise, DIPO
-native diffusion noise, MFPO latent noise, OptiQ latent and conditional sigma.
-Native: SAC mean, MFPO Q-best-of10, OptiQ random-z mu-only; upstream DIPO native
-diffusion is itself stochastic. No external Gaussian/DACER exploration or NovelD
-reward in evaluation. Evaluation RNG is isolated from training. v2-v4 natural
-starts can already be identical; do not pool natural/fixed into200 distinct starts.
+## Shared collection/update accounting
 
-Only final full checkpoint: models/targets/optimizers/entropy/DACER/RND/replay,
-RNGs and64 simulator states, SHA256 and serialized read-back verification.
-The preflight uses the same actual batch4096,64 environments,warmup8192 and
-4 real learner updates to8320 total transitions; it is not a reported result.
-Require finite changed actor/critic/RND predictor and unchanged RND target,
-exact update counts, successful checkpoint readback and all evaluation modes.
+All methods collect256 transitions then run8 learner/RND updates, batch4096,
+replay1M. This is1/32 updates per transition and128 sampled replay items per new
+transition. Warmup32 vector steps=8192 transitions, no learner updates.
+Match baselines_main's native counter: global_steps excludes warmup and stop
+when global_steps>max_step. Report actual total step and global_steps separately.
 
-## Scheduling
+|Maze|Actual total transitions, including warmup|Learner/RND updates|
+|---|---:|---:|
+|v1/v2|3,008,256|93,752|
+|v3|4,008,448|125,008|
+|v4|5,008,384|156,256|
 
-Commit exact code and freeze before preflight or main training. Each GPU job
-runs its own preflight then main training; no maze/method completion barrier.
-Each completion opens the slot to the next job within2 seconds. Respect GPU locks.
-Failure holds new jobs on that server and preserves other live jobs; no automatic
-restarts. Preserve previous source/logs/checkpoints and cancelled queues.
-W&B OptiQ/gmm-trg, group antmaze-upstream-dense-nativebudget-64env-s0-20260923.
-Previous sparse1M campaign is cancelled and preserved, never relabelled or resumed.
+No invented1M cap. Each policy is one run with256 environments, not256 seeds.
+SAC/DIPO import the original learners without model/LR/support changes.
+OptiQ/MFPO are external adapters because upstream has neither; keep each native
+model/objective/optimizer but match common data,batch,update and NovelD settings.
+OptiQ:256x2GELU,T.25,beta1,DACERtrue,meaninit1,randomz,N=M64,
+log_sigma[-5,-1]/initial-1,actor/criticLR3e-4; existing DACER state batch256.
+MFPO: native256x3,2flow steps,native objective/optimizers/config.
+
+## Evaluation, runtime and bookkeeping exceptions
+
+Retain user-requested eval250k/final-only full checkpoint instead of upstream's
+frequent eval/model saves. Interim20episodes/mode with20 vector slots, as original
+eval_num_envs. Final100episodes per mode for natural and fixed-full-state resets.
+Native: SAC mean, MFPO Q-best-of10, OptiQ randomz mu-only, DIPO native stochastic
+reverse diffusion. Direct policy includes each model's policy noise, including
+OptiQ conditional sigma. OptiQ zero_z separately. No NovelD or external Gaussian/
+DACER exploration reward/noise during evaluation. Evaluation RNG isolated.
+
+Seed0 is the user's single-seed comparison instead of upstream's generic seed42.
+Python3.11/torchcu128 support5090; actual MuJoCo2.1/mujoco_py2.1.2.14/Gym.23.1
+remain. A Gym/NumPy pickle compatibility adapter preserves RNG state exactly.
+Explicitly seed the actual MuJoCo reset RNG (old Gym Env.seed is a no-op).
+Preserve true terminal_observation before auto-reset for replay/NovelD; bootstrap
+at time limits. These correctness/serialization adapters do not change reward,
+physics, reset distribution or termination. No extra shaping or goal changes.
+
+All256 training simulations are Gym AsyncVectorEnv CPU workers forked beforeCUDA
+initialization, one GPU learner. Four jobs per server=1024 CPU simulations;
+thread limits1, per-job CPU affinity. Do not claim256x speedup on fewerCPUcores.
+Final full state: model/target/optimizer/entropy/DACER/RND/replay/RNG/256simulators,
+SHA256/readback, sparse reward and nearest-goal success consistency validation.
+
+## Validation and queue
+
+Commit/freeze before any changed training. check_env audits256-worker v1-v4
+physics/reward/reset/timeout, original resolved configs, native counter budgets,
+replay wrap, and original NovelD formula. Each job also uses actual256env,
+batch4096,warmup8192+256=8448 transitions,8real updates, finite changed model/RND,
+save/readback and all evaluation modes before main. Preflights are not results.
+
+Independent FIFO: immediately fill any finished GPU within2seconds, no all-maze
+or all-method completion barrier. Respect GPU locks. Failure holds that server's
+pending jobs, preserves live work; do not automatically restart failed training.
+W&B OptiQ/gmm-trg, group antmaze-upstream-sparse256-nativebudget-s0-20260923.
