@@ -87,7 +87,7 @@ def render(root,configs,rows):
     def save(fig,name):
         fig.savefig(out/(name+'.png'),dpi=180);fig.savefig(out/(name+'.pdf'));plt.close(fig)
     for reset in ('fixed','natural'):
-        fig,axes=plt.subplots(2,len(rows),figsize=(3.5*len(rows),9.8),squeeze=False)
+        fig,axes=plt.subplots(2,len(rows),figsize=(max(10,3.5*len(rows)),9.8),squeeze=False)
         for ri,mode in enumerate(('native','policy')):
             for ci,(c,row) in enumerate(zip(configs,rows)):
                 ax=axes[ri,ci];maze(ax,c);s=row['summaries'][mode+'-'+reset]
@@ -97,7 +97,7 @@ def render(root,configs,rows):
                 g1=round(s['goal_fractions']['1']*100);g2=round(s['goal_fractions']['2']*100)
                 ax.set_title(f"NovelD {row['coefficient']:g} | success {g1+g2}/100\nG1 {g1} | G2 {g2} | fail {100-g1-g2}",fontsize=10)
                 if ci==0:ax.set_ylabel('Random-z mean (mu-only)' if mode=='native' else 'Random-z + conditional sigma',fontsize=10)
-        fig.suptitle(f'AntMaze v3 · OptiQ · 100k interactions · training seed 0\n100 rollouts per panel · {reset} full initial state',fontsize=13)
+        fig.suptitle(f'AntMaze {configs[0]["task"]} · OptiQ · 100k interactions · training seed 0\n100 rollouts per panel · {reset} full initial state',fontsize=13)
         fig.legend(handles=[Line2D([0],[0],color=COLORS[g],label=l) for g,l in ((1,'Goal 1'),(2,'Goal 2'),(0,'Failed'))],
             loc='lower center',ncol=3,frameon=False,bbox_to_anchor=(.5,.016))
         fig.text(.5,.003,'No external DACER noise or NovelD reward in evaluation. Each column is one independently trained policy.',ha='center',fontsize=8)
@@ -133,7 +133,7 @@ def render(root,configs,rows):
     axes[0].legend(fontsize=8)
     fig.suptitle('Actual training logs · bonus/env reward are minibatch snapshots every 1k steps')
     fig.tight_layout(rect=(0,0,1,.93));save(fig,'reward-scale')
-    lines=['# AntMaze v3 OptiQ NovelD coefficient: 100k',
+    lines=[f'# AntMaze {configs[0]["task"]} OptiQ NovelD coefficient: 100k',
         '',f'학습 소스: `{TRAINING_SHA}`. 각 계수당 학습 seed 0 하나. 100k 환경 step, 95k learner/RND update.',
         '기본값은 0.01을 유지하고 이번 실행만 계수 '+', '.join(format(r['coefficient'],'g') for r in rows)+'을 적용했다. 나머지 설정 및 초기 모델/RND는 동일하다.',
         '', '고정된 동일 전체 초기 상태에서 각 정책 100회 평가. native는 random-z μ-only, policy는 random-z + conditional sigma다. 평가에 외부 DACER 잡음/NovelD 보상을 넣지 않는다.',
