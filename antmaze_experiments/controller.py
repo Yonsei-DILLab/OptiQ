@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 from .run import write, CAMPAIGN
+from .settings import BUDGETS, REWARD
 
 
 def job(root, identifier, gpu):
@@ -27,6 +28,11 @@ def job(root, identifier, gpu):
             return result.returncode
         proof=json.loads((target/'result.json').read_text())
         assert proof['completed'] and proof['source_commit']==manifest['source_commit']
+        expected=8320 if phase=='preflight' else BUDGETS[entry['task']]
+        assert proof['steps']==expected and proof['updates']==(expected-8192)//32
+        assert proof['checkpoint']['dense_replay_verified']
+        config=json.loads((target/'config.json').read_text())
+        assert config['reward']==REWARD and config['num_envs']==64 and config['batch_size']==4096
     write(root/'jobs'/f'{identifier}.json',dict(**entry,gpu=gpu,status='completed'))
     return 0
 

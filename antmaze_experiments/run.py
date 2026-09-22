@@ -10,7 +10,7 @@ import time
 import traceback
 import numpy as np
 
-CAMPAIGN = 'antmaze-upstream-64env-1m-s0-20260923'
+from .settings import CAMPAIGN, BUDGETS, REWARD
 
 
 def write(path, value):
@@ -94,13 +94,23 @@ def checkpoint(learner, env, obs, folder, step, rng, config):
     # Read back serialized model/replay/simulator data before marking complete.
     loaded = torch.load(path, map_location='cpu', weights_only=False)
     assert loaded['step']==step and loaded['updates']==learner.updates
-    assert loaded['replay']['buf_obs'].shape[0]==step
+    assert loaded['replay']['buf_obs'].shape[0]==min(step,memory.capacity)
+    assert loaded['replay_metadata']['total_samples']==step
     for key,value in replay.items(): assert torch.equal(loaded['replay'][key],value),key
     assert np.array_equal(loaded['observations'],obs)
     with path.open('rb') as f: digest=hashlib.file_digest(f,'sha256').hexdigest()
+    from .envs import make_one
+    reference=make_one(config['task'],0)
+    target_goals=np.asarray(reference.physics_env.target_goal).reshape(-1,2)
+    reference.close()
+    positions=loaded['replay']['buf_next_obs'][:,:2].numpy()
+    expected=-np.linalg.norm(positions[:,None,:]-target_goals[None,:,:],axis=-1).min(axis=1)
+    actual=loaded['replay']['buf_reward'].numpy().ravel()
+    assert np.allclose(actual,expected,rtol=2e-6,atol=2e-5)
     proof = dict(path=path.name,sha256=digest,bytes=path.stat().st_size,
         steps=step,updates=learner.updates,replay_count=memory.cur_capacity,
-        simulator_count=len(loaded['env_states']),readback_verified=True)
+        simulator_count=len(loaded['env_states']),readback_verified=True,
+        dense_replay_verified=True,dense_max_error=float(np.max(np.abs(actual-expected))))
     write(folder/'checkpoint-verification.json',proof)
     return proof
 
@@ -130,13 +140,13 @@ def main():
     learner = (Native if a.method in ('sac','dipo') else JaxLearner)(
         a.method,(env.single_observation_space,env.single_action_space),a.task,folder)
     initial = audit(learner)
-    budget = 8320 if a.preflight else 1000000
+    budget = 8320 if a.preflight else BUDGETS[a.task]
     warmup = 8192
     config = dict(source_commit=source,upstream_commit='7edd06c4799abbab0f8fa534c21deb56253b018e',
         method=a.method,task=a.task,seed=0,preflight=a.preflight,steps=budget,
         num_envs=64,batch_size=4096,updates_per_vector_step=2,updates_per_transition=1/32,
         expected_updates=(budget-warmup)//32,warmup_transitions=warmup,
-        reward='unaltered upstream sparse goal bonus 0/10/20',noveld_coefficient=.01,
+        reward=REWARD,noveld_coefficient=.01,
         native=learner.config,random_init=a.task=='v1',eval_interval=250000,
         checkpoint='final only',step_definition='sum of all 64 environment transitions, including warmup',
         evaluation='policy: direct draws, no extra exploration noise; native: SAC mean, MFPO Q-best-of10, OptiQ random-z mu-only, DIPO native diffusion',
@@ -144,7 +154,7 @@ def main():
     write(folder/'config.json',config)
     import wandb
     run = wandb.init(entity='OptiQ',project='gmm-trg',group=CAMPAIGN,
-        name=f'{a.task}-{a.method}-s0-env64-b4096',dir=str(folder),config=config,
+        name=f'{a.task}-{a.method}-dense-s0-env64-b4096-{BUDGETS[a.task]//1000000}m',dir=str(folder),config=config,
         mode='disabled' if a.preflight else 'online')
     if not a.preflight: write(folder/'wandb.json',dict(id=run.id,url=run.url))
     rng=np.random.default_rng(0);step=0;started=time.monotonic();next_eval=250000

@@ -79,3 +79,13 @@ for all four methods. Use common original DDiffPG update ratio: collect64 then
 2 learner updates. Warmup8192 is included in1M. See antmaze_experiments/PROTOCOL.md.
 Keep upstream antmaze/ files unchanged; place integration outside that tree.
 Validate runtime, real batch4096 updates and accounting before main launches.
+
+User correction (2026-09-23, supersedes sparse/1M profile): use dense negative
+nearest-goal Euclidean distance without sparse goal bonus. Respect upstream
+per-maze budgets: v1/v2 3M, v3 4M, v4 5M. Keep all four methods at64 envs,
+batch4096, collect64/update2, seed0, NovelD.01, evaluation250k, final-only full
+checkpoint. Cancel sparse campaign, preserve logs, and restart fresh dense jobs.
+Dense DIPO requires negative critic support; document this compatibility override.
+MaxEntDP uses dense distance reward and reports1M trajectories, but its public
+source does not establish an AntMaze NovelD setting. Do not describe .01 or
+our parallel/batch/update profile as MaxEntDP defaults.

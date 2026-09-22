@@ -7,6 +7,7 @@ import sys
 import copy
 import numpy as np
 import torch
+from .settings import BUDGETS, DIPO_DENSE_V_MIN
 
 ROOT = Path(__file__).resolve().parents[1]
 BATCH = 4096
@@ -25,7 +26,9 @@ class Native:
             cfg = compose(config_name='default', overrides=[f'algo={method}_algo',
                 f'env.name=antmaze-{task}', 'seed=0', 'num_envs=64', 'algo.update_times=2'])
         cfg = preprocess_cfg(cfg, if_ddiffpg=False)
-        cfg.max_step = 1000000
+        assert cfg.max_step == BUDGETS[task]
+        cfg.env.reward_type = 'dense'
+        if method == 'dipo': cfg.algo.v_min = DIPO_DENSE_V_MIN
         cfg.env.env_kwargs = gym.spec('antmaze-' + task).kwargs
         self.config = OmegaConf.to_container(cfg, resolve=True)
         proxy = SimpleNamespace(observation_space=spaces[0], action_space=spaces[1],
@@ -115,6 +118,7 @@ class JaxLearner:
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
         self.method, self.updates = method, 0
+        self.budget = BUDGETS[task]
         self.replay = ReplayBuffer(1000000, (29,), 8, device='cuda')
         self.intrinsic = IntrinsicM((29,), env_name='antmaze-'+task,
                                    normalize=False, pos_enc=True, L=10)
@@ -128,7 +132,7 @@ class JaxLearner:
             cfg = module.compose_config(['benchmark=ant', 'seed=0',
                 'alg.actor.mean_output_init_scale=1.0', 'dacer.enabled=true',
                 'dacer.noise_scale=0.1', f'output_root={folder}'])
-            cfg.env_name = 'DDiffPG-' + task + '-upstream-sparse'
+            cfg.env_name = 'DDiffPG-' + task + '-upstream-dense'
             cfg.task = 'antmaze'
             cfg.alg.batch_size = BATCH
             cfg.alg.learning_starts = 8192
@@ -136,11 +140,11 @@ class JaxLearner:
             # Constructor does not collect data. Common scheduler controls updates.
             self.model = module.runner.OptiQDIME('MlpPolicy',
                 env=SpaceOnlyEnv.create(spaces), cfg=cfg,
-                model_save_path=None, save_every_n_steps=1000000)
+                model_save_path=None, save_every_n_steps=self.budget)
             from stable_baselines3.common.logger import configure
             self.model.set_logger(configure(str(folder/'learner'), ['csv']))
             self.model.replay_buffer = self.view
-            self.model._total_timesteps = 1000000
+            self.model._total_timesteps = self.budget
             self.config = OmegaConf.to_container(cfg, resolve=True)
         else:
             sys.path.insert(0, str(ROOT/'gmm40-baseline/MFPO'))
@@ -184,7 +188,7 @@ class JaxLearner:
             if self.method == 'optiq':
                 m = self.model
                 m.num_timesteps = step
-                m._current_progress_remaining = 1-step/1000000
+                m._current_progress_remaining = 1-step/self.budget
                 self.view.diagnostic = m.regulator_enabled and m._n_updates >= m.regulator_next_update
                 m.train(batch_size=BATCH, gradient_steps=1)
                 info = {k:float(v) for k,v in m.logger.name_to_value.items()
