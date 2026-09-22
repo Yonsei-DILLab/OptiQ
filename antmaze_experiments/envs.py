@@ -3,12 +3,29 @@ from functools import partial
 from pathlib import Path
 import sys
 import copy
+import copyreg
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "antmaze"))
 import gym
 import ddiffpg  # register exact upstream environments
+
+
+def restore_gym_rng(state):
+    """Gym0.23's pickle constructor predates NumPy1.24's second argument."""
+    from gym.utils.seeding import RandomNumberGenerator
+    bitgen = getattr(np.random, state['bit_generator'])()
+    bitgen.state = state
+    return RandomNumberGenerator(bitgen)
+
+
+def reduce_gym_rng(rng):
+    return restore_gym_rng, (rng.bit_generator.state,)
+
+
+from gym.utils.seeding import RandomNumberGenerator
+copyreg.pickle(RandomNumberGenerator, reduce_gym_rng)
 
 
 class Recorded(gym.Wrapper):
