@@ -33,6 +33,11 @@ def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
         try:
             for batch in range((episodes+count-1)//count):
                 obs = env.reset(); active = np.arange(count)+batch*count < episodes
+                if fixed:
+                    common = env.envs[0].initial
+                    for i,e in enumerate(env.envs):
+                        e.initial = common
+                        obs[i] = e.restore(common)
                 tracks = [[o[:2].copy()] for o in obs]
                 full_starts = [e.state() for e in env.envs]
                 rets = np.zeros(count); lens = np.zeros(count, int)

@@ -81,6 +81,9 @@ def make_one(task, seed, fixed=False):
     # Upstream preprocess_cfg explicitly enables random starts only on v1.
     env = gym.make('antmaze-' + task, reward_type='sparse', random_init=task == 'v1')
     env.seed(seed)
+    # Gym0.23 Env.seed is a no-op beneath D4RL's ProxyEnv. Seed the actual
+    # MuJoCo environment RNG used by the original reset_model implementation.
+    env.unwrapped.wrapped_env.np_random, _ = gym.utils.seeding.np_random(seed)
     env.action_space.seed(seed)
     return Recorded(env, fixed=fixed)
 
