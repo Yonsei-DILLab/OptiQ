@@ -52,7 +52,7 @@ preserved.
 
 - Local backup: `artifacts/antmaze_upstream_migration_20260923/legacy-workspace/antmaze/`.
 - Each server backup: `/home/heechan/OptiQ-ops/archives/antmaze-legacy-20260923/antmaze/`.
-- v1 DIPO NovelD 0.01 continues to use its original frozen source
+- v1 DIPO NovelD 0.01 was stopped by user request on 2026-09-23; preserve its original frozen source
   `/home/heechan/OptiQ-ops/sources/a4ea6c1e3284199bbfab7057282fdc57fd3742a2`.
 - All cancelled v2-v4 and earlier experiment queues remain cancelled.
 
@@ -69,3 +69,7 @@ PYTHONPATH="$PWD/artifacts/antmaze_upstream_migration_20260923/legacy-workspace"
 
 The import verification checks exact source identity and Python syntax. It does
 not launch training, validate simulation dynamics at runtime, or restart jobs.
+
+The separately approved 64-environment integration is documented in
+[antmaze_experiments/PROTOCOL.md](../antmaze_experiments/PROTOCOL.md). It does not
+alter the vendored upstream snapshot.

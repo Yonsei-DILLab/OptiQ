@@ -71,3 +71,11 @@ docs/ANTMAZE_UPSTREAM.md and docs/antmaze-ddiffpg-upstream.json. Preserve previo
 results and running/frozen source snapshots. This is a source import, not an
 experiment launch or authorization to run upstream defaults. OptiQ and MFPO
 adapters are absent from this upstream snapshot.
+
+User approval (2026-09-23, latest): stop old v1 DIPO and run fresh official
+DDiffPG AntMaze v1-v4 with OptiQ/SAC/DIPO/MFPO, seed0, total1M interactions
+each, using8 GPUs. User explicitly chose64 environments per run and batch4096
+for all four methods. Use common original DDiffPG update ratio: collect64 then
+2 learner updates. Warmup8192 is included in1M. See antmaze_experiments/PROTOCOL.md.
+Keep upstream antmaze/ files unchanged; place integration outside that tree.
+Validate runtime, real batch4096 updates and accounting before main launches.
