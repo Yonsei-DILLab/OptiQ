@@ -10,6 +10,15 @@ def main():
     p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--shard',type=int,choices=(0,1),required=True)
     a=p.parse_args();source,sha=source_sha();ops=Path('/home/heechan/OptiQ-ops')
     assert source==ops/'sources'/sha,'Use immutable committed worktree'
+    dependencies={}
+    for relative,required in (('gmm40-baseline/meow','cleanrl/cleanrl/meow_continuous_action.py'),
+                              ('gmm40-baseline/MFPO','jaxrl5/agents/mean_flow_learner.py')):
+        dependency=source/relative
+        assert (dependency/required).is_file(),f'Initialize pinned Git submodule before registration: {relative}'
+        expected=subprocess.check_output(['git','ls-tree','HEAD',relative],cwd=source,text=True).split()[2]
+        actual=subprocess.check_output(['git','rev-parse','HEAD'],cwd=dependency,text=True).strip()
+        assert actual==expected,f'Submodule revision mismatch: {relative}'
+        dependencies[relative]=actual
     root=Path('/home/heechan/optiq-experiments')/NAME
     conf=ops/'supervisor/jobs'/(NAME+'.conf')
     assert not root.exists() and not conf.exists(),'Refuse duplicate registration'
@@ -30,7 +39,7 @@ stdout_logfile={root}/controller.log
 stdout_logfile_maxbytes=0
 ''')
     (root/'registration.json').write_text(json.dumps(dict(source_commit=sha,source=str(source),
-        shard=a.shard,service=NAME,command=cmd,gpu_slots=[0,1,2,3],respect_existing_gpu_locks=True,
+        shard=a.shard,service=NAME,command=cmd,gpu_slots=[0,1,2,3],respect_existing_gpu_locks=True,dependencies=dependencies,
         autostart=False,autorestart=False),indent=2)+'\n')
     ctl=['/usr/local/bin/supervisorctl','-c',str(ops/'supervisor/supervisord.conf')]
     for tail in (['reread'],['update',NAME],['start',NAME]):subprocess.run(ctl+tail,check=True)
