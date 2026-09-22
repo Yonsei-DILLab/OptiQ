@@ -52,3 +52,9 @@ seed0 for 1M interactions, evaluating every250k and saving the full checkpoint
 only at final1M. Keep original OptiQ/SAC/MFPO v1 controls. Investigate literature
 and existing settings before deciding coefficient studies for v2/v3/v4. Do not
 launch the held all-maze coefficient10 campaign, ERIR, xy novelty or new shaping.
+
+User selection (2026-09-22, newest): register fresh v2/v3/v4 OptiQ/SAC/DIPO/MFPO
+seed0 1M runs at NovelD0.1 on both four-GPU servers. Existing v1 DIPO0.01 stays
+running. Evaluate every250k and save full state only at final1M. Use independent
+per-job backfill immediately when a slot opens; no all-method/all-maze barrier.
+Keep dense reward, other native hyperparameters and NovelD structure unchanged.
