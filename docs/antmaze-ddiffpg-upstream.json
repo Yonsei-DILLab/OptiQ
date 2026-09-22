@@ -1,0 +1,963 @@
+{
+  "repository": "https://github.com/supersglzc/ddiffpg.git",
+  "ref": "main",
+  "commit": "7edd06c4799abbab0f8fa534c21deb56253b018e",
+  "imported_date_kst": "2026-09-23",
+  "source_modified": false,
+  "files": {
+    ".gitignore": {
+      "sha256": "38df095ee7460295f85907ccaa9c3f384dc9dc591a4c825bae5444a6a79ab8c8",
+      "bytes": 1919,
+      "mode": "100644",
+      "git_blob": "72b653c2ec56a7d3ecdae821bfde4bcbd26ce8fc"
+    },
+    "LICENSE": {
+      "sha256": "db0b0a8651a7d4e3b6dc6675893fa116bc1463789a3061ae7ee05c7934dd792d",
+      "bytes": 1066,
+      "mode": "100644",
+      "git_blob": "48b162efb4eac78e0420ee32ceed0bf49743362f"
+    },
+    "README.md": {
+      "sha256": "6e8d316dcea79e14c64407554d2b3ac2b08858bce62b5ef953510ef99c397d2c",
+      "bytes": 1873,
+      "mode": "100644",
+      "git_blob": "c62d12ab1c6f46f7a36df871b31142a560767d7f"
+    },
+    "ddiffpg/__init__.py": {
+      "sha256": "8e8a4c25e864078d9230406400db9c77fdbc0d3e5463a755c7443c39e7434e9c",
+      "bytes": 4508,
+      "mode": "100644",
+      "git_blob": "bf1fa248c7b72b3d65aa703321e450772ce01950"
+    },
+    "ddiffpg/algo/__init__.py": {
+      "sha256": "061902075906f2918d44161e2a2cd83bde7a19c71493f8ad65d95e5d7e634859",
+      "bytes": 166,
+      "mode": "100644",
+      "git_blob": "8bfc96e3a87d17920a38ab039ed0f4437bcbdb0f"
+    },
+    "ddiffpg/algo/ac_base.py": {
+      "sha256": "c58cbcd49180371c5940a4416313d269a59be60616bfaedbe09adddd9e5aa9e8",
+      "bytes": 4916,
+      "mode": "100644",
+      "git_blob": "2e97cb625c93f24077edd419a67362ee0eb8d4fb"
+    },
+    "ddiffpg/algo/ddiffpg.py": {
+      "sha256": "a3a267330b5d8d7fb0951dcfb15926756c04811fc7cc1d4e77890fd3bf69e887",
+      "bytes": 16706,
+      "mode": "100644",
+      "git_blob": "2ccb842584a163732ed725b073c314d683fc7300"
+    },
+    "ddiffpg/algo/dipo.py": {
+      "sha256": "3597c44c5e0c6b686326d7dac8255d8192a50f686f1631b800a20a75c5f73cf1",
+      "bytes": 11689,
+      "mode": "100644",
+      "git_blob": "338fa9b4a5959a79c5551e85dd9c5bb1d6145529"
+    },
+    "ddiffpg/algo/sac.py": {
+      "sha256": "f310169953239a5915ad08345a76849eee420095e417f5760adabf4b297bf5de",
+      "bytes": 7536,
+      "mode": "100644",
+      "git_blob": "8036f34965f95fd3711adbe3a04744657aedabe7"
+    },
+    "ddiffpg/algo/td3.py": {
+      "sha256": "bbf5887e2cf6492551741cf032222d783236457e37c445b727f7f5077ea8b59b",
+      "bytes": 10524,
+      "mode": "100644",
+      "git_blob": "0bfe2920111b63cb3d521a25807583b4c6e7a593"
+    },
+    "ddiffpg/cfg/algo/actor_critic.yaml": {
+      "sha256": "eab9db47a2a14a52828f2bc62c28bc86847a8527534562ee6e12cf8d878909e2",
+      "bytes": 159,
+      "mode": "100644",
+      "git_blob": "b040de5c10dc35ecc1812ecd1529e580ac1f9591"
+    },
+    "ddiffpg/cfg/algo/ddiffpg_algo.yaml": {
+      "sha256": "37c70ceb56aa347f816101f8f6a8115663819db064eb96ecbf1cd6581d484c8f",
+      "bytes": 724,
+      "mode": "100644",
+      "git_blob": "0fc384dfd743a4975e9dd8d2e7d2853ea45b9c26"
+    },
+    "ddiffpg/cfg/algo/dipo_algo.yaml": {
+      "sha256": "9ac1ca62bc3af7f647b73827fed291d8e37a68303f2773ffb47ce0ed484f3028",
+      "bytes": 496,
+      "mode": "100644",
+      "git_blob": "c2dbf6788a517e70ed080f1469ac3514267035e5"
+    },
+    "ddiffpg/cfg/algo/sac_algo.yaml": {
+      "sha256": "ca86a4106f715dfcc2468386fbb1b04b35f55b3ddd642751c28d4155da1989ba",
+      "bytes": 282,
+      "mode": "100644",
+      "git_blob": "831c3497cc0c8f251e0895384dddeea087399d16"
+    },
+    "ddiffpg/cfg/algo/td3_algo.yaml": {
+      "sha256": "d31b6d4f63dd6c7a08371504eba760087f8bc6bcc2f1290a72baeb526837acd3",
+      "bytes": 495,
+      "mode": "100644",
+      "git_blob": "74fb66f827c0375de06bce46638b205fbebc4c15"
+    },
+    "ddiffpg/cfg/default.yaml": {
+      "sha256": "bb5a41b989e86de305bd9429f9757ba3433450005de5c6e4114ba300f06052b0",
+      "bytes": 533,
+      "mode": "100644",
+      "git_blob": "b4883971bea8f33bd75b993011cc161fab4ff9f6"
+    },
+    "ddiffpg/cfg/logging/default.yaml": {
+      "sha256": "2a9bf55c096a2aab007660813928bff4adab457737c93cfc1962efb2fb2aedf8",
+      "bytes": 142,
+      "mode": "100644",
+      "git_blob": "b14e1d0a301de153f343624a68d9d53c563fe47a"
+    },
+    "ddiffpg/env/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "100644",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    "ddiffpg/env/d4rl/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "100644",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    "ddiffpg/env/d4rl/locomotion/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "100644",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    "ddiffpg/env/d4rl/locomotion/ant.py": {
+      "sha256": "e72703b23e158a844252c74dc472520ffa402f233b470282a9a9ce4a49610bea",
+      "bytes": 8137,
+      "mode": "100644",
+      "git_blob": "507bef9665c5581867c74cbe12d68bdbdedb7ee4"
+    },
+    "ddiffpg/env/d4rl/locomotion/assets/ant.xml": {
+      "sha256": "6d1b63ca404a690569c97824b13433dd529734b36510df87c17d23528f163dc1",
+      "bytes": 5014,
+      "mode": "100644",
+      "git_blob": "dd2270af7c7b8dbd8d043ae2a9e31949fc0a84a3"
+    },
+    "ddiffpg/env/d4rl/locomotion/assets/low_gear_ant.xml": {
+      "sha256": "ec1bb889c5ad1ac14ef4030eadd9bb76385a5ea2d8c23176c052421c548bfe89",
+      "bytes": 5070,
+      "mode": "100644",
+      "git_blob": "fe50364c15b60df4624eb77dd99dbd107ca89c68"
+    },
+    "ddiffpg/env/d4rl/locomotion/assets/low_gear_ant_4g.xml": {
+      "sha256": "f6f4ab9759c331b26bd0a0cf939051f6de12ad3ade9291b13c8dbd036d777355",
+      "bytes": 5293,
+      "mode": "100644",
+      "git_blob": "538b6aca4d08b4513c1efdce278dafecd71116b8"
+    },
+    "ddiffpg/env/d4rl/locomotion/assets/point.xml": {
+      "sha256": "698413eafa2319746366850c561edfe88ef98e4af3efaed981f02bbf41f0187b",
+      "bytes": 1766,
+      "mode": "100644",
+      "git_blob": "d41ade04621555a60dca95f51b11f7298dbcb3a3"
+    },
+    "ddiffpg/env/d4rl/locomotion/assets/reward_map.npy": {
+      "sha256": "70de7266f00757ebda5ea6cbf6dee3e279d5400c228a0872b0192a908f49e254",
+      "bytes": 33928,
+      "mode": "100644",
+      "git_blob": "8be6f5244be01c7c83f2a4cd7aa79af9e9668b30"
+    },
+    "ddiffpg/env/d4rl/locomotion/goal_reaching_env.py": {
+      "sha256": "6f6aaf4f03c538c69a3836ca9cb4de2e46f052afb9bb882e134183e69ce3992e",
+      "bytes": 2110,
+      "mode": "100644",
+      "git_blob": "a471951df908c9a3f615cee1aa8b2414cd28ea75"
+    },
+    "ddiffpg/env/d4rl/locomotion/maze_env.py": {
+      "sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af",
+      "bytes": 18961,
+      "mode": "100644",
+      "git_blob": "935cfe96f1edb125935fe1bd1025432d098036d3"
+    },
+    "ddiffpg/env/panda_gym/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "100644",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/LICENSE.txt": {
+      "sha256": "59899c6091b540582ed617e8eeaac4919dc985ccfc35459ee9752b699be5205b",
+      "bytes": 10172,
+      "mode": "100644",
+      "git_blob": "2bb9ad240fa04c8cf706a4901c4807878e90c2dc"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/collision/finger.obj": {
+      "sha256": "c05dee2e2770ac3d45a097cec4a9d758e279ebdb7dc550eb249571c4690a6476",
+      "bytes": 7603,
+      "mode": "100644",
+      "git_blob": "f26c8eccb82f18834579caae3b450dff4dac0124"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/collision/hand.obj": {
+      "sha256": "a216bedc742a736f2c6cab010c6014475fe5f7b5ed53e371509adf885df618a2",
+      "bytes": 15247,
+      "mode": "100644",
+      "git_blob": "e13ab22f0c5a8f177dd8d117c4b1bdc606b47e94"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/collision/link0.obj": {
+      "sha256": "d29233f03537b6ee92a6861d4139290960325c2bacf9a640ab7935a5539c653f",
+      "bytes": 14925,
+      "mode": "100644",
+      "git_blob": "8c7162a2ef1135a1b162d2fde83b8c07a41cc2d8"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/collision/link1.obj": {
+      "sha256": "0879335b20930eccccdc7d2565553895589f9125d4c8c0d462ad0f74f17e7472",
+      "bytes": 22976,
+      "mode": "100644",
+      "git_blob": "8a58a4762c1d0ccd357ce9b33d539d8cd53ce075"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/collision/link2.obj": {
+      "sha256": "cfca62e5846d3ba6db8be3740fc2219454401f1048db11a78bd9ec8f30cdc128",
+      "bytes": 22688,
+      "mode": "100644",
+      "git_blob": "710ce6e161cc52fd3e66473741668b695f380bf9"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/collision/link3.obj": {
+      "sha256": "22235fb3676b5cb45a2f512065fab94fecf052a767cddfaed62cbb6d1efcf1f8",
+      "bytes": 22870,
+      "mode": "100644",
+      "git_blob": "fdb83d73fb145f4ce90a3f5fdce8b9956d5f277d"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/collision/link4.obj": {
+      "sha256": "64b5914ef159149f87b767ff0eae4db41b9c267aecdddf2816ff25726fa0e6f2",
+      "bytes": 68016,
+      "mode": "100644",
+      "git_blob": "e8ab05f4dc10e7b344d0d66037124d33ace13e82"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/collision/link5.obj": {
+      "sha256": "ff8d4bb5ab506b8cf621f44b928be7714dff86b669a92909b8d4f71c5b01597e",
+      "bytes": 67745,
+      "mode": "100644",
+      "git_blob": "ef7db8f7d5b264ce245c3b9db141a75feedf8423"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/collision/link6.mtl": {
+      "sha256": "569f88e12d5672c190e2aa14526fcc16b609c25bd5ade907ddb83106ac61e78c",
+      "bytes": 3827,
+      "mode": "100644",
+      "git_blob": "19918db1703465bffa9bdae71ea55d0590b2ff6e"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/collision/link6.obj": {
+      "sha256": "e1dc8bbca8690944e6331f5a108d49c363eeec179b56a9f913541a541e6a2cfc",
+      "bytes": 140218,
+      "mode": "100644",
+      "git_blob": "2aeb4ade45c713d2ca129b9edc0814f3130e9841"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/collision/link7.obj": {
+      "sha256": "675a784e949b2b47894f1965016bd56b992b136bd90e1a62e832f49b4a55b240",
+      "bytes": 45132,
+      "mode": "100644",
+      "git_blob": "434ad28159a02eef84a5c02bfd1a830715f009b5"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/finger.mtl": {
+      "sha256": "525d16f9a1338ebc2f3c062b30e462a279356aa4fe242617d39e05fa6926c27b",
+      "bytes": 481,
+      "mode": "100644",
+      "git_blob": "04763318c8b5962c7c7aac8c2bb043f5e62ed3bd"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/finger.obj": {
+      "sha256": "c6959401c281e6d5b4486f08072140b6fdb3461678face301ac448cec06322d3",
+      "bytes": 65359,
+      "mode": "100644",
+      "git_blob": "197ba6cf45d226bab798ad25c4c176a432592e2f"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/hand.mtl": {
+      "sha256": "da2fb08fb2efec231cfd38b710e657b3ef04d3d3cf18082d3d043080dd6c79df",
+      "bytes": 1132,
+      "mode": "100644",
+      "git_blob": "b5305974ac1be9415d9e6d090757ef35d785af3d"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/hand.obj": {
+      "sha256": "3c95c6f99024842a8b9e73629dacc30ac5ee459feb0dbcc16df765fd27620584",
+      "bytes": 713204,
+      "mode": "100644",
+      "git_blob": "d6d4a507eaf23642cc970c99445e74bd6d7adbf0"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/link1.mtl": {
+      "sha256": "8c6e1b7fe3a382b872c986cfb3601e79b701afb7b4bfc72dcd6abd4b31f9d0f5",
+      "bytes": 262,
+      "mode": "100644",
+      "git_blob": "a6d51eaf0fe94babda0fef6c7ef325341a6d6622"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/link1.obj": {
+      "sha256": "e0ec1bec9432a46f797e912cd8165798e62ebfd85c0807dce142bd6b9a768cd7",
+      "bytes": 1070650,
+      "mode": "100644",
+      "git_blob": "0953701220a3e0cdd9045395d6107500ba4e079c"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/link2.mtl": {
+      "sha256": "e7821edf4876534ddeb9cdc789453e6473e2f1b9d33747f036005788b83199da",
+      "bytes": 261,
+      "mode": "100644",
+      "git_blob": "aa8ff0721a93103e4609811787d693195d61ff1b"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/link2.obj": {
+      "sha256": "a1a41ada6d6cb8c51a8d0d19db9cadea101493842a52db75529e7ba0d4592904",
+      "bytes": 1084458,
+      "mode": "100644",
+      "git_blob": "cb8969fe0d441cf7b383096b2f7c90a0b49ea71c"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/link3.mtl": {
+      "sha256": "c2648eae04bf57f48100234ada9400156b1867d0fc2dbda2606bb786d6cfec51",
+      "bytes": 931,
+      "mode": "100644",
+      "git_blob": "12d989ea04b6a71844353ae2a0f9255214f8f87f"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/link3.obj": {
+      "sha256": "82f81c15c236a41918dade0241ce40e59c4a0ee7fb08985f3a934380a8f7f594",
+      "bytes": 1237175,
+      "mode": "100644",
+      "git_blob": "20c5c9ab0a1e7c9adce1d67eb70faa0265e0e6c1"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/link4.mtl": {
+      "sha256": "aa5e228aca4026e34e69dc9eb80bed96cc7d81dae5595984c16b464de5ba5963",
+      "bytes": 925,
+      "mode": "100644",
+      "git_blob": "359afbe4eecd2262faa3631bd6c1391295ca53dc"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/link4.obj": {
+      "sha256": "91f36ecba40ecce6c169ede6d152a6c8853ee886e2b145ef6c5865cc9d5516b8",
+      "bytes": 1272305,
+      "mode": "100644",
+      "git_blob": "8479cb50eb314012b915720987a31d01de667c5c"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/link5.mtl": {
+      "sha256": "1d44e731edacef0b66d7813468107877d05a12893f363ce3a0985c8305f404f3",
+      "bytes": 676,
+      "mode": "100644",
+      "git_blob": "f89b09aafd7fbdad317f614348ad4565af34c8b8"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/link5.obj": {
+      "sha256": "10d084e6f728af7d291403f0359373c121e87785b177e5c6df8a7e1e88077f11",
+      "bytes": 1582192,
+      "mode": "100644",
+      "git_blob": "e1a06b826c859f44e2b8ebea9363596b848586a3"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/link6.mtl": {
+      "sha256": "78299752f3c28e87c19f5456e851423de647fbb065f8d88332c1f72ba5729b4c",
+      "bytes": 3552,
+      "mode": "100644",
+      "git_blob": "a78dec1ee7c25f0ce7bdcb718c9e96fbfbc13921"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes/visual/link6.obj": {
+      "sha256": "7d6c29421e8066761c993a519474eb58f851885387cc2ad5a606f96eb428f059",
+      "bytes": 2236857,
+      "mode": "100644",
+      "git_blob": "c03c59e6f10c21c05de8d63b5835dee1adc89b6f"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes_peg/Insertion.STL": {
+      "sha256": "9f8a4907b5a546a9184f83d1021d765b825f8c8d764d27f29419472afb9e6430",
+      "bytes": 6084,
+      "mode": "100644",
+      "git_blob": "e2fd3af6cc51eee341d11d10dab6ed4b413ecfae"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/meshes_peg/base_link.STL": {
+      "sha256": "c4bf2b3891ee75e037412e261580c476928358a2acadde040a6d78fb38bea6c4",
+      "bytes": 254284,
+      "mode": "100644",
+      "git_blob": "bfa00cb8c5f9277d603a8ac893bf603068844763"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/panda.urdf": {
+      "sha256": "f764797cf3c4114fa6ef09d9f9e4f038e4f22437db2eb778fd1dc8aad4a7ff6b",
+      "bytes": 11265,
+      "mode": "100644",
+      "git_blob": "505f2a2a19e80c04b572066fb2644ce58adba522"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/panda_copy.urdf": {
+      "sha256": "9c27cf846302e26a1d3a44ccfd4dd2dbba89cccc9f17b96b6bd1f8bceedd1ff0",
+      "bytes": 11263,
+      "mode": "100644",
+      "git_blob": "abb3b2edc01e71191a504b7b068bf9253a1b82de"
+    },
+    "ddiffpg/env/panda_gym/assets/franka_panda/panda_peg.urdf": {
+      "sha256": "6079811a07dff57e437adaf08d3377616b40d1d842fbebcd262acf264d4fceac",
+      "bytes": 14145,
+      "mode": "100644",
+      "git_blob": "e08710cf2893391c6ea007d0e8d27ed3a724e888"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Hole/Hole.urdf": {
+      "sha256": "9d9bb5cd582a846c1ba0fd29dcd47009a2d8ad822f00ad9038a0253190c32ccb",
+      "bytes": 1222,
+      "mode": "100644",
+      "git_blob": "eba5938a244241915e713a749f55997a4d8c066e"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Hole/Hole/CMakeLists.txt": {
+      "sha256": "564dc565b439cded338acfb07019e8ef040958f1dd66baa51dae21e5629c314e",
+      "bytes": 268,
+      "mode": "100644",
+      "git_blob": "ff66e95a954b8311f1ae0104ba8033c1f5503ac6"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Hole/Hole/config/joint_names_Hole.yaml": {
+      "sha256": "53acb79667bda4b12ea982b66336e4e9992f28cefffd8926447e80d9a80797bf",
+      "bytes": 31,
+      "mode": "100644",
+      "git_blob": "25925977858de200b3c67ecdd6122e0eb93a1300"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Hole/Hole/launch/display.launch": {
+      "sha256": "d5b1c0c294bb16aa9601588182a6df2d1476b0a8a2cf75c92394e1e065edcaa8",
+      "bytes": 454,
+      "mode": "100644",
+      "git_blob": "6881e99032a6e4fc8b0d180ab5f9db336dd4838f"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Hole/Hole/launch/gazebo.launch": {
+      "sha256": "b1effaa6ff151c7e17fbbf74ff6ae2163ef4e90b97ade55cce66d094fff82d78",
+      "bytes": 521,
+      "mode": "100644",
+      "git_blob": "4621ead3e3e038c0276eb194b7fdbdea7843888a"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Hole/Hole/meshes/base_link.STL": {
+      "sha256": "f1431d8affbe28a50d12fa36cf95b266b93cac158872215b3bb648ebc20819cb",
+      "bytes": 5684,
+      "mode": "100644",
+      "git_blob": "0b85c9927cda2ca8f382cfc02f12aa0cebd292df"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Hole/Hole/package.xml": {
+      "sha256": "8e2f024d4f8dc0c05424eb01aa7157fd017d17495b9f0be40b9d2430087b5f1a",
+      "bytes": 607,
+      "mode": "100644",
+      "git_blob": "90a67a0547df3c8e16f139caf5ab33642acefe63"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Hole/Hole/urdf/Hole.csv": {
+      "sha256": "1e792e9d271c32bf6abbb1c2e47667997d96ceed7da179227fa7606bc0790e04",
+      "bytes": 1139,
+      "mode": "100644",
+      "git_blob": "4256ae5245ad25e1d4ca196aa9bc31f301df1d03"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Hole/Hole/urdf/Hole.urdf": {
+      "sha256": "9d9bb5cd582a846c1ba0fd29dcd47009a2d8ad822f00ad9038a0253190c32ccb",
+      "bytes": 1222,
+      "mode": "100644",
+      "git_blob": "eba5938a244241915e713a749f55997a4d8c066e"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg.urdf": {
+      "sha256": "2aa0ffb57391544053c7fa7b4282570ff0e4b98620d641ffccb78807c90d6edd",
+      "bytes": 2397,
+      "mode": "100644",
+      "git_blob": "97516f24b78ef43475ded6f2e910e7052317f30e"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/CMakeLists.txt": {
+      "sha256": "9c8a17c0a4b6095928487b5cc747e814e7b3b7c6d4f7dcdf3504b2f4b8077386",
+      "bytes": 267,
+      "mode": "100644",
+      "git_blob": "8cc06e4f7dda0bc61ad76b61f03f64758b6ea376"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/Peg.urdf": {
+      "sha256": "2aa0ffb57391544053c7fa7b4282570ff0e4b98620d641ffccb78807c90d6edd",
+      "bytes": 2397,
+      "mode": "100644",
+      "git_blob": "97516f24b78ef43475ded6f2e910e7052317f30e"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/Peg/CMakeLists.txt": {
+      "sha256": "9c8a17c0a4b6095928487b5cc747e814e7b3b7c6d4f7dcdf3504b2f4b8077386",
+      "bytes": 267,
+      "mode": "100644",
+      "git_blob": "8cc06e4f7dda0bc61ad76b61f03f64758b6ea376"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/Peg/config/joint_names_Peg.yaml": {
+      "sha256": "6115eb14b954a30d21a509d69bf319b2533d6378853eddc2339c34f5bab32d39",
+      "bytes": 44,
+      "mode": "100644",
+      "git_blob": "bea2a75b2133ff1e840d0870fef0d54066c54f4c"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/Peg/launch/display.launch": {
+      "sha256": "962d0bc4c7d62d7598b99291f50e11dba19fd6aab2b51576407b9614034eda18",
+      "bytes": 451,
+      "mode": "100644",
+      "git_blob": "d3f722e2f0b8cc2591a7a5fa704a3e5ee61a458a"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/Peg/launch/gazebo.launch": {
+      "sha256": "a8b15eb43f62f4c63255b83d1174b30ae77acecfd0485304dd26a499cce070f9",
+      "bytes": 518,
+      "mode": "100644",
+      "git_blob": "39ecc9bd9a3d5aa97fe476abf20441c3c4acc9ba"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/Peg/meshes/Insertion.STL": {
+      "sha256": "9f8a4907b5a546a9184f83d1021d765b825f8c8d764d27f29419472afb9e6430",
+      "bytes": 6084,
+      "mode": "100644",
+      "git_blob": "e2fd3af6cc51eee341d11d10dab6ed4b413ecfae"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/Peg/meshes/base_link.STL": {
+      "sha256": "c4bf2b3891ee75e037412e261580c476928358a2acadde040a6d78fb38bea6c4",
+      "bytes": 254284,
+      "mode": "100644",
+      "git_blob": "bfa00cb8c5f9277d603a8ac893bf603068844763"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/Peg/package.xml": {
+      "sha256": "832dc94af0538b34f6b315ad738bc6e675c13d3c94719f9ae24fb31b65d15049",
+      "bytes": 604,
+      "mode": "100644",
+      "git_blob": "ce6e5249fca86e5500fa3d71b5b3b365fa4f1033"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/Peg/urdf/Peg.csv": {
+      "sha256": "4acdb38b921a0ff3cdcc650f0c02ee9a46547152a454e59d6f01de6bb3a8d1ca",
+      "bytes": 1607,
+      "mode": "100644",
+      "git_blob": "85b4d06d7c1edfcbf820baa0cec39c7a45054123"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/Peg/urdf/Peg.urdf": {
+      "sha256": "2aa0ffb57391544053c7fa7b4282570ff0e4b98620d641ffccb78807c90d6edd",
+      "bytes": 2397,
+      "mode": "100644",
+      "git_blob": "97516f24b78ef43475ded6f2e910e7052317f30e"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/config/joint_names_Peg.yaml": {
+      "sha256": "6115eb14b954a30d21a509d69bf319b2533d6378853eddc2339c34f5bab32d39",
+      "bytes": 44,
+      "mode": "100644",
+      "git_blob": "bea2a75b2133ff1e840d0870fef0d54066c54f4c"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/launch/display.launch": {
+      "sha256": "962d0bc4c7d62d7598b99291f50e11dba19fd6aab2b51576407b9614034eda18",
+      "bytes": 451,
+      "mode": "100644",
+      "git_blob": "d3f722e2f0b8cc2591a7a5fa704a3e5ee61a458a"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/launch/gazebo.launch": {
+      "sha256": "a8b15eb43f62f4c63255b83d1174b30ae77acecfd0485304dd26a499cce070f9",
+      "bytes": 518,
+      "mode": "100644",
+      "git_blob": "39ecc9bd9a3d5aa97fe476abf20441c3c4acc9ba"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/meshes/Insertion.STL": {
+      "sha256": "9f8a4907b5a546a9184f83d1021d765b825f8c8d764d27f29419472afb9e6430",
+      "bytes": 6084,
+      "mode": "100644",
+      "git_blob": "e2fd3af6cc51eee341d11d10dab6ed4b413ecfae"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/meshes/base_link.STL": {
+      "sha256": "c4bf2b3891ee75e037412e261580c476928358a2acadde040a6d78fb38bea6c4",
+      "bytes": 254284,
+      "mode": "100644",
+      "git_blob": "bfa00cb8c5f9277d603a8ac893bf603068844763"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/package.xml": {
+      "sha256": "832dc94af0538b34f6b315ad738bc6e675c13d3c94719f9ae24fb31b65d15049",
+      "bytes": 604,
+      "mode": "100644",
+      "git_blob": "ce6e5249fca86e5500fa3d71b5b3b365fa4f1033"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/urdf/Peg.csv": {
+      "sha256": "4acdb38b921a0ff3cdcc650f0c02ee9a46547152a454e59d6f01de6bb3a8d1ca",
+      "bytes": 1607,
+      "mode": "100644",
+      "git_blob": "85b4d06d7c1edfcbf820baa0cec39c7a45054123"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/Peg/Peg/urdf/Peg.urdf": {
+      "sha256": "2aa0ffb57391544053c7fa7b4282570ff0e4b98620d641ffccb78807c90d6edd",
+      "bytes": 2397,
+      "mode": "100644",
+      "git_blob": "97516f24b78ef43475ded6f2e910e7052317f30e"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/cabinet_0004.urdf": {
+      "sha256": "9c0ef63fe700b7a66f2bd7afd667d22c06017a725c179e7aeb5b526c34841f9a",
+      "bytes": 2093,
+      "mode": "100644",
+      "git_blob": "53711f1177ddc72c348ea027f1b203d26343bd50"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/cabinet_0004_new.urdf": {
+      "sha256": "ee9019ba775e4b6fa0a28886d0ba854eab2b5937e0fb9a22b9a6bfdd904ec20d",
+      "bytes": 2065,
+      "mode": "100644",
+      "git_blob": "d878e8f46f9c006eb43e4373faac0bcbacea4f25"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/dof_rootd_Ba001_r.mtl": {
+      "sha256": "4234b46e40f09073700505580e27151cd908602e1ea3ec981c4c9dbda38690b9",
+      "bytes": 138,
+      "mode": "100644",
+      "git_blob": "e9254b95bd2b388863c4099b53ca5fa8ee0a6fd7"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/dof_rootd_Ba001_r.obj": {
+      "sha256": "45fe6065e67142903053861f878b1ec9cab78039e81649e7b7203cadca5ef5d7",
+      "bytes": 10082,
+      "mode": "100644",
+      "git_blob": "52b3197d9e08968ea6f97557bea253fb5a570d7b"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/dof_rootd_Ba001_r.processed.obj": {
+      "sha256": "055a3c1bb912fd2f49510e3fb0ee5e9cff9372af83baba1d2dc30ceec13dbd02",
+      "bytes": 19346,
+      "mode": "100644",
+      "git_blob": "8a5e400f09561b5bc565aa43ba4c572673cc74ab"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/dof_rootd_Ba001_r.processed.obj.mtl": {
+      "sha256": "e413cd6c9c26bacdf18ddf564b51b308c55b88114ef5819d0e9d3badbf19498f",
+      "bytes": 201,
+      "mode": "100644",
+      "git_blob": "509f87e2084189bd3805324edfb5dadd91bdb224"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/dof_rootd_Ba001_r_vhacd.obj": {
+      "sha256": "cc8fd0b634c76e151d792c385519e1c00326f48d8c98e26517877c984f0ca6b5",
+      "bytes": 1298,
+      "mode": "100644",
+      "git_blob": "11da4432b83e51b79dc12b5f1311f931354ac596"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/dof_rootd_Bb001_r.mtl": {
+      "sha256": "efcbae1871f685287ac79c8b411b2cc7e5ff4318ffa212f704e5ae8520cd2ae6",
+      "bytes": 138,
+      "mode": "100644",
+      "git_blob": "15117e08349dd6b050879db0d43a5ba8cd7f38e3"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/dof_rootd_Bb001_r.obj": {
+      "sha256": "11c5ac7c29b363fc3957683b33c3298c3fbd62fa73e9bc748204fac98cce6917",
+      "bytes": 15684,
+      "mode": "100644",
+      "git_blob": "800df29ec0613ce7359ef8b00696afecfa0beca3"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/dof_rootd_Bb001_r.processed.obj": {
+      "sha256": "d13d079c870cc77508e60f79e2ed8839b274c28633aeb23b05637c3677b73cdc",
+      "bytes": 29382,
+      "mode": "100644",
+      "git_blob": "2417f187007558e0557213aacbaa40ae945aca08"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/dof_rootd_Bb001_r.processed.obj.mtl": {
+      "sha256": "e413cd6c9c26bacdf18ddf564b51b308c55b88114ef5819d0e9d3badbf19498f",
+      "bytes": 201,
+      "mode": "100644",
+      "git_blob": "509f87e2084189bd3805324edfb5dadd91bdb224"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/dof_rootd_Bb001_r_vhacd.obj": {
+      "sha256": "dab234c3b23104db106276b6b55975d5f6c16202f9762dfc6dca76a62ac3b401",
+      "bytes": 1155,
+      "mode": "100644",
+      "git_blob": "246562c06b832e28f266d79ab66483f2b4d93bdd"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/drawer_1.urdf": {
+      "sha256": "3d7a3431fb075e6ddf453f5d7d252246139ef0d32acedc87284dfc2f90b3fae9",
+      "bytes": 9956,
+      "mode": "100644",
+      "git_blob": "a3f0a3d234049a2d5a2dff982dc3dfbb714711f0"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/none_motion.mtl": {
+      "sha256": "059184c38eaafb120c572dc8ad69bdc1c80df1e8721a074c72fb7f73e946655c",
+      "bytes": 138,
+      "mode": "100644",
+      "git_blob": "3177d554e8de3a1fa9edf6940f65e24699bd508a"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/none_motion.obj": {
+      "sha256": "20bbda53b0751b7c5a3b3f7efd4d0c5f9e4b43152617ae8470dbf3b83f2bc554",
+      "bytes": 108065,
+      "mode": "100644",
+      "git_blob": "33c4f4ec6d308baa23e49cbae58317e0fc658a29"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/none_motion.processed.obj": {
+      "sha256": "98cb006fa70bac3c20a52f44ccdaa766b3acd827ed662698bfc6418db7fbd973",
+      "bytes": 203674,
+      "mode": "100644",
+      "git_blob": "6150c128593daf295d1360f4ea507a3937101bf1"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/none_motion.processed.obj.mtl": {
+      "sha256": "e413cd6c9c26bacdf18ddf564b51b308c55b88114ef5819d0e9d3badbf19498f",
+      "bytes": 201,
+      "mode": "100644",
+      "git_blob": "509f87e2084189bd3805324edfb5dadd91bdb224"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cabinet/none_motion_vhacd.obj": {
+      "sha256": "0710f0822fd47bac74a25d4799dbfc06df5fa78fe6dbf07de66cb395465d3546",
+      "bytes": 8811,
+      "mode": "100644",
+      "git_blob": "f3b301554252c08ebdaac1ea438873d19af5c76e"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cube/cube.mtl": {
+      "sha256": "f1f00eb0bbc202f78ca951bac7cab7f86ea895be0ce63213ab5a1420d59a8cf8",
+      "bytes": 206,
+      "mode": "100644",
+      "git_blob": "e114d5850c0debf37a401f0b2c97aa8dc44306cf"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cube/cube.obj": {
+      "sha256": "bc49d37fdba98c976719f0e3d2a59192558c45e66dcfbba6ab3e17fe773fe00d",
+      "bytes": 836,
+      "mode": "100644",
+      "git_blob": "74ee020a3bf913ca08fb2e5f1f38e18464a7cbdf"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cube/cube.urdf": {
+      "sha256": "a7d8f7271d42971de0559595cc97b6dd42be89fc6f60e2b50dddbe4cb2ddd2af",
+      "bytes": 720,
+      "mode": "100644",
+      "git_blob": "58ef853a820a135a7dc58cbb152235413184a8d4"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/cube/cube_new.urdf": {
+      "sha256": "9359c72122b0ec07e4e5e871dfdea9ba47f0de3fe8069222ec99298f97a779d6",
+      "bytes": 720,
+      "mode": "100644",
+      "git_blob": "c7da1071c9fcb0855f0e0f4355f11951000cef72"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/door/door.urdf": {
+      "sha256": "f494cade7029e5434d04873855eca90a1b6aaf9eaceda41393355feb58642c3a",
+      "bytes": 2591,
+      "mode": "100644",
+      "git_blob": "c164386c8b64ef879e20f2391a926a463a6e16e1"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/plane/plane.mtl": {
+      "sha256": "421de8c371462058b3eaa022fe19aad28c32524603d9c3b72c3bee1995a7a652",
+      "bytes": 255,
+      "mode": "100644",
+      "git_blob": "cd101528d364fc8f6553c4312cd0f90757f2b6bb"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/plane/plane.obj": {
+      "sha256": "0cc3ec11a128956c6888a3ef8a79edaa279cd70e0df7ab96f7749e24f55067f5",
+      "bytes": 349,
+      "mode": "100644",
+      "git_blob": "6062095314e3d3f5b9da26a580ca2e6ee14623e6"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/plane/plane.urdf": {
+      "sha256": "19a5ebd65358a254aee107db2e387f65338ffbf11812f8ec79d4be25f4e1ff4f",
+      "bytes": 679,
+      "mode": "100644",
+      "git_blob": "525b5ac02e9b3a25a19c100ccd2369eb82bcc6d8"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/sphere_small_zeroinertia.urdf": {
+      "sha256": "89e4860c356089d70ace9e56909dd85ae8fa90afa2c126f7907ba701e20cc1a0",
+      "bytes": 763,
+      "mode": "100644",
+      "git_blob": "3a1fa33de795cf4bca7deab9017113c8135869a7"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/table/table.mtl": {
+      "sha256": "e946fc3e0c57cae583bea65199bb7db61947ac2b621c8648f384ab376ef7af13",
+      "bytes": 247,
+      "mode": "100644",
+      "git_blob": "97d6457c5373f101f2cd2a72e8001a5c02ab97b7"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/table/table.obj": {
+      "sha256": "bed08f447d185741d3b2787a251562a2ecd6ba2838c08a9bfd2383fa1a495df8",
+      "bytes": 841,
+      "mode": "100644",
+      "git_blob": "1357e497cdf68205d8c32b4abdedb67b8032ef4a"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/table/table.urdf": {
+      "sha256": "64adb24b45e671a44f1b3f230e1826b9575c716cebecd638d8e13f0fd9c01dc2",
+      "bytes": 1465,
+      "mode": "100644",
+      "git_blob": "5a923a70040b6e1ce1f98f2ea5f5ba9244fa98ca"
+    },
+    "ddiffpg/env/panda_gym/assets/objects/textured_sphere_smooth.obj": {
+      "sha256": "a5958ff7ea9772aa52891895b16fae981ae5878294db64a0ad1b873a3cdf505f",
+      "bytes": 111611,
+      "mode": "100644",
+      "git_blob": "5830c77a7d6752b157e13c4631c1f325ae86ecb4"
+    },
+    "ddiffpg/env/panda_gym/envs/__init__.py": {
+      "sha256": "b0778c4e731a8ee8d6ce8568fb57e0ce0d896843b252a9b8ce432b633cece895",
+      "bytes": 146,
+      "mode": "100644",
+      "git_blob": "5e78c1945dd941c756342451049a757e670085b1"
+    },
+    "ddiffpg/env/panda_gym/envs/core.py": {
+      "sha256": "6017c009a354b7376b9e7e66d3f6706fd253d5ec93a1a003ed97529c704ad9cb",
+      "bytes": 12178,
+      "mode": "100644",
+      "git_blob": "a1f06e34679b66a7e406f884329f58430d60dd23"
+    },
+    "ddiffpg/env/panda_gym/envs/panda_tasks.py": {
+      "sha256": "0b61509689713b226b0cd59fbd64feb9daf341cb01f26b99ba15c4340d3445ab",
+      "bytes": 10164,
+      "mode": "100644",
+      "git_blob": "c6634696b17fb33b6cb2e529dc2b7a5aead02ee7"
+    },
+    "ddiffpg/env/panda_gym/envs/robots/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "100644",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    "ddiffpg/env/panda_gym/envs/robots/panda.py": {
+      "sha256": "d38bbbcdf69799f28d1fc40a305621a866b96ba6d585619ed424486bddcb4678",
+      "bytes": 11040,
+      "mode": "100644",
+      "git_blob": "bf3d7e5c8e766d2d9817f8e31af52150e98f7f36"
+    },
+    "ddiffpg/env/panda_gym/envs/tasks/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "100644",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    "ddiffpg/env/panda_gym/envs/tasks/cabinet.py": {
+      "sha256": "64460b660364096c26f6a6327d1e8fa3ecf1d001b0927a1ffd764a5a78917fb6",
+      "bytes": 2778,
+      "mode": "100644",
+      "git_blob": "265f4f49abda611aedac77eaeba8c3367f3bd315"
+    },
+    "ddiffpg/env/panda_gym/envs/tasks/drawer_multi.py": {
+      "sha256": "2eb56d1a58f42cbd215da2dd9acf4cbc9ca5bd2f67aafd0c84ff8965bf49ade8",
+      "bytes": 4737,
+      "mode": "100644",
+      "git_blob": "7a6c0cd1fa8ffe8a455e995ce20750784fe90896"
+    },
+    "ddiffpg/env/panda_gym/envs/tasks/peg_insertion.py": {
+      "sha256": "4b08abebd1cdc3f95e1f2c3c2c778a14f653ec83683173c104761831d4b9798c",
+      "bytes": 5015,
+      "mode": "100644",
+      "git_blob": "5297f5f42f1d9587e6c25eeba0e4bf6778495657"
+    },
+    "ddiffpg/env/panda_gym/envs/tasks/reach.py": {
+      "sha256": "7de0a1a1a3768ae84dc5fbd5a504b384ab8ea96f79ebc7d51acb1a0334be3e4c",
+      "bytes": 4020,
+      "mode": "100644",
+      "git_blob": "a87e0c4dad78da843b51d886525712c239af30a6"
+    },
+    "ddiffpg/env/panda_gym/pybullet.py": {
+      "sha256": "93489de98edd1fdf7c97a2c612d9ff6e25773f8d46ee4fa2a4459bd40e9da5d3",
+      "bytes": 29085,
+      "mode": "100644",
+      "git_blob": "2c0a411215605db06d53c7c580f4eda77e4e084e"
+    },
+    "ddiffpg/models/__init__.py": {
+      "sha256": "ee3ebc8b612432957bc50c3272ed099c86664820351361c4375d300867fdd6ac",
+      "bytes": 168,
+      "mode": "100644",
+      "git_blob": "06ffef0b564ee9a156cd0ff51cb48f2f14a3cafe"
+    },
+    "ddiffpg/models/baseline_helpers.py": {
+      "sha256": "b03840157318edcac68722bf0e084b8d95dd76bea4c28bca004c13c7b7e9a824",
+      "bytes": 8536,
+      "mode": "100644",
+      "git_blob": "ccaab353405e1f3e3a2ecf5d7b84ffa8f0b7d39f"
+    },
+    "ddiffpg/models/baseline_models.py": {
+      "sha256": "701b142681504bc9dce2c0cdf2fc70422745a0f9c1d9cfe04c0a375beb113f5b",
+      "bytes": 11971,
+      "mode": "100644",
+      "git_blob": "3473ccde320c4042b8625fb8a987387d5aa012d0"
+    },
+    "ddiffpg/models/diffusion_mlp.py": {
+      "sha256": "b62c184fd42e48794af4e4cfbe2b024fee4a6281c0d192b1ca46fc3f6f720c86",
+      "bytes": 10801,
+      "mode": "100644",
+      "git_blob": "5827f8b1f332e3bcc6e2c505cdd1b3d9dc61a4c5"
+    },
+    "ddiffpg/models/mlp.py": {
+      "sha256": "fb48122c00c80499b2586169919fbb4089cae561e30239636536fedfdec03e7c",
+      "bytes": 10279,
+      "mode": "100644",
+      "git_blob": "7175f43f7a17f44810077b726d962607b1690fe1"
+    },
+    "ddiffpg/replay/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "100644",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    "ddiffpg/replay/diffusion_replay.py": {
+      "sha256": "74e4448cecc32a0419956d0a3f789784d9fd889d193c89876843a3ae59a272ec",
+      "bytes": 18941,
+      "mode": "100644",
+      "git_blob": "0562592dfd83137035d64fffe182ea21529210f6"
+    },
+    "ddiffpg/replay/nstep_replay.py": {
+      "sha256": "4eae6926f0e452778da4d75d6f39560cccd65a10e57eca5591b62115b43495be",
+      "bytes": 3650,
+      "mode": "100644",
+      "git_blob": "e01631eb14e324ea436a9f8ce599f1670037457a"
+    },
+    "ddiffpg/replay/simple_replay.py": {
+      "sha256": "0afd1b8c12f6d957674511e2b51dc5d7ed9f590ab20ebca0e34b54047440b8ae",
+      "bytes": 8640,
+      "mode": "100644",
+      "git_blob": "adb1f36449dd27c2ea5565447f5e7510c1d5e438"
+    },
+    "ddiffpg/utils/Q_scheduler.py": {
+      "sha256": "e813a25fda73384ebc96b56031afb1e74a52b095f075e97a3e87323781d63731",
+      "bytes": 5321,
+      "mode": "100644",
+      "git_blob": "9df376e4f75b56fb19bdeeccbe66cf1f25b6f07b"
+    },
+    "ddiffpg/utils/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "100644",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    "ddiffpg/utils/common.py": {
+      "sha256": "9b14886bd9322e3139ca8df0382bb1391c6f2f5d0e7ddb6529262b82cb17c51f",
+      "bytes": 9943,
+      "mode": "100644",
+      "git_blob": "a081731f778e591ed119205edf315cd543c285fc"
+    },
+    "ddiffpg/utils/distl_util.py": {
+      "sha256": "fd3366472a6c113dc18e4caf48c2f2a1ee7db8071076249123b5374286c62bc3",
+      "bytes": 897,
+      "mode": "100644",
+      "git_blob": "97c085683cd6cf9d038872a3392fa10854073521"
+    },
+    "ddiffpg/utils/intrinsic.py": {
+      "sha256": "93649b68a514ef37cf0404dedff32cb615c463ad2d14c1bbadde596e2fca2c59",
+      "bytes": 6333,
+      "mode": "100644",
+      "git_blob": "e000dfeaa44542c3b22b35c443b3bebe8954e290"
+    },
+    "ddiffpg/utils/model_util.py": {
+      "sha256": "b0cbbf14939e8a998f1b5d2ed48b87058279f38074379c002d919818451587a9",
+      "bytes": 1254,
+      "mode": "100644",
+      "git_blob": "1443a66e07bf043772989a104f6391056074a20b"
+    },
+    "ddiffpg/utils/noise.py": {
+      "sha256": "bfe0c04c04ad239644405242839a2a109749628588b3e33ed5abac494bc49466",
+      "bytes": 1456,
+      "mode": "100644",
+      "git_blob": "94f819a00dcd85a660e805ad5903840346a67e95"
+    },
+    "ddiffpg/utils/plot_util.py": {
+      "sha256": "1b0e4c85dd7bc6f67f72d46b6bc114bfe75da91e8c9b818e58fe9e7a69914c51",
+      "bytes": 4615,
+      "mode": "100644",
+      "git_blob": "7854422181d35bfea928928f4a36d0901e5cb779"
+    },
+    "ddiffpg/utils/schedule_util.py": {
+      "sha256": "f7093d4450f151436b22afe4428329cd83c3b87f5cbc86a4f632528c2e2a790c",
+      "bytes": 1797,
+      "mode": "100644",
+      "git_blob": "7a94b8122bc514d08eb1f3412f3158ee570310f7"
+    },
+    "ddiffpg/utils/torch_util.py": {
+      "sha256": "37b0a824c3195b1e1ee638748da762c16f25e69e9e3273ba7557861a471ae17a",
+      "bytes": 4890,
+      "mode": "100644",
+      "git_blob": "ee0082484e4c499b6e37549241055236f1d38ff0"
+    },
+    "ddiffpg/wrappers/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mode": "100644",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    "ddiffpg/wrappers/d4rl_wrapper.py": {
+      "sha256": "c07ae0e5b91253222f0192d51f52fc1ccdd859ac8453556e653eca6ea15689a7",
+      "bytes": 3463,
+      "mode": "100644",
+      "git_blob": "dbeb5146edf41b96c3b18cdc729312cc72a7a87a"
+    },
+    "ddiffpg/wrappers/pybullet_wrapper.py": {
+      "sha256": "59b45c774936305c9868d28e974a16ed604475cb05e48588728677a79b276d5e",
+      "bytes": 1106,
+      "mode": "100644",
+      "git_blob": "0bc73cff7b32b4c3cc1b45640d9ecfb601388f4e"
+    },
+    "environment.yml": {
+      "sha256": "293fb8fa50ed68c60a79841651537ddcd748910294d60a25e756b3c751bd21fd",
+      "bytes": 137,
+      "mode": "100644",
+      "git_blob": "6a5f2afa33eb086d42b8f3e8b7164705c3fb84fc"
+    },
+    "pyproject.toml": {
+      "sha256": "77c7a38ed77f9896f77a919bc1db3c7cb1267b286c41d8b77e7c55dea0ad93fe",
+      "bytes": 680,
+      "mode": "100644",
+      "git_blob": "b2af177650dfc83745063b512d59ff4f7c82e6bf"
+    },
+    "scripts/baselines_main.py": {
+      "sha256": "bda84143b0ae659ac8a98dfcee0436f7a6eb386f692a97911a55625811bb0e54",
+      "bytes": 6242,
+      "mode": "100644",
+      "git_blob": "49f59c02bb40562d61009172aaaad8b88aa1ba97"
+    },
+    "scripts/ddiffpg_main.py": {
+      "sha256": "62672bb22c1c329943dbaa28ae088acf286f7054f646dde9ccc676cb98bdbd13",
+      "bytes": 7269,
+      "mode": "100644",
+      "git_blob": "6cb2ca518625595bdd91a07bec262b048002c13d"
+    }
+  }
+}

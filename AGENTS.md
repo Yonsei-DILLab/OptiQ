@@ -58,3 +58,16 @@ seed0 1M runs at NovelD0.1 on both four-GPU servers. Existing v1 DIPO0.01 stays
 running. Evaluate every250k and save full state only at final1M. Use independent
 per-job backfill immediately when a slot opens; no all-method/all-maze barrier.
 Keep dense reward, other native hyperparameters and NovelD structure unchanged.
+
+User stop (2026-09-22, supersedes v2-v4 launch instructions above): all
+v2/v3/v4 NovelD0.1 running and pending jobs were stopped/cancelled. Only the
+already running v1 DIPO NovelD0.01 may continue from its unchanged frozen source.
+Do not resume cancelled jobs without a new explicit user instruction.
+
+User source replacement (2026-09-23): replace the custom AntMaze implementation
+with the complete official supersglzc/ddiffpg repository under antmaze/. Preserve
+the upstream files unchanged, their licenses, and provenance; see
+docs/ANTMAZE_UPSTREAM.md and docs/antmaze-ddiffpg-upstream.json. Preserve previous
+results and running/frozen source snapshots. This is a source import, not an
+experiment launch or authorization to run upstream defaults. OptiQ and MFPO
+adapters are absent from this upstream snapshot.
