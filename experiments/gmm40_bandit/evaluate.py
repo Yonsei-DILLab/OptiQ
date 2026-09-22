@@ -103,10 +103,15 @@ def plot_samples(path,samples,target,name):
     import matplotlib.pyplot as plt
     from matplotlib.colors import LogNorm
     grid=np.linspace(-50,50,250);xx,yy=np.meshgrid(grid,grid)
-    fig,axs=plt.subplots(1,2,figsize=(11,4.8),constrained_layout=True)
+    fig,axs=plt.subplots(1,3,figsize=(15,4.8),constrained_layout=True)
     axs[0].contourf(xx,yy,np.exp(target.log_prob(np.stack([xx,yy],-1))),levels=25,cmap='magma')
     axs[0].set_title('Exact target density (evaluation only)')
     axs[1].hist2d(*samples.T,bins=150,range=[[-50,50],[-50,50]],norm=LogNorm(),cmap='magma')
     axs[1].set_title(name+' | 32,768 native action samples')
-    for ax in axs:ax.set(xlabel='Action 1',ylabel='Action 2',xlim=(-50,50),ylim=(-50,50),aspect='equal')
+    mass,_=responsibility_mass(samples,target.means,target.std)
+    axs[2].bar(np.arange(40),mass,color='#3676b9')
+    axs[2].axhline(1/40,color='black',ls='--',label='Target mass 1/40')
+    axs[2].set(xlabel='Target component',ylabel='Posterior responsibility mass',title='Component mass (evaluation only)')
+    axs[2].legend(fontsize=8)
+    for ax in axs[:2]:ax.set(xlabel='Action 1',ylabel='Action 2',xlim=(-50,50),ylim=(-50,50),aspect='equal')
     fig.savefig(path,dpi=150);plt.close(fig)

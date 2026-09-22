@@ -24,6 +24,16 @@ def main():
         for ax,metric in zip(axs,['coverage','sliced_w2']):
             y=np.array([r[metric] for r in rs]);line=ax.errorbar(np.median(x),y.mean(),yerr=y.std(ddof=1) if len(y)>1 else 0,fmt='o',capsize=3,label=method)
             ax.scatter(x,y,s=15,alpha=.35,color=line[0].get_color())
+    for ax,metric,higher in zip(axs,['coverage','sliced_w2'],[True,False]):
+        means=[]
+        for method in dict.fromkeys(r['condition'] for r in finished):
+            rs=[r for r in finished if r['condition']==method]
+            means.append((float(np.median([r['latency']['single_action_us'] for r in rs])),float(np.mean([r[metric] for r in rs]))))
+        frontier=[];best=-float('inf')
+        for x,y in sorted(means):
+            utility=y if higher else -y
+            if utility>best:frontier.append((x,y));best=utility
+        if len(frontier)>1:ax.plot(*np.asarray(frontier).T,ls='--',color='gray',alpha=.6,label='Empirical nondominated means')
     for ax in axs:ax.set_xscale('log');ax.set_xlabel('Single-action inference latency (µs, log)');ax.grid(alpha=.25)
     axs[0].set(ylabel='Recovered components / 40 ↑',ylim=(-.02,1.05),title='A-1. Mode coverage–latency')
     axs[1].set(ylabel='Sliced W2 ↓ (physical action units)',title='A-2. Distribution error–latency')
