@@ -17,6 +17,8 @@ def main():
     p = argparse.ArgumentParser(allow_abbrev=False)
     p.add_argument('--host', choices=['180', '199'], required=True)
     p.add_argument('--smoke', action='store_true')
+    p.add_argument('--only', choices=['legacy-v1','official-v1','legacy-v2','legacy-v3','legacy-v4'])
+    p.add_argument('--attempt', choices=['r2'])
     a = p.parse_args()
     source = subprocess.check_output(['git','rev-parse','HEAD'], cwd=ROOT, text=True).strip()
     assert not subprocess.check_output(['git','status','--porcelain'],cwd=ROOT,text=True).strip()
@@ -26,10 +28,12 @@ def main():
     jobs = [('legacy','v1',1000), ('official','v1',1000), ('legacy','v3',500)] if a.host=='180' else [('legacy','v2',500), ('legacy','v4',500)]
     records = []
     for index,(family,task,episodes) in enumerate(jobs):
-        name = f'{family}-{task}' + ('-smoke' if a.smoke else '')
+        if a.only and a.only != f'{family}-{task}':
+            continue
+        name = f'{family}-{task}' + ('-smoke' if a.smoke else '') + (f'-{a.attempt}' if a.attempt else '')
         if not a.smoke:
-            proof = json.loads((campaign/(f'{family}-{task}-smoke')/'verification.json').read_text())
-            assert proof['passed']
+            proofs = list(campaign.glob(f'{family}-{task}-smoke*/verification.json'))
+            assert any(json.loads(p.read_text())['passed'] for p in proofs)
         training = LEGACY if family=='legacy' else OFF
         train_root = OPS/'sources'/training
         original = ('antmaze-dense-noveld-1m-s0-20260922' if family=='legacy' else
@@ -59,7 +63,7 @@ def main():
         conf.write_text(text)
         records.append(dict(name=name,service=service,command=args,environment=env,
                             output=str(out),training_source=training,evaluation_source=source))
-    manifest = campaign/f'registration-{a.host}{"-smoke" if a.smoke else ""}.json'
+    manifest = campaign/f'registration-{a.host}{"-smoke" if a.smoke else ""}{"-"+a.attempt if a.attempt else ""}.json'
     assert not manifest.exists()
     manifest.write_text(json.dumps(records,indent=2)+'\n')
     subprocess.run(SUP+['reread'],check=True)

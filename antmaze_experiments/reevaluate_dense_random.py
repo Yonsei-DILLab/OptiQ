@@ -106,7 +106,23 @@ def main():
         template = dict(actor=policy.actor_state, critic=policy.qf_state, target_actor=policy.target_actor_state)
         saved = fs.from_bytes(template, payload['learner']['policy'])
         policy.actor_state, policy.qf_state, policy.target_actor_state = saved['actor'], saved['critic'], saved['target_actor']
-        assert fs.to_bytes(saved) == payload['learner']['policy']
+        # Msgpack map ordering/array wrappers may change after restoration;
+        # compare every named value, not the container's serialized bytes.
+        original = fs.msgpack_restore(payload['learner']['policy'])
+        def equal_tree(actual, expected):
+            if isinstance(expected, dict):
+                assert set(actual) == set(expected)
+                for key in expected:
+                    equal_tree(actual[key], expected[key])
+            elif isinstance(expected, (list, tuple)):
+                assert len(actual) == len(expected)
+                for x, y in zip(actual, expected):
+                    equal_tree(x, y)
+            else:
+                x, y = np.asarray(actual), np.asarray(expected)
+                assert x.shape == y.shape and x.dtype == y.dtype
+                np.testing.assert_array_equal(x, y)
+        equal_tree(fs.to_state_dict(saved), original)
         updates = payload['updates']
     states = dict(actor=policy.actor_state, critic=policy.qf_state, target_actor=policy.target_actor_state)
     before = hashlib.sha256(fs.to_bytes(states)).hexdigest()
