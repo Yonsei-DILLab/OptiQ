@@ -156,3 +156,13 @@ intermediate evals,final100 and existing OptiQ policy checkpoints. Register a
 new16-job campaign on8GPUs with independent2second backfill; old cancelled
 queues remain cancelled. W&B OptiQ/antmaze. Commit/push/share frozen source
 before launch. See antmaze_experiments/DENSE_OFF_16_CURRENT_PROTOCOL.md.
+
+
+User temperature experiment (2026-09-24, newest): stop currently running SAC
+jobs and launch four fresh OptiQ policies, v1-v4 seed0, dense reward and NovelD
+OFF, temperature1. Preserve the latest OptiQ256x3 actor/critic and native
+3M/3M/4M/5M budgets,256env,batch4096,8updates/256transitions, all other settings
+and40-episode intermediate/random-start evaluation. Preserve existing DIPO
+training and completed results; do not restart held MFPO/cancelled SAC queues.
+Use direct-gmm-trg-antmaze, W&B OptiQ/antmaze, committed/shared frozen source.
+See antmaze_experiments/DENSE_T1_PROTOCOL.md.
