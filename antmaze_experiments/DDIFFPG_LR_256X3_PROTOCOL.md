@@ -40,6 +40,13 @@ change/RND/checkpoint readback and policy restore validations still apply.
 No global completion barrier, automatic restart, or performance early stop.
 
 W&B OptiQ/antmaze, campaign/group:
-antmaze-optiq-ddiffpg-lr-256x3-s0-20260923.
+antmaze-optiq-ddiffpg-lr-256x3-s0-20260923-r2.
 Register with antmaze_experiments.register_ddiffpg_lr_256x3 from its committed
 frozen checkout. A failure holds pending work and preserves other live jobs.
+
+The first registration (without-r2, source f07e4b2) stopped in preflight before
+training: the shared MuJoCo config loader asserts its original256x2 profile.
+Preserve that source and failed preflight logs. Apply AntMaze-specific model/LR
+values after base-config validation and before model construction, then validate
+the actual modules and optimizer transforms. The-r2 registration is a fresh
+preflight/main launch with the same approved experiment settings, not a resume.

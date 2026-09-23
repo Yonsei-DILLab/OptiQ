@@ -151,13 +151,17 @@ class JaxLearner:
             upstream_lr = OmegaConf.load(ROOT/'antmaze/ddiffpg/cfg/algo/actor_critic.yaml')
             overrides = ['benchmark=ant', 'seed=0',
                 'alg.actor.mean_output_init_scale=1.0', 'dacer.enabled=true',
-                'alg.actor.hidden_dims=[256,256,256]', 'alg.critic.hs=[256,256,256]',
-                f'alg.optimizer.lr_actor={upstream_lr.actor_lr}',
-                f'alg.optimizer.lr_critic={upstream_lr.critic_lr}',
                 'dacer.noise_scale=0.1', f'output_root={folder}']
             if temperature is not None:
                 overrides.append(f'alg.actor.temperature={temperature}')
             cfg = module.compose_config(overrides)
+            # The shared MuJoCo loader validates its 256x2 base profile. Apply
+            # AntMaze's approved overrides after that validation, before model
+            # construction; verify_profile checks the actual modules/optimizers.
+            cfg.alg.actor.hidden_dims = [256, 256, 256]
+            cfg.alg.critic.hs = [256, 256, 256]
+            cfg.alg.optimizer.lr_actor = float(upstream_lr.actor_lr)
+            cfg.alg.optimizer.lr_critic = float(upstream_lr.critic_lr)
             cfg.env_name = 'DDiffPG-' + task + '-upstream-' + reward_profile
             cfg.task = 'antmaze'
             cfg.wandb.entity = WANDB_ENTITY

@@ -7,7 +7,7 @@ import time
 
 from .settings import total_budget, WANDB_ENTITY, WANDB_PROJECT
 
-CAMPAIGN = 'antmaze-optiq-ddiffpg-lr-256x3-s0-20260923'
+CAMPAIGN = 'antmaze-optiq-ddiffpg-lr-256x3-s0-20260923-r2'
 
 
 def main():
