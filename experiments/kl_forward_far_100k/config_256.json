@@ -1,0 +1,63 @@
+{
+  "study": "20260923_forward_far_100k_N256M256",
+  "n": 256,
+  "m": 256,
+  "batch": 32,
+  "steps": 100000,
+  "temperature": 0.25,
+  "learning_rate": 0.0003,
+  "hidden_dims": [
+    256,
+    256
+  ],
+  "log_std_min": -5.0,
+  "log_std_max": -1.0,
+  "initial_log_std": -1.0,
+  "mean_output_init_scale": 1.0,
+  "teacher_std_floor": 0.006737946999085467,
+  "density_chunk": 128,
+  "seeds": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "conditions": [
+    {
+      "method": "forward",
+      "L": 0
+    }
+  ],
+  "eval_samples": 32768,
+  "histogram_bins": 4096,
+  "eval_steps": [
+    20000,
+    25000,
+    30000,
+    35000,
+    40000,
+    45000,
+    50000,
+    55000,
+    60000,
+    65000,
+    70000,
+    75000,
+    80000,
+    85000,
+    90000,
+    95000,
+    100000
+  ],
+  "diagnostic_steps": [],
+  "diagnostic_L_ref": 16384,
+  "diagnostic_repetitions": 3,
+  "diagnostic_actions": 128,
+  "action_bound": 20.0,
+  "target_centers": [
+    -10.0,
+    0.0,
+    10.0
+  ],
+  "target_width": 0.1
+}
