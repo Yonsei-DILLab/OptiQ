@@ -40,7 +40,7 @@ def evaluate(experiment,folder,step):
         backup=qhat,reference_backup=REFERENCE_BACKUP,backup_error=qhat-REFERENCE_BACKUP,
         backup_mc_se=float(q.std(ddof=1)/np.sqrt(q.size)),
         sigma_mean=float(sigma.mean()),sigma_min=float(sigma.min()),sigma_max=float(sigma.max()),
-        between_mean_variance=float(mu.var()),within_variance=float((sigma**2).mean()))
+        between_mean_variance=float(mu.var()),gaussian_scale_squared_mean=float((sigma**2).mean()))
     np.savez_compressed(folder/f'samples_{step:05d}.npz',actions=a,mu=mu,sigma=sigma,
         edges=edges,histogram_mass=mass,target_mass=target)
     (folder/f'metrics_{step:05d}.json').write_text(json.dumps(metrics,indent=2)+'\n')

@@ -12,6 +12,10 @@ set -euo pipefail
 cd "$STUDY_ROOT/source"
 export PYTHONNOUSERSITE=1 PYTHONUNBUFFERED=1 OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2
 export JAX_PLATFORMS=cuda XLA_PYTHON_CLIENT_PREALLOCATE=false MPLCONFIGDIR="$STUDY_ROOT/runtime/matplotlib_${SLURM_JOB_ID}"
+export PYTHONFAULTHANDLER=1
+# Match established login4 launchers: prefer the environment's pip CUDA stack
+# over the login shell's inherited /opt/ohpc CUDA libraries.
+unset LD_LIBRARY_PATH PYTHONPATH JAX_DEFAULT_MATMUL_PRECISION
 PY=/scratch2/hobbit9882/.venvs/optiq-mujoco-scalar/bin/python
 if [[ "${VALIDATE_ONLY:-0}" == 1 ]]; then
  exec "$PY" -m experiments.kl_direction_1d.validate --gpu --out "$STUDY_ROOT/runtime/GPU_VALIDATION.json"

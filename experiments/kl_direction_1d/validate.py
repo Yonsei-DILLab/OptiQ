@@ -25,6 +25,7 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--gpu',action='store_true');parser.add_argument('--out',type=Path)
     args=parser.parse_args();cfg=json.loads(Path(__file__).with_name('config.json').read_text())
     report=dict(backend=jax.default_backend(),devices=[str(x) for x in jax.devices()],checks={})
+    print(json.dumps(dict(phase='validation_started',**report)),flush=True)
     if args.gpu:assert jax.default_backend()=='gpu'
     checks=report['checks'];upstream=json.loads(Path(__file__).with_name('UPSTREAM.json').read_text())
     for name,record in upstream['vendored'].items():assert hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()==record['sha256']
@@ -74,12 +75,14 @@ def main():
     if args.gpu:
         benchmarks=[]
         for cond in cfg['conditions']:
+            print(json.dumps(dict(phase='full_shape_smoke',**cond)),flush=True)
             e=Experiment(cfg,cond['method'],cond['L'],0)
             start=time.perf_counter();e.advance_fn.lower(e.state,e.key,10).compile();compile_seconds=time.perf_counter()-start
             start=time.perf_counter();metrics=e.advance(10);seconds=time.perf_counter()-start
             assert all(np.isfinite(x) for x in metrics.values());assert metrics['gradient_norm']>0
             assert metrics['sigma_min']>=np.exp(-5)-1e-6 and metrics['sigma_max']<=np.exp(-1)+1e-6
             benchmarks.append(dict(**cond,compile_seconds=compile_seconds,seconds_per_update=seconds/10,metrics=metrics))
+            print(json.dumps(benchmarks[-1]),flush=True)
             # Release compiled full-shape executable before next smoke condition.
             del e;jax.clear_caches()
         report['full_shape_benchmarks']=benchmarks
