@@ -105,3 +105,11 @@ verified environment settings and adapter/runtime/evaluation exceptions.
 User approval (2026-09-23, latest): stabilize DIPO numerical projection/BCE and gradients outside vendored antmaze/. Use dense negative nearest-goal distance and NovelD OFF. First inspect 10k-learner-update v1/v3 trajectories for OptiQ/SAC/DIPO/MFPO, then fresh 16-policy parallel native-budget training on8GPUs. Keep256env,batch4096,8updates/256transitions,other native hyperparameters and original physics. DIPO negative support is an explicit dense compatibility override. See antmaze_experiments/DENSE_OFF_PROTOCOL.md. Cancelled/failed older campaigns remain inactive.
 
 User evaluation preference (2026-09-23, latest): primary AntMaze trajectory plots must use sampled random starting positions, not one arbitrarily fixed start. New main launch profile uses evaluation-only xy uniform[-2,2] for all four mazes, keeping native training reset settings. Record this explicit evaluation override for v2-v4 and never relabel completed fixed-start data. Preserve fixed-start results as supplementary only. Dense+NovelD-off 10k-update probes are completed; the main native-budget queue has not been registered while the user discusses sparse rewards and exploration design.
+
+User launch approval (2026-09-23, newest): proceed now with all16 dense-reward
+AntMaze policies, OptiQ/SAC/DIPO/MFPO x v1-v4, seed0. This resolves and supersedes
+the preceding main-queue hold. Use the already validated dense + NovelD OFF
+profile in DENSE_OFF_PROTOCOL.md, original 3M/3M/4M/5M native budgets,256envs,
+batch4096,8updates per256transitions,8GPUs with independent2second backfill.
+Keep validated numerical safeguards and randomized evaluation starts. Preserve
+all older cancelled queues and completed probe results; do not relaunch them.

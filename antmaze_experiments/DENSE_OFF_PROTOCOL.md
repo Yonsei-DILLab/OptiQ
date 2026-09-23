@@ -81,3 +81,20 @@ not an upstream default. Configs and evaluation summaries record it. Fixed-state
 rollouts remain supplementary. Original probe v3 rollouts were fixed upstream
 starts and must never be relabeled as randomized. No main campaign is launched
 until the reward-design discussion following the probe is resolved.
+
+## Main launch approval (2026-09-23)
+
+The user explicitly requested all16 single-seed dense experiments now, resolving
+the reward-design hold above. Launch the existing dense + NovelD OFF profile
+without additional temperature, sigma, critic-support or optimizer changes.
+Both hosts use one identical committed frozen source. Record the eight completed
+probes under their actual training source c3366d15428b0d5cc46af0f9458450e28ee00c58;
+the randomized-evaluation change was separately committed and validated at
+3a40cb8fc385f16f00175a3967d73446093b2ce2. Main source provenance must remain
+separate from probe source provenance. Probe technical validation and trajectory
+review passed; reaching a goal was not a short-probe launch requirement.
+
+Host180 schedules v1/v3 and host199 v2/v4. On each host both DIPO jobs and both
+OptiQ jobs start first, followed by SAC and MFPO as individual slots become free.
+Each job validates the exact frozen main profile before fresh main training.
+No cross-method or cross-maze completion barrier is introduced.
