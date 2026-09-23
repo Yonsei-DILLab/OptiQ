@@ -1,0 +1,17 @@
+# Forward KL: far-separated narrow modes, mean-head initialization scale 1
+
+User explicitly selected truncated Gaussian actions and centers in [-20,20], with target Gaussian width 0.1 unchanged. Target centers are (-10,0,10), equal mixture weights; Q(a)=0.25 log f(a), actor temperature 0.25. No target samples or labels enter training. This is not a coordinate-equivalent rescaling of the preceding [-1,1] task: widths and conditional standard deviations stay in their original physical units while centers and the action box expand.
+
+Four sizes N=M=64,128,256,512, seeds0–3 (16 runs), batch32 independent groups at the same zero state,20K updates,Adam3e-4. Two256-unit GELU layers,1D standard-normal latent. Mean initializer variance scale1 (fan_avg/uniform), mu=20*tanh(raw mean head); log sigma still clipped[-5,-1], initial-1, proposal sigma floor exp(-5). Initializer scale1 is not an output multiplier. The20 factor is explicitly the new action/mean bound, not a sigma scaling.
+
+Forward training remains: sample N latent conditionals; draw M candidates IID from their equally weighted mixture using box-truncated Gaussians; weights softmax(Q/tau-log proposal); stop teacher samples/weights; minimize weighted marginal mixture NLL with gradients through the student density and truncation normalizers. Reparameterization paths through teacher draws are stopped. No OT, mode masks, critic, reverse loss, extra proposal injection, or target-guided warmup.
+
+Numerical source is copied from kl_direction_1d then adapted in a separate namespace. Actor only changes mean bound; Gaussian normalizers, support checks and inverse-CDF sampler all change to[-20,20]. Target changes centers only. Do not edit an immutable or running source snapshot.
+
+Evaluation uses32,768 actual policy samples at0,100,500,1K,2K,5K,10K,20K; no density KDE. Use4096 histogram bins over[-20,20] (width0.009765625) so narrow0.1 modes remain resolved. Provide full-range histograms plus three per-mode zooms. TV uses analytic target bin probabilities; W1 uses a dense reference CDF. Backup integration includes peak-bracketing quadrature breakpoints. Reference target is used solely in diagnostics. Additional independent one-group teacher probes do not consume training RNG.
+
+Prespecified three-separated-peak criterion: each center's±0.1 core holds at least half its analytic target core probability; the±0.1 windows at the two midpoints(-5,5) have at most half the lower adjacent core average density. Report masses and ratios as well as pass/fail; this is a practical separation diagnostic, not a certified count of density maxima. Basin mass alone is insufficient. Record first passing saved snapshot and whether it persists across later saved snapshots. No claim about unsaved times.
+
+Before launch validate box support, normalizers, exact coordinate-change identity of sampling/density, finite NLL gradients, unchanged scale1 actor parameters, mu20x versus the original actor, unchanged sigma, target normalization and peak criterion. Commit exact sources/configs/job/protocol to heejoon, archive full SHA and hashes.16 independent Slurm jobs,1GPU2CPU16GB each, concurrency up to16; do not touch unrelated held jobs. Preserve checkpoints,Adam,RNG and all samples on dildata.
+
+Remote root: login4:/scratch2/hobbit9882/OptiQ-SingleQ-N64-M256-K64-T025-20260921/extensions/forward_far_20260923. Central archive: dildata:/data1/heejoonorm/OptiQ/studies/20260923_forward_far/campaign. Local report: reports/20260923_forward_far.
