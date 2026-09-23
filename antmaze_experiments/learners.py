@@ -128,7 +128,7 @@ class SpaceOnlyEnv:
 
 class JaxLearner:
     def __init__(self, method, spaces, task, folder, temperature=None, budget=None,
-                 reward_profile='sparse',noveld=True):
+                 reward_profile='sparse',noveld=True,temperature_schedule=None):
         import jax
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
@@ -154,6 +154,11 @@ class JaxLearner:
                 'dacer.noise_scale=0.1', f'output_root={folder}']
             if temperature is not None:
                 overrides.append(f'alg.actor.temperature={temperature}')
+            if temperature_schedule is not None:
+                schedule=temperature_schedule
+                overrides.append('++alg.actor.temperature_schedule={enabled:true,'
+                    f'final_temperature:{schedule["final_temperature"]},'
+                    f'anneal_steps:{schedule["anneal_steps"]},decay:{schedule["decay"]}'+'}')
             cfg = module.compose_config(overrides)
             # The shared MuJoCo loader validates its 256x2 base profile. Apply
             # AntMaze's approved overrides after that validation, before model

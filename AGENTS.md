@@ -166,3 +166,15 @@ and40-episode intermediate/random-start evaluation. Preserve existing DIPO
 training and completed results; do not restart held MFPO/cancelled SAC queues.
 Use direct-gmm-trg-antmaze, W&B OptiQ/antmaze, committed/shared frozen source.
 See antmaze_experiments/DENSE_T1_PROTOCOL.md.
+
+
+User follow-up queue (2026-09-24, newest): queue twelve OptiQ AntMaze
+annealing runs (v1-v4 x10→1,10→.25,10→.5,seed0),dense reward/NovelD OFF.
+Exclude8192 warmup; linearly anneal over the next1M environment transitions,
+then hold the final temperature through existing3M/3M/4M/5M budgets. After
+these queue entries, schedule missing dense baselines: MFPOv1-v4 and SACv4.
+This explicitly authorizes these baseline replacements despite prior holds.
+SACv2 final result/checkpoint is complete despite controller cancellation; do
+not duplicate it. Preserve current T1/DIPO jobs and every old source/result.
+Use independent per-slot backfill, no cross-maze barrier, and W&B OptiQ/antmaze.
+See antmaze_experiments/ANNEAL_BASELINES_PROTOCOL.md.

@@ -2,6 +2,7 @@
 import argparse
 import fcntl
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -23,6 +24,11 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
              '--method',entry['method'],'--task',entry['task'],'--output',str(target)]
         if 'temperature' in entry:
             cmd.extend(['--temperature',str(entry['temperature'])])
+        if 'temperature_schedule' in entry:
+            schedule=entry['temperature_schedule']
+            cmd.extend(['--temperature-final',str(schedule['final_temperature']),
+                        '--temperature-anneal-steps',str(schedule['anneal_steps']),
+                        '--temperature-decay',schedule['decay']])
         if 'steps' in entry and phase != 'preflight':
             cmd.extend(['--budget-steps',str(entry['steps'])])
         if 'final_eval_episodes' in entry:
@@ -64,6 +70,15 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             actor=config['native']['alg']['actor']
             assert actor['temperature']==entry['temperature']
             assert (actor['log_std_min'],actor['log_std_max'],actor['initial_log_std'])==(-5.,-1.,-1.)
+        if 'temperature_schedule' in entry:
+            schedule=entry['temperature_schedule']
+            assert config['temperature_schedule']==schedule
+            assert config['native']['alg']['actor']['temperature_schedule']==schedule
+            progress=min(max((expected-config['warmup_transitions'])/schedule['anneal_steps'],0.),1.)
+            wanted=(1-progress)*entry['temperature']+progress*schedule['final_temperature']
+            if schedule['decay']=='log_linear':
+                wanted=math.exp((1-progress)*math.log(entry['temperature'])+progress*math.log(schedule['final_temperature']))
+            assert abs(proof['final_temperature']-wanted)<1e-9
         if entry.get('save_intermediate_policy',False):
             assert config['save_intermediate_policy']
             snapshots=sorted((target/'policy-checkpoints').glob('*/verification.json'))

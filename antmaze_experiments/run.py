@@ -144,6 +144,9 @@ def main():
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--preflight',action='store_true')
     p.add_argument('--temperature',type=float)
+    p.add_argument('--temperature-final',type=float)
+    p.add_argument('--temperature-anneal-steps',type=int,default=1000000)
+    p.add_argument('--temperature-decay',choices=['linear','log_linear'],default='linear')
     p.add_argument('--budget-steps',type=int)
     p.add_argument('--final-eval-episodes',type=int,default=100)
     p.add_argument('--interim-eval-episodes',type=int,default=EVAL_NUM_ENVS)
@@ -154,6 +157,13 @@ def main():
     a = p.parse_args()
     if a.temperature is not None:
         assert a.method == 'optiq' and a.temperature > 0
+    temperature_schedule=None
+    if a.temperature_final is not None:
+        assert a.method=='optiq' and a.temperature is not None
+        assert np.isfinite(a.temperature) and np.isfinite(a.temperature_final)
+        assert 0 < a.temperature_final <= a.temperature and a.temperature_anneal_steps > 0
+        temperature_schedule=dict(enabled=True,final_temperature=a.temperature_final,
+            anneal_steps=a.temperature_anneal_steps,decay=a.temperature_decay)
     if a.budget_steps is not None:
         assert a.budget_steps >= WARMUP + NUM_ENVS
         assert a.budget_steps % NUM_ENVS == 0
@@ -185,7 +195,7 @@ def main():
     else:
         learner = JaxLearner(a.method,(env.single_observation_space,env.single_action_space),
             a.task,folder,temperature=a.temperature,budget=planned_budget,
-            reward_profile=a.reward_profile,noveld=a.noveld=='on')
+            reward_profile=a.reward_profile,noveld=a.noveld=='on',temperature_schedule=temperature_schedule)
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     budget = PREFLIGHT_STEPS if a.preflight else planned_budget
@@ -201,6 +211,7 @@ def main():
         reward_profile=a.reward_profile,noveld_enabled=a.noveld=='on',
         eval_starts=a.eval_starts,primary_trajectory='policy-natural',
         noveld_coefficient=.01 if a.noveld=='on' else 0.,temperature=a.temperature,
+        temperature_schedule=temperature_schedule,
         native=learner.config,random_init=a.task=='v1',eval_interval=250000,
         eval_num_envs=EVAL_NUM_ENVS,interim_eval_episodes=a.interim_eval_episodes,
         final_eval_episodes=a.final_eval_episodes,
@@ -213,6 +224,8 @@ def main():
     write(folder/'config.json',config)
     import wandb
     temp_name=f'-T{a.temperature:g}' if a.temperature is not None else ''
+    if temperature_schedule is not None:
+        temp_name+=f'-to{a.temperature_final:g}-{a.temperature_decay}-{a.temperature_anneal_steps}postwarmup'
     run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s0-{budget}steps'
     run = wandb.init(entity=WANDB_ENTITY,project=WANDB_PROJECT,group=os.environ.get('OPTIQ_CAMPAIGN',CAMPAIGN),
         name=run_name,dir=str(folder),config=config,
@@ -229,6 +242,10 @@ def main():
         record=dict(step=step,global_steps=max(0,step-warmup),updates=learner.updates,rnd_updates=learner.intrinsic.update_step,
             seconds=time.monotonic()-started,episodes=episodes,successes=len(successes),
             **{f'seconds/{k}':v for k,v in timing.items()})
+        if temperature_schedule is not None:
+            record.update(temperature=float(info.get('train/temperature',a.temperature)),
+                temperature_anneal_progress=float(info.get('train/temperature_anneal_progress',0.)),
+                temperature_post_warmup_steps=max(0,step-warmup))
         write(folder/'progress.json',record);print(json.dumps(record),flush=True)
         run.log(dict(record,**info),step=step)
     try:
@@ -287,6 +304,9 @@ def main():
             steps=step,global_steps=step-warmup,updates=learner.updates,rnd_updates=learner.intrinsic.update_step,
             summaries=summaries,checkpoint=proof,timing=timing,seconds=time.monotonic()-started,
             training_successes=len(successes),training_episodes=episodes)
+        if temperature_schedule is not None:
+            result['temperature_schedule']=temperature_schedule
+            result['final_temperature']=float(info['train/temperature'])
         write(folder/'result.json',result)
         # Keep final 100-episode evaluations separate from periodic 40-episode
         # metrics, including the reset distribution and zero-z control.

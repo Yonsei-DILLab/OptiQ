@@ -8,6 +8,7 @@ from typing import NamedTuple
 class TemperatureSchedule(NamedTuple):
     final_temperature: float
     anneal_steps: int
+    decay: str = "log_linear"
 
 
 def parse_temperature_schedule(actor, backup_mode):
@@ -27,16 +28,21 @@ def parse_temperature_schedule(actor, backup_mode):
     steps = config.get("anneal_steps")
     if isinstance(steps, bool) or not isinstance(steps, int) or steps <= 0:
         raise ValueError("temperature_schedule.anneal_steps must be a positive integer")
-    return TemperatureSchedule(final, steps)
+    decay = config.get("decay", "log_linear")
+    if decay not in ("linear", "log_linear"):
+        raise ValueError("temperature_schedule.decay must be linear or log_linear")
+    return TemperatureSchedule(final, steps, decay)
 
 
 def scheduled_temperature(initial, schedule, env_steps, warmup_steps):
-    """Log-linear decay after warmup, with exact endpoints and no RNG/state."""
+    """Decay after warmup; preserve log-linear behavior for existing profiles."""
     progress = min(max((env_steps - warmup_steps) / schedule.anneal_steps, 0.0), 1.0)
     if progress == 0.0:
         temperature = float(initial)
     elif progress == 1.0:
         temperature = schedule.final_temperature
+    elif schedule.decay == "linear":
+        temperature = (1 - progress) * float(initial) + progress * schedule.final_temperature
     else:
         temperature = math.exp((1 - progress) * math.log(initial)
                                + progress * math.log(schedule.final_temperature))
