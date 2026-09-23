@@ -1,0 +1,18 @@
+{
+  "base_commit": "36aab085bcfe8219997e1bc21e3ad8fe55f266b0",
+  "actor_source": "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/policy.py",
+  "actor_ast_nodes": [
+    "kernel_init",
+    "SemiImplicitActor"
+  ],
+  "vendored": {
+    "box_gaussian.py": {
+      "source": "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/box_gaussian.py",
+      "sha256": "a3e09688f03cda41f2bf14d9a8438e605399422b57b6be9d9b8ad1a04d4b6ef8"
+    },
+    "distillation.py": {
+      "source": "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/distillation.py",
+      "sha256": "ff305a7462e33970e4b786101c0af335cf594a351f846a596997c6dc9f3912c9"
+    }
+  }
+}
