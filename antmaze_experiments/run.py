@@ -285,7 +285,14 @@ def main():
             summaries=summaries,checkpoint=proof,timing=timing,seconds=time.monotonic()-started,
             training_successes=len(successes),training_episodes=episodes)
         write(folder/'result.json',result)
-        run.summary.update(dict(completed=True,steps=step,updates=learner.updates))
+        # Keep final 100-episode evaluations separate from periodic 40-episode
+        # metrics, including the reset distribution and zero-z control.
+        final_summary = dict(completed=True, steps=step, updates=learner.updates,
+                             final_evaluations=summaries)
+        for label, summary in summaries.items():
+            for key in ('success_rate', 'mean_return', 'episodes', 'goal_counts'):
+                final_summary[f'final/{label}/{key}'] = summary[key]
+        run.summary.update(final_summary)
     except BaseException as error:
         write(folder/'failure.json',dict(type=type(error).__name__,message=str(error),
             traceback=traceback.format_exc(),step=step,source_commit=source))

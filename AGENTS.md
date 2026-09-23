@@ -144,3 +144,15 @@ change optimizer family/tau. The previous four jobs were already completed
 when checked; preserve their results/frozen source and do not relaunch them.
 Launch only four new OptiQ jobs on180, share committed source with199, and log
 toOptiQ/antmaze. See antmaze_experiments/DDIFFPG_LR_256X3_PROTOCOL.md.
+
+
+User launch approval (2026-09-24, newest): run sixteen fresh AntMaze policies,
+OptiQ/SAC/DIPO/MFPO x v1-v4, seed0, using dense negative nearest-goal distance
+and NovelD OFF. Preserve latest OptiQ256x3 actor/critic,T=.01,actor3e-4/critic5e-4,
+log sigma[-5,-1],DACER on and other settings. Keep native baseline models/LRs,
+validated DIPO numerical guards and dense support[-6000,5]. Use256env,batch4096,
+8updates/256transitions,native3M/3M/4M/5M budgets,40-episode random-start
+intermediate evals,final100 and existing OptiQ policy checkpoints. Register a
+new16-job campaign on8GPUs with independent2second backfill; old cancelled
+queues remain cancelled. W&B OptiQ/antmaze. Commit/push/share frozen source
+before launch. See antmaze_experiments/DENSE_OFF_16_CURRENT_PROTOCOL.md.

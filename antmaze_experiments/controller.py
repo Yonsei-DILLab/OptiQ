@@ -55,7 +55,8 @@ def job(root, identifier, gpu):
             assert profile['critic_hidden_dims']==entry['optiq_profile']['critic_hidden_dims']
             assert profile['optimizers']['actor']['expected_lr']==entry['optiq_profile']['actor_lr']
             assert profile['optimizers']['critic']['expected_lr']==entry['optiq_profile']['critic_lr']
-            assert profile['rnd_lrs']==[1e-4] and profile['tau']==.005
+            expected_rnd_lrs = [1e-4] if config['noveld_enabled'] else []
+            assert profile['rnd_lrs']==expected_rnd_lrs and profile['tau']==.005
             assert config['wandb_project']==manifest['wandb_project']=='antmaze'
         if 'temperature' in entry:
             actor=config['native']['alg']['actor']
