@@ -131,3 +131,16 @@ uploads. Preserve run IDs, metrics, local logs, frozen source and checkpoints;
 record relocated URLs in separate metadata. Do not restart training to change
 the project. Other benchmarks keep their existing projects. See
 antmaze_experiments/WANDB_PROJECT.md.
+
+
+User LR/architecture approval (2026-09-23, newest): replace the previous OptiQ
+AntMaze run with fresh v1-v4 seed0 jobs using DDiffPG main-method network LRs
+(actor3e-4,critic5e-4), and use256x3 for BOTH OptiQ actor and twin critics in
+AntMaze. RND remains the NovelD estimator at its existing1e-4 LR. Preserve
+T=.01,sparse+NovelD.01,log sigma[-5,-1],tau.005,Adam,batch4096,256env and the
+8/256 update ratio, other hyperparameters, original budgets and40-episode
+intermediate/random-start evaluation. Do not adopt DDiffPG action_lr.03 or
+change optimizer family/tau. The previous four jobs were already completed
+when checked; preserve their results/frozen source and do not relaunch them.
+Launch only four new OptiQ jobs on180, share committed source with199, and log
+toOptiQ/antmaze. See antmaze_experiments/DDIFFPG_LR_256X3_PROTOCOL.md.

@@ -48,6 +48,15 @@ def job(root, identifier, gpu):
         assert config['eval_starts']==entry.get('eval_starts','upstream')
         assert proof['rnd_updates']==(proof['updates'] if config['noveld_enabled'] else 0)
         assert config['interim_eval_episodes']==entry.get('interim_eval_episodes',20)
+        if 'optiq_profile' in entry:
+            profile=json.loads((target/'optiq-profile-verification.json').read_text())
+            assert profile['verified']
+            assert profile['actor_hidden_dims']==entry['optiq_profile']['actor_hidden_dims']
+            assert profile['critic_hidden_dims']==entry['optiq_profile']['critic_hidden_dims']
+            assert profile['optimizers']['actor']['expected_lr']==entry['optiq_profile']['actor_lr']
+            assert profile['optimizers']['critic']['expected_lr']==entry['optiq_profile']['critic_lr']
+            assert profile['rnd_lrs']==[1e-4] and profile['tau']==.005
+            assert config['wandb_project']==manifest['wandb_project']=='antmaze'
         if 'temperature' in entry:
             actor=config['native']['alg']['actor']
             assert actor['temperature']==entry['temperature']

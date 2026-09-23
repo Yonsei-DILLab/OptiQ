@@ -146,8 +146,14 @@ class JaxLearner:
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             from omegaconf import OmegaConf
+            # AntMaze-only defaults approved on 2026-09-23. Other benchmarks
+            # retain their own model and optimizer configuration.
+            upstream_lr = OmegaConf.load(ROOT/'antmaze/ddiffpg/cfg/algo/actor_critic.yaml')
             overrides = ['benchmark=ant', 'seed=0',
                 'alg.actor.mean_output_init_scale=1.0', 'dacer.enabled=true',
+                'alg.actor.hidden_dims=[256,256,256]', 'alg.critic.hs=[256,256,256]',
+                f'alg.optimizer.lr_actor={upstream_lr.actor_lr}',
+                f'alg.optimizer.lr_critic={upstream_lr.critic_lr}',
                 'dacer.noise_scale=0.1', f'output_root={folder}']
             if temperature is not None:
                 overrides.append(f'alg.actor.temperature={temperature}')
@@ -168,6 +174,8 @@ class JaxLearner:
             self.model.replay_buffer = self.view
             self.model._total_timesteps = self.budget
             self.config = OmegaConf.to_container(cfg, resolve=True)
+            from .optiq_profile import verify_profile
+            verify_profile(self, folder)
         else:
             sys.path.insert(0, str(ROOT/'gmm40-baseline/MFPO'))
             from configs.mfpo_config import get_config
