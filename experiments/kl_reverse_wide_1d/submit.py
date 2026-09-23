@@ -8,7 +8,7 @@ def main():
     record_path=rt/('VALIDATION_SUBMISSION.json' if a.stage=='validate' else 'SUBMISSION.json')
     assert not record_path.exists(),'Already submitted'
     source=json.loads((r/'SOURCE_MANIFEST.json').read_text())
-    cmd=['sbatch','--parsable','--partition=suma_rtx4090,asus_6000ada,big_suma_rtx3090,base_suma_rtx3090,dell_rtx3090,suma_a6000,gigabyte_a6000,gigabyte_a5000,asus_a5000,tyan_a6000','--qos=big_qos','--exclude=cs-gpu-01,node05,node14,node23,node24,node31,node35,node40']
+    cmd=['sbatch','--parsable','--partition=suma_rtx4090,asus_6000ada,big_suma_rtx3090,base_suma_rtx3090,dell_rtx3090,suma_a6000,gigabyte_a6000,gigabyte_a5000,asus_a5000,tyan_a6000','--qos=big_qos','--exclude=cs-gpu-01,node05,node14,node23,node24,node31,node33,node35,node40']
     env=dict(os.environ,STUDY_ROOT=str(r))
     if a.stage=='validate':
         cmd+=['--time=00:30:00','--job-name=reverse-L1M-check','--output='+str(rt/'slurm/validation_%j.out'),'--error='+str(rt/'slurm/validation_%j.err')]

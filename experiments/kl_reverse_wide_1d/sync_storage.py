@@ -17,6 +17,6 @@ while True:
     except Exception as e:result=dict(time=time.time(),error=repr(e))
     (OUT/'SYNC_STATUS.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result),flush=True)
     if result.get('exit_code')==0:
-        count=len(list((OUT/'campaign/attempt2/runtime/runs').glob('*/COMPLETE.json')))
+        count=len(list((OUT/'campaign/attempt3/runtime/runs').glob('*/COMPLETE.json')))
         if count==4:break
     time.sleep(180)
