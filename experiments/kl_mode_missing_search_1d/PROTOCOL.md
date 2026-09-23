@@ -16,15 +16,18 @@ Same initialization and source/action RNG for paired methods, auxiliary bank ind
 Use the validated highest-precision density-bank MLP and max-scaled streaming score.
 Forward has no L; reverse has finite-L ratio bias, so conclusions are about these estimators.
 
-## Search grid (config.json authoritative)
-Equal-mixture centers (-d,0,d), Gaussian target width h:
-- d=1.5,h=.25, mean init scale {1e-4,.01,.1,1}
-- d=2.5,h=.5, mean init scale {1e-4,.01,.1,1}
-- d=3.5,h=.5, mean init scale {.01,.1,1}
-- d=5,h=1, mean init scale 1 (previous condition reference)
+## Search grid, round 2 (config.json authoritative)
+Round 1 did not yield a reproducible strict separation at 10K. Preserve all its results.
+Motivation for round 2: high mean-head initializer scales create skewed/saturated
+initial action distributions; test whether forward rebalances modes that reverse retains poorly.
+No sigma/lr/proposal/batch changes.
+- centers (-3.5,0,3.5), h=.5, scale {10,100}
+- centers (-5,0,5), h=.5, scale {1,10,100}
+- centers (-5,0,5), h=1, scale {10,100}
+- centers (-2.5,0,2.5), h=.5, scale {10,100}
+- centers (0,3,6), h=.5, scale {1,10,100}
 Q=.25*log(mean_k Normal(a;center_k,h^2)); normalize target over [-10,10].
-Only centers, h and mean initializer change. Actor sigma bounds and proposal do not.
-12 cases x 2 methods x 2 seeds(0,1), 10K updates each. Log/evaluate 0,1K,5K,10K.
+12 cases x 2 methods x 2 seeds(0,1), 10K updates. Log/evaluate 0,1K,5K,10K.
 
 ## Selection and confirmation
 32768 actual actor actions; 512 equal bins on [-10,10], no KDE or smoothed density.
