@@ -40,7 +40,7 @@ change/RND/checkpoint readback and policy restore validations still apply.
 No global completion barrier, automatic restart, or performance early stop.
 
 W&B OptiQ/antmaze, campaign/group:
-antmaze-optiq-ddiffpg-lr-256x3-s0-20260923-r2.
+antmaze-optiq-ddiffpg-lr-256x3-s0-20260923-r3.
 Register with antmaze_experiments.register_ddiffpg_lr_256x3 from its committed
 frozen checkout. A failure holds pending work and preserves other live jobs.
 
@@ -50,3 +50,9 @@ Preserve that source and failed preflight logs. Apply AntMaze-specific model/LR
 values after base-config validation and before model construction, then validate
 the actual modules and optimizer transforms. The-r2 registration is a fresh
 preflight/main launch with the same approved experiment settings, not a resume.
+
+The-r2 preflight (source297aad7) constructed the requested model but stopped
+before learning because the added verifier referenced a nonexistent policy.actor
+attribute. The-r3 verifier checks actual initialized hidden-layer kernel shapes
+(including the twin-critic axis), and retains the independent optimizer probe.
+Both failed attempts remain preserved; no main training ran in those attempts.

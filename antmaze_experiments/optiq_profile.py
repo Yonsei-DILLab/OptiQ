@@ -8,8 +8,8 @@ def verify_profile(learner, folder):
     import jax.numpy as jnp
     policy = learner.model.policy
     cfg = learner.config['alg']
-    assert list(policy.actor.hidden_dims) == [256, 256, 256]
-    assert list(policy.qf.net_arch) == [256, 256, 256]
+    assert list(cfg['actor']['hidden_dims']) == [256, 256, 256]
+    assert list(cfg['critic']['hs']) == [256, 256, 256]
     assert cfg['optimizer']['lr_actor'] == 3e-4
     assert cfg['optimizer']['lr_critic'] == 5e-4
     assert cfg['tau'] == .005
@@ -31,8 +31,13 @@ def verify_profile(learner, folder):
                 elif key == 'kernel':
                     result[name] = list(value.shape)
             return result
+        kernels = shapes(state.params)
+        hidden = [shape for shape in kernels.values() if shape[-1] == 256]
+        expected_hidden = ([[37,256],[256,256],[256,256]] if label == 'actor'
+                           else [[2,37,256],[2,256,256],[2,256,256]])
+        assert sorted(hidden) == sorted(expected_hidden), (label, kernels)
         checks[label] = dict(expected_lr=expected, scalar_adam_probe=observed,
-                             kernel_shapes=shapes(state.params))
+                             kernel_shapes=kernels)
     rnd_lrs = ([group['lr'] for group in learner.intrinsic.rnd_optimizer.param_groups]
                if learner.noveld_enabled else [])
     assert all(lr == 1e-4 for lr in rnd_lrs)
