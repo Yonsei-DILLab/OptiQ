@@ -12,7 +12,7 @@ def write(path,data):
     tmp=path.with_suffix('.tmp');tmp.write_text(json.dumps(data,indent=2)+'\n');tmp.replace(path)
 
 
-def train(root,cfg,case,seed,method,steps,L,stage):
+def train(root,cfg,case,seed,method,steps,L,stage,parent_root=None):
     out=root/'runtime'/stage/case['id']/f'{method}_s{seed}';out.mkdir(parents=True,exist_ok=True)
     if (out/'COMPLETE.json').exists():return
     cfg=dict(cfg,**case,steps=steps,density_chunk=4096 if L>1024 else 256,
@@ -27,7 +27,22 @@ def train(root,cfg,case,seed,method,steps,L,stage):
         assert previous['L']==L and previous['config']==cfg
         if (out/'checkpoint.msgpack').exists():exp.restore(out/'checkpoint.msgpack')
         with (out/'RESUME.jsonl').open('a') as f:f.write(json.dumps(metadata)+'\n')
-    else:write(out/'RUN.json',metadata)
+    else:
+        if parent_root is not None:
+            parent=parent_root/'runtime/screen'/case['id']/f'{method}_s{seed}'
+            if not (parent/'RUN.json').exists():parent=parent_root/'runtime/replicate'/case['id']/f'{method}_s{seed}'
+            old=json.loads((parent/'RUN.json').read_text())
+            assert old['method']==method and old['L']==L and old['seed']==seed
+            numerical=['n','m','batch','temperature','learning_rate','hidden_dims','log_std_min','log_std_max','initial_log_std','mean_output_init_scale','teacher_std_floor','density_chunk','action_bound','target_centers','target_width','train_block']
+            assert all(old['config'][k]==cfg[k] for k in numerical)
+            assert json.loads((parent/'COMPLETE.json').read_text())['step']==10000
+            exp.restore(parent/'checkpoint.msgpack');assert int(exp.state.step)==10000
+            metadata['parent_checkpoint']=str(parent/'checkpoint.msgpack')
+            metadata['parent_source_commit']=old['source_commit']
+            metadata['initial_parameter_sha256']=old['initial_parameter_sha256']
+            metadata['parent_checkpoint_sha256']=hashlib.sha256((parent/'checkpoint.msgpack').read_bytes()).hexdigest()
+        metadata['starting_step']=int(exp.state.step)
+        write(out/'RUN.json',metadata)
     stop=[]
     for sig in (signal.SIGTERM,signal.SIGUSR1,signal.SIGINT):signal.signal(sig,lambda s,f:stop.append(s))
     def save():
@@ -56,7 +71,8 @@ def train(root,cfg,case,seed,method,steps,L,stage):
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--index',type=int,required=True)
-    p.add_argument('--stage',choices=['screen','replicate','confirm'],default='screen');p.add_argument('--selected-case',type=int)
+    p.add_argument('--stage',choices=['screen','replicate','longscreen','confirm','confirm_pair'],default='screen');p.add_argument('--selected-case',type=int)
+    p.add_argument('--parent-root',type=Path)
     args=p.parse_args();cfg=json.loads(Path(__file__).with_name('config.json').read_text())
     assert jax.default_backend()=='gpu','Never train on login node'
     if args.stage=='screen':
@@ -65,6 +81,15 @@ def main():
     elif args.stage=='replicate':
         case=cfg['cases'][args.selected_case];seed=2+args.index
         for method in ['forward','reverse']:train(args.root,cfg,case,seed,method,10000,1024 if method=='reverse' else 0,'replicate')
+    elif args.stage=='longscreen':
+        case=cfg['cases'][args.selected_case];seed=args.index
+        assert args.parent_root is not None
+        for method in ['forward','reverse']:
+            train(args.root,cfg,case,seed,method,50000,1024 if method=='reverse' else 0,'longscreen',args.parent_root)
+    elif args.stage=='confirm_pair':
+        case=cfg['cases'][args.selected_case];seed=args.index
+        for method in ['forward','reverse']:
+            train(args.root,cfg,case,seed,method,100000,1048576 if method=='reverse' else 0,'confirm')
     else:
         case=cfg['cases'][args.selected_case];seed=args.index//2;method=['forward','reverse'][args.index%2]
         train(args.root,cfg,case,seed,method,100000,1048576 if method=='reverse' else 0,'confirm')

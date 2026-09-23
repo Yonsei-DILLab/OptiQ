@@ -182,5 +182,7 @@
     }
   ],
   "confirm_L": 1048576,
-  "confirm_from_initialization": true
+  "confirm_from_initialization": true,
+  "longscreen_steps": 50000,
+  "longscreen_case": "e02"
 }

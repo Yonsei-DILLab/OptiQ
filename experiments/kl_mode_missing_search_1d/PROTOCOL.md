@@ -54,3 +54,17 @@ then independent Slurm case/seed jobs (1 GPU,2CPU), no unrelated run dependencie
 Full params/Adam/RNG checkpoints, signals save safely. Existing L1M study untouched.
 Commit source/config/launch/protocol before execution. SHA+file hashes+jobIDs stored
 beside immutable snapshot. Raw output and checkpoints sync to dildata, not Git.
+
+## Focused follow-up: e02, 50K at screening L (2026-09-24)
+At10K, e02 centers(-4,0,4),h=.5,mean init scale .1 passed selection on both
+screen seeds0,1. Held-out seed3 also fits three peaks; seed2 covers the basins
+but has poor shape (TV .295). All four reverse seeds miss both outer modes.
+Extend ALL four paired seeds from10K to50K at unchanged reverse L1024 to
+check whether the remaining forward shape error resolves and reverse missing
+persists. This is an explicitly exploratory horizon extension, not a changed
+criterion or exclusion of the unsuccessful seed. Seeds0,1 parents are under
+runtime/screen; seeds2,3 under runtime/replicate. Preserve full Adam/RNG and
+record parent source and checkpoint hashes. Same numerical update and parameters.
+Final100K still uses reverse L1048576, with both methods fresh. Pair methods in
+the SAME GPU allocation per seed (forward then reverse) to keep initialization
+hardware identical. Do not initialize full confirmation from screening checkpoints.

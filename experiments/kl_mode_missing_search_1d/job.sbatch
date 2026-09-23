@@ -18,4 +18,5 @@ if [[ ${VALIDATION_ONLY:-0} == 1 ]]; then
 fi
 args=(--root "$STUDY_ROOT" --index "$SLURM_ARRAY_TASK_ID" --stage "${STAGE:-screen}")
 if [[ -n ${SELECTED_CASE:-} ]]; then args+=(--selected-case "$SELECTED_CASE"); fi
+if [[ -n ${PARENT_ROOT:-} ]]; then args+=(--parent-root "$PARENT_ROOT"); fi
 exec "$PY" -m experiments.kl_mode_missing_search_1d.run "${args[@]}"
