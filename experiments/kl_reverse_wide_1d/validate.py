@@ -53,6 +53,9 @@ def main():
     s,lp,_=e.density_score(e.state.params,a,dk,32);s0,lp0=dense_score(a,mu,ls)
     checks['chunk_score_vs_dense']=close(s,s0)
     checks['chunk_log_density_vs_dense']=close(lp,lp0)
+    old_s,old_lp,_=Forward.density_score(e,e.state.params,a,dk,32)
+    checks['prior_recurrence_vs_dense_max_abs_error']=float(np.max(np.abs(np.asarray(old_s-s0))))
+    checks['score_reference_max_abs']=float(np.max(np.abs(np.asarray(s0))))
     checks['score_vs_action_autograd']=close(s0,jax.grad(lambda x:mixture_log_prob(x[None],mu[None],ls[None]).sum())(a))
     def reference(params):
         cm,cl=e.components(params,z);actions=sample_box(ek,cm[idx],cl[idx])
@@ -93,4 +96,3 @@ def main():
 
 
 if __name__=='__main__':main()
-

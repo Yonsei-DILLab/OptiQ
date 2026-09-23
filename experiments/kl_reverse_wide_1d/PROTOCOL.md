@@ -20,6 +20,8 @@ Backpropagate mean_j a_j*d_j only through source actions. The auxiliary density 
 
 Inherit the existing numerical code from kl_forward_wide_1d and enable its reverse branch. Actor,box sampler/density,optimizer initialization,source-action draws,target,and evaluation are not rewritten. Density bank is streamed in chunks4096 (256 chunks); combine sums by log-sum-exp and scores by density-weighted aggregation,never average log densities or per-chunk scores uniformly. All chunks use unchanged pre-update parameters. Chunk size differs from old128 to reduce dispatch overhead at L=2^20; IID estimator semantics are unchanged,but auxiliary random draws differ with partitioning. Same-seed initial actor/Adam/RNG and1024 evaluation samples must equal the completed forward comparator exactly.
 
+The first GPU numerical gate at commit7ab2c09 failed the streamed-vs-dense score tolerance on very-low-density actions before the full-shape benchmark or production. The inherited recurrence reconstructed normalized chunk weights by subtracting large negative log sums,allowing their sum to deviate from one in float32. Replace ONLY this aggregation with running-max-scaled density,score-numerator,and squared-density sums. This computes the same finite-L ratio on identical chunk draws without reconstructing convex weights by log subtraction. Compare directly to dense and the prior recurrence on the same small bank. Existing forward/old reverse source snapshots are untouched.
+
 This evaluates32*1,048,576 additional actor latents and32*128*1,048,576 component-action pairs per update. Full shape GPU benchmarking precedes production. Do not silently lower L,batch,N,M,or total updates for speed. Keep32-bit numerical precision settings consistent with forward. Peak workspace and per-update seconds are recorded.
 
 ## Evaluation and storage
@@ -30,7 +32,7 @@ Training log/stop boundary every5 updates (changed from50 for responsiveness); f
 
 Validate paired initialization/config scope,target derivative,streamed-vs-dense score/density,score-vs-action-autograd,surrogate-vs-direct stopped-bank path gradient,zero auxiliary parameter gradient,and full checkpoint/RNG restoration. CPU correctness tests before deployment; committed full-shape GPU benchmark before four independently eligible production seeds. OneGPU,2CPU,32GB host RAM per seed,three-day scheduler limit,checkpoint signal10minutes before timeout. Existing/deferred jobs are untouched.
 
-Remote:login4:/scratch2/hobbit9882/OptiQ-SingleQ-N64-M256-K64-T025-20260921/extensions/reverse_wide_20260923.
-Central:dildata:/data1/heejoonorm/OptiQ/studies/20260923_reverse_wide/campaign.
+Remote:login4:/scratch2/hobbit9882/OptiQ-SingleQ-N64-M256-K64-T025-20260921/extensions/reverse_wide_20260923/attempt2. The parent retains the failed numerical preflight and its original immutable source.
+Central:dildata:/data1/heejoonorm/OptiQ/studies/20260923_reverse_wide/campaign/attempt2. Backup covers the parent campaign including the failed preflight for provenance.
 Local study:studies/20260923_reverse_wide;report:reports/20260923_reverse_wide.
 Commit exact implementation/config/launch/protocol to heejoon before GPU smoke or training; record full SHA,file manifest,validation,and SlurmIDs. Reuse the existing restricted read-only backup link; no credentials in source or artifacts.
