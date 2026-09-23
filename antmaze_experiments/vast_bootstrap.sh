@@ -9,6 +9,7 @@ export DEBIAN_FRONTEND=noninteractive
 if [ ! -x "$ROOT/venv/bin/python" ]; then
   "$BASE" -m venv --system-site-packages "$ROOT/venv"
 fi
+"$BASE" "$SOURCE/antmaze_experiments/inherit_runtime.py" "$BASE" "$ROOT/venv/bin/python"
 if [ ! -f "$ROOT/runtime-ready.json" ]; then
   apt-get update -qq
   apt-get install -y -qq libosmesa6-dev libgl1-mesa-dev patchelf gcc g++
