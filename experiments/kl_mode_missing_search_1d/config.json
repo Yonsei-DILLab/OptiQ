@@ -1,5 +1,5 @@
 {
-  "study": "20260924_kl_mode_missing_search_round3",
+  "study": "20260924_kl_mode_missing_search_round4",
   "n": 128,
   "m": 128,
   "batch": 32,
@@ -61,117 +61,7 @@
   "confirm_steps": 100000,
   "cases": [
     {
-      "id": "e00",
-      "target_centers": [
-        -3.75,
-        0,
-        3.75
-      ],
-      "target_width": 0.5,
-      "mean_output_init_scale": 0.1
-    },
-    {
-      "id": "e01",
-      "target_centers": [
-        -3.75,
-        0,
-        3.75
-      ],
-      "target_width": 0.5,
-      "mean_output_init_scale": 1
-    },
-    {
-      "id": "e02",
-      "target_centers": [
-        -4,
-        0,
-        4
-      ],
-      "target_width": 0.5,
-      "mean_output_init_scale": 0.1
-    },
-    {
-      "id": "e03",
-      "target_centers": [
-        -4,
-        0,
-        4
-      ],
-      "target_width": 0.5,
-      "mean_output_init_scale": 1
-    },
-    {
-      "id": "e04",
-      "target_centers": [
-        -4,
-        0,
-        4
-      ],
-      "target_width": 0.5,
-      "mean_output_init_scale": 10
-    },
-    {
-      "id": "e05",
-      "target_centers": [
-        -4.25,
-        0,
-        4.25
-      ],
-      "target_width": 0.5,
-      "mean_output_init_scale": 0.1
-    },
-    {
-      "id": "e06",
-      "target_centers": [
-        -4.25,
-        0,
-        4.25
-      ],
-      "target_width": 0.5,
-      "mean_output_init_scale": 1
-    },
-    {
-      "id": "e07",
-      "target_centers": [
-        -4.5,
-        0,
-        4.5
-      ],
-      "target_width": 0.5,
-      "mean_output_init_scale": 0.1
-    },
-    {
-      "id": "e08",
-      "target_centers": [
-        -4.5,
-        0,
-        4.5
-      ],
-      "target_width": 0.5,
-      "mean_output_init_scale": 1
-    },
-    {
-      "id": "e09",
-      "target_centers": [
-        -4.5,
-        0,
-        4.5
-      ],
-      "target_width": 0.5,
-      "mean_output_init_scale": 10
-    },
-    {
-      "id": "e10",
-      "target_centers": [
-        -3,
-        0,
-        3
-      ],
-      "target_width": 0.4,
-      "mean_output_init_scale": 1
-    },
-    {
-      "id": "e11",
+      "id": "f00",
       "target_centers": [
         -3.5,
         0,
@@ -179,6 +69,76 @@
       ],
       "target_width": 0.4,
       "mean_output_init_scale": 1
+    },
+    {
+      "id": "f01",
+      "target_centers": [
+        -3.5,
+        0,
+        3.5
+      ],
+      "target_width": 0.4,
+      "mean_output_init_scale": 0.1
+    },
+    {
+      "id": "f02",
+      "target_centers": [
+        -3.75,
+        0,
+        3.75
+      ],
+      "target_width": 0.4,
+      "mean_output_init_scale": 1
+    },
+    {
+      "id": "f03",
+      "target_centers": [
+        -3.75,
+        0,
+        3.75
+      ],
+      "target_width": 0.45,
+      "mean_output_init_scale": 1
+    },
+    {
+      "id": "f04",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_width": 0.5,
+      "mean_output_init_scale": 2
+    },
+    {
+      "id": "f05",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_width": 0.5,
+      "mean_output_init_scale": 3
+    },
+    {
+      "id": "f06",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_width": 0.5,
+      "mean_output_init_scale": 5
+    },
+    {
+      "id": "f07",
+      "target_centers": [
+        -4.5,
+        0,
+        4.5
+      ],
+      "target_width": 0.5,
+      "mean_output_init_scale": 3
     }
   ],
   "confirm_L": 1048576,
@@ -188,5 +148,12 @@
     "e02",
     "e06",
     "e09"
+  ],
+  "screen_steps": 50000,
+  "screen_seeds": [
+    0,
+    1,
+    2,
+    3
   ]
 }

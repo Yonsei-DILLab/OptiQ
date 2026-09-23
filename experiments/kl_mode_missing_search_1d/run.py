@@ -76,8 +76,8 @@ def main():
     args=p.parse_args();cfg=json.loads(Path(__file__).with_name('config.json').read_text())
     assert jax.default_backend()=='gpu','Never train on login node'
     if args.stage=='screen':
-        case=cfg['cases'][args.index//2];seed=args.index%2
-        for method in ['forward','reverse']:train(args.root,cfg,case,seed,method,10000,1024 if method=='reverse' else 0,'screen')
+        seeds=cfg.get('screen_seeds',[0,1]);case=cfg['cases'][args.index//len(seeds)];seed=seeds[args.index%len(seeds)]
+        for method in ['forward','reverse']:train(args.root,cfg,case,seed,method,cfg.get('screen_steps',10000),1024 if method=='reverse' else 0,'screen')
     elif args.stage=='replicate':
         case=cfg['cases'][args.selected_case];seed=2+args.index
         for method in ['forward','reverse']:train(args.root,cfg,case,seed,method,10000,1024 if method=='reverse' else 0,'replicate')

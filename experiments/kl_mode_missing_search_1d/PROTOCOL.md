@@ -80,3 +80,17 @@ local shape. Reverse had only the central mode in both screen seeds.
 Seeds0,1 resume10K, seeds2,3 start fresh when no parent exists. Both methods
 receive50K total updates; never omit poorly fitting seeds. Choose by all-seed
 peak recovery and distribution error, not just coarse basin coverage.
+
+## Round4: four-seed persistence screen
+Prior follow-ups: e02 reverse recovers in3/4 by50K; e06 forward fails seed2,
+reverse recovers seed3; e09 forward has poor central peak in seeds2/3, reverse
+misses both outer modes in4/4. None is a clean four-seed example. Keep all results.
+Screen eight conditions listed in config.json, ALL seeds0-3,50K updates each,
+reverseL1024. This includes earlier e11 at a longer horizon plus intermediate
+head scales and widths. Fresh initialization for both methods, sameGPU per pair.
+Ranking: forward all4 seeds have three separated peaks and meanTV<.15; reverse
+all4 seeds miss at least one mode. If no condition meets this, report partial
+separation honestly and do not present the best seed as reproducible evidence.
+Same numerical kernels and inherited GPU validations as previous rounds; runner
+only generalizes screen seed/horizon indexing. Final100K reverseL1048576 remains
+freshly initialized. No largeL confirmation is claimed until actually measured.

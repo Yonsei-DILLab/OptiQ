@@ -19,7 +19,9 @@ def main():
     if a.stage=='validate':env['VALIDATION_ONLY']='1';cmd+=['--time=00:30:00']
     else:
         assert json.loads((rt/'GPU_VALIDATION.json').read_text())['passed']
-        if a.stage=='screen':cmd+=['--array=0-23%8']
+        if a.stage=='screen':
+            cfg=json.loads((r/'source/experiments/kl_mode_missing_search_1d/config.json').read_text())
+            jobs=len(cfg['cases'])*len(cfg.get('screen_seeds',[0,1]));cmd+=[f'--array=0-{jobs-1}%8']
         elif a.stage=='replicate':
             assert a.selected_case is not None;cmd+=['--array=0-1%2']
         elif a.stage=='longscreen':
