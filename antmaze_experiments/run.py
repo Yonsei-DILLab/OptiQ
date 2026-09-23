@@ -129,7 +129,16 @@ def main():
     p.add_argument('--task',choices=['v1','v2','v3','v4'],required=True)
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--preflight',action='store_true')
+    p.add_argument('--temperature',type=float)
+    p.add_argument('--budget-steps',type=int)
+    p.add_argument('--final-eval-episodes',type=int,default=100)
     a = p.parse_args()
+    if a.temperature is not None:
+        assert a.method == 'optiq' and a.temperature > 0
+    if a.budget_steps is not None:
+        assert a.budget_steps >= WARMUP + NUM_ENVS
+        assert a.budget_steps % NUM_ENVS == 0
+    assert 1 <= a.final_eval_episodes <= 1000
     root = Path(__file__).resolve().parents[1]
     source = subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
     assert not subprocess.check_output(['git','status','--porcelain','--untracked-files=no'],cwd=root,text=True).strip()
@@ -145,26 +154,34 @@ def main():
     random.seed(0);np.random.seed(0)
     assert torch.cuda.is_available()
     from .learners import Native,JaxLearner,audit
-    learner = (Native if a.method in ('sac','dipo') else JaxLearner)(
-        a.method,(env.single_observation_space,env.single_action_space),a.task,folder)
+    planned_budget = a.budget_steps if a.budget_steps is not None else total_budget(a.task)
+    if a.method in ('sac','dipo'):
+        learner = Native(a.method,(env.single_observation_space,env.single_action_space),a.task,folder)
+    else:
+        learner = JaxLearner(a.method,(env.single_observation_space,env.single_action_space),
+            a.task,folder,temperature=a.temperature,budget=planned_budget)
     initial = audit(learner)
-    budget = PREFLIGHT_STEPS if a.preflight else total_budget(a.task)
+    budget = PREFLIGHT_STEPS if a.preflight else planned_budget
     warmup = WARMUP
     config = dict(source_commit=source,upstream_commit='7edd06c4799abbab0f8fa534c21deb56253b018e',
         method=a.method,task=a.task,seed=0,preflight=a.preflight,steps=budget,
         num_envs=NUM_ENVS,batch_size=4096,updates_per_vector_step=UPDATES,updates_per_transition=1/32,
         expected_updates=expected_updates(budget),warmup_transitions=warmup,
         upstream_max_step=BUDGETS[a.task],native_global_steps=budget-warmup,
-        reward=REWARD,noveld_coefficient=.01,
+        reward=REWARD,noveld_coefficient=.01,temperature=a.temperature,
         native=learner.config,random_init=a.task=='v1',eval_interval=250000,
         eval_num_envs=EVAL_NUM_ENVS,interim_eval_episodes=EVAL_NUM_ENVS,
+        final_eval_episodes=a.final_eval_episodes,
         checkpoint='final only',step_definition='step includes warmup; global_steps excludes warmup as upstream; stop global_steps>max_step',
         evaluation='policy: direct draws, no extra exploration noise; native: SAC mean, MFPO Q-best-of10, OptiQ random-z mu-only, DIPO native diffusion',
         runtime=dict(python=os.sys.version,torch=torch.__version__,numpy=np.__version__))
     write(folder/'config.json',config)
     import wandb
-    run = wandb.init(entity='OptiQ',project='gmm-trg',group=CAMPAIGN,
-        name=f'{a.task}-{a.method}-sparse-s0-env256-b4096-{BUDGETS[a.task]//1000000}m',dir=str(folder),config=config,
+    run_name=(f'{a.task}-{a.method}-T{a.temperature:g}-sparse-s0-{budget}steps'
+        if a.temperature is not None else
+        f'{a.task}-{a.method}-sparse-s0-env256-b4096-{BUDGETS[a.task]//1000000}m')
+    run = wandb.init(entity='OptiQ',project='gmm-trg',group=os.environ.get('OPTIQ_CAMPAIGN',CAMPAIGN),
+        name=run_name,dir=str(folder),config=config,
         mode='disabled' if a.preflight else os.environ.get('WANDB_MODE','online'))
     if not a.preflight:
         offline=os.environ.get('WANDB_MODE','online')=='offline'
@@ -220,7 +237,7 @@ def main():
             for fixed in (False,True):
                 t=time.monotonic()
                 label=mode+('-fixed' if fixed else '-natural')
-                summaries[label]=evaluate(learner,a.task,folder,step,2 if a.preflight else 100,mode,fixed)
+                summaries[label]=evaluate(learner,a.task,folder,step,2 if a.preflight else a.final_eval_episodes,mode,fixed)
                 timing['evaluation']+=time.monotonic()-t
         result=dict(completed=True,source_commit=source,method=a.method,task=a.task,
             steps=step,global_steps=step-warmup,updates=learner.updates,rnd_updates=learner.intrinsic.update_step,

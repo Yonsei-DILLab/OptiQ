@@ -19,6 +19,12 @@ def job(root, identifier, gpu):
         target=root/phase/identifier
         cmd=['bash',str(source/'antmaze_experiments/launch.sh'),
              '--method',entry['method'],'--task',entry['task'],'--output',str(target)]
+        if 'temperature' in entry:
+            cmd.extend(['--temperature',str(entry['temperature'])])
+        if 'steps' in entry and phase != 'preflight':
+            cmd.extend(['--budget-steps',str(entry['steps'])])
+        if 'final_eval_episodes' in entry:
+            cmd.extend(['--final-eval-episodes',str(entry['final_eval_episodes'])])
         if phase=='preflight':cmd.append('--preflight')
         write(root/'jobs'/f'{identifier}.json',dict(**entry,gpu=gpu,pid=os.getpid(),phase=phase,status='running'))
         with (root/'logs'/f'{identifier}-{phase}.log').open('x') as log:
@@ -28,7 +34,7 @@ def job(root, identifier, gpu):
             return result.returncode
         proof=json.loads((target/'result.json').read_text())
         assert proof['completed'] and proof['source_commit']==manifest['source_commit']
-        expected=PREFLIGHT_STEPS if phase=='preflight' else total_budget(entry['task'])
+        expected=PREFLIGHT_STEPS if phase=='preflight' else entry.get('steps',total_budget(entry['task']))
         assert proof['steps']==expected and proof['updates']==expected_updates(expected)
         assert proof['checkpoint']['sparse_replay_verified']
         config=json.loads((target/'config.json').read_text())

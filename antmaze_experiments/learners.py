@@ -115,12 +115,12 @@ class SpaceOnlyEnv:
 
 
 class JaxLearner:
-    def __init__(self, method, spaces, task, folder):
+    def __init__(self, method, spaces, task, folder, temperature=None, budget=None):
         import jax
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
         self.method, self.updates = method, 0
-        self.budget = total_budget(task)
+        self.budget = total_budget(task) if budget is None else budget
         self.replay = ReplayBuffer(1000000, (29,), 8, device='cuda')
         self.intrinsic = IntrinsicM((29,), env_name='antmaze-'+task,
                                    normalize=False, pos_enc=True, L=10)
@@ -131,9 +131,12 @@ class JaxLearner:
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             from omegaconf import OmegaConf
-            cfg = module.compose_config(['benchmark=ant', 'seed=0',
+            overrides = ['benchmark=ant', 'seed=0',
                 'alg.actor.mean_output_init_scale=1.0', 'dacer.enabled=true',
-                'dacer.noise_scale=0.1', f'output_root={folder}'])
+                'dacer.noise_scale=0.1', f'output_root={folder}']
+            if temperature is not None:
+                overrides.append(f'alg.actor.temperature={temperature}')
+            cfg = module.compose_config(overrides)
             cfg.env_name = 'DDiffPG-' + task + '-upstream-sparse'
             cfg.task = 'antmaze'
             cfg.alg.batch_size = BATCH
