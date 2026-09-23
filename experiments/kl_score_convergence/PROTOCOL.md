@@ -62,3 +62,7 @@ Checkpoint별임계값과모든checkpoint를포괄하는최대임계값을제시
 login4실험폴더: /scratch2/hobbit9882/OptiQ-SingleQ-N64-M256-K64-T025-20260921/extensions/kl_score_convergence_20260923
 중앙보관: dildata:/data1/heejoonorm/OptiQ/studies/20260923_kl_score_convergence/campaign
 로컬보고서: reports/20260923_kl_score_convergence/report.md 및 figures.
+
+## Reference 추가 해상도 검사
+
+초기분석에서일부actor가131072quadraturenodes까지엄격한reference안정성조건을통과하지못했다. 판정tolerance는변경하지않는다. 해당actor에만quadraturenodes262144,524288,1048576,2097152,4194304,8388608을차례로추가한다. 원래MCbank/action/actor/score측정은전부그대로재사용한다. 정밀화reference로오차와최소L만다시계산하고runtime/refined_results에보관한다. 초기자료는runtime/results에그대로남긴다. 원래reference가통과한actor는재계산하지않는다. Reference2회연속안정성은동일하게유지하며추가최대범위에서도실패하면미확정으로남긴다. 후처리commit과원본MC파일SHA를별도REFINEMENT.json에기록한다.
