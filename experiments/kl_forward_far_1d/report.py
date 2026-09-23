@@ -79,7 +79,7 @@ def main():
 | Mean head initialization | variance scaling 1; 초기화만 변경하며 매 update의 별도 multiplier가 아님 |
 | Conditional sigma | log sigma ∈ [-5,-1], 초기 sigma = exp(-1); 물리 단위 유지 |
 | N=M | 64,128,256,512 |
-| Batch / seeds | 32개의 독립 OT 없는 그룹 / 0–3 |
+| Batch / seeds | 32개의 독립 후보 추정 그룹 / 0–3 |
 | 학습 | 20K updates, Adam 3e-4, hidden256×256 GELU, latent 1D normal |
 | Energy / temperature | Q(a)=0.25 log f(a), tau=0.25 |
 | Forward loss | 동일한 finite-mixture proposal에서 추출한 후보에 exp(Q/tau)/proposal weight를 주고 marginal NLL 학습 |
@@ -118,12 +118,23 @@ Histogram TV는 모든 bin의 확률 차이 절댓값 합의 절반이다. Basin
 
 시점은 0,100,500,1000,2000,5000,10000,20000 updates에서만 관찰한다. ‘유지’는 최소 두 저장 시점에 걸쳐 이후 모두 통과한 경우다. 저장 사이의 transient 회복·붕괴까지 검증한 것은 아니다.
 
+## 초기 proposal과 해석 시 주의점
+
+Mean head scale을 1로 바꾸어도 초기 actor가 세 target mode를 덮는다는 보장은 없다. 실제 고정 평가 latent에서 관찰한 초기 mean 범위와 action 범위를 확인한다. 이번 코드에서 N은 학습 시 매번 뽑는 latent 수이므로 N을 늘리는 것 자체가 초기 network의 분포를 넓히지는 않는다.
+
+이 실험은 actor 자체의 proposal에서 candidate를 뽑는다. 매우 멀리 있는 mode의 후보가 드물면 정확한 Q를 알고 있어도 finite-sample importance weighting에는 그 mode 정보가 충분히 들어오지 않는다. 따라서 최종 fitting의 실패를 모두 student NLL 최적화 문제로 단정할 수 없다. 별도 저장한 teacher probe는 평가 시점마다 독립적인 한 그룹의 진단이므로, 전체 학습 teacher의 평균으로 해석하지 않는다.
+
 ## 보관 및 한계
 
 학습 commit: `1153ff9a797173681a980fffea6f2e75414fe40d`, Slurm `2314650` array0–15. Source, config, 전체 actor·Adam·RNG checkpoint, sample 및 독립 teacher probe는 `dildata:/data1/heejoonorm/OptiQ/studies/20260923_forward_far/campaign`에 보관한다.
 
 Mean bound 변경, mode 간격 확대, 작은 mode 폭 유지가 함께 적용된 fixed-Q 실험이다. 이전 실험과의 차이를 mean initialization 하나의 효과로 해석할 수 없다. N과 M도 함께 늘렸으므로 두 효과를 분리하지 않는다.
 '''
+    init_rows=[]
+    for s,v in enumerate(data[64]):
+        initial=np.load(v['path']/'samples_00000.npz')
+        init_rows.append(f'| {s} | {initial["mu"].min():.3f} ~ {initial["mu"].max():.3f} | {initial["actions"].min():.3f} ~ {initial["actions"].max():.3f} |')
+    md=md.replace('## 초기 proposal과 해석 시 주의점\n','## 초기 proposal과 해석 시 주의점\n\n같은 seed의 초기 파라미터는 N에 의존하지 않는다. 아래는 N=64의 초기 평가 샘플 32,768개에서 관찰한 범위이며, 분포의 수학적 support 범위는 아니다.\n\n| Seed | 초기 conditional mean의 관측 범위 | 초기 action의 관측 범위 |\n|---|---|---|\n'+'\n'.join(init_rows)+'\n')
     (a.out/'report.md').write_text(md)
     (a.out/'AGGREGATE.json').write_text(json.dumps(dict(stats=stats,runs=records),indent=2)+'\n')
     h='<html lang="ko"><meta charset="utf-8"><title>Forward distant modes</title><style>body{font-family:system-ui;max-width:1400px;margin:40px auto;line-height:1.7;color:#243047}img{width:100%}pre{white-space:pre-wrap;font-family:inherit;background:#f5f7fa;padding:20px}</style><body><h1>Forward KL: (-10, 0, 10)</h1><p>'+html.escape(summary)+'</p>'
