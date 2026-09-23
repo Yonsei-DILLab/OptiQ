@@ -1,0 +1,15 @@
+# Forward128x128: modes(-5,0,5), target standard deviation1,100K updates
+
+User requested a new forward run with N=M128,target centers(-5,0,5),target width1,and100K total updates. Width means each target Gaussian's standard deviation. Use fresh random initialization for seeds0–3,not the previous20K/100K checkpoints. Target mixture has equal weights and is restricted to the user-selected action box[-10,10]. Q(a)=0.25 log f(a),temperature0.25. Preserve existing100K continuation jobs/results independently.
+
+Other actor/training settings are retained:mean initializer variance scale1,mu=10*tanh(head),conditional log sigma bounds[-5,-1] and initial-1,proposal floor exp(-5),256x256 GELU,1D normal latent,zero state,batch32,Adam3e-4. Target width1 does NOT change actor conditional sigma bounds. N128 latent conditionals,M128 IID draws from their equally weighted truncated-Gaussian mixture,stopped importance teacher softmax(Q/tau-log proposal),weighted marginal NLL. No OT,mode masks,teacher target samples,or learned critic.
+
+Relative to kl_forward_far_1d,change target centers/width and action/mean bound20->10. Copy the numerical package into a new namespace and adjust actor mean10*tanh(head),box inverse-CDF sampler,normalizers,and support consistently. The marginal NLL definition remains identical. This also halves the initial physical means and their parameter Jacobian relative to mean20*tanh(head); do not describe it as changing support only. Run fresh for100K. Evaluation schedule0,100,500,1K,2K,5K,7.5K,10K,then every5K through100K. Save full actor/Adam/RNG checkpoint every500 updates.
+
+Evaluation:32768 actual policy samples,unsmoothed histograms. Use512 equal bins over[-10,10] (width0.0390625) suited to width1 modes. This measurement binning differs from the prior narrow-mode4096-bin report; do not compare raw histogram TV between targets as an isolated algorithm improvement. Include exact analytic target overlay and per-seed curves. Correct basin boundaries are[-10,-2.5,2.5,10]. Three-peak diagnostic uses centers+-1 core windows and midpoint+-1 valley windows. Require all core masses>=half their target core mass and valley/core ratios<=.5,as the earlier width-relative rule. Validate that the exact target passes before launch. Report actual masses and histograms,not just the pass flag.
+
+Validate target normalization,three peak positions,energy formula,finite forward loss/gradients,and exact coordinate-change consistency of actor/sampler/density with the prior box;check that marginal NLL definition is unchanged. Commit source/config/job/protocol before launching to heejoon. Four independent Slurm tasks,1GPU2CPU16GB,at most4 concurrent,one-hour walltime. Store full source manifest,run IDs and checksums. No numerical edits to older snapshots.
+
+Remote:login4:/scratch2/hobbit9882/OptiQ-SingleQ-N64-M256-K64-T025-20260921/extensions/forward_wide_20260923.
+Central:dildata:/data1/heejoonorm/OptiQ/studies/20260923_forward_wide/campaign.
+Local report:reports/20260923_forward_wide.
