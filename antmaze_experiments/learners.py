@@ -181,10 +181,10 @@ class JaxLearner:
             from .optiq_profile import verify_profile
             verify_profile(self, folder)
         else:
+            from .dependencies import load_mfpo_config
+            self.config = load_mfpo_config(ROOT).to_dict()
             sys.path.insert(0, str(ROOT/'gmm40-baseline/MFPO'))
-            from configs.mfpo_config import get_config
             from jaxrl5.agents.mean_flow_learner import MeanFlowLearner
-            self.config = get_config().to_dict()
             self.config.pop('model_cls')
             for space in spaces:
                 space.seed(0)

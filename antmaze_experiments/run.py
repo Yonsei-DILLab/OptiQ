@@ -162,6 +162,8 @@ def main():
     if a.save_intermediate_policy:
         assert a.method == 'optiq', 'Intermediate policy saving is currently OptiQ-only'
     root = Path(__file__).resolve().parents[1]
+    from .dependencies import verify_dependencies
+    dependencies = verify_dependencies(root, (a.method,))
     source = subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
     assert not subprocess.check_output(['git','status','--porcelain','--untracked-files=no'],cwd=root,text=True).strip()
     folder=a.output; folder.mkdir(parents=True,exist_ok=False)
@@ -190,6 +192,7 @@ def main():
     warmup = WARMUP
     config = dict(source_commit=source,upstream_commit='7edd06c4799abbab0f8fa534c21deb56253b018e',
         method=a.method,task=a.task,seed=0,preflight=a.preflight,steps=budget,
+        source_dependencies=dependencies,
         wandb_entity=WANDB_ENTITY,wandb_project=WANDB_PROJECT,
         num_envs=NUM_ENVS,batch_size=4096,updates_per_vector_step=UPDATES,updates_per_transition=1/32,
         expected_updates=expected_updates(budget),warmup_transitions=warmup,

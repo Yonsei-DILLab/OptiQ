@@ -9,12 +9,14 @@ import sys
 import time
 from .run import write, CAMPAIGN
 from .settings import REWARD, DENSE_REWARD, NUM_ENVS, PREFLIGHT_STEPS, total_budget, expected_updates
+from .dependencies import verify_dependencies
 
 
 def job(root, identifier, gpu):
     manifest=json.loads((root/'manifest.json').read_text())
     entry=next(j for j in manifest['jobs'] if j['id']==identifier)
     source=Path(manifest['source'])
+    verify_dependencies(source, (entry['method'],))
     for phase in ('preflight','runs'):
         target=root/phase/identifier
         cmd=['bash',str(source/'antmaze_experiments/launch.sh'),
@@ -81,6 +83,7 @@ def controller(root):
     manifest=json.loads((root/'manifest.json').read_text())
     source=Path(manifest['source'])
     assert subprocess.check_output(['git','rev-parse','HEAD'],cwd=source,text=True).strip()==manifest['source_commit']
+    verify_dependencies(source, {entry['method'] for entry in manifest['jobs']})
     pending=list(manifest['jobs']);live={};completed=[];failed=[]
     for directory in ('jobs','logs','preflight','runs'): (root/directory).mkdir(exist_ok=True)
     if (root/'status.json').exists():raise RuntimeError('Existing controller state: do not restart automatically')

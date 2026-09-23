@@ -6,6 +6,7 @@ import subprocess
 import time
 
 from .settings import total_budget
+from .dependencies import prepare_dependencies
 
 
 def main():
@@ -44,6 +45,7 @@ def main():
                   num_envs=256,batch_size=4096,updates_per_vector_step=8,
                   reward_profile='dense',noveld_enabled=False,seed=0)
     manifest['evaluation_starts']='xy uniform[-2,2] per episode, all mazes; training reset settings unchanged'
+    manifest['source_dependencies'] = prepare_dependencies(source, {method for _, method in pairs})
     root.mkdir()
     (root/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     conf=Path('/home/heechan/OptiQ-ops/supervisor/jobs')/(name+'.conf')

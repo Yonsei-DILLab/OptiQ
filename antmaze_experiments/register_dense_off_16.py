@@ -6,6 +6,7 @@ import subprocess
 import time
 
 from .settings import total_budget, WANDB_ENTITY, WANDB_PROJECT
+from .dependencies import prepare_dependencies, verify_dependencies
 
 CAMPAIGN = 'antmaze-dense-off-16-current-s0-20260924'
 HOSTS = {0: 'vast-heechan-180', 1: 'vast-heechan-199'}
@@ -60,12 +61,14 @@ def main():
                                        cwd=source, text=True).strip()
     manifest = campaign_manifest(source, sha, args.shard)
     if args.dry_run:
+        manifest['source_dependencies'] = verify_dependencies(source, ('mfpo',))
         print(json.dumps(manifest, indent=2))
         return
     root = Path('/home/heechan/optiq-experiments') / CAMPAIGN
     conf = Path('/home/heechan/OptiQ-ops/supervisor/jobs') / (CAMPAIGN + '.conf')
     assert not root.exists(), root
     assert not conf.exists(), conf
+    manifest['source_dependencies'] = prepare_dependencies(source, ('mfpo',))
     root.mkdir()
     (root / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     conf.write_text(f'''[program:{CAMPAIGN}]
