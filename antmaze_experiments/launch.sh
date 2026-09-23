@@ -11,5 +11,5 @@ export PYTHONWARNINGS=ignore
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 export XLA_PYTHON_CLIENT_PREALLOCATE=false
 export MPLBACKEND=Agg PYTHONUNBUFFERED=1
-export WANDB_PROJECT=gmm-trg WANDB_ENTITY=OptiQ
+export WANDB_PROJECT=antmaze WANDB_ENTITY=OptiQ
 exec /home/heechan/.venv-ddiffpg-native/bin/python -m antmaze_experiments.run "$@"

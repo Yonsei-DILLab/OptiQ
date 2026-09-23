@@ -11,7 +11,7 @@ import traceback
 import numpy as np
 
 from .settings import (CAMPAIGN, BUDGETS, REWARD, DENSE_REWARD, NUM_ENVS, EVAL_NUM_ENVS, UPDATES, WARMUP,
-                       PREFLIGHT_STEPS, total_budget, expected_updates)
+                       PREFLIGHT_STEPS, total_budget, expected_updates, WANDB_ENTITY, WANDB_PROJECT)
 
 
 def write(path, value):
@@ -190,6 +190,7 @@ def main():
     warmup = WARMUP
     config = dict(source_commit=source,upstream_commit='7edd06c4799abbab0f8fa534c21deb56253b018e',
         method=a.method,task=a.task,seed=0,preflight=a.preflight,steps=budget,
+        wandb_entity=WANDB_ENTITY,wandb_project=WANDB_PROJECT,
         num_envs=NUM_ENVS,batch_size=4096,updates_per_vector_step=UPDATES,updates_per_transition=1/32,
         expected_updates=expected_updates(budget),warmup_transitions=warmup,
         upstream_max_step=BUDGETS[a.task],native_global_steps=budget-warmup,
@@ -210,12 +211,13 @@ def main():
     import wandb
     temp_name=f'-T{a.temperature:g}' if a.temperature is not None else ''
     run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s0-{budget}steps'
-    run = wandb.init(entity='OptiQ',project='gmm-trg',group=os.environ.get('OPTIQ_CAMPAIGN',CAMPAIGN),
+    run = wandb.init(entity=WANDB_ENTITY,project=WANDB_PROJECT,group=os.environ.get('OPTIQ_CAMPAIGN',CAMPAIGN),
         name=run_name,dir=str(folder),config=config,
         mode='disabled' if a.preflight else os.environ.get('WANDB_MODE','online'))
     if not a.preflight:
         offline=os.environ.get('WANDB_MODE','online')=='offline'
         write(folder/'wandb.json',dict(id=run.id,url=None if offline else run.url,
+            entity=WANDB_ENTITY,project=WANDB_PROJECT,
             mode='offline' if offline else 'online',sync_pending=offline))
     rng=np.random.default_rng(0);step=0;started=time.monotonic();next_eval=250000
     timing=dict(collection=0.,learner=0.,evaluation=0.,checkpoint=0.)

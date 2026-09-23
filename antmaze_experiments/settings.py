@@ -1,5 +1,7 @@
 """Official sparse/NovelD baseline profile, with native256-env accounting."""
 CAMPAIGN = 'antmaze-upstream-sparse256-nativebudget-s0-20260923'
+WANDB_ENTITY = 'OptiQ'
+WANDB_PROJECT = 'antmaze'
 BUDGETS = dict(v1=3000000, v2=3000000, v3=4000000, v4=5000000)
 REWARD = 'unchanged upstream sparse reward:0 except goal bonus10 or20'
 DENSE_REWARD = 'negative Euclidean distance from next xy to nearest goal; no sparse bonus'

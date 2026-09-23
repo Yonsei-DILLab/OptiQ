@@ -123,3 +123,11 @@ evaluation-only policy checkpoints, and retain final100 episodes/full-state save
 Preserve256env,batch4096,8updates/256transitions and native3M/3M/4M/5M budgets.
 The four jobs use server180; server199 receives source only. Do not launch
 baselines/extra seeds or resume cancelled campaigns. See SPARSE_T001_PROTOCOL.md.
+
+User logging separation (2026-09-23, latest): all AntMaze runs belong to
+W&B OptiQ/antmaze, including historical runs moved from OptiQ/gmm-trg. Use
+antmaze_experiments/settings.py logging constants for new online and offline
+uploads. Preserve run IDs, metrics, local logs, frozen source and checkpoints;
+record relocated URLs in separate metadata. Do not restart training to change
+the project. Other benchmarks keep their existing projects. See
+antmaze_experiments/WANDB_PROJECT.md.

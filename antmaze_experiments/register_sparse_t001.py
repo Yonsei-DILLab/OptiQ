@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 import time
 
-from .settings import total_budget
+from .settings import total_budget, WANDB_ENTITY, WANDB_PROJECT
 
 CAMPAIGN = 'antmaze-sparse-noveld-t001-optiq-s0-20260923'
 
@@ -27,7 +27,8 @@ def main():
                steps=total_budget(task),interim_eval_episodes=40,final_eval_episodes=100,
                save_intermediate_policy=True) for task in ('v1','v2','v3','v4')]
     manifest=dict(campaign=CAMPAIGN,source=str(source),source_commit=sha,
-                  host=args.host,wandb_mode='online',jobs=jobs,seed=0,
+                  host=args.host,wandb_mode='online',wandb_entity=WANDB_ENTITY,
+                  wandb_project=WANDB_PROJECT,jobs=jobs,seed=0,
                   num_envs=256,batch_size=4096,updates_per_vector_step=8,
                   reward_profile='sparse',noveld_enabled=True,noveld_coefficient=.01,
                   temperature=.01,log_std_min=-5.,log_std_max=-1.,initial_log_std=-1.,

@@ -7,6 +7,7 @@ import subprocess
 import sys
 import time
 from .run import write
+from .settings import WANDB_ENTITY, WANDB_PROJECT
 
 
 def main():
@@ -36,11 +37,12 @@ def main():
                 candidates=list((run/'wandb').glob('offline-run-*'))
                 assert len(candidates)==1
                 with (root/'wandb-sync.log').open('a') as log:
-                    subprocess.run([sys.executable,'-m','wandb','sync','--entity','OptiQ',
-                        '--project','gmm-trg',str(candidates[0])],check=True,timeout=180,
+                    subprocess.run([sys.executable,'-m','wandb','sync','--entity',WANDB_ENTITY,
+                        '--project',WANDB_PROJECT,str(candidates[0])],check=True,timeout=180,
                         stdout=log,stderr=subprocess.STDOUT)
                 synced[identifier]=dict(id=info['id'],time=time.time(),
-                    url=f"https://wandb.ai/OptiQ/gmm-trg/runs/{info['id']}")
+                    entity=WANDB_ENTITY,project=WANDB_PROJECT,
+                    url=f"https://wandb.ai/{WANDB_ENTITY}/{WANDB_PROJECT}/runs/{info['id']}")
                 write(run/'wandb-synced.json',synced[identifier])
             except (OSError,subprocess.SubprocessError,AssertionError) as error:
                 with (root/'wandb-sync.log').open('a') as log:

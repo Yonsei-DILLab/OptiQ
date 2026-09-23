@@ -7,7 +7,7 @@ import sys
 import copy
 import numpy as np
 import torch
-from .settings import BUDGETS, NUM_ENVS, UPDATES, WARMUP, total_budget, DIPO_DENSE_V_MIN
+from .settings import BUDGETS, NUM_ENVS, UPDATES, WARMUP, total_budget, DIPO_DENSE_V_MIN, WANDB_ENTITY, WANDB_PROJECT
 from .numerics import DisabledIntrinsic, stable_dipo_class
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -154,6 +154,8 @@ class JaxLearner:
             cfg = module.compose_config(overrides)
             cfg.env_name = 'DDiffPG-' + task + '-upstream-' + reward_profile
             cfg.task = 'antmaze'
+            cfg.wandb.entity = WANDB_ENTITY
+            cfg.wandb.project = WANDB_PROJECT
             cfg.alg.batch_size = BATCH
             cfg.alg.learning_starts = WARMUP
             cfg.alg.actor.learning_starts = WARMUP
