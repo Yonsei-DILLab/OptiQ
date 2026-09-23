@@ -15,6 +15,12 @@ class Experiment(ForwardExperiment):
         super().__init__(cfg, 'forward', 0, seed)
         self.method, self.L = method, int(L)
 
+    def density_components(self, params, z):
+        # Preserve default-precision source actions exactly as in forward; only
+        # density-bank MLP evaluation needs consistent full-float32 dot products.
+        with jax.default_matmul_precision('highest'):
+            return self.components(params, z)
+
     def density_score(self, params, a, key, L):
         """Stream the SAME IID bank with max-scaled sums, avoiding log cancellation.
 
@@ -29,7 +35,7 @@ class Experiment(ForwardExperiment):
         def block(carry,index):
             peak,total,numerator,squared=carry
             z=jax.random.normal(jax.random.fold_in(key,index),(chunk,1))
-            mu,ls=self.components(params,z)
+            mu,ls=self.density_components(params,z)
             ell=component_log_prob(a[None],mu[None],ls[None])[0]
             local_peak=jnp.max(ell,axis=0)
             mass=jnp.exp(ell-local_peak[None])

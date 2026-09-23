@@ -49,18 +49,14 @@ def main():
     aux=jnp.concatenate([jax.random.normal(jax.random.fold_in(dk,i),(8,1)) for i in range(4)])
     a=jnp.linspace(-9.7,9.7,31)[:,None]
     checks['target_gradient']=close(target_score(a),jax.grad(lambda x:log_f(x).sum())(a))
-    mu,ls=e.components(e.state.params,aux)
+    mu,ls=e.density_components(e.state.params,aux)
     s,lp,_=e.density_score(e.state.params,a,dk,32);s0,lp0=dense_score(a,mu,ls)
-    # Dense and scan paths compile the actor/pdf with different shapes/fusions.
-    # Far outside the initialized policy, float32 log-pdf rounding changes the
-    # posterior score more than in the region receiving sampled gradients.
-    # Keep the strict check in the policy-density region and separately bound
-    # the relative full-support discrepancy (including near-zero-density tails).
+    # Record typical and far-tail errors, with the original strict tolerance.
     error=np.abs(np.asarray(s-s0)).ravel()
     typical=np.asarray(lp0)>-15.
     assert typical.any()
     checks['chunk_score_vs_dense_typical']=close(np.asarray(s)[typical],np.asarray(s0)[typical])
-    checks['chunk_score_vs_dense_full_support']=close(s,s0,2e-4)
+    checks['chunk_score_vs_dense_full_support']=close(s,s0)
     checks['score_comparison_points']={'actions':np.asarray(a).ravel().tolist(),'log_density':np.asarray(lp0).tolist(),'abs_error':error.tolist()}
     checks['chunk_log_density_vs_dense']=close(lp,lp0)
     old_s,old_lp,_=Forward.density_score(e,e.state.params,a,dk,32)
@@ -69,7 +65,7 @@ def main():
     checks['score_vs_action_autograd']=close(s0,jax.grad(lambda x:mixture_log_prob(x[None],mu[None],ls[None]).sum())(a))
     def reference(params):
         cm,cl=e.components(params,z);actions=sample_box(ek,cm[idx],cl[idx])
-        am,al=e.components(jax.tree_util.tree_map(jax.lax.stop_gradient,params),aux)
+        am,al=e.density_components(jax.tree_util.tree_map(jax.lax.stop_gradient,params),aux)
         return (mixture_log_prob(actions[None],am[None],al[None])[0]-q_value(actions)/cfg['temperature']).mean()
     grad=jax.grad(lambda params:e.group_loss(params,key)[0])(e.state.params)
     checks['surrogate_gradient_vs_direct_detached_density']=close(flat(grad),flat(jax.grad(reference)(e.state.params)),1e-4)
