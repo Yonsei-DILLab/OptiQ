@@ -16,18 +16,22 @@ Same initialization and source/action RNG for paired methods, auxiliary bank ind
 Use the validated highest-precision density-bank MLP and max-scaled streaming score.
 Forward has no L; reverse has finite-L ratio bias, so conclusions are about these estimators.
 
-## Search grid, round 2 (config.json authoritative)
-Round 1 did not yield a reproducible strict separation at 10K. Preserve all its results.
-Motivation for round 2: high mean-head initializer scales create skewed/saturated
-initial action distributions; test whether forward rebalances modes that reverse retains poorly.
-No sigma/lr/proposal/batch changes.
-- centers (-3.5,0,3.5), h=.5, scale {10,100}
-- centers (-5,0,5), h=.5, scale {1,10,100}
-- centers (-5,0,5), h=1, scale {10,100}
-- centers (-2.5,0,2.5), h=.5, scale {10,100}
-- centers (0,3,6), h=.5, scale {1,10,100}
+## Search grid, round 3 (config.json authoritative)
+Rounds1/2: 24 cases,96 runs at10K yielded no reproducible strict separation.
+Refine the transition between d=3.5,h=.5,scale1 (both fit) and d=5,h=.5,
+scale1/10 (both lose outer modes). Do not discard the no-gap cases.
+- d=3.75,h=.5, scale {.1,1}
+- d=4,h=.5, scale {.1,1,10}
+- d=4.25,h=.5, scale {.1,1}
+- d=4.5,h=.5, scale {.1,1,10}
+- d=3 and3.5,h=.4, scale1
+Equal-mixture centers (-d,0,d), box [-10,10].
 Q=.25*log(mean_k Normal(a;center_k,h^2)); normalize target over [-10,10].
-12 cases x 2 methods x 2 seeds(0,1), 10K updates. Log/evaluate 0,1K,5K,10K.
+12 cases x2 methods x2 seeds(0,1),10K updates. Log/evaluate0,1K,5K,10K.
+Numerical source is unchanged from round2. Reuse its passed GPU gradient/score
+validation after verifying identical source hashes; validate new target settings
+on CPU. PRO6000 additionally passed the full GPU checks and may be used alongside
+3090/4090 nodes; record device per run. No CPU fallback.
 
 ## Selection and confirmation
 32768 actual actor actions; 512 equal bins on [-10,10], no KDE or smoothed density.
