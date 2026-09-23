@@ -8,7 +8,7 @@ import subprocess
 import sys
 import time
 from .run import write, CAMPAIGN
-from .settings import REWARD, NUM_ENVS, PREFLIGHT_STEPS, total_budget, expected_updates
+from .settings import REWARD, DENSE_REWARD, NUM_ENVS, PREFLIGHT_STEPS, total_budget, expected_updates
 
 
 def job(root, identifier, gpu):
@@ -25,6 +25,8 @@ def job(root, identifier, gpu):
             cmd.extend(['--budget-steps',str(entry['steps'])])
         if 'final_eval_episodes' in entry:
             cmd.extend(['--final-eval-episodes',str(entry['final_eval_episodes'])])
+        for key in ('reward_profile','noveld'):
+            if key in entry:cmd.extend(['--'+key.replace('_','-'),str(entry[key])])
         if phase=='preflight':cmd.append('--preflight')
         write(root/'jobs'/f'{identifier}.json',dict(**entry,gpu=gpu,pid=os.getpid(),phase=phase,status='running'))
         with (root/'logs'/f'{identifier}-{phase}.log').open('x') as log:
@@ -36,9 +38,12 @@ def job(root, identifier, gpu):
         assert proof['completed'] and proof['source_commit']==manifest['source_commit']
         expected=PREFLIGHT_STEPS if phase=='preflight' else entry.get('steps',total_budget(entry['task']))
         assert proof['steps']==expected and proof['updates']==expected_updates(expected)
-        assert proof['checkpoint']['sparse_replay_verified']
+        assert proof['checkpoint']['environment_reward_verified']
         config=json.loads((target/'config.json').read_text())
-        assert config['reward']==REWARD and config['num_envs']==NUM_ENVS and config['batch_size']==4096
+        reward=REWARD if entry.get('reward_profile','sparse')=='sparse' else DENSE_REWARD
+        assert config['reward']==reward and config['num_envs']==NUM_ENVS and config['batch_size']==4096
+        assert config['noveld_enabled']==(entry.get('noveld','on')=='on')
+        assert proof['rnd_updates']==(proof['updates'] if config['noveld_enabled'] else 0)
     write(root/'jobs'/f'{identifier}.json',dict(**entry,gpu=gpu,status='completed'))
     return 0
 

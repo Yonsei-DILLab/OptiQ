@@ -10,7 +10,7 @@ import time
 import traceback
 import numpy as np
 
-from .settings import (CAMPAIGN, BUDGETS, REWARD, NUM_ENVS, EVAL_NUM_ENVS, UPDATES, WARMUP,
+from .settings import (CAMPAIGN, BUDGETS, REWARD, DENSE_REWARD, NUM_ENVS, EVAL_NUM_ENVS, UPDATES, WARMUP,
                        PREFLIGHT_STEPS, total_budget, expected_updates)
 
 
@@ -30,7 +30,8 @@ def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
     destination.mkdir(parents=True, exist_ok=True)
     paths, returns, goals, lengths, starts = [], [], [], [], []
     with evaluation_rng(learner, 700000 + step):
-        env = vector(task, count, seed=87231, asynchronous=False, fixed=fixed)
+        env = vector(task, count, seed=87231, asynchronous=False, fixed=fixed,
+                     reward_profile=learner.reward_profile)
         try:
             for batch in range((episodes+count-1)//count):
                 obs = env.reset(); active = np.arange(count)+batch*count < episodes
@@ -85,8 +86,9 @@ def checkpoint(learner, env, obs, folder, step, rng, config):
     state = dict(config=config,step=step,updates=learner.updates,learner=learner.state(),
         replay=replay,replay_metadata=dict(next_p=memory.next_p,if_full=memory.if_full,
             cur_capacity=memory.cur_capacity,total_samples=memory.total_samples),
-        intrinsic=dict(model=intrinsic.rnd_model.state_dict(),
-            optimizer=intrinsic.rnd_optimizer.state_dict(),updates=intrinsic.update_step),
+        intrinsic=(dict(model=intrinsic.rnd_model.state_dict(),
+            optimizer=intrinsic.rnd_optimizer.state_dict(),updates=intrinsic.update_step)
+            if learner.noveld_enabled else dict(enabled=False,updates=0)),
         env_states=env.call('state'),observations=obs,behavior_rng=rng.bit_generator.state,
         python_rng=random.getstate(),numpy_rng=np.random.get_state(),
         torch_rng=torch.get_rng_state(),cuda_rng=torch.cuda.get_rng_state_all())
@@ -106,19 +108,27 @@ def checkpoint(learner, env, obs, folder, step, rng, config):
     reference.close()
     positions=loaded['replay']['buf_next_obs'][:,:2].numpy()
     distances=np.linalg.norm(positions[:,None,:]-target_goals[None,:,:],axis=-1)
-    expected=np.zeros(len(positions),np.float32)
-    for goal in reversed(target_goals):
-        reached=np.linalg.norm(positions-goal,axis=-1)<=.5
-        expected[reached]=20 if tuple(goal)==(-8,8) else 10
     actual=loaded['replay']['buf_reward'].numpy().ravel()
-    assert np.isin(actual,[0,10,20]).all()
-    # Float32 replay coordinates can round a point across the success threshold.
-    boundary=np.min(np.abs(distances-.5),axis=1)<2e-5
-    assert np.array_equal(actual[~boundary],expected[~boundary])
+    if config['reward_profile']=='dense':
+        expected=-distances.min(axis=1)
+        assert np.allclose(actual,expected,rtol=2e-6,atol=2e-5)
+        boundary=np.zeros(len(actual),bool)
+    else:
+        expected=np.zeros(len(positions),np.float32)
+        for goal in reversed(target_goals):
+            reached=np.linalg.norm(positions-goal,axis=-1)<=.5
+            expected[reached]=20 if tuple(goal)==(-8,8) else 10
+        assert np.isin(actual,[0,10,20]).all()
+        boundary=np.min(np.abs(distances-.5),axis=1)<2e-5
+        assert np.array_equal(actual[~boundary],expected[~boundary])
     proof = dict(path=path.name,sha256=digest,bytes=path.stat().st_size,
         steps=step,updates=learner.updates,replay_count=memory.cur_capacity,
         simulator_count=len(loaded['env_states']),readback_verified=True,
-        sparse_replay_verified=True,threshold_roundoff_rows=int(boundary.sum()))
+        environment_reward_verified=True,reward_profile=config['reward_profile'],
+        sparse_replay_verified=config['reward_profile']=='sparse',
+        dense_replay_verified=config['reward_profile']=='dense',
+        intrinsic_enabled=learner.noveld_enabled,
+        threshold_roundoff_rows=int(boundary.sum()))
     write(folder/'checkpoint-verification.json',proof)
     return proof
 
@@ -132,6 +142,8 @@ def main():
     p.add_argument('--temperature',type=float)
     p.add_argument('--budget-steps',type=int)
     p.add_argument('--final-eval-episodes',type=int,default=100)
+    p.add_argument('--reward-profile',choices=['sparse','dense'],default='sparse')
+    p.add_argument('--noveld',choices=['on','off'],default='on')
     a = p.parse_args()
     if a.temperature is not None:
         assert a.method == 'optiq' and a.temperature > 0
@@ -147,7 +159,7 @@ def main():
     os.sched_setaffinity(0,cpus[gpu::4] or cpus)
     # Fork workers before importing torch/JAX or initializing a GPU context.
     from .envs import vector, transition
-    env = vector(a.task,NUM_ENVS,seed=0)
+    env = vector(a.task,NUM_ENVS,seed=0,reward_profile=a.reward_profile)
     obs = env.reset()
     import torch
     torch.set_num_threads(1);torch.manual_seed(0)
@@ -156,10 +168,12 @@ def main():
     from .learners import Native,JaxLearner,audit
     planned_budget = a.budget_steps if a.budget_steps is not None else total_budget(a.task)
     if a.method in ('sac','dipo'):
-        learner = Native(a.method,(env.single_observation_space,env.single_action_space),a.task,folder)
+        learner = Native(a.method,(env.single_observation_space,env.single_action_space),a.task,folder,
+                         reward_profile=a.reward_profile,noveld=a.noveld=='on')
     else:
         learner = JaxLearner(a.method,(env.single_observation_space,env.single_action_space),
-            a.task,folder,temperature=a.temperature,budget=planned_budget)
+            a.task,folder,temperature=a.temperature,budget=planned_budget,
+            reward_profile=a.reward_profile,noveld=a.noveld=='on')
     initial = audit(learner)
     budget = PREFLIGHT_STEPS if a.preflight else planned_budget
     warmup = WARMUP
@@ -168,7 +182,9 @@ def main():
         num_envs=NUM_ENVS,batch_size=4096,updates_per_vector_step=UPDATES,updates_per_transition=1/32,
         expected_updates=expected_updates(budget),warmup_transitions=warmup,
         upstream_max_step=BUDGETS[a.task],native_global_steps=budget-warmup,
-        reward=REWARD,noveld_coefficient=.01,temperature=a.temperature,
+        reward=REWARD if a.reward_profile=='sparse' else DENSE_REWARD,
+        reward_profile=a.reward_profile,noveld_enabled=a.noveld=='on',
+        noveld_coefficient=.01 if a.noveld=='on' else 0.,temperature=a.temperature,
         native=learner.config,random_init=a.task=='v1',eval_interval=250000,
         eval_num_envs=EVAL_NUM_ENVS,interim_eval_episodes=EVAL_NUM_ENVS,
         final_eval_episodes=a.final_eval_episodes,
@@ -177,9 +193,8 @@ def main():
         runtime=dict(python=os.sys.version,torch=torch.__version__,numpy=np.__version__))
     write(folder/'config.json',config)
     import wandb
-    run_name=(f'{a.task}-{a.method}-T{a.temperature:g}-sparse-s0-{budget}steps'
-        if a.temperature is not None else
-        f'{a.task}-{a.method}-sparse-s0-env256-b4096-{BUDGETS[a.task]//1000000}m')
+    temp_name=f'-T{a.temperature:g}' if a.temperature is not None else ''
+    run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s0-{budget}steps'
     run = wandb.init(entity='OptiQ',project='gmm-trg',group=os.environ.get('OPTIQ_CAMPAIGN',CAMPAIGN),
         name=run_name,dir=str(folder),config=config,
         mode='disabled' if a.preflight else os.environ.get('WANDB_MODE','online'))
@@ -213,7 +228,8 @@ def main():
             if step>warmup:
                 t=time.monotonic();info=learner.update(step);timing['learner']+=time.monotonic()-t
                 assert all(np.isfinite(float(v)) for v in info.values()), info
-                assert learner.updates==learner.intrinsic.update_step==expected_updates(step)
+                assert learner.updates==expected_updates(step)
+                assert learner.intrinsic.update_step==(learner.updates if learner.noveld_enabled else 0)
             if step>=next_eval and step<budget:
                 t=time.monotonic()
                 for mode in ('native','policy'):
@@ -224,9 +240,9 @@ def main():
                 next_eval+=250000
             if step%4096==0 or step==budget: progress()
         final_audit=audit(learner)
-        for key in ('actor','critic','rnd_predictor'):
+        for key in (('actor','critic','rnd_predictor') if learner.noveld_enabled else ('actor','critic')):
             assert initial[key]['sha256']!=final_audit[key]['sha256'],key
-        assert initial['rnd_target']==final_audit['rnd_target']
+        if learner.noveld_enabled:assert initial['rnd_target']==final_audit['rnd_target']
         write(folder/'parameter-audit.json',dict(initial=initial,final=final_audit,passed=True))
         np.save(folder/'training-xy.npy',xy)
         write(folder/'training-successes.json',successes)

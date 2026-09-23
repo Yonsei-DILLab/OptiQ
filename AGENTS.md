@@ -101,3 +101,5 @@ eval250k/final-only full save. Independent backfill on8 GPUs, no completion
 barriers. Cancelled dense/sparse64/older queues stay cancelled, data preserved.
 Upstream159 files remain unchanged; see antmaze_experiments/PROTOCOL.md for
 verified environment settings and adapter/runtime/evaluation exceptions.
+
+User approval (2026-09-23, latest): stabilize DIPO numerical projection/BCE and gradients outside vendored antmaze/. Use dense negative nearest-goal distance and NovelD OFF. First inspect 10k-learner-update v1/v3 trajectories for OptiQ/SAC/DIPO/MFPO, then fresh 16-policy parallel native-budget training on8GPUs. Keep256env,batch4096,8updates/256transitions,other native hyperparameters and original physics. DIPO negative support is an explicit dense compatibility override. See antmaze_experiments/DENSE_OFF_PROTOCOL.md. Cancelled/failed older campaigns remain inactive.

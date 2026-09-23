@@ -1,4 +1,4 @@
-"""Bookkeeping only: upstream sparse reward, physics and resets unchanged."""
+"""Original physics/resets with explicit sparse or dense-distance reward."""
 from functools import partial
 from pathlib import Path
 import sys
@@ -29,11 +29,12 @@ copyreg.pickle(RandomNumberGenerator, reduce_gym_rng)
 
 
 class Recorded(gym.Wrapper):
-    def __init__(self, env, fixed=False):
+    def __init__(self, env, fixed=False, reward_profile='sparse'):
         super().__init__(env)
         self.fixed = fixed
         self.initial = None
         self.length = 0
+        self.reward_profile = reward_profile
 
     @property
     def physics_env(self):
@@ -73,11 +74,17 @@ class Recorded(gym.Wrapper):
         obs, reward, done, info = self.env.step(action)
         self.length += 1
         assert reward in (0, 10, 20), reward
-        info = dict(info, xy=np.asarray(obs[:2], np.float32), episode_length=self.length)
+        goals = np.asarray(self.physics_env.target_goal).reshape(-1,2)
+        distance = float(np.linalg.norm(np.asarray(obs[:2])-goals,axis=1).min())
+        info = dict(info, xy=np.asarray(obs[:2], np.float32), episode_length=self.length,
+                    distance=distance,upstream_sparse_reward=float(reward))
+        if self.reward_profile == 'dense':
+            reward = -distance
+        assert np.isfinite(reward)
         return np.asarray(obs, np.float32), reward, done, info
 
 
-def make_one(task, seed, fixed=False):
+def make_one(task, seed, fixed=False, reward_profile='sparse'):
     # Upstream preprocess_cfg explicitly enables random starts only on v1.
     env = gym.make('antmaze-' + task, reward_type='sparse', random_init=task == 'v1')
     env.seed(seed)
@@ -85,11 +92,12 @@ def make_one(task, seed, fixed=False):
     # MuJoCo environment RNG used by the original reset_model implementation.
     env.unwrapped.wrapped_env.np_random, _ = gym.utils.seeding.np_random(seed)
     env.action_space.seed(seed)
-    return Recorded(env, fixed=fixed)
+    assert reward_profile in ('sparse','dense')
+    return Recorded(env, fixed=fixed, reward_profile=reward_profile)
 
 
-def vector(task, count, seed, asynchronous=True, fixed=False):
-    constructors = [partial(make_one, task, seed if fixed else seed + i, fixed)
+def vector(task, count, seed, asynchronous=True, fixed=False, reward_profile='sparse'):
+    constructors = [partial(make_one, task, seed if fixed else seed + i, fixed, reward_profile)
                     for i in range(count)]
     if asynchronous:
         # Construct before initializing CUDA; workers execute CPU MuJoCo only.

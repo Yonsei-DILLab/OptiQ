@@ -7,19 +7,19 @@ import sys
 import copy
 import numpy as np
 import torch
-from .settings import BUDGETS, NUM_ENVS, UPDATES, WARMUP, total_budget
+from .settings import BUDGETS, NUM_ENVS, UPDATES, WARMUP, total_budget, DIPO_DENSE_V_MIN
+from .numerics import DisabledIntrinsic, stable_dipo_class
 
 ROOT = Path(__file__).resolve().parents[1]
 BATCH = 4096
 
 
 class Native:
-    def __init__(self, method, spaces, task, folder):
+    def __init__(self, method, spaces, task, folder, reward_profile='sparse',noveld=True):
         from hydra import compose, initialize_config_dir
         from omegaconf import OmegaConf
         from ddiffpg.utils.common import preprocess_cfg
         from ddiffpg.algo.sac import AgentSAC
-        from ddiffpg.algo.dipo import AgentDIPO
         from ddiffpg.replay.simple_replay import ReplayBuffer
         import gym
         with initialize_config_dir(config_dir=str(ROOT/'antmaze/ddiffpg/cfg'), version_base=None):
@@ -30,12 +30,20 @@ class Native:
         assert cfg.num_envs == NUM_ENVS and cfg.algo.update_times == UPDATES
         assert cfg.algo.batch_size == BATCH and cfg.algo.warm_up * NUM_ENVS == WARMUP
         assert cfg.env.reward_type == 'sparse'
+        self.reward_profile,self.noveld_enabled = reward_profile,noveld
+        cfg.env.reward_type = reward_profile
+        if method == 'dipo' and reward_profile == 'dense':
+            cfg.algo.v_min = DIPO_DENSE_V_MIN
         cfg.env.env_kwargs = dict(gym.spec('antmaze-' + task).kwargs,
             reward_type=cfg.env.reward_type, random_init=cfg.env.random_init)
         self.config = OmegaConf.to_container(cfg, resolve=True)
+        self.config['intrinsic']['enabled'] = noveld
+        self.config['intrinsic']['effective_type'] = 'noveld' if noveld else 'off'
+        if method == 'dipo':self.config['projection_implementation'] = 'float64 normalized bounded C51; guarded BCE'
         proxy = SimpleNamespace(observation_space=spaces[0], action_space=spaces[1],
             max_episode_length=500 if task in ('v1', 'v2') else 700)
-        self.agent = dict(sac=AgentSAC, dipo=AgentDIPO)[method](proxy, cfg)
+        self.agent = (AgentSAC if method=='sac' else stable_dipo_class())(proxy, cfg)
+        if not noveld:self.agent.intrinsic = DisabledIntrinsic()
         self.replay = ReplayBuffer(1000000, (29,), 8, device='cuda')
         self.intrinsic = self.agent.intrinsic
         self.method = method
@@ -60,6 +68,8 @@ class Native:
     def update(self, step):
         info = self.agent.update_net(self.replay)
         self.updates += UPDATES
+        info.update(getattr(self.agent,'projection_diagnostics',{}))
+        if not self.noveld_enabled:info.update(noveld_mean=0.,rnd_loss=0.,rnd_grad=0.)
         return info
 
     def record_collection(self, obs, reward, done):
@@ -89,11 +99,13 @@ class ReplayView:
         if diagnostic:
             batch_size = 256  # preserve existing DACER state sample count
         obs, act, _, reward, nxt, done = self.memory.sample_batch(batch_size)
-        if not diagnostic:
+        if not diagnostic and getattr(self.intrinsic,'enabled',True):
             bonus = self.intrinsic.compute_reward(obs, nxt)
             loss, grad = self.intrinsic.update(torch.cat([obs, nxt]))
             reward = reward + bonus
             self.metrics = dict(noveld_mean=float(bonus.mean()), rnd_loss=loss, rnd_grad=grad)
+        elif not diagnostic:
+            self.metrics = dict(noveld_mean=0.,rnd_loss=0.,rnd_grad=0.)
         return ReplayBufferSamples(obs.cpu(), act.cpu(), nxt.cpu(), done.cpu(), reward.cpu())
 
 
@@ -115,15 +127,18 @@ class SpaceOnlyEnv:
 
 
 class JaxLearner:
-    def __init__(self, method, spaces, task, folder, temperature=None, budget=None):
+    def __init__(self, method, spaces, task, folder, temperature=None, budget=None,
+                 reward_profile='sparse',noveld=True):
         import jax
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
         self.method, self.updates = method, 0
+        self.reward_profile,self.noveld_enabled = reward_profile,noveld
         self.budget = total_budget(task) if budget is None else budget
         self.replay = ReplayBuffer(1000000, (29,), 8, device='cuda')
-        self.intrinsic = IntrinsicM((29,), env_name='antmaze-'+task,
+        self.intrinsic = (IntrinsicM((29,), env_name='antmaze-'+task,
                                    normalize=False, pos_enc=True, L=10)
+                          if noveld else DisabledIntrinsic())
         self.view = ReplayView(self.replay, self.intrinsic)
         if method == 'optiq':
             spec = importlib.util.spec_from_file_location('antmaze_trg',
@@ -137,7 +152,7 @@ class JaxLearner:
             if temperature is not None:
                 overrides.append(f'alg.actor.temperature={temperature}')
             cfg = module.compose_config(overrides)
-            cfg.env_name = 'DDiffPG-' + task + '-upstream-sparse'
+            cfg.env_name = 'DDiffPG-' + task + '-upstream-' + reward_profile
             cfg.task = 'antmaze'
             cfg.alg.batch_size = BATCH
             cfg.alg.learning_starts = WARMUP
@@ -257,8 +272,9 @@ def audit(learner):
             params = dict(actor=learner.agent.actor.params, critic=learner.agent.critic_1.params)
         else:
             params = dict(actor=learner.model.policy.actor_state.params, critic=learner.model.policy.qf_state.params)
-    params.update(rnd_predictor=learner.intrinsic.rnd_model.predictor.state_dict(),
-                  rnd_target=learner.intrinsic.rnd_model.target.state_dict())
+    if learner.noveld_enabled:
+        params.update(rnd_predictor=learner.intrinsic.rnd_model.predictor.state_dict(),
+                      rnd_target=learner.intrinsic.rnd_model.target.state_dict())
     def leaves(x):
         if hasattr(x,'items'):
             for k in sorted(x): yield from leaves(x[k])
