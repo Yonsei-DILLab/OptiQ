@@ -1,0 +1,362 @@
+{
+  "case_index": 5,
+  "case": {
+    "id": "f05",
+    "target_centers": [
+      -4.25,
+      0,
+      4.25
+    ],
+    "target_width": 0.5,
+    "mean_output_init_scale": 3
+  },
+  "selection_scope": "Exploratory illustrative case; all tested settings and all seeds retained. Not unbiased performance estimation.",
+  "screen_commit": "b4d674d0d2c56871d384f41762b7eb98f033363f",
+  "screen_steps": 50000,
+  "screen_reverse_L": 1024,
+  "screen_results": [
+    {
+      "seed": 0,
+      "method": "forward",
+      "step": 50000,
+      "histogram_TV": 0.060200496485582275,
+      "mode_mass": [
+        0.335968017578125,
+        0.331390380859375,
+        0.3326416015625
+      ],
+      "target_mode_mass": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.33333333333333337
+      ],
+      "core_mass": [
+        0.2197265625,
+        0.208984375,
+        0.222320556640625
+      ],
+      "target_core_mass": [
+        0.22756316404570592,
+        0.22756316404571653,
+        0.22756316404570587
+      ],
+      "valley_core_ratio": [
+        0.06936331775700935,
+        0.04643691588785047
+      ],
+      "missing_modes": 0,
+      "missing_mask": [
+        false,
+        false,
+        false
+      ],
+      "three_peak_pass": true,
+      "sigma_mean": 0.3678794205188751,
+      "sigma_min": 0.3678794801235199,
+      "sigma_max": 0.3678794801235199,
+      "between_mean_variance": 12.001224517822266
+    },
+    {
+      "seed": 0,
+      "method": "reverse",
+      "step": 50000,
+      "histogram_TV": 0.6667313723074848,
+      "mode_mass": [
+        3.0517578125e-05,
+        0.999969482421875,
+        0.0
+      ],
+      "target_mode_mass": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.33333333333333337
+      ],
+      "core_mass": [
+        0.0,
+        0.684112548828125,
+        0.0
+      ],
+      "target_core_mass": [
+        0.22756316404570592,
+        0.22756316404571653,
+        0.22756316404570587
+      ],
+      "valley_core_ratio": [
+        22.0,
+        21.0
+      ],
+      "missing_modes": 2,
+      "missing_mask": [
+        true,
+        false,
+        true
+      ],
+      "three_peak_pass": false,
+      "sigma_mean": 0.3678794205188751,
+      "sigma_min": 0.3678794801235199,
+      "sigma_max": 0.3678794801235199,
+      "between_mean_variance": 0.11565113812685013
+    },
+    {
+      "seed": 1,
+      "method": "forward",
+      "step": 50000,
+      "histogram_TV": 0.0943702951541989,
+      "mode_mass": [
+        0.339019775390625,
+        0.318817138671875,
+        0.3421630859375
+      ],
+      "target_mode_mass": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.33333333333333337
+      ],
+      "core_mass": [
+        0.2208251953125,
+        0.175140380859375,
+        0.220184326171875
+      ],
+      "target_core_mass": [
+        0.22756316404570592,
+        0.22756316404571653,
+        0.22756316404570587
+      ],
+      "valley_core_ratio": [
+        0.11099494685485276,
+        0.12981355636870534
+      ],
+      "missing_modes": 0,
+      "missing_mask": [
+        false,
+        false,
+        false
+      ],
+      "three_peak_pass": true,
+      "sigma_mean": 0.3678794205188751,
+      "sigma_min": 0.3678794801235199,
+      "sigma_max": 0.3678794801235199,
+      "between_mean_variance": 12.218027114868164
+    },
+    {
+      "seed": 1,
+      "method": "reverse",
+      "step": 50000,
+      "histogram_TV": 0.6667059898425625,
+      "mode_mass": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "target_mode_mass": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.33333333333333337
+      ],
+      "core_mass": [
+        0.0,
+        0.685211181640625,
+        0.0
+      ],
+      "target_core_mass": [
+        0.22756316404570592,
+        0.22756316404571653,
+        0.22756316404570587
+      ],
+      "valley_core_ratio": [
+        16.0,
+        16.0
+      ],
+      "missing_modes": 2,
+      "missing_mask": [
+        true,
+        false,
+        true
+      ],
+      "three_peak_pass": false,
+      "sigma_mean": 0.3678794205188751,
+      "sigma_min": 0.3678794801235199,
+      "sigma_max": 0.3678794801235199,
+      "between_mean_variance": 0.11461013555526733
+    },
+    {
+      "seed": 2,
+      "method": "forward",
+      "step": 50000,
+      "histogram_TV": 0.044524013911102736,
+      "mode_mass": [
+        0.331695556640625,
+        0.33526611328125,
+        0.333038330078125
+      ],
+      "target_mode_mass": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.33333333333333337
+      ],
+      "core_mass": [
+        0.219757080078125,
+        0.21636962890625,
+        0.2225341796875
+      ],
+      "target_core_mass": [
+        0.22756316404570592,
+        0.22756316404571653,
+        0.22756316404570587
+      ],
+      "valley_core_ratio": [
+        0.036812411847672775,
+        0.044851904090267986
+      ],
+      "missing_modes": 0,
+      "missing_mask": [
+        false,
+        false,
+        false
+      ],
+      "three_peak_pass": true,
+      "sigma_mean": 0.3678794205188751,
+      "sigma_min": 0.3678794801235199,
+      "sigma_max": 0.3678794801235199,
+      "between_mean_variance": 11.968542098999023
+    },
+    {
+      "seed": 2,
+      "method": "reverse",
+      "step": 50000,
+      "histogram_TV": 0.6667256802979877,
+      "mode_mass": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "target_mode_mass": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.33333333333333337
+      ],
+      "core_mass": [
+        0.0,
+        0.6826171875,
+        0.0
+      ],
+      "target_core_mass": [
+        0.22756316404570592,
+        0.22756316404571653,
+        0.22756316404570587
+      ],
+      "valley_core_ratio": [
+        17.0,
+        17.0
+      ],
+      "missing_modes": 2,
+      "missing_mask": [
+        true,
+        false,
+        true
+      ],
+      "three_peak_pass": false,
+      "sigma_mean": 0.3678794205188751,
+      "sigma_min": 0.3678794801235199,
+      "sigma_max": 0.3678794801235199,
+      "between_mean_variance": 0.11674095690250397
+    },
+    {
+      "seed": 3,
+      "method": "forward",
+      "step": 50000,
+      "histogram_TV": 0.10684735766521294,
+      "mode_mass": [
+        0.334747314453125,
+        0.32098388671875,
+        0.344268798828125
+      ],
+      "target_mode_mass": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.33333333333333337
+      ],
+      "core_mass": [
+        0.212554931640625,
+        0.180633544921875,
+        0.218414306640625
+      ],
+      "target_core_mass": [
+        0.22756316404570592,
+        0.22756316404571653,
+        0.22756316404570587
+      ],
+      "valley_core_ratio": [
+        0.10508531846595709,
+        0.13127217435377597
+      ],
+      "missing_modes": 0,
+      "missing_mask": [
+        false,
+        false,
+        false
+      ],
+      "three_peak_pass": true,
+      "sigma_mean": 0.3678794205188751,
+      "sigma_min": 0.3678794801235199,
+      "sigma_max": 0.3678794801235199,
+      "between_mean_variance": 12.176817893981934
+    },
+    {
+      "seed": 3,
+      "method": "reverse",
+      "step": 50000,
+      "histogram_TV": 0.6667031685957514,
+      "mode_mass": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "target_mode_mass": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.33333333333333337
+      ],
+      "core_mass": [
+        0.0,
+        0.68255615234375,
+        0.0
+      ],
+      "target_core_mass": [
+        0.22756316404570592,
+        0.22756316404571653,
+        0.22756316404570587
+      ],
+      "valley_core_ratio": [
+        16.0,
+        18.0
+      ],
+      "missing_modes": 2,
+      "missing_mask": [
+        true,
+        false,
+        true
+      ],
+      "three_peak_pass": false,
+      "sigma_mean": 0.3678794205188751,
+      "sigma_min": 0.3678794801235199,
+      "sigma_max": 0.3678794801235199,
+      "between_mean_variance": 0.11708955466747284
+    }
+  ],
+  "confirmation": {
+    "seeds": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "N": 128,
+    "M": 128,
+    "batch": 32,
+    "steps": 100000,
+    "reverse_L": 1048576,
+    "fresh_initialization": true,
+    "paired_methods_same_gpu": true
+  }
+}

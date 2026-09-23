@@ -94,3 +94,14 @@ separation honestly and do not present the best seed as reproducible evidence.
 Same numerical kernels and inherited GPU validations as previous rounds; runner
 only generalizes screen seed/horizon indexing. Final100K reverseL1048576 remains
 freshly initialized. No largeL confirmation is claimed until actually measured.
+
+## Selected illustration and final high-L validation
+Round4 f05: centers(-4.25,0,4.25),width .5,mean-head variance-scale3.
+At50K withreverseL1024, all4 forward seeds recover3peaks and haveTV<.15;
+all4 reverse seeds miss at least1mode. Exact per-seed outcomes are recorded
+inSELECTION.json. This is a searched illustration; do not claim universal
+forward superiority or omit prior counterexamples. Final both methods are
+freshly initialized,4seeds,100K; reverseL1048576 and chunk4096. Forward
+has noauxiliaryL. Case index5. Pair forward/reverse in oneallocation perseed;
+use ordinary seeds0-2 andPROseed3,2CPU/1GPU perallocation. Retain prior
+width1 large-Lstudy without interruption. If bigL removes the gap, report it.
