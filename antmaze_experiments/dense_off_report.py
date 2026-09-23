@@ -146,6 +146,23 @@ def report(root):
                if label.startswith('policy-') else 'OptiQ random-z mu-only; SAC mean; MFPO Q-best-of10; DIPO native diffusion. ')
         fig.supxlabel(extra+'Stars: goals; red dots: failed endpoints. All failures shown.',fontsize=9)
         fig.savefig(out/filename,dpi=180);plt.close(fig)
+    # The user's primary v1 view samples the original random reset distribution.
+    fig,axes=plt.subplots(1,4,figsize=(15,4.8),constrained_layout=True)
+    for ax,method in zip(axes,METHODS):
+        d,m=data[f'v1-{method}-s0']['modes']['policy-natural']
+        for line,length in zip(d['xy'],d['lengths']):
+            line=line[:length+1]
+            ax.plot(line[:,0],line[:,1],color=COLORS[method],alpha=.3,lw=.65,zorder=2)
+            ax.scatter(*line[-1],s=5,c='#d85d4f',alpha=.35,zorder=3)
+        decorate(ax,'v1',d['xy'][0,0])
+        ax.scatter(d['xy'][:,0,0],d['xy'][:,0,1],marker='^',s=11,c='#172936',alpha=.4,zorder=7)
+        ax.set_title(f'{LABELS[method]} | success {m["successes"]}/100\n'
+                     f'upper/lower corridor entry {m["upper_entries"]}/{m["lower_entries"]}')
+    fig.suptitle('AntMaze v1 | dense reward + NovelD OFF | RANDOM starts\n'
+                 '10k learner updates (328,192 transitions), seed 0; 100 direct-policy rollouts per method',fontsize=13)
+    fig.supxlabel('Triangles: sampled initial positions. Stars: goals. Red dots: failed endpoints. '
+                  'OptiQ includes conditional sigma; no external exploration noise.',fontsize=9)
+    fig.savefig(out/'v1_random_starts.png',dpi=180);plt.close(fig)
     fig,axes=plt.subplots(len(tasks),4,figsize=(15,4.8*len(tasks)),squeeze=False,constrained_layout=True)
     for row,task in enumerate(tasks):
         maze,rr,cc=geometry(task)
@@ -173,17 +190,17 @@ def report(root):
         ax.grid(alpha=.2);ax.legend()
     fig.savefig(out/'coverage_curves.png',dpi=180);plt.close(fig)
     summary=dict(source_commit=next(iter(sources)),single_seed=0,runs=rows,
-                 primary='direct-policy, identical-full-state, 100 episodes; no exploration noise',
+                 primary='direct-policy, original reset distribution, 100 episodes; no exploration noise',
                  natural_fixed_not_pooled=True,technical_validation_passed=True)
     (out/'results.json').write_text(json.dumps(summary,indent=2,ensure_ascii=False)+'\n')
     lines=['# Dense + NovelD OFF: 10k learner update 검증','',
            '각 방법·미로 단일 seed0. 256env, batch4096, 총328,192 transitions. 학습 중 탐색과 최종 정책을 구분한다.',
-           '주 그림은 같은 simulator full state에서 직접 정책 샘플링한100회. 실패 궤적도 모두 포함했다.',
-           '', '|미로|방법|학습 방문격자(0.5m)|학습 도달|고정시작 정책 성공/100|정책 최근접 목표(m)|',
+           '주 그림은 원본 초기상태분포(현재 v1 랜덤, v3 고정)에서 직접 정책 샘플링한100회. 실패 궤적도 모두 포함했다. 고정 상태 결과는 보조 비교다.',
+           '', '|미로|방법|학습 방문격자(0.5m)|학습 도달|원본시작분포 정책 성공/100|정책 최근접 목표(m)|',
            '|---|---|---:|---:|---:|---:|']
     for task in tasks:
         for method in METHODS:
-            r=rows[f'{task}-{method}-s0'];tr=r['training'];m=r['modes']['policy-fixed']
+            r=rows[f'{task}-{method}-s0'];tr=r['training'];m=r['modes']['policy-natural']
             lines.append(f'|{task}|{LABELS[method]}|{tr["bins_05m"]}|{tr["successes"]}|{m["successes"]}|{m["closest_goal_m"]:.2f}|')
     lines+=['','DIPO: float64 C51 projection·확률 경계·gradient norm1·finite guard 적용. Dense 호환 support[-6000,5],51atoms.',
             '모든 평가 return을 저장된 매 step 위치의 실제 dense 거리합과 대조했다. NovelD/RND update는 모두0이다.',

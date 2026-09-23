@@ -31,7 +31,8 @@ def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
     paths, returns, goals, lengths, starts = [], [], [], [], []
     with evaluation_rng(learner, 700000 + step):
         env = vector(task, count, seed=87231, asynchronous=False, fixed=fixed,
-                     reward_profile=learner.reward_profile)
+                     reward_profile=learner.reward_profile,
+                     random_init=True if getattr(learner,'eval_random_starts',False) else None)
         try:
             for batch in range((episodes+count-1)//count):
                 obs = env.reset(); active = np.arange(count)+batch*count < episodes
@@ -72,6 +73,9 @@ def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
         goal_counts={str(g):int(np.sum(np.array(goals)==g)) for g in sorted(set(goals))},
         mean_length=float(np.mean(lengths)),
         identical_initial_full_state=bool(np.all(np.array(starts)==starts[0])))
+    result['start_distribution'] = ('fixed first sampled full state' if fixed else
+        'xy uniform[-2,2], original pose/velocity' if task=='v1' or getattr(learner,'eval_random_starts',False)
+        else 'original fixed full state')
     if fixed: assert result['identical_initial_full_state']
     write(destination/'summary.json',result)
     return result
@@ -144,6 +148,7 @@ def main():
     p.add_argument('--final-eval-episodes',type=int,default=100)
     p.add_argument('--reward-profile',choices=['sparse','dense'],default='sparse')
     p.add_argument('--noveld',choices=['on','off'],default='on')
+    p.add_argument('--eval-starts',choices=['upstream','random'],default='upstream')
     a = p.parse_args()
     if a.temperature is not None:
         assert a.method == 'optiq' and a.temperature > 0
@@ -175,6 +180,7 @@ def main():
             a.task,folder,temperature=a.temperature,budget=planned_budget,
             reward_profile=a.reward_profile,noveld=a.noveld=='on')
     initial = audit(learner)
+    learner.eval_random_starts = a.eval_starts=='random'
     budget = PREFLIGHT_STEPS if a.preflight else planned_budget
     warmup = WARMUP
     config = dict(source_commit=source,upstream_commit='7edd06c4799abbab0f8fa534c21deb56253b018e',
@@ -184,12 +190,13 @@ def main():
         upstream_max_step=BUDGETS[a.task],native_global_steps=budget-warmup,
         reward=REWARD if a.reward_profile=='sparse' else DENSE_REWARD,
         reward_profile=a.reward_profile,noveld_enabled=a.noveld=='on',
+        eval_starts=a.eval_starts,primary_trajectory='policy-natural',
         noveld_coefficient=.01 if a.noveld=='on' else 0.,temperature=a.temperature,
         native=learner.config,random_init=a.task=='v1',eval_interval=250000,
         eval_num_envs=EVAL_NUM_ENVS,interim_eval_episodes=EVAL_NUM_ENVS,
         final_eval_episodes=a.final_eval_episodes,
         checkpoint='final only',step_definition='step includes warmup; global_steps excludes warmup as upstream; stop global_steps>max_step',
-        evaluation='policy: direct draws, no extra exploration noise; native: SAC mean, MFPO Q-best-of10, OptiQ random-z mu-only, DIPO native diffusion',
+        evaluation='primary=policy-natural; policy: direct draws, no extra exploration noise; native: SAC mean, MFPO Q-best-of10, OptiQ random-z mu-only, DIPO native diffusion; fixed starts are supplementary',
         runtime=dict(python=os.sys.version,torch=torch.__version__,numpy=np.__version__))
     write(folder/'config.json',config)
     import wandb

@@ -36,13 +36,14 @@ def main():
                [('v2','dipo'),('v4','dipo'),('v2','optiq'),('v4','optiq'),
                 ('v2','sac'),('v4','sac'),('v2','mfpo'),('v4','mfpo')])
     jobs=[dict(id=f'{task}-{method}-s0',task=task,method=method,reward_profile='dense',
-               noveld='off',steps=328192 if a.stage=='probe' else total_budget(task),
+               noveld='off',eval_starts='random',steps=328192 if a.stage=='probe' else total_budget(task),
                final_eval_episodes=100) for task,method in pairs]
     manifest=dict(campaign=name,stage=a.stage,shard=a.shard,source=str(source),
                   source_commit=sha,wandb_mode='online',jobs=jobs,probe_review=review,
                   protocol='antmaze_experiments/DENSE_OFF_PROTOCOL.md',
                   num_envs=256,batch_size=4096,updates_per_vector_step=8,
                   reward_profile='dense',noveld_enabled=False,seed=0)
+    manifest['evaluation_starts']='xy uniform[-2,2] per episode, all mazes; training reset settings unchanged'
     root.mkdir()
     (root/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     conf=Path('/home/heechan/OptiQ-ops/supervisor/jobs')/(name+'.conf')

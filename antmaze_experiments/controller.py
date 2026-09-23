@@ -25,7 +25,7 @@ def job(root, identifier, gpu):
             cmd.extend(['--budget-steps',str(entry['steps'])])
         if 'final_eval_episodes' in entry:
             cmd.extend(['--final-eval-episodes',str(entry['final_eval_episodes'])])
-        for key in ('reward_profile','noveld'):
+        for key in ('reward_profile','noveld','eval_starts'):
             if key in entry:cmd.extend(['--'+key.replace('_','-'),str(entry[key])])
         if phase=='preflight':cmd.append('--preflight')
         write(root/'jobs'/f'{identifier}.json',dict(**entry,gpu=gpu,pid=os.getpid(),phase=phase,status='running'))
@@ -43,6 +43,7 @@ def job(root, identifier, gpu):
         reward=REWARD if entry.get('reward_profile','sparse')=='sparse' else DENSE_REWARD
         assert config['reward']==reward and config['num_envs']==NUM_ENVS and config['batch_size']==4096
         assert config['noveld_enabled']==(entry.get('noveld','on')=='on')
+        assert config['eval_starts']==entry.get('eval_starts','upstream')
         assert proof['rnd_updates']==(proof['updates'] if config['noveld_enabled'] else 0)
     write(root/'jobs'/f'{identifier}.json',dict(**entry,gpu=gpu,status='completed'))
     return 0

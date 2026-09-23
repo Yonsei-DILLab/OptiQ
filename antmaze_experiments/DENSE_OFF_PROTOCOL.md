@@ -60,9 +60,24 @@ Failures hold pending jobs on that host and preserve live jobs,with no automatic
 restart. Old failed/cancelled queues remain inactive and their data is retained.
 
 Evaluation every250k,interim20episodes,final100episodes per mode/reset. Full
-checkpoint only at final. Direct stochastic policy,fixed identical simulator
-state is primary for policy path diversity. Native controls: SAC mean,MFPO
+checkpoint only at final. Direct stochastic policy with sampled initial positions
+is primary; identical-state rollouts are supplementary. Native controls: SAC mean,MFPO
 Q-best-of10,OptiQ randomz mu-only,DIPO stochastic reverse diffusion; OptiQ zero_z
 also separate. No external exploration noise or intrinsic reward during eval.
 Keep failure paths, natural/fixed sets separate,training exploration separate
 from final-policy rollout. W&B OptiQ/gmm-trg,explicit dense-noveld-off groups.
+
+## User evaluation correction after inspecting probe trajectories
+
+The primary trajectory figure now uses the episode reset distribution, not one
+sampled fixed start. v1's original reset samples x,y uniformly from[-2,2]; the
+probe's supplementary fixed start happened to be(1.9873,-1.4523). Its upper-route
+counts must not be interpreted as the unconditional policy's preference.
+Completed probe data remain unchanged. New main jobs default to evaluation-only
+random starts for all4 mazes,using the same upstream random_init implementation
+(xy uniform[-2,2],original pose and velocity). Training reset distributions stay
+original: v1 random,v2-v4 fixed. This is an explicit evaluation override for v2-v4,
+not an upstream default. Configs and evaluation summaries record it. Fixed-state
+rollouts remain supplementary. Original probe v3 rollouts were fixed upstream
+starts and must never be relabeled as randomized. No main campaign is launched
+until the reward-design discussion following the probe is resolved.

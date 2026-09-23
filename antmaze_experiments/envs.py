@@ -84,9 +84,10 @@ class Recorded(gym.Wrapper):
         return np.asarray(obs, np.float32), reward, done, info
 
 
-def make_one(task, seed, fixed=False, reward_profile='sparse'):
+def make_one(task, seed, fixed=False, reward_profile='sparse', random_init=None):
     # Upstream preprocess_cfg explicitly enables random starts only on v1.
-    env = gym.make('antmaze-' + task, reward_type='sparse', random_init=task == 'v1')
+    reset_random = task == 'v1' if random_init is None else bool(random_init)
+    env = gym.make('antmaze-' + task, reward_type='sparse', random_init=reset_random)
     env.seed(seed)
     # Gym0.23 Env.seed is a no-op beneath D4RL's ProxyEnv. Seed the actual
     # MuJoCo environment RNG used by the original reset_model implementation.
@@ -96,8 +97,8 @@ def make_one(task, seed, fixed=False, reward_profile='sparse'):
     return Recorded(env, fixed=fixed, reward_profile=reward_profile)
 
 
-def vector(task, count, seed, asynchronous=True, fixed=False, reward_profile='sparse'):
-    constructors = [partial(make_one, task, seed if fixed else seed + i, fixed, reward_profile)
+def vector(task, count, seed, asynchronous=True, fixed=False, reward_profile='sparse',random_init=None):
+    constructors = [partial(make_one, task, seed if fixed else seed + i, fixed, reward_profile,random_init)
                     for i in range(count)]
     if asynchronous:
         # Construct before initializing CUDA; workers execute CPU MuJoCo only.
