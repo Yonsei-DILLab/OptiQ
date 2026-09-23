@@ -20,7 +20,8 @@ def job(root, identifier, gpu):
     for phase in ('preflight','runs'):
         target=root/phase/identifier
         cmd=['bash',str(source/'antmaze_experiments/launch.sh'),
-             '--method',entry['method'],'--task',entry['task'],'--output',str(target)]
+             '--method',entry['method'],'--task',entry['task'],'--output',str(target),
+             '--seed',str(entry.get('seed',0))]
         if 'temperature' in entry:
             cmd.extend(['--temperature',str(entry['temperature'])])
         if 'steps' in entry and phase != 'preflight':
@@ -44,6 +45,9 @@ def job(root, identifier, gpu):
         assert proof['steps']==expected and proof['updates']==expected_updates(expected)
         assert proof['checkpoint']['environment_reward_verified']
         config=json.loads((target/'config.json').read_text())
+        assert config['seed']==entry.get('seed',0)
+        if entry['method']=='optiq':
+            assert config['native']['seed']==entry.get('seed',0)
         reward=REWARD if entry.get('reward_profile','sparse')=='sparse' else DENSE_REWARD
         assert config['reward']==reward and config['num_envs']==NUM_ENVS and config['batch_size']==4096
         assert config['noveld_enabled']==(entry.get('noveld','on')=='on')

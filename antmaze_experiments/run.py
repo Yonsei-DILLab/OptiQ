@@ -144,6 +144,7 @@ def main():
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--preflight',action='store_true')
     p.add_argument('--temperature',type=float)
+    p.add_argument('--seed',type=int,default=0)
     p.add_argument('--budget-steps',type=int)
     p.add_argument('--final-eval-episodes',type=int,default=100)
     p.add_argument('--interim-eval-episodes',type=int,default=EVAL_NUM_ENVS)
@@ -152,6 +153,7 @@ def main():
     p.add_argument('--noveld',choices=['on','off'],default='on')
     p.add_argument('--eval-starts',choices=['upstream','random'],default='upstream')
     a = p.parse_args()
+    assert 0 <= a.seed < 2**31
     if a.temperature is not None:
         assert a.method == 'optiq' and a.temperature > 0
     if a.budget_steps is not None:
@@ -171,27 +173,28 @@ def main():
     os.sched_setaffinity(0,cpus[gpu::4] or cpus)
     # Fork workers before importing torch/JAX or initializing a GPU context.
     from .envs import vector, transition
-    env = vector(a.task,NUM_ENVS,seed=0,reward_profile=a.reward_profile)
+    env = vector(a.task,NUM_ENVS,seed=a.seed*NUM_ENVS,reward_profile=a.reward_profile)
     obs = env.reset()
     import torch
-    torch.set_num_threads(1);torch.manual_seed(0)
-    random.seed(0);np.random.seed(0)
+    torch.set_num_threads(1);torch.manual_seed(a.seed)
+    random.seed(a.seed);np.random.seed(a.seed)
     assert torch.cuda.is_available()
     from .learners import Native,JaxLearner,audit
     planned_budget = a.budget_steps if a.budget_steps is not None else total_budget(a.task)
     if a.method in ('sac','dipo'):
         learner = Native(a.method,(env.single_observation_space,env.single_action_space),a.task,folder,
-                         reward_profile=a.reward_profile,noveld=a.noveld=='on')
+                         reward_profile=a.reward_profile,noveld=a.noveld=='on',seed=a.seed)
     else:
         learner = JaxLearner(a.method,(env.single_observation_space,env.single_action_space),
             a.task,folder,temperature=a.temperature,budget=planned_budget,
-            reward_profile=a.reward_profile,noveld=a.noveld=='on')
+            reward_profile=a.reward_profile,noveld=a.noveld=='on',seed=a.seed)
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     budget = PREFLIGHT_STEPS if a.preflight else planned_budget
     warmup = WARMUP
     config = dict(source_commit=source,upstream_commit='7edd06c4799abbab0f8fa534c21deb56253b018e',
-        method=a.method,task=a.task,seed=0,preflight=a.preflight,steps=budget,
+        method=a.method,task=a.task,seed=a.seed,preflight=a.preflight,steps=budget,
+        environment_seed_base=a.seed*NUM_ENVS,
         source_dependencies=dependencies,
         wandb_entity=WANDB_ENTITY,wandb_project=WANDB_PROJECT,
         num_envs=NUM_ENVS,batch_size=4096,updates_per_vector_step=UPDATES,updates_per_transition=1/32,
@@ -213,7 +216,7 @@ def main():
     write(folder/'config.json',config)
     import wandb
     temp_name=f'-T{a.temperature:g}' if a.temperature is not None else ''
-    run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s0-{budget}steps'
+    run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s{a.seed}-{budget}steps'
     run = wandb.init(entity=WANDB_ENTITY,project=WANDB_PROJECT,group=os.environ.get('OPTIQ_CAMPAIGN',CAMPAIGN),
         name=run_name,dir=str(folder),config=config,
         mode='disabled' if a.preflight else os.environ.get('WANDB_MODE','online'))
@@ -222,7 +225,7 @@ def main():
         write(folder/'wandb.json',dict(id=run.id,url=None if offline else run.url,
             entity=WANDB_ENTITY,project=WANDB_PROJECT,
             mode='offline' if offline else 'online',sync_pending=offline))
-    rng=np.random.default_rng(0);step=0;started=time.monotonic();next_eval=250000
+    rng=np.random.default_rng(a.seed);step=0;started=time.monotonic();next_eval=250000
     timing=dict(collection=0.,learner=0.,evaluation=0.,checkpoint=0.)
     xy=np.empty((budget,2),np.float32);successes=[];episodes=0;info={}
     def progress():

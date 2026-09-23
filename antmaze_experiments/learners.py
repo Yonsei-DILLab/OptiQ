@@ -15,7 +15,7 @@ BATCH = 4096
 
 
 class Native:
-    def __init__(self, method, spaces, task, folder, reward_profile='sparse',noveld=True):
+    def __init__(self, method, spaces, task, folder, reward_profile='sparse',noveld=True,seed=0):
         from hydra import compose, initialize_config_dir
         from omegaconf import OmegaConf
         from ddiffpg.utils.common import preprocess_cfg
@@ -24,7 +24,7 @@ class Native:
         import gym
         with initialize_config_dir(config_dir=str(ROOT/'antmaze/ddiffpg/cfg'), version_base=None):
             cfg = compose(config_name='default', overrides=[f'algo={method}_algo',
-                f'env.name=antmaze-{task}', 'seed=0'])
+                f'env.name=antmaze-{task}', f'seed={seed}'])
         cfg = preprocess_cfg(cfg, if_ddiffpg=False)
         assert cfg.max_step == BUDGETS[task]
         assert cfg.num_envs == NUM_ENVS and cfg.algo.update_times == UPDATES
@@ -128,7 +128,7 @@ class SpaceOnlyEnv:
 
 class JaxLearner:
     def __init__(self, method, spaces, task, folder, temperature=None, budget=None,
-                 reward_profile='sparse',noveld=True):
+                 reward_profile='sparse',noveld=True,seed=0):
         import jax
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
@@ -149,7 +149,7 @@ class JaxLearner:
             # AntMaze-only defaults approved on 2026-09-23. Other benchmarks
             # retain their own model and optimizer configuration.
             upstream_lr = OmegaConf.load(ROOT/'antmaze/ddiffpg/cfg/algo/actor_critic.yaml')
-            overrides = ['benchmark=ant', 'seed=0',
+            overrides = ['benchmark=ant', f'seed={seed}',
                 'alg.actor.mean_output_init_scale=1.0', 'dacer.enabled=true',
                 'dacer.noise_scale=0.1', f'output_root={folder}']
             if temperature is not None:
@@ -187,8 +187,8 @@ class JaxLearner:
             from jaxrl5.agents.mean_flow_learner import MeanFlowLearner
             self.config.pop('model_cls')
             for space in spaces:
-                space.seed(0)
-            self.agent = MeanFlowLearner.create(0, *spaces, **self.config)
+                space.seed(seed)
+            self.agent = MeanFlowLearner.create(seed, *spaces, **self.config)
             @jax.jit
             def sample(agent, obs):
                 keys = jax.random.split(agent.rng, len(obs)+1)
