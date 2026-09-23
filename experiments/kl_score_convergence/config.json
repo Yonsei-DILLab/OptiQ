@@ -1,0 +1,21 @@
+{
+  "study": "20260923_kl_score_convergence",
+  "parent_source_commit": "ae0c370f5d19765089030e62b64f4f0f60a30c37",
+  "L_initial_max": 262144,
+  "L_adaptive_max": 1048576,
+  "Ls": [128,256,512,1024,2048,4096,8192,16384,32768,65536,131072,262144,524288,1048576],
+  "repeats": 16,
+  "policy_probes": 512,
+  "grid_probes": 257,
+  "grid_range": [-0.999,0.999],
+  "kernel_chunk": 128,
+  "actor_chunk": 4096,
+  "quadrature_order": 16,
+  "quadrature_panels": [256,512,1024,2048,4096,8192],
+  "latent_limit": 12.0,
+  "reference_atol": 0.001,
+  "reference_rtol": 0.0001,
+  "strict_nrmse": 0.01,
+  "practical_nrmse": 0.05,
+  "checkpoint_indices": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+}
