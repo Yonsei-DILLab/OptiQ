@@ -60,3 +60,16 @@ no automatic restart or performance-based early stopping.
 SAC cancellation is recorded in the old campaign's sidecar; the old controller
 may label requested termination as failure. Preserve that raw status and logs,
 and distinguish user cancellation from a new numerical/training error.
+
+## Manual network recovery
+
+Server199 lost outbound DNS and HTTPS connectivity during W&B initialization.
+Its two T1 preflights passed, but neither main run collected any transitions.
+The failed attempt is preserved under a timestamped `network-init-attempts/`
+directory, with original manifest/status/logs. A manually registered recovery
+uses `recover_dense_t1_offline` and the original frozen learning source, skips
+already verified preflights, and changes only W&B transport to offline. No
+partially trained model is discarded or resumed. The recovery controller
+commit is separate from the learning source commit. An independent managed
+`sync_wandb` sidecar uploads completed local W&B records when connectivity
+returns. No automatic training restart is enabled.

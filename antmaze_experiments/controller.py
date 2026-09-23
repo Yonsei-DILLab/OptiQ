@@ -12,12 +12,12 @@ from .settings import REWARD, DENSE_REWARD, NUM_ENVS, PREFLIGHT_STEPS, total_bud
 from .dependencies import verify_dependencies
 
 
-def job(root, identifier, gpu):
+def job(root, identifier, gpu, phases=('preflight','runs')):
     manifest=json.loads((root/'manifest.json').read_text())
     entry=next(j for j in manifest['jobs'] if j['id']==identifier)
     source=Path(manifest['source'])
     verify_dependencies(source, (entry['method'],))
-    for phase in ('preflight','runs'):
+    for phase in phases:
         target=root/phase/identifier
         cmd=['bash',str(source/'antmaze_experiments/launch.sh'),
              '--method',entry['method'],'--task',entry['task'],'--output',str(target)]
