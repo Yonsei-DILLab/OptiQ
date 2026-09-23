@@ -122,6 +122,7 @@ def report(root):
     plt.rcParams.update({'font.family':'DejaVu Sans','font.size':9,'figure.facecolor':'white',
                          'axes.spines.top':False,'axes.spines.right':False})
     for label,filename,title in [('policy-fixed','policy_fixed_trajectories.png','Direct policy sampling'),
+                                ('policy-natural','policy_natural_trajectories.png','Direct policy / original reset distribution'),
                                 ('native-fixed','native_fixed_trajectories.png','Native evaluation controls')]:
         fig,axes=plt.subplots(len(tasks),4,figsize=(15,4.8*len(tasks)),squeeze=False,constrained_layout=True)
         for row,task in enumerate(tasks):
@@ -132,12 +133,17 @@ def report(root):
                     ax.plot(line[:,0],line[:,1],color=COLORS[method],alpha=.24,lw=.55,zorder=2)
                     ax.scatter(*line[-1],s=5,c='#289350' if goal else '#d85d4f',alpha=.4,zorder=3)
                 decorate(ax,task,d['xy'][0,0])
+                if label=='policy-natural':
+                    ax.scatter(d['xy'][:,0,0],d['xy'][:,0,1],marker='^',s=9,
+                               c='#172936',alpha=.3,zorder=7)
                 ax.set_title(f'{task.upper()} | {LABELS[method]} | success {m["successes"]}/100\n'
                              f'closest goal {m["closest_goal_m"]:.2f} m; displacement {m["median_max_displacement_m"]:.1f} m')
+        reset_title=('100 rollouts; v1 random starts, v3 original fixed start' if label=='policy-natural' else
+                     '100 identical-state rollouts; v1 start (1.99, -1.45), v3 start (0, 0)')
         fig.suptitle(f'Dense reward + NovelD OFF | {title} | seed 0\n'
-                     f'10k learner updates / 328,192 transitions; 100 rollouts from identical full state',fontsize=14)
+                     f'10k learner updates / 328,192 transitions; {reset_title}',fontsize=13)
         extra=('OptiQ includes conditional sigma; no external exploration noise. '
-               if label=='policy-fixed' else 'OptiQ random-z mu-only; SAC mean; MFPO Q-best-of10; DIPO native diffusion. ')
+               if label.startswith('policy-') else 'OptiQ random-z mu-only; SAC mean; MFPO Q-best-of10; DIPO native diffusion. ')
         fig.supxlabel(extra+'Stars: goals; red dots: failed endpoints. All failures shown.',fontsize=9)
         fig.savefig(out/filename,dpi=180);plt.close(fig)
     fig,axes=plt.subplots(len(tasks),4,figsize=(15,4.8*len(tasks)),squeeze=False,constrained_layout=True)
@@ -184,6 +190,15 @@ def report(root):
             '체크포인트는 원격 보존하고 SHA256를 다시 확인했다. 원시 궤적·학습xy·config·검증 메타데이터는 로컬 보관.',
             '성공이나 다양한 성공 경로를 얻었다는 결론은 실제 도달 수와 경로 확인으로만 판단한다. 짧은 학습·단일seed의 한계가 있다.',
             f'학습 source: `{next(iter(sources))}`.']
+    lines+=['','## v1 시작 위치 영향',
+            '원본 v1은 매 reset에서 x,y를 각각[-2,2]에서 뽑는다. 고정 시작 그림은 그중(1.9873,-1.4523)을100회 반복한 조건부 평가다.',
+            '이 시작점은 위쪽에 치우쳐 있으므로 이 그림 하나로 전체 정책의 경로 편중을 단정하지 않는다.',
+            'policy_natural_trajectories.png는 원래 랜덤 시작 분포를 사용한다. 여러 시작에서 두 통로를 가는 결과도 같은 상태의 다봉 정책을 증명하지는 않는다.',
+            '', '|방법|고정 시작 위/아래 통로 진입|랜덤 시작 위/아래 통로 진입|랜덤 시작 성공/100|',
+            '|---|---:|---:|---:|']
+    for method in METHODS:
+        a=rows[f'v1-{method}-s0']['modes']['policy-fixed'];b=rows[f'v1-{method}-s0']['modes']['policy-natural']
+        lines.append(f'|{LABELS[method]}|{a["upper_entries"]}/{a["lower_entries"]}|{b["upper_entries"]}/{b["lower_entries"]}|{b["successes"]}|')
     (out/'REPORT_KO.md').write_text('\n'.join(lines)+'\n')
     print(json.dumps({k:dict(training=v['training'],policy=v['modes']['policy-fixed']) for k,v in rows.items()},indent=2))
 
