@@ -1,0 +1,17 @@
+# Forward KL size sweep: N=M256 /512, mean head scale1e-4
+
+User requested restoring the mean-head initializer to0.0001 and testing256x256 and512x512 to see when the three target modes are recovered. Eight new runs: two sizes times seeds0–3; compare to the existing four completed128x128 Forward runs. Existing128 data and the separate mean-head-scale1 experiment remain unchanged.
+
+All other numerical training settings are the prior TRG1D three-mode experiment: same1D zero state,1D standard-normal latent, action[-1,1], target equal Gaussian modes at(-.6,0,.6) of width.1, Q=.25 log f, tau.25, batch32 independent groups of the same state,20K actor updates, Adam3e-4. Conditional truncated Gaussian,256x256 GELU,log sigma[-5,-1],initial log sigma-1,mean head variance scale1e-4. No OT, mode masks, learned critic, entropy bonus or target samples supplied to training.
+
+Reuse core/actor/box Gaussian/forward NLL/evaluation source byte-identically. The existing launcher --config selects the new size config. Numerical changes are only N and M; different array shapes mean matching seeds are not identical random draws after initialization. Heavy finite-L score diagnostics are disabled as in the preceding Forward-only initializer ablation; they never affect optimization or training RNG. All original evaluation snapshots and actual sample counts stay unchanged.
+
+Before execution, commit exact source/config/launch/protocol to heejoon. Archive source with file hashes and job IDs. Eight independent Slurm jobs,1GPU2CPUs16GB each, at most8 concurrent, one-hour limit; clear inherited CUDA paths, exclude known faulty nodes. Do not create experiment-order dependencies or modify unrelated held jobs. Preserve full actor/Adam/RNG checkpoint.
+
+Main measurements: actual32768 policy samples, unsmoothed256-bin histograms, histogram TV, basin-mass TV, W1, conditional sigma and every seed's final density. Do not equate nonzero mass in all three basins to three recovered peaks.
+
+Operational three-peak diagnostic, specified before results: core windows c+-0.1 around each known mode; two valley windows[-.4,-.2] and[.2,.4]. Use actual sample counts, no KDE smoothing. Each core must contain at least half of its analytic target probability, and each valley's average density must be <=half of the lower adjacent core average densities. All windows have width.2. Report the two valley/core ratios and core masses, not just pass/fail. This is a pragmatic separation diagnostic, not a proof of exactly3 local maxima or exact target recovery. Inspect histograms directly. For a recorded recovery time, require passing at that evaluation snapshot and all later saved snapshots; call it observed-persistent only if at least two snapshots pass. If only20K passes, label final-only (not persistent). Missing snapshots between recorded times do not certify no transient relapse.
+
+When neither size consistently recovers all3 peaks, report that tested sizes are insufficient under these settings rather than silently expanding the sweep or attributing failure to sample count alone.
+
+Run root: login4:/scratch2/hobbit9882/OptiQ-SingleQ-N64-M256-K64-T025-20260921/extensions/forward_size_20260923. SubdirectoriesN256M256 andN512M512 each contain runtime/runs/forward_L0_s*. Shared immutable source. Central:dildata:/data1/heejoonorm/OptiQ/studies/20260923_forward_sizes/campaign. Reports:reports/20260923_forward_sizes.
