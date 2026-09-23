@@ -67,6 +67,6 @@ login4실험폴더: /scratch2/hobbit9882/OptiQ-SingleQ-N64-M256-K64-T025-2026092
 
 초기분석에서일부actor가131072quadraturenodes까지엄격한reference안정성조건을통과하지못했다. 판정tolerance는변경하지않는다. 해당actor에만quadraturenodes262144,524288,1048576,2097152,4194304,8388608을차례로추가한다. 원래MCbank/action/actor/score측정은전부그대로재사용한다. 정밀화reference로오차와최소L만다시계산하고runtime/refined_results에보관한다. 초기자료는runtime/results에그대로남긴다. 원래reference가통과한actor는재계산하지않는다. Reference2회연속안정성은동일하게유지하며추가최대범위에서도실패하면미확정으로남긴다. 후처리commit과원본MC파일SHA를별도REFINEMENT.json에기록한다.
 
-## 一百万 bank 이후 제한된 추가 검사
+## L=1,048,576 이후 제한된 추가 검사
 
 Reference를 모두 확정한 뒤 엄격 1%를 통과하지 못한6개 actor에만 L=2,097,152,4,194,304,8,388,608을 추가한다. 사후 확장이라는 점을 명시하며 오차 판정기준을 완화하지 않는다. 원래16개 IID bank의 동일 prefix에서 누적합을 이어 계산한다. 첫128개 score를 재계산해 일치를 검증하고, 원래 모든 MC score 배열은 그대로 보존한다. 8,388,608에서도1%를 확인하지 못하면 그 사실을 결론으로 남긴다. 모든20개 actor에서 공통된 별도 latent65536개(seed761023)의 sigma 분포를 기록한다. Sigma와 추정 오차의 관계는 상관관계 진단이지 원인 확정 실험이 아니다. 결과는runtime/extended_results, 코드/commit은EXTENSION_SOURCE_MANIFEST.json에 보관한다.
