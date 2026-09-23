@@ -25,8 +25,10 @@ def job(root, identifier, gpu):
             cmd.extend(['--budget-steps',str(entry['steps'])])
         if 'final_eval_episodes' in entry:
             cmd.extend(['--final-eval-episodes',str(entry['final_eval_episodes'])])
-        for key in ('reward_profile','noveld','eval_starts'):
+        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes'):
             if key in entry:cmd.extend(['--'+key.replace('_','-'),str(entry[key])])
+        if entry.get('save_intermediate_policy',False):
+            cmd.append('--save-intermediate-policy')
         if phase=='preflight':cmd.append('--preflight')
         write(root/'jobs'/f'{identifier}.json',dict(**entry,gpu=gpu,pid=os.getpid(),phase=phase,status='running'))
         with (root/'logs'/f'{identifier}-{phase}.log').open('x') as log:
@@ -45,6 +47,20 @@ def job(root, identifier, gpu):
         assert config['noveld_enabled']==(entry.get('noveld','on')=='on')
         assert config['eval_starts']==entry.get('eval_starts','upstream')
         assert proof['rnd_updates']==(proof['updates'] if config['noveld_enabled'] else 0)
+        assert config['interim_eval_episodes']==entry.get('interim_eval_episodes',20)
+        if 'temperature' in entry:
+            actor=config['native']['alg']['actor']
+            assert actor['temperature']==entry['temperature']
+            assert (actor['log_std_min'],actor['log_std_max'],actor['initial_log_std'])==(-5.,-1.,-1.)
+        if entry.get('save_intermediate_policy',False):
+            assert config['save_intermediate_policy']
+            snapshots=sorted((target/'policy-checkpoints').glob('*/verification.json'))
+            expected_count=1 if phase=='preflight' else (expected-1)//250000
+            assert len(snapshots)==expected_count,(len(snapshots),expected_count)
+            for saved in snapshots:
+                verification=json.loads(saved.read_text())
+                assert verification['readback_verified'] and verification['restored_policy_state_exact']
+                assert verification['source_commit']==manifest['source_commit']
     write(root/'jobs'/f'{identifier}.json',dict(**entry,gpu=gpu,status='completed'))
     return 0
 

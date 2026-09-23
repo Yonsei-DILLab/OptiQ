@@ -146,6 +146,8 @@ def main():
     p.add_argument('--temperature',type=float)
     p.add_argument('--budget-steps',type=int)
     p.add_argument('--final-eval-episodes',type=int,default=100)
+    p.add_argument('--interim-eval-episodes',type=int,default=EVAL_NUM_ENVS)
+    p.add_argument('--save-intermediate-policy',action='store_true')
     p.add_argument('--reward-profile',choices=['sparse','dense'],default='sparse')
     p.add_argument('--noveld',choices=['on','off'],default='on')
     p.add_argument('--eval-starts',choices=['upstream','random'],default='upstream')
@@ -156,6 +158,9 @@ def main():
         assert a.budget_steps >= WARMUP + NUM_ENVS
         assert a.budget_steps % NUM_ENVS == 0
     assert 1 <= a.final_eval_episodes <= 1000
+    assert 1 <= a.interim_eval_episodes <= 1000
+    if a.save_intermediate_policy:
+        assert a.method == 'optiq', 'Intermediate policy saving is currently OptiQ-only'
     root = Path(__file__).resolve().parents[1]
     source = subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
     assert not subprocess.check_output(['git','status','--porcelain','--untracked-files=no'],cwd=root,text=True).strip()
@@ -193,8 +198,11 @@ def main():
         eval_starts=a.eval_starts,primary_trajectory='policy-natural',
         noveld_coefficient=.01 if a.noveld=='on' else 0.,temperature=a.temperature,
         native=learner.config,random_init=a.task=='v1',eval_interval=250000,
-        eval_num_envs=EVAL_NUM_ENVS,interim_eval_episodes=EVAL_NUM_ENVS,
+        eval_num_envs=EVAL_NUM_ENVS,interim_eval_episodes=a.interim_eval_episodes,
         final_eval_episodes=a.final_eval_episodes,
+        save_intermediate_policy=a.save_intermediate_policy,
+        policy_checkpoint_interval=250000 if a.save_intermediate_policy else None,
+        policy_checkpoint_kind='evaluation-only; model/optimizer/RNG, no replay or simulator',
         checkpoint='final only',step_definition='step includes warmup; global_steps excludes warmup as upstream; stop global_steps>max_step',
         evaluation='primary=policy-natural; policy: direct draws, no extra exploration noise; native: SAC mean, MFPO Q-best-of10, OptiQ random-z mu-only, DIPO native diffusion; fixed starts are supplementary',
         runtime=dict(python=os.sys.version,torch=torch.__version__,numpy=np.__version__))
@@ -238,9 +246,14 @@ def main():
                 assert learner.updates==expected_updates(step)
                 assert learner.intrinsic.update_step==(learner.updates if learner.noveld_enabled else 0)
             if step>=next_eval and step<budget:
+                if a.save_intermediate_policy:
+                    from .policy_checkpoints import save_evaluation_checkpoint
+                    t=time.monotonic()
+                    save_evaluation_checkpoint(learner,folder,step,config)
+                    timing['checkpoint']+=time.monotonic()-t
                 t=time.monotonic()
                 for mode in ('native','policy'):
-                    s=evaluate(learner,a.task,folder,step,EVAL_NUM_ENVS,mode)
+                    s=evaluate(learner,a.task,folder,step,a.interim_eval_episodes,mode)
                     run.log({f'eval/{mode}/success_rate':s['success_rate'],
                              f'eval/{mode}/return':s['mean_return']},step=step)
                 timing['evaluation']+=time.monotonic()-t
@@ -253,6 +266,9 @@ def main():
         write(folder/'parameter-audit.json',dict(initial=initial,final=final_audit,passed=True))
         np.save(folder/'training-xy.npy',xy)
         write(folder/'training-successes.json',successes)
+        if a.preflight and a.save_intermediate_policy:
+            from .policy_checkpoints import save_evaluation_checkpoint
+            save_evaluation_checkpoint(learner,folder,step,config)
         t=time.monotonic();proof=checkpoint(learner,env,obs,folder,step,rng,config)
         timing['checkpoint']+=time.monotonic()-t
         summaries={}

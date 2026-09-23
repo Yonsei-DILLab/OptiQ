@@ -113,3 +113,13 @@ profile in DENSE_OFF_PROTOCOL.md, original 3M/3M/4M/5M native budgets,256envs,
 batch4096,8updates per256transitions,8GPUs with independent2second backfill.
 Keep validated numerical safeguards and randomized evaluation starts. Preserve
 all older cancelled queues and completed probe results; do not relaunch them.
+
+User restart and correction (2026-09-23, latest): stop all dense jobs and cancel
+their pending queue. Launch only OptiQ v1/v2/v3/v4, seed0 each (four total),
+using original sparse reward + NovelD0.01. The user explicitly withdrew removal
+of the sigma cap: retain log sigma[-5,-1],initial-1 and set temperature0.01.
+Use250k evaluations with40 episodes per native/direct mode, save intermediate
+evaluation-only policy checkpoints, and retain final100 episodes/full-state save.
+Preserve256env,batch4096,8updates/256transitions and native3M/3M/4M/5M budgets.
+The four jobs use server180; server199 receives source only. Do not launch
+baselines/extra seeds or resume cancelled campaigns. See SPARSE_T001_PROTOCOL.md.
