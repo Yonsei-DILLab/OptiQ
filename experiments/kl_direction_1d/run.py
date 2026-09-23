@@ -19,7 +19,8 @@ def atomic_json(path,data):
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--root',type=Path,required=True)
     parser.add_argument('--index',type=int,required=True);parser.add_argument('--resume',action='store_true')
-    args=parser.parse_args();cfg=json.loads(Path(__file__).with_name('config.json').read_text())
+    parser.add_argument('--config',type=Path,default=Path(__file__).with_name('config.json'))
+    args=parser.parse_args();cfg=json.loads(args.config.read_text())
     condition=cfg['conditions'][args.index%len(cfg['conditions'])];seed=cfg['seeds'][args.index//len(cfg['conditions'])]
     method,L=condition['method'],condition['L'];name=f'{method}_L{L}_s{seed}'
     out=args.root/'runtime/runs'/name;out.mkdir(parents=True,exist_ok=True)
