@@ -85,7 +85,9 @@ def main():
         case=cfg['cases'][args.selected_case];seed=args.index
         assert args.parent_root is not None
         for method in ['forward','reverse']:
-            train(args.root,cfg,case,seed,method,50000,1024 if method=='reverse' else 0,'longscreen',args.parent_root)
+            available=any((args.parent_root/'runtime'/st/case['id']/f'{method}_s{seed}'/'COMPLETE.json').exists() for st in ['screen','replicate'])
+            if seed<2:assert available
+            train(args.root,cfg,case,seed,method,50000,1024 if method=='reverse' else 0,'longscreen',args.parent_root if available else None)
     elif args.stage=='confirm_pair':
         case=cfg['cases'][args.selected_case];seed=args.index
         for method in ['forward','reverse']:

@@ -68,3 +68,15 @@ record parent source and checkpoint hashes. Same numerical update and parameters
 Final100K still uses reverse L1048576, with both methods fresh. Pair methods in
 the SAME GPU allocation per seed (forward then reverse) to keep initialization
 hardware identical. Do not initialize full confirmation from screening checkpoints.
+
+## Persistence follow-up: e06 and e09
+In e02, reverse seed2 recovered all modes by50K. Thus10K separation alone is
+insufficient for a persistent-missing example. Retain this negative finding.
+Test both adjacent candidates to50K, same L1024, seeds0-3:
+- e06: centers(-4.25,0,4.25),width .5,mean head scale1.
+- e09: centers(-4.5,0,4.5),width .5,mean head scale10.
+Forward had all three basin masses at10K in both cases but still imperfect
+local shape. Reverse had only the central mode in both screen seeds.
+Seeds0,1 resume10K, seeds2,3 start fresh when no parent exists. Both methods
+receive50K total updates; never omit poorly fitting seeds. Choose by all-seed
+peak recovery and distribution error, not just coarse basin coverage.
