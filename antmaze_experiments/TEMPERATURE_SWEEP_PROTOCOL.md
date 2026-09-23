@@ -21,3 +21,11 @@ do not assert that a remote queue has been registered.
   Remote installation and GPU ownership must be verified before registration.
 
 Seed 0 behavior is unchanged by the seed plumbing. Upstream antmaze/ is untouched.
+
+Deployment approved: our Vast hosts, behind existing work. Use vast2/3/4/5;
+vast1 remains disk-constrained and its DIPO slot is preserved. Separate runtime
+inherits existing Python3.11 packages but overrides Torch with CUDA12.8 support
+and installs original Gym0.23.1 / MuJoCo2.1 / mujoco_py2.1.2.14. Existing runtime
+packages and live code are not modified. Each GPU job must pass the real
+256-env,4096-batch,8-update preflight before main training. Runtime failure
+does not start training; job failure holds that host's pending jobs. No restart.
