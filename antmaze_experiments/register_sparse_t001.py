@@ -23,7 +23,7 @@ def main():
     conf=Path('/home/heechan/OptiQ-ops/supervisor/jobs')/(CAMPAIGN+'.conf')
     assert not conf.exists(),conf
     jobs=[dict(id=f'{task}-optiq-s0',task=task,method='optiq',temperature=.01,
-               reward_profile='sparse',noveld='on',eval_starts='random',
+               reward_profile='sparse',noveld='on',eval_starts='upstream',
                steps=total_budget(task),interim_eval_episodes=40,final_eval_episodes=100,
                save_intermediate_policy=True) for task in ('v1','v2','v3','v4')]
     manifest=dict(campaign=CAMPAIGN,source=str(source),source_commit=sha,

@@ -232,3 +232,13 @@ T1,DACER OFF,NovelD OFF and all other control settings. Use existing8GPU plus
 user-added4GPU after readiness validation. Commit/push/share frozen source
 before learning; preserve cancelled runs and all NM/ablation assets on added
 host. See antmaze_experiments/PROGRESS100_FACTORIAL_PROTOCOL.md.
+
+User evaluation correction (2026-09-24, latest): evaluation resets match learning:
+v1 keeps native random XY starts; v2/v3/v4 use original fixed origin, pose and
+velocity. This supersedes the previous all-maze random evaluation preference.
+Do not restart or mutate frozen training to change its in-memory evaluator.
+For already-running OptiQ, separately evaluate saved/latest and future checkpoints
+at the correct fixed starts; label frozen v2-v4 random results supplementary.
+Future launch defaults use eval_starts=upstream and fixed-primary v2-v4 output.
+Preserve v1 random evaluation, original policy sampling, rewards, all parameters
+and historical data. See antmaze_experiments/MATCHED_START_EVALUATION.md.

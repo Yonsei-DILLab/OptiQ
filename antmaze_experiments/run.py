@@ -25,6 +25,8 @@ def write(path, value):
 def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
     from .envs import vector, transition
     from .learners import evaluation_rng
+    origin_fixed = getattr(learner, 'eval_fixed_starts', False)
+    fixed = bool(fixed or origin_fixed)
     label = f'{mode}-' + ('fixed' if fixed else 'natural')
     count = min(EVAL_NUM_ENVS, episodes)
     destination = folder/'evaluations'/f'{step:010d}'/label
@@ -33,7 +35,7 @@ def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
     with evaluation_rng(learner, 700000 + step):
         env = vector(task, count, seed=87231, asynchronous=False, fixed=fixed,
                      reward_profile=learner.reward_profile,
-                     random_init=True if getattr(learner,'eval_random_starts',False) else None)
+                     random_init=False if origin_fixed else True if getattr(learner,'eval_random_starts',False) else None)
         try:
             for batch in range((episodes+count-1)//count):
                 obs = env.reset(); active = np.arange(count)+batch*count < episodes
@@ -74,10 +76,14 @@ def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
         goal_counts={str(g):int(np.sum(np.array(goals)==g)) for g in sorted(set(goals))},
         mean_length=float(np.mean(lengths)),
         identical_initial_full_state=bool(np.all(np.array(starts)==starts[0])))
-    result['start_distribution'] = ('fixed first sampled full state' if fixed else
+    result['start_distribution'] = ('original fixed origin, pose and velocity' if origin_fixed else
+        'fixed first sampled full state' if fixed else
         'xy uniform[-2,2], original pose/velocity' if task=='v1' or getattr(learner,'eval_random_starts',False)
         else 'original fixed full state')
     if fixed: assert result['identical_initial_full_state']
+    if origin_fixed:
+        np.testing.assert_array_equal(np.asarray(starts)[:, :2], np.zeros((episodes, 2)))
+    result['original_origin_fixed'] = origin_fixed
     result['reward_profile']=learner.reward_profile
     if learner.reward_profile in PROFILES:
         result['reward_specification']=specification(task,learner.reward_profile)
@@ -183,7 +189,7 @@ def main():
     p.add_argument('--save-intermediate-policy',action='store_true')
     p.add_argument('--reward-profile',choices=REWARD_PROFILES,default='sparse')
     p.add_argument('--noveld',choices=['on','off'],default='on')
-    p.add_argument('--eval-starts',choices=['upstream','random'],default='upstream')
+    p.add_argument('--eval-starts',choices=['upstream','random','fixed'],default='upstream')
     a = p.parse_args()
     if a.reward_profile in PROFILES and a.noveld!='off':
         p.error("Progress profiles require --noveld off; intrinsic reward is a separate ablation")
@@ -236,6 +242,7 @@ def main():
             dacer_enabled=a.dacer!='off')
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
+    learner.eval_fixed_starts = a.eval_starts=='fixed' or (a.eval_starts=='upstream' and a.task!='v1')
     budget = PREFLIGHT_STEPS if a.preflight else planned_budget
     warmup = WARMUP
     config = dict(source_commit=source,upstream_commit='7edd06c4799abbab0f8fa534c21deb56253b018e',
@@ -248,7 +255,8 @@ def main():
         reward=reward_description(a.reward_profile),
         reward_specification=specification(a.task,a.reward_profile),
         reward_profile=a.reward_profile,noveld_enabled=a.noveld=='on',
-        eval_starts=a.eval_starts,primary_trajectory='policy-natural',
+        eval_starts=a.eval_starts,effective_eval_starts='fixed' if learner.eval_fixed_starts else 'random',
+        primary_trajectory='policy-fixed' if learner.eval_fixed_starts else 'policy-natural',
         noveld_coefficient=.01 if a.noveld=='on' else 0.,temperature=a.temperature,
         temperature_schedule=temperature_schedule,
         dacer_target_entropy_per_dim=a.dacer_target_entropy_per_dim,
@@ -260,7 +268,8 @@ def main():
         policy_checkpoint_interval=250000 if a.save_intermediate_policy else None,
         policy_checkpoint_kind='evaluation-only; model/optimizer/RNG, no replay or simulator',
         checkpoint='final only',step_definition='step includes warmup; global_steps excludes warmup as upstream; stop global_steps>max_step',
-        evaluation='primary=policy-natural; policy: direct draws, no extra exploration noise; native: SAC mean, MFPO Q-best-of10, OptiQ random-z mu-only, DIPO native diffusion; fixed starts are supplementary',
+        evaluation=('primary=policy-fixed at original origin/pose/velocity; ' if learner.eval_fixed_starts else 'primary=policy-natural; ')+
+            'policy: direct draws, no extra exploration noise; native: SAC mean, MFPO Q-best-of10, OptiQ random-z mu-only, DIPO native diffusion',
         runtime=dict(python=os.sys.version,torch=torch.__version__,numpy=np.__version__))
     write(folder/'config.json',config)
     import wandb
@@ -349,7 +358,7 @@ def main():
         timing['checkpoint']+=time.monotonic()-t
         summaries={}
         for mode in (['native','policy','zero_z'] if a.method=='optiq' else ['native','policy']):
-            for fixed in (False,True):
+            for fixed in ((True,) if learner.eval_fixed_starts else (False,) if a.eval_starts=='upstream' else (False,True)):
                 t=time.monotonic()
                 label=mode+('-fixed' if fixed else '-natural')
                 summaries[label]=evaluate(learner,a.task,folder,step,2 if a.preflight else a.final_eval_episodes,mode,fixed)

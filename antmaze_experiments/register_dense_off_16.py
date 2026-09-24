@@ -20,7 +20,7 @@ def campaign_manifest(source, sha, shard):
     for method in ('dipo', 'optiq', 'sac', 'mfpo'):
         for task in tasks:
             entry = dict(id=f'{task}-{method}-s0', task=task, method=method,
-                         reward_profile='dense', noveld='off', eval_starts='random',
+                         reward_profile='dense', noveld='off', eval_starts='upstream',
                          steps=total_budget(task), interim_eval_episodes=40,
                          final_eval_episodes=100)
             if method == 'optiq':

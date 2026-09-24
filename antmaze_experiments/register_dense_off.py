@@ -37,7 +37,7 @@ def main():
                [('v2','dipo'),('v4','dipo'),('v2','optiq'),('v4','optiq'),
                 ('v2','sac'),('v4','sac'),('v2','mfpo'),('v4','mfpo')])
     jobs=[dict(id=f'{task}-{method}-s0',task=task,method=method,reward_profile='dense',
-               noveld='off',eval_starts='random',steps=328192 if a.stage=='probe' else total_budget(task),
+               noveld='off',eval_starts='upstream',steps=328192 if a.stage=='probe' else total_budget(task),
                final_eval_episodes=100) for task,method in pairs]
     manifest=dict(campaign=name,stage=a.stage,shard=a.shard,source=str(source),
                   source_commit=sha,wandb_mode='online',jobs=jobs,probe_review=review,
