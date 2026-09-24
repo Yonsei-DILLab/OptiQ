@@ -14,7 +14,7 @@ if [ ! -f "$ROOT/runtime-ready.json" ]; then
   apt-get update -qq
   apt-get install -y -qq libosmesa6-dev libgl1-mesa-dev patchelf gcc g++
   uv pip install --python "$ROOT/venv/bin/python" --no-cache 'torch==2.7.1' --index-url https://download.pytorch.org/whl/cu128
-  uv pip install --python "$ROOT/venv/bin/python" --no-cache 'numpy==1.26.4' 'gym==0.23.1' 'Cython==0.29.37' 'mujoco-py==2.1.2.14' 'h5py' 'dm-control' 'pybullet' 'termcolor'
+  uv pip install --python "$ROOT/venv/bin/python" --no-cache 'numpy==1.26.4' 'gym==0.23.1' 'Cython==0.29.37' 'mujoco-py==2.1.2.14' 'h5py' 'dm-control' 'pybullet' 'termcolor' 'loguru' 'seaborn'
   uv pip install --python "$ROOT/venv/bin/python" --no-deps --no-cache 'd4rl==1.1'
   if [ ! -f "$ROOT/mujoco210/bin/libmujoco210.so" ]; then
     curl -fL --retry 3 https://mujoco.org/download/mujoco210-linux-x86_64.tar.gz -o "$ROOT/mujoco210.tar.gz"
