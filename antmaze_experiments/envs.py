@@ -5,7 +5,7 @@ import sys
 import copy
 import copyreg
 import numpy as np
-from .progress_reward import PROFILES, progress_reward, geodesic, maze_geometry
+from .progress_reward import PROFILES, progress_reward, geodesic, maze_geometry, bonus_enabled, is_geodesic
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "antmaze"))
@@ -92,7 +92,7 @@ class Recorded(gym.Wrapper):
             reward, previous_distance, current_distance = progress_reward(
                 before, self.physics_env.get_xy(), self.task, self.reward_profile, reward)
             info.update(reward_progress=float(previous_distance-current_distance),
-                reward_step_penalty=-.01,reward_success=info['upstream_sparse_reward'],
+                reward_step_penalty=-.01,reward_success=info['upstream_sparse_reward'] if bonus_enabled(self.reward_profile) else 0.,
                 progress_distance_before=float(previous_distance),
                 progress_distance_after=float(current_distance),reward_profile=self.reward_profile)
             if info['success']:
@@ -115,7 +115,7 @@ def make_one(task, seed, fixed=False, reward_profile='sparse', random_init=None)
 
 
 def vector(task, count, seed, asynchronous=True, fixed=False, reward_profile='sparse',random_init=None):
-    if reward_profile=='progress_geodesic':
+    if is_geodesic(reward_profile):
         geodesic(task)  # Precompute once before fork; workers inherit immutable graph.
     constructors = [partial(make_one, task, seed if fixed else seed + i, fixed, reward_profile,random_init)
                     for i in range(count)]

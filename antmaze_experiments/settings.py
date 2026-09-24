@@ -24,11 +24,14 @@ def expected_updates(total_steps):
     return (total_steps-WARMUP) // NUM_ENVS * UPDATES
 
 
-REWARD_PROFILES = ('sparse', 'dense', 'progress_euclidean', 'progress_geodesic')
+REWARD_PROFILES = ('sparse', 'dense', 'progress_euclidean', 'progress_geodesic',
+                   'progress_euclidean_no_bonus', 'progress_geodesic_no_bonus')
 
 def reward_description(profile):
     return {
         'sparse': REWARD, 'dense': DENSE_REWARD,
         'progress_euclidean': 'nearest-goal Euclidean distance decrease -0.01 + upstream goal bonus10/20',
+        'progress_euclidean_no_bonus': 'nearest-goal Euclidean distance decrease -0.01; no success bonus',
+        'progress_geodesic_no_bonus': 'nearest-goal XY geodesic distance decrease -0.01; no success bonus',
         'progress_geodesic': 'nearest-goal XY geodesic distance decrease -0.01 + upstream goal bonus10/20',
     }[profile]

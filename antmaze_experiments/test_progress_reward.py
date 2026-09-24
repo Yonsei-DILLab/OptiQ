@@ -2,10 +2,21 @@
 import unittest
 import numpy as np
 from .progress_reward import (Geodesic,geodesic,maze_geometry,distance,progress_reward,
-                              success_bonus,specification,value_support,PROFILES)
+                              success_bonus,specification,value_support,PROFILES,bonus_enabled)
 from .settings import reward_description
 
 class ProgressRewardTests(unittest.TestCase):
+    def test_bonus_only_changes_terminal_reward(self):
+        for base in PROFILES[:2]:
+            for task in ('v1','v2','v3','v4'):
+                for goal in maze_geometry(task)[1]:
+                    before=goal+[.6,0];after=goal+[.3,0]
+                    bonus=success_bonus(after,task)
+                    r_on,*_=progress_reward(before,after,task,base,bonus)
+                    r_off,*_=progress_reward(before,after,task,base+'_no_bonus',bonus)
+                    self.assertAlmostEqual(float(r_on-r_off),float(bonus))
+                    self.assertFalse(specification(task,base+'_no_bonus')['success_bonus_enabled'])
+
     def test_empty_space_is_euclidean(self):
         g=Geodesic([],[[3,4]],margin=0)
         np.testing.assert_allclose(g.distances([[0,0],[3,4]]),[[5],[0]])
@@ -41,7 +52,7 @@ class ProgressRewardTests(unittest.TestCase):
                     self.assertEqual(success_bonus(goal,task),bonus)
                     self.assertAlmostEqual(float(distance(goal,task,profile)),0.)
                     r,_,_=progress_reward(goal,goal,task,profile,bonus)
-                    self.assertAlmostEqual(float(r),bonus-.01)
+                    self.assertAlmostEqual(float(r),(bonus if bonus_enabled(profile) else 0)-.01)
                 self.assertEqual(specification(task,profile)['physical_body_inflation_m'],0.)
                 lo,hi=value_support(task,profile)
                 self.assertLess(lo,-1);self.assertGreater(hi,20)
@@ -60,13 +71,13 @@ class ProgressRewardTests(unittest.TestCase):
             end=np.array([-7.7,0.]);start=np.array([-7.4,0.])
             r,d0,d1=progress_reward(start,end,'v1',profile,10.)
             self.assertAlmostEqual(float(d1),.3)
-            self.assertAlmostEqual(float(r),10.29)
+            self.assertAlmostEqual(float(r),.29+(10 if bonus_enabled(profile) else 0))
 
     def test_route_total_and_metadata_no_legacy_change(self):
         for profile in PROFILES:
             route=np.array([[0,0],[0,3],[-4,3],[-8,3],[-8,0]],float)
             r,_,_=progress_reward(route[:-1],route[1:],'v1',profile,np.array([0,0,0,10]))
-            self.assertAlmostEqual(float(r.sum()),float(distance(route[0],'v1',profile))+10-.04)
+            self.assertAlmostEqual(float(r.sum()),float(distance(route[0],'v1',profile))+(10 if bonus_enabled(profile) else 0)-.04)
         self.assertEqual(reward_description('dense'),'negative Euclidean distance from next xy to nearest goal; no sparse bonus')
         self.assertIsNone(specification('v1','dense'))
 

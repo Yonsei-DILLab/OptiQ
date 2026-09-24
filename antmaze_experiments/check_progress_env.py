@@ -2,7 +2,7 @@
 import argparse,json,time
 from pathlib import Path
 import numpy as np
-from .progress_reward import PROFILES,distance,specification
+from .progress_reward import PROFILES,distance,specification,bonus_enabled
 
 
 def check():
@@ -21,7 +21,7 @@ def check():
                     o,r,d,i=e.step(action);rows[profile]=(o,r,d,i)
                     if profile=='dense':assert np.isclose(r,-i['distance'])
                     if profile in PROFILES:
-                        expected=distance(before,task,profile)-distance(e.physics_env.get_xy(),task,profile)-.01+i['upstream_sparse_reward']
+                        expected=distance(before,task,profile)-distance(e.physics_env.get_xy(),task,profile)-.01+(i['upstream_sparse_reward'] if bonus_enabled(profile) else 0)
                         max_error=max(max_error,abs(float(r-expected)))
                         assert np.isclose(r,expected,atol=1e-9)
                         assert np.isclose(r,i['reward_progress']+i['reward_step_penalty']+i['reward_success'])
@@ -39,7 +39,7 @@ def check():
                     np.testing.assert_allclose(one[0],two[0],atol=1e-7,rtol=1e-7)
                     assert np.isclose(one[1],two[1],atol=1e-9) and one[2]==two[2]
                     assert one[2] and one[3]['success']>0
-                    wanted=20 if tuple(goal)==(-8,8) else 10
+                    wanted=(20 if tuple(goal)==(-8,8) else 10) if bonus_enabled(profile) else 0
                     assert one[3]['reward_success']==wanted
                     arrivals.append(dict(profile=profile,goal=goal.tolist(),bonus=wanted,reward=float(one[1])))
             results[task]=dict(transitions_per_profile=100,physics_identical=True,max_reward_error=max_error,

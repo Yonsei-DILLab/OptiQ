@@ -70,3 +70,11 @@ No reproduction claim: Habitat ICCV2019 uses a single designated goal and its
 NavMesh, +10 when STOP within0.2m. These AntMaze profiles retain multiple goals,
 upstream10/20 bonuses,0.5m automatic success, and Ant physics. Neither variant
 guarantees multimodality; a shorter/better-return route may still dominate.
+
+## Subsequent launch authorization
+
+The user subsequently authorized a16-policy factorial: both distances with and
+without terminal success bonus, across v1-v4. Profiles with suffix`_no_bonus`
+remove only the bonus while retaining success detection and termination. The
+implementation-only restriction above describes the initial task; the new
+campaign is specified separately in PROGRESS_FACTORIAL_PROTOCOL.md.

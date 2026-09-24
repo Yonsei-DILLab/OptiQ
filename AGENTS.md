@@ -213,3 +213,14 @@ Preserve native3M/4M/5M budgets and use both four-5090 hosts with independent
 2second backfill. Preserve existing completed results and cancelled queues.
 Commit/push/share before launch; W&B OptiQ/antmaze. See
 antmaze_experiments/DACER_OFF_TEMPERATURE_PROTOCOL.md.
+
+User progress-reward factorial approval (2026-09-24, newest): run fresh OptiQ
+only, Euclidean/geodesic distance x success bonus ON/OFF x v1-v4, seed0,
+16 policies. Reward is d(current)-d(next)-.01 plus original10/20 goal bonus
+when enabled; keep goal success/termination identical when bonus is OFF.
+Use T1 DACER OFF NovelD OFF control settings, native3M/3M/4M/5M budgets,
+256env,batch4096,8updates/256transitions,replay1M,256x3 networks and existing
+40/100episode random-start evaluations/intermediate policy saves. Preserve
+running/completed experiments. Commit/push/share before per-job preflight/main
+training; use8GPU independent2second backfill. W&B OptiQ/antmaze. See
+antmaze_experiments/PROGRESS_FACTORIAL_PROTOCOL.md for exact profiles and geometry.

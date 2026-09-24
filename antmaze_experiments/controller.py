@@ -54,6 +54,10 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
         config=json.loads((target/'config.json').read_text())
         reward=reward_description(entry.get('reward_profile','sparse'))
         assert config['reward']==reward and config['num_envs']==NUM_ENVS and config['batch_size']==4096
+        if 'reward_specification' in entry:
+            assert config['reward_profile']==entry['reward_profile']
+            assert config['reward_specification']==entry['reward_specification']
+            assert proof['checkpoint']['progress_replay_verified']
         assert config['noveld_enabled']==(entry.get('noveld','on')=='on')
         assert config['eval_starts']==entry.get('eval_starts','upstream')
         assert proof['rnd_updates']==(proof['updates'] if config['noveld_enabled'] else 0)
