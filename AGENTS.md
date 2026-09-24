@@ -242,3 +242,13 @@ at the correct fixed starts; label frozen v2-v4 random results supplementary.
 Future launch defaults use eval_starts=upstream and fixed-primary v2-v4 output.
 Preserve v1 random evaluation, original policy sampling, rewards, all parameters
 and historical data. See antmaze_experiments/MATCHED_START_EVALUATION.md.
+
+# User replacement (2026-09-25, latest)
+
+Stop all running/pending geodesic AntMaze jobs across180/199/vast1 and preserve
+their data and frozen sources. Launch only four fresh OptiQ v1-v4 seed0 policies
+using100*(nearest-goal Euclidean distance decrease),success bonus0,step penalty0.
+Keep T1,DACER OFF,NovelD OFF and other latest settings. Evaluation matches training:
+v1random,v2-v4fixed original full state. Commit/push/share before preflight/main
+launch; independent slots on180/199,source-only sharing tovast1. See
+antmaze_experiments/EUCLIDEAN_NO_STEP_PROTOCOL.md. Cancelled campaigns stay stopped.

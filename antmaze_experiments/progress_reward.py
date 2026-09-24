@@ -15,14 +15,16 @@ LEGACY_PROFILES = ('progress_euclidean', 'progress_geodesic',
 
 SCALED_PROFILES = tuple(p.replace('progress_', 'progress100_') for p in LEGACY_PROFILES)
 NO_COST_PROFILE = 'progress100_geodesic_no_step_no_bonus'
-PROFILES = LEGACY_PROFILES + SCALED_PROFILES + (NO_COST_PROFILE,)
+EUCLIDEAN_NO_COST_PROFILE = 'progress100_euclidean_no_step_no_bonus'
+NO_COST_PROFILES = (NO_COST_PROFILE, EUCLIDEAN_NO_COST_PROFILE)
+PROFILES = LEGACY_PROFILES + SCALED_PROFILES + NO_COST_PROFILES
 
 def progress_scale(profile):
     if profile not in PROFILES: raise ValueError(profile)
-    return 100. if profile in SCALED_PROFILES or profile == NO_COST_PROFILE else 1.
+    return 100. if profile in SCALED_PROFILES or profile in NO_COST_PROFILES else 1.
 
 def step_cost(profile):
-    if profile == NO_COST_PROFILE: return 0.
+    if profile in NO_COST_PROFILES: return 0.
     return STEP_COST * progress_scale(profile)
 
 def bonus_enabled(profile):
@@ -154,7 +156,7 @@ def progress_reward(before, after, task, profile, bonus):
 def specification(task, profile):
     if profile not in PROFILES:return None
     walls,goals,bounds=maze_geometry(task)
-    formula=('100*(d(current)-d(next))' if profile == NO_COST_PROFILE else
+    formula=('100*(d(current)-d(next))' if profile in NO_COST_PROFILES else
              '100*(d(current)-d(next))-1' if profile in SCALED_PROFILES else 'd(current)-d(next)-0.01')
     return dict(formula=formula+('+upstream_success_bonus' if bonus_enabled(profile) else ''),
         success_bonus_enabled=bonus_enabled(profile),
