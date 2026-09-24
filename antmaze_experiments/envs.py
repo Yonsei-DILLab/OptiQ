@@ -5,7 +5,7 @@ import sys
 import copy
 import copyreg
 import numpy as np
-from .progress_reward import PROFILES, progress_reward, geodesic, maze_geometry, bonus_enabled, is_geodesic
+from .progress_reward import PROFILES, progress_reward, geodesic, maze_geometry, bonus_enabled, is_geodesic, progress_scale, step_cost
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "antmaze"))
@@ -91,8 +91,9 @@ class Recorded(gym.Wrapper):
         elif self.reward_profile in PROFILES:
             reward, previous_distance, current_distance = progress_reward(
                 before, self.physics_env.get_xy(), self.task, self.reward_profile, reward)
-            info.update(reward_progress=float(previous_distance-current_distance),
-                reward_step_penalty=-.01,reward_success=info['upstream_sparse_reward'] if bonus_enabled(self.reward_profile) else 0.,
+            info.update(reward_progress=float(progress_scale(self.reward_profile)*(previous_distance-current_distance)),
+                reward_distance_delta=float(previous_distance-current_distance),
+                reward_step_penalty=-step_cost(self.reward_profile),reward_success=info['upstream_sparse_reward'] if bonus_enabled(self.reward_profile) else 0.,
                 progress_distance_before=float(previous_distance),
                 progress_distance_after=float(current_distance),reward_profile=self.reward_profile)
             if info['success']:

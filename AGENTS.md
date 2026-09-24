@@ -224,3 +224,11 @@ Use T1 DACER OFF NovelD OFF control settings, native3M/3M/4M/5M budgets,
 running/completed experiments. Commit/push/share before per-job preflight/main
 training; use8GPU independent2second backfill. W&B OptiQ/antmaze. See
 antmaze_experiments/PROGRESS_FACTORIAL_PROTOCOL.md for exact profiles and geometry.
+
+User replacement (2026-09-24, newest): stop current progress-reward factorial
+and restart16 OptiQ policies (Euclidean/geodesic x bonus ON/OFF x v1-v4,seed0)
+with100*(d_current-d_next)-1+B. Keep B10/20 when ON,zero when OFF; preserve
+T1,DACER OFF,NovelD OFF and all other control settings. Use existing8GPU plus
+user-added4GPU after readiness validation. Commit/push/share frozen source
+before learning; preserve cancelled runs and all NM/ablation assets on added
+host. See antmaze_experiments/PROGRESS100_FACTORIAL_PROTOCOL.md.

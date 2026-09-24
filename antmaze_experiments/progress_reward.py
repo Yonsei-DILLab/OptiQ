@@ -10,15 +10,25 @@ from pathlib import Path
 import hashlib
 import numpy as np
 
-PROFILES = ('progress_euclidean', 'progress_geodesic',
+LEGACY_PROFILES = ('progress_euclidean', 'progress_geodesic',
             'progress_euclidean_no_bonus', 'progress_geodesic_no_bonus')
+
+SCALED_PROFILES = tuple(p.replace('progress_', 'progress100_') for p in LEGACY_PROFILES)
+PROFILES = LEGACY_PROFILES + SCALED_PROFILES
+
+def progress_scale(profile):
+    if profile not in PROFILES: raise ValueError(profile)
+    return 100. if profile in SCALED_PROFILES else 1.
+
+def step_cost(profile):
+    return STEP_COST * progress_scale(profile)
 
 def bonus_enabled(profile):
     if profile not in PROFILES: raise ValueError(profile)
     return not profile.endswith('_no_bonus')
 
 def is_geodesic(profile):
-    return profile in ('progress_geodesic', 'progress_geodesic_no_bonus')
+    return profile in PROFILES and 'geodesic' in profile
 STEP_COST = .01
 GEOMETRY_MARGIN = 1e-6
 UPSTREAM = Path(__file__).resolve().parents[1]/'antmaze/ddiffpg/env/d4rl/locomotion/maze_env.py'
@@ -136,16 +146,17 @@ def success_bonus(points, task):
 
 def progress_reward(before, after, task, profile, bonus):
     previous=distance(before,task,profile);current=distance(after,task,profile)
-    return previous-current-STEP_COST+(np.asarray(bonus) if bonus_enabled(profile) else 0.),previous,current
+    return progress_scale(profile)*(previous-current)-step_cost(profile)+(np.asarray(bonus) if bonus_enabled(profile) else 0.),previous,current
 
 
 def specification(task, profile):
     if profile not in PROFILES:return None
     walls,goals,bounds=maze_geometry(task)
-    return dict(formula='d(current)-d(next)-0.01'+('+upstream_success_bonus' if bonus_enabled(profile) else ''),
+    formula=('100*(d(current)-d(next))-1' if profile in SCALED_PROFILES else 'd(current)-d(next)-0.01')
+    return dict(formula=formula+('+upstream_success_bonus' if bonus_enabled(profile) else ''),
         success_bonus_enabled=bonus_enabled(profile),
         distance='nearest-goal Euclidean' if not is_geodesic(profile) else 'nearest-goal XY visibility-graph geodesic',
-        step_cost=STEP_COST,discount_inside_reward=False,goals=goals.tolist(),
+        step_cost=step_cost(profile),progress_scale=progress_scale(profile),discount_inside_reward=False,goals=goals.tolist(),
         goal_bonuses=[(20 if tuple(g)==(-8,8) else 10) if bonus_enabled(profile) else 0 for g in goals],
         distance_endpoint='goal center; do not replace terminal distance by zero',
         success_radius=.5,success_terminates=True,timeout_bootstraps=True,
@@ -157,10 +168,10 @@ def specification(task, profile):
 def value_support(task, profile, gamma=.99):
     """Conservative C51 bounds for this reward, not the old sparse [0,5].
 
-Discounted sum of d_t-d_next is bounded by +/-Dmax. A terminating goal
-adds at most20 once, and the infinite time-cost sum is -.01/(1-gamma).
+Discounted progress is bounded by +/-progress_scale*Dmax. A terminating
+goal adds at most20 once; time cost is -step_cost/(1-gamma).
     """
     if profile not in PROFILES:raise ValueError(profile)
     walls,goals,bounds=maze_geometry(task)
     dmax=geodesic(task).distance_bound if is_geodesic(profile) else float(np.linalg.norm(bounds[2:]-bounds[:2]))
-    return -float(np.ceil(dmax+STEP_COST/(1-gamma)+1)),float(np.ceil(dmax+20+1))
+    return -float(np.ceil(progress_scale(profile)*dmax+step_cost(profile)/(1-gamma)+1)),float(np.ceil(progress_scale(profile)*dmax+20+1))

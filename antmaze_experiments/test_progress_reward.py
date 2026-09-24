@@ -2,12 +2,27 @@
 import unittest
 import numpy as np
 from .progress_reward import (Geodesic,geodesic,maze_geometry,distance,progress_reward,
-                              success_bonus,specification,value_support,PROFILES,bonus_enabled)
+                              success_bonus,specification,value_support,PROFILES,bonus_enabled,progress_scale,step_cost)
 from .settings import reward_description
 
 class ProgressRewardTests(unittest.TestCase):
+    def test_100x_formula_keeps_bonus_unscaled(self):
+        for profile in ('progress100_euclidean','progress100_geodesic'):
+            for before,after,wanted in [([-7.,0.],[-7.05,0.],4.),
+                                        ([-7.,0.],[-7.,0.],-1.),
+                                        ([-7.05,0.],[-7.,0.],-6.)]:
+                r,*_=progress_reward(before,after,'v1',profile,0.)
+                self.assertAlmostEqual(float(r),wanted)
+            for bonus in (10.,20.):
+                r,*_=progress_reward([-7.4,0.],[-7.7,0.],'v1',profile,bonus)
+                self.assertAlmostEqual(float(r),29.+bonus)
+                off,*_=progress_reward([-7.4,0.],[-7.7,0.],'v1',profile+'_no_bonus',bonus)
+                self.assertAlmostEqual(float(off),29.)
+        old,*_=progress_reward([-7.4,0.],[-7.7,0.],'v1','progress_euclidean',10.)
+        self.assertAlmostEqual(float(old),10.29)
+
     def test_bonus_only_changes_terminal_reward(self):
-        for base in PROFILES[:2]:
+        for base in (p for p in PROFILES if not p.endswith('_no_bonus')):
             for task in ('v1','v2','v3','v4'):
                 for goal in maze_geometry(task)[1]:
                     before=goal+[.6,0];after=goal+[.3,0]
@@ -52,7 +67,7 @@ class ProgressRewardTests(unittest.TestCase):
                     self.assertEqual(success_bonus(goal,task),bonus)
                     self.assertAlmostEqual(float(distance(goal,task,profile)),0.)
                     r,_,_=progress_reward(goal,goal,task,profile,bonus)
-                    self.assertAlmostEqual(float(r),(bonus if bonus_enabled(profile) else 0)-.01)
+                    self.assertAlmostEqual(float(r),(bonus if bonus_enabled(profile) else 0)-step_cost(profile))
                 self.assertEqual(specification(task,profile)['physical_body_inflation_m'],0.)
                 lo,hi=value_support(task,profile)
                 self.assertLess(lo,-1);self.assertGreater(hi,20)
@@ -64,20 +79,20 @@ class ProgressRewardTests(unittest.TestCase):
             stationary,_,_=progress_reward(a,a,'v1',profile,0)
             forward,_,_=progress_reward(a,b,'v1',profile,0)
             backward,_,_=progress_reward(b,a,'v1',profile,0)
-            self.assertAlmostEqual(float(stationary),-.01)
-            self.assertAlmostEqual(float(forward+backward),-.02)
+            self.assertAlmostEqual(float(stationary),-step_cost(profile))
+            self.assertAlmostEqual(float(forward+backward),-2*step_cost(profile))
             self.assertGreater(forward,stationary)
             # Terminal endpoint keeps the actual center distance; no artificial zero.
             end=np.array([-7.7,0.]);start=np.array([-7.4,0.])
             r,d0,d1=progress_reward(start,end,'v1',profile,10.)
             self.assertAlmostEqual(float(d1),.3)
-            self.assertAlmostEqual(float(r),.29+(10 if bonus_enabled(profile) else 0))
+            self.assertAlmostEqual(float(r),.29*progress_scale(profile)+(10 if bonus_enabled(profile) else 0))
 
     def test_route_total_and_metadata_no_legacy_change(self):
         for profile in PROFILES:
             route=np.array([[0,0],[0,3],[-4,3],[-8,3],[-8,0]],float)
             r,_,_=progress_reward(route[:-1],route[1:],'v1',profile,np.array([0,0,0,10]))
-            self.assertAlmostEqual(float(r.sum()),float(distance(route[0],'v1',profile))+(10 if bonus_enabled(profile) else 0)-.04)
+            self.assertAlmostEqual(float(r.sum()),float(distance(route[0],'v1',profile))*progress_scale(profile)+(10 if bonus_enabled(profile) else 0)-4*step_cost(profile))
         self.assertEqual(reward_description('dense'),'negative Euclidean distance from next xy to nearest goal; no sparse bonus')
         self.assertIsNone(specification('v1','dense'))
 

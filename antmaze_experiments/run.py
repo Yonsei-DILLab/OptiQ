@@ -10,7 +10,7 @@ import time
 import traceback
 import numpy as np
 
-from .progress_reward import PROFILES, specification, progress_reward, success_bonus
+from .progress_reward import PROFILES, specification, progress_reward, success_bonus, progress_scale
 from .settings import (REWARD_PROFILES, reward_description, CAMPAIGN, BUDGETS, REWARD, DENSE_REWARD, NUM_ENVS, EVAL_NUM_ENVS, UPDATES, WARMUP,
                        PREFLIGHT_STEPS, total_budget, expected_updates, WANDB_ENTITY, WANDB_PROJECT)
 
@@ -126,11 +126,13 @@ def checkpoint(learner, env, obs, folder, step, rng, config):
         assert np.allclose(actual,expected,rtol=2e-6,atol=2e-5)
         boundary=np.zeros(len(actual),bool)
     elif config['reward_profile'] in PROFILES:
+        # Replay XY is float32; reward was computed from float64 physics.
+        reward_atol=2e-5*progress_scale(config['reward_profile'])
         previous=loaded['replay']['buf_obs'][:,:2].numpy()
         bonuses=success_bonus(positions,config['task'])
         expected,_,_=progress_reward(previous,positions,config['task'],config['reward_profile'],bonuses)
         boundary=np.min(np.abs(distances-.5),axis=1)<2e-5
-        assert np.allclose(actual[~boundary],expected[~boundary],rtol=2e-6,atol=2e-5)
+        assert np.allclose(actual[~boundary],expected[~boundary],rtol=2e-6,atol=reward_atol)
         # Float32 replay XY can round across the goal radius. Account for the
         # original physics decision using terminal mask only on those rows.
         if boundary.any():
@@ -140,7 +142,7 @@ def checkpoint(learner, env, obs, folder, step, rng, config):
             bonus=np.where(terminal,values[nearest],0.)
             expected_boundary,_,_=progress_reward(previous[boundary],positions[boundary],
                 config['task'],config['reward_profile'],bonus)
-            assert np.allclose(actual[boundary],expected_boundary,rtol=2e-6,atol=2e-5)
+            assert np.allclose(actual[boundary],expected_boundary,rtol=2e-6,atol=reward_atol)
     else:
         expected=np.zeros(len(positions),np.float32)
         for goal in reversed(target_goals):
@@ -156,6 +158,7 @@ def checkpoint(learner, env, obs, folder, step, rng, config):
         sparse_replay_verified=config['reward_profile']=='sparse',
         dense_replay_verified=config['reward_profile']=='dense',
         progress_replay_verified=config['reward_profile'] in PROFILES,
+        progress_reward_absolute_tolerance=reward_atol if config['reward_profile'] in PROFILES else None,
         intrinsic_enabled=learner.noveld_enabled,
         threshold_roundoff_rows=int(boundary.sum()))
     write(folder/'checkpoint-verification.json',proof)

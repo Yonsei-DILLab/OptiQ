@@ -2,7 +2,7 @@
 import argparse,json,time
 from pathlib import Path
 import numpy as np
-from .progress_reward import PROFILES,distance,specification,bonus_enabled
+from .progress_reward import PROFILES,distance,specification,bonus_enabled,progress_scale,step_cost
 
 
 def check():
@@ -21,7 +21,7 @@ def check():
                     o,r,d,i=e.step(action);rows[profile]=(o,r,d,i)
                     if profile=='dense':assert np.isclose(r,-i['distance'])
                     if profile in PROFILES:
-                        expected=distance(before,task,profile)-distance(e.physics_env.get_xy(),task,profile)-.01+(i['upstream_sparse_reward'] if bonus_enabled(profile) else 0)
+                        expected=progress_scale(profile)*(distance(before,task,profile)-distance(e.physics_env.get_xy(),task,profile))-step_cost(profile)+(i['upstream_sparse_reward'] if bonus_enabled(profile) else 0)
                         max_error=max(max_error,abs(float(r-expected)))
                         assert np.isclose(r,expected,atol=1e-9)
                         assert np.isclose(r,i['reward_progress']+i['reward_step_penalty']+i['reward_success'])
@@ -58,7 +58,7 @@ def check():
                 assert d.all() and terminal.all()
                 for i,info in enumerate(infos):
                     np.testing.assert_array_equal(end[i],info['terminal_observation'])
-                    assert np.isclose(r[i],info['reward_progress']-.01+info['reward_success'])
+                    assert np.isclose(r[i],info['reward_progress']-step_cost(profile)+info['reward_success'])
                 # Force a time limit without arrival; bootstrap remains enabled.
                 for e in v.envs:
                     state=e.state();state['elapsed']=v.envs[0].env._max_episode_steps-1;e.restore(state)

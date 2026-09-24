@@ -24,10 +24,14 @@ def expected_updates(total_steps):
     return (total_steps-WARMUP) // NUM_ENVS * UPDATES
 
 
-REWARD_PROFILES = ('sparse', 'dense', 'progress_euclidean', 'progress_geodesic',
-                   'progress_euclidean_no_bonus', 'progress_geodesic_no_bonus')
+from .progress_reward import PROFILES
+REWARD_PROFILES = ('sparse', 'dense') + PROFILES
 
 def reward_description(profile):
+    if profile.startswith('progress100_'):
+        from .progress_reward import SCALED_PROFILES
+        if profile not in SCALED_PROFILES: raise ValueError(profile)
+        return reward_description(profile.replace('progress100_', 'progress_')).replace('distance decrease -0.01', 'distance decrease *100 -1')
     return {
         'sparse': REWARD, 'dense': DENSE_REWARD,
         'progress_euclidean': 'nearest-goal Euclidean distance decrease -0.01 + upstream goal bonus10/20',
