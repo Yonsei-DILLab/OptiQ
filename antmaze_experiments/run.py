@@ -208,6 +208,7 @@ def main():
     p.add_argument('--dacer-target-entropy-per-dim',type=float)
     p.add_argument('--dacer-interval-updates',type=int)
     p.add_argument('--discount',type=float)
+    p.add_argument('--teacher-std-floor',type=float)
     p.add_argument('--dacer',choices=['on','off'])
     p.add_argument('--budget-steps',type=int)
     p.add_argument('--final-eval-episodes',type=int,default=100)
@@ -241,6 +242,10 @@ def main():
     if a.discount is not None:
         assert a.method=='optiq' and np.isfinite(a.discount) and 0 < a.discount < 1
         assert a.dynamics_profile is None, 'Use a separate horizon profile'
+    if a.teacher_std_floor is not None:
+        from .teacher_proposal import validate_floor
+        validate_floor(a.teacher_std_floor)
+        assert a.method=='optiq' and a.dynamics_profile is None
     temperature_schedule=None
     if a.temperature_final is not None:
         assert a.method=='optiq' and a.temperature is not None
@@ -282,7 +287,8 @@ def main():
             reward_profile=a.reward_profile,noveld=a.noveld=='on',temperature_schedule=temperature_schedule,
             dacer_target_entropy_per_dim=a.dacer_target_entropy_per_dim,
             dacer_enabled=a.dacer!='off',dynamics_profile=a.dynamics_profile,
-            dacer_interval_updates=a.dacer_interval_updates,discount=a.discount)
+            dacer_interval_updates=a.dacer_interval_updates,discount=a.discount,
+            teacher_std_floor=a.teacher_std_floor)
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     learner.eval_fixed_starts = a.eval_starts=='fixed' or (a.eval_starts=='upstream' and a.task!='v1')
@@ -316,6 +322,8 @@ def main():
         evaluation=('primary=policy-fixed at original origin/pose/velocity; ' if learner.eval_fixed_starts else 'primary=policy-natural; ')+
             'policy: direct draws, no extra exploration noise; native: SAC mean, MFPO Q-best-of10, OptiQ random-z mu-only, DIPO native diffusion',
         runtime=dict(python=os.sys.version,torch=torch.__version__,numpy=np.__version__))
+    if a.teacher_std_floor is not None:
+        config['teacher_std_floor_override']=a.teacher_std_floor
     if a.dynamics_profile is not None:
         config.update(dynamics_profile=a.dynamics_profile,dynamics_settings=dynamics,
                       reward_multiplier=dynamics['reward_multiplier'],
@@ -331,6 +339,7 @@ def main():
         temp_name+=f'-Hdim{a.dacer_target_entropy_per_dim:g}'
     if a.dacer_interval_updates is not None:temp_name+=f'-Hinterval{a.dacer_interval_updates}'
     if a.discount is not None:temp_name+=f'-gamma{a.discount:g}'
+    if a.teacher_std_floor is not None:temp_name+=f'-teacherfloor{a.teacher_std_floor:g}'
     if a.dacer is not None:temp_name+='-dacer'+a.dacer
     if a.dynamics_profile is not None:temp_name+='-dyn-'+a.dynamics_profile
     run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s0-{budget}steps'
@@ -444,6 +453,11 @@ def main():
         if a.discount is not None:
             assert float(learner.model.gamma)==a.discount
             result['discount']=float(learner.model.gamma)
+        if a.teacher_std_floor is not None:
+            actual=float(info['train/proposal_std_pretanh'])
+            assert np.isclose(actual,a.teacher_std_floor,rtol=1e-6)
+            assert float(info['train/actor_std_max']) <= np.exp(-1.) + 1e-6
+            result['teacher_std_floor']=actual
         if temperature_schedule is not None:
             result['temperature_schedule']=temperature_schedule
             result['final_temperature']=float(info['train/temperature'])

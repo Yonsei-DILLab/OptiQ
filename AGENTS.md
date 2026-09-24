@@ -387,3 +387,13 @@ as native benchmark success. Verify exact paired prefixes, full start, reward,
 model/RNG and checkpoint preservation. Preserve all live jobs; nice19CPU only
 on180, no4090. Commit/push/freeze report source before execution. See
 antmaze_experiments/ROLLOUT_HORIZON_DIAGNOSTIC_PROTOCOL.md.
+
+Active-goal teacher-floor screen (2026-09-25): two fresh v3 normalized-geodesic
+T3/gamma.999 seed0 candidates change only existing teacher_std_floor to.5/1.0,
+250k post-warmup. Keep actor sigma[-5,-1],N=M64,all losses/TD/optimizer/sampling
+implementations and other control settings unchanged. Adapter only forwards an
+existing configuration and validates scratch sampling/density plus actual update
+metrics. Commit/push/freeze before real preflight; verify initial parameters
+against archived db4ca0a T3 control. Preserve live v1/v4 schedule jobs and fill
+independently free180 slots; no cancelled199 resume or4090 work. No automatic
+extension. See antmaze_experiments/TEACHER_FLOOR_SCREEN_PROTOCOL.md.

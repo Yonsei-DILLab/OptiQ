@@ -54,7 +54,7 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             cmd.extend(['--budget-steps',str(entry['steps'])])
         if 'final_eval_episodes' in entry:
             cmd.extend(['--final-eval-episodes',str(entry['final_eval_episodes'])])
-        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer','dynamics_profile','eval_interval','dacer_interval_updates','discount'):
+        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer','dynamics_profile','eval_interval','dacer_interval_updates','discount','teacher_std_floor'):
             if key in entry:cmd.extend(['--'+key.replace('_','-'),str(entry[key])])
         if entry.get('save_intermediate_policy',False):
             cmd.append('--save-intermediate-policy')
@@ -97,6 +97,13 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             assert (actor['log_std_min'],actor['log_std_max'],actor['initial_log_std'])==(-5.,-1.,-1.)
         if 'discount' in entry:
             assert config['discount']==config['native']['alg']['gamma']==proof['discount']==entry['discount']
+        if 'teacher_std_floor' in entry:
+            floor=entry['teacher_std_floor']
+            verification=json.loads((target/'teacher-proposal-verification.json').read_text())
+            assert verification['verified'] and verification['teacher_std_floor']==floor
+            assert config['teacher_std_floor_override']==floor
+            assert config['native']['alg']['actor']['proposal_std']==floor
+            assert math.isclose(proof['teacher_std_floor'],floor,rel_tol=1e-6)
         if 'temperature_schedule' in entry:
             schedule=entry['temperature_schedule']
             assert config['temperature_schedule']==schedule
