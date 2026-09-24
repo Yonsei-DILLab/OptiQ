@@ -41,9 +41,9 @@ def shortlist(cases,data,seeds,max_count=6):
 
 def plot_case(cfg,c,runs,output):
     x=np.linspace(-10,10,8193);target=reference(dict(cfg,**c),x)[0]
-    fig,axes=plt.subplots(1,2,figsize=(11,3.8),sharey=True)
+    fig,axes=plt.subplots(1,2,figsize=(11,4.1),sharey=True)
     for j,(ax,method) in enumerate(zip(axes,['forward','reverse'])):
-        values=[];tvs=[];missing=[]
+        values=[];tvs=[];missing=[];caption=''
         for seed in range(4):
             r=runs.get(f'{method}_s{seed}')
             if r:
@@ -52,8 +52,8 @@ def plot_case(cfg,c,runs,output):
         if values:
             y=np.mean(values,axis=0);ax.stairs(y,edges,fill=True,alpha=.18,color=f'C{j}',linewidth=0)
             ax.stairs(y,edges,color=f'C{j}',lw=1.2,label=f'{method.capitalize()} ({len(values)} seeds)')
-            ax.text(.03,.94,f'Mean TV = {np.mean(tvs):.3f}\nMissing modes / seed: {missing}',transform=ax.transAxes,va='top',fontsize=9)
-        ax.plot(x,target,'k--',lw=1.3,label='Target');ax.set(xlim=(-10,10),xlabel='Action',title=f'{method.capitalize()} KL');ax.legend(loc='upper right',fontsize=8)
+            caption=f'Mean seed TV = {np.mean(tvs):.3f}; missing modes: {missing}'
+        ax.plot(x,target,'k--',lw=1.3,label='Target');ax.set(xlim=(-10,10),xlabel='Action\n'+caption,title=f'{method.capitalize()} KL');ax.legend(loc='upper right',fontsize=8)
     axes[0].set_ylabel('Probability density');fig.suptitle(c['id']+' | '+str(len(c['target_centers']))+' modes',fontsize=13)
     fig.tight_layout();fig.savefig(output/f'{c["id"]}.png',dpi=180);plt.close(fig)
     seeds=[s for s in range(4) if any(f'{m}_s{s}' in runs for m in ['forward','reverse'])]

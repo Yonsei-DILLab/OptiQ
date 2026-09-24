@@ -74,7 +74,7 @@ def main():
     ax.plot(x,target,'k--',lw=1.1,label='Target');ax.set(xlim=(-10,10),xlabel='Action',ylabel='Density')
     tvs=ft if method=='forward' else rt
     ax.set_title(f'{LABELS[ident].removeprefix("A. ")} | {method.capitalize()} KL\nMean seed TV={np.mean(tvs):.3f}',fontsize=10)
-    if method=='reverse':ax.text(.02,.96,f'Missing modes per seed: {miss}',transform=ax.transAxes,va='top',fontsize=8)
+    ax.set_xlabel('Action\nMissing modes per seed: '+str(miss if method=='reverse' else [0]*4),fontsize=9)
     if row==0:ax.legend(fontsize=8,loc='upper right')
    # Full seed panels remain accessible alongside each selected environment.
    shutil.copy2(args.reports/dirname/f'{ident}_all_seeds.png',out/f'{ident}_all_seeds.png')
