@@ -4,7 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import numpy as np
-from scipy.special import ndtr
+from scipy.special import ndtr, ndtri
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -36,6 +36,30 @@ def main():
     bounds=np.r_[-bound,(centers[:-1]+centers[1:])/2,bound]
     target_basin=np.diff(target_cdf(bounds,centers,std,bound))
     basins={name:float(.5*np.abs(np.histogram(a,bounds)[0]/len(a)-target_basin).sum()) for name,a in raw.items()}
+    n=2**20;ranks=(np.arange(n,dtype=np.float64)+.5)/n
+    lower=np.full(n,-bound);upper=np.full(n,bound)
+    for _ in range(42):
+        mid=(lower+upper)/2;less=target_cdf(mid,centers,std,bound)<ranks
+        lower=np.where(less,mid,lower);upper=np.where(less,upper,mid)
+    quantiles=(lower+upper)/2
+    inverse_residual=float(np.max(np.abs(target_cdf(quantiles,centers,std,bound)-ranks)))
+    assert inverse_residual<1e-10
+    w1={name:float(np.mean(np.abs(np.sort(a).astype(np.float64)-quantiles))) for name,a in raw.items()}
+    null_rng_w=np.random.default_rng(202609243);null_w1=[]
+    lo=ndtr((-bound-centers)/std);hi=ndtr((bound-centers)/std);component_mass=hi-lo
+    for _ in range(16):
+        comp=null_rng_w.choice(len(centers),n,p=component_mass/component_mass.sum())
+        u=lo[comp]+component_mass[comp]*null_rng_w.random(n)
+        action=centers[comp]+std*ndtri(np.clip(u,np.finfo(float).eps,1-np.finfo(float).eps))
+        null_w1.append(float(np.mean(np.abs(np.sort(action)-quantiles))))
+    wasserstein={'per_seed':w1,'perfect_sampler_values':null_w1,
+                 'perfect_sampler_mean':float(np.mean(null_w1)),
+                 'perfect_sampler_q05':float(np.quantile(null_w1,.05)),
+                 'perfect_sampler_q95':float(np.quantile(null_w1,.95)),
+                 'inverse_cdf_max_residual':inverse_residual,'midpoint_quadrature_bound':2*bound/n}
+    for method in ['forward','reverse']:
+        values=np.array([w1[f'{method}_s{s}'] for s in range(4)])
+        wasserstein[method]={'mean':float(values.mean()),'SD':float(values.std(ddof=1))}
     all_metrics={};matrices={};null_counts={};null_rng=np.random.default_rng(202609242)
     for bins in bin_counts:
         edges=np.linspace(-bound,bound,bins+1)
@@ -62,7 +86,7 @@ def main():
         all_metrics[str(bins)]=metrics;matrices[bins]=(edges,target,hist)
     payload={'bins':bin_counts,'sample_count_per_seed':2**20,'seeds':[0,1,2,3],'rebin_commit':args.commit,
              'inputs':input_metadata,'metrics':all_metrics,'basin_TV':basins,
-             'perfect_sampler_repeats':128,'perfect_sampler_rng_seed':202609242}
+             'perfect_sampler_repeats':128,'perfect_sampler_rng_seed':202609242,'wasserstein1':wasserstein}
     (args.output/'SUMMARY.json').write_text(json.dumps(payload,indent=2)+'\n')
     np.savez_compressed(args.output/'perfect_sampler_tv.npz',**{f'bins_{b}':v for b,v in null_counts.items()})
     for bins,(edges,target,hist) in matrices.items():
@@ -86,7 +110,7 @@ def main():
         ax.plot(x,target_pdf,'k--',lw=1.8,label='Target density')
         ax.set_title(f'{method.capitalize()} KL')
         tv=all_metrics['4096'][method]
-        ax.text(.035,.93,f'Mean TV = {tv["TV_mean"]:.4f}',transform=ax.transAxes,ha='left',va='top')
+        ax.text(.035,.93,f'Mean TV = {tv["TV_mean"]:.4f}\nMean W1 = {wasserstein[method]["mean"]:.4f}',transform=ax.transAxes,ha='left',va='top')
         ax.set(xlim=(-10,10),ylim=(0,.9),xlabel='Action')
         ax.legend(loc='upper right',frameon=True)
         ax.set_xticks([-10,-5,0,5,10])
@@ -94,7 +118,7 @@ def main():
     fig.tight_layout(pad=1.4,w_pad=2.)
     for ext in ['png','pdf','svg']:fig.savefig(args.output/f'final_density_4096.{ext}',dpi=300)
     plt.close(fig)
-    caption=r'''**Forward versus reverse KL on a three-mode target.** The learned density in each panel is the mean histogram across four seeds after 100,000 updates. Each seed contributes the same $2^{20}$ saved action samples; 4,096 equal-width bins cover $[-10,10]$. Shading denotes one sample standard deviation across seeds, and the dashed line is the exact target density. No KDE smoothing is applied. The annotated TV is the mean of per-seed histogram TV values computed from exact target bin probabilities, not TV of the averaged histogram. Both methods use $N=M=128$; reverse KL uses $L=2^{20}$. The target has equally weighted means $(-4.25,0,4.25)$ and standard deviation $0.5$. This is the previously selected illustrative toy setting.'''
+    caption=r'''**Forward versus reverse KL on a three-mode target.** The learned density in each panel is the mean histogram across four seeds after 100,000 updates. Each seed contributes the same $2^{20}$ saved action samples; 4,096 equal-width bins cover $[-10,10]$. Shading denotes one sample standard deviation across seeds, and the dashed line is the exact target density. No KDE smoothing is applied. TV is calculated against exact target bin probabilities; one-dimensional Wasserstein-1 (W1) is computed independently of the histogram using sorted actions and target quantiles. Annotations give the mean of per-seed metrics, not metrics of the averaged density. Both methods use $N=M=128$; reverse KL uses $L=2^{20}$. The target has equally weighted means $(-4.25,0,4.25)$ and standard deviation $0.5$. This is the previously selected illustrative toy setting.'''
     (args.output/'caption.md').write_text(caption+'\n')
     lines=['# 最終 KL 비교: 표준 Matplotlib 스타일과 4096-bin TV'.replace('最終','최종'),'',
            '![4096-bin seed 평균 histogram](final_density_4096.png)','',
@@ -122,6 +146,16 @@ def main():
         m=all_metrics['4096'][method];lines.append(f'|{method.capitalize()} KL|{m["TV_mean"]:.8f}|{m["TV_SD"]:.8f}|')
     lines+=['','|Seed|Forward TV|Reverse TV|','|---:|---:|---:|']
     for seed in range(4):lines.append(f'|{seed}|{all_metrics["4096"]["per_seed"][f"forward_s{seed}"]:.8f}|{all_metrics["4096"]["per_seed"][f"reverse_s{seed}"]:.8f}|')
+    lines+=['','## Bin에 의존하지 않는 Wasserstein-1','',
+            r'$$W_1(\widehat\pi,p^\star)=\int_0^1|F_{\widehat\pi}^{-1}(u)-F_{p^\star}^{-1}(u)|\,du\ \approx\ \frac1n\sum_{i=1}^{n}\left|a_{(i)}-F_{p^\star}^{-1}\!\left(\frac{i-1/2}{n}\right)\right|.$$', '',
+            'action 표본을 정렬한 뒤 exact target CDF를 역으로 푼 분위수와 비교했다. 별도의 target MC 표본이나 histogram을 기준으로 사용하지 않았다. W1은 확률 질량을 옮기는 평균 거리이며, 이 실험에서는 action 좌표 단위다. TV와 수치 크기 자체를 직접 비교하는 지표는 아니다.','',
+            '|방법|W1 평균|Seed 간 SD|','|---|---:|---:|']
+    for method in ['forward','reverse']:
+        w=wasserstein[method];lines.append(f'|{method.capitalize()} KL|{w["mean"]:.8f}|{w["SD"]:.8f}|')
+    lines+=['','|Seed|Forward W1|Reverse W1|','|---:|---:|---:|']
+    for seed in range(4):lines.append(f'|{seed}|{w1[f"forward_s{seed}"]:.8f}|{w1[f"reverse_s{seed}"]:.8f}|')
+    lines+=['',f'Perfect target sampler 16회의 W1 평균은 {wasserstein["perfect_sampler_mean"]:.6f}, 5–95% 구간은 {wasserstein["perfect_sampler_q05"]:.6f}–{wasserstein["perfect_sampler_q95"]:.6f}였다. W1도 유한 표본에서는 0이 아니지만, bin 개수의 영향은 없다.', '',
+            'Target quantile은 [-10,10]에서 42번 bisection으로 계산했다. 경험분포와 target 사이의 W1 적분에 대한 midpoint 근사의 보수적 오차 상한은 action 범위/n = 20/2²⁰ ≈ 0.0000191이다(역 CDF 부동소수점 오차 제외). 이 수치 적분 오차는 정책으로부터 유한 표본만 얻는 sampling error와 별개다.','']
     lines+=['','## 논문용 caption','',caption,'',
             '## 재현','',f'- Rebin/plot source commit: `{args.commit}`.',
             '- 원본 action 생성 source: `8b35c3ecae257846ee453e099af2432064e894f0`.',

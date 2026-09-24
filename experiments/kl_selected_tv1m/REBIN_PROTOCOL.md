@@ -25,6 +25,17 @@ Report mean and5-95% repeat quantiles as a sampling-noise calibration, NOT a
 universal lower bound and NOT a bias correction that can be subtracted from
 actorTV. The reference has no actor error. This does not change training.
 
+User addition: also measure Wasserstein distance. Use1D Wasserstein-1 in original
+action units (no binning): sort each1M action sample and compare to the normalized
+target inverseCDF at midpoint ranks(i+0.5)/n. Solve target quantiles by42 bisection
+steps on[-10,10], reuse the SAME exact-target quantiles for allactors. Midpoint
+quantile integration differs from the empirical-to-target W1 integral by at most
+support_width/n=20/1048576<2e-5, apart from inverseCDF floating-point error.
+Do not compare to a separately sampled target as the main W1 metric. Calibrate
+finite-sample W1 with16 independent perfect-target action draws(PRNG202609243),
+using correctly weighted truncated-Gaussian mixture sampling. Report W1 perseed,
+mean/SD across4seeds, perfect-sampler mean and5-95%range, and annotate mainfigure.
+
 Commit this protocol and executable before evaluation. Source checkpoint and
 raw-action sampling provenance remain unchanged. Archive512-bin custom-style
 figure before replacing report's representative figure. Store all new counts,
