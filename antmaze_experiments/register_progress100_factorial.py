@@ -14,8 +14,8 @@ CONTROL_SOURCE = '484f92e7d6d34c964d85b4493ff17c5a9ebcf32e'
 TASKS = ('v1', 'v2', 'v3', 'v4')
 PROFILES = ('progress100_euclidean', 'progress100_euclidean_no_bonus',
             'progress100_geodesic', 'progress100_geodesic_no_bonus')
-# Each 5090 host has 5 jobs/22M native steps; the added 4090 host has
-# 6 shorter jobs/16M. Fill each individual GPU immediately, no maze barrier.
+# Each 5090 host has 5 jobs/21M native steps; the added 4090 host has
+# 6 shorter jobs/18M. Fill each individual GPU immediately, no maze barrier.
 SHARDS = {
     0: (('v4',0),('v4',2),('v3',0),('v3',2),('v1',0)),
     1: (('v4',1),('v4',3),('v3',1),('v3',3),('v1',1)),

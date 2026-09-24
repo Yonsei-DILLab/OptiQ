@@ -23,7 +23,7 @@ Every250k evaluate40 random-start episodes/mode and save policy checkpoints;
 final100/mode/reset and full state/replay. Keep fixed-start supplementary.
 
 Three four-GPU hosts: vast-heechan-180/199 (5090) and vast1 (4090). Each5090
-host has22M native transitions,4090 host16M. Independent backfill every2seconds,
+host has21M native transitions,4090 host18M. Independent backfill every2seconds,
 no cross-maze/preflight barrier. Each job performs its own real256env/batch4096
 8448transition/8update preflight, then fresh main training. No auto retry.
 Additional server requires adequate disk and compatible runtime before launch;
@@ -55,3 +55,8 @@ Pin any differing adapter dependencies in the isolated overlay, record exact
 versions, and validate CUDA/JAX/MuJoCo before the per-job preflights. The user
 approved deleting only unused efficiency sbx-venv/sql-venv; retain all result
 and NM/ablation directories, including the NM-shared v2-transfer environment.
+
+Post-launch documentation correction: shard totals are21M/21M/18M,60M
+native transitions overall. Job budgets and assignments were already correct.
+All running jobs retain frozen training source0751e86a547dc8f1d82e4861c2931cc6f9cf04b8;
+this arithmetic/comment correction does not modify or restart them.
