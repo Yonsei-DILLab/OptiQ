@@ -1,5 +1,5 @@
 {
-  "samples_per_update": 256,
+  "samples_per_update": 4096,
   "seed": 0,
   "proposal": "current_q",
   "sampling": "iid_mixture",
