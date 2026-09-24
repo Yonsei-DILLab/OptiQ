@@ -24,6 +24,8 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
              '--method',entry['method'],'--task',entry['task'],'--output',str(target)]
         if 'temperature' in entry:
             cmd.extend(['--temperature',str(entry['temperature'])])
+        if 'dacer_target_entropy_per_dim' in entry:
+            cmd.extend(['--dacer-target-entropy-per-dim',str(entry['dacer_target_entropy_per_dim'])])
         if 'temperature_schedule' in entry:
             schedule=entry['temperature_schedule']
             cmd.extend(['--temperature-final',str(schedule['final_temperature']),
@@ -79,6 +81,19 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             if schedule['decay']=='log_linear':
                 wanted=math.exp((1-progress)*math.log(entry['temperature'])+progress*math.log(schedule['final_temperature']))
             assert abs(proof['final_temperature']-wanted)<1e-9
+        if 'dacer_target_entropy_per_dim' in entry:
+            target_entropy=entry['dacer_target_entropy_per_dim']
+            verification=json.loads((target/'dacer-target-verification.json').read_text())
+            assert verification['verified'] and verification['action_dim']==8
+            assert verification['target_entropy_per_dim']==target_entropy
+            assert config['dacer_target_entropy_per_dim']==target_entropy
+            assert config['native']['dacer']['target_entropy_per_dim']==target_entropy
+            assert config['native']['dacer']['enabled'] and config['native']['dacer']['behavior_only']
+            assert config['temperature_schedule'] is None
+            regulator=json.loads((target/'dacer_regulator.json').read_text())
+            assert math.isclose(regulator['target_entropy'],target_entropy*8,abs_tol=1e-12)
+            assert regulator['updates']>=1 and math.isfinite(regulator['entropy_proxy'])
+            assert proof['dacer_target_entropy_per_dim']==target_entropy
         if entry.get('save_intermediate_policy',False):
             assert config['save_intermediate_policy']
             snapshots=sorted((target/'policy-checkpoints').glob('*/verification.json'))

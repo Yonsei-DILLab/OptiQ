@@ -147,6 +147,7 @@ def main():
     p.add_argument('--temperature-final',type=float)
     p.add_argument('--temperature-anneal-steps',type=int,default=1000000)
     p.add_argument('--temperature-decay',choices=['linear','log_linear'],default='linear')
+    p.add_argument('--dacer-target-entropy-per-dim',type=float)
     p.add_argument('--budget-steps',type=int)
     p.add_argument('--final-eval-episodes',type=int,default=100)
     p.add_argument('--interim-eval-episodes',type=int,default=EVAL_NUM_ENVS)
@@ -157,6 +158,8 @@ def main():
     a = p.parse_args()
     if a.temperature is not None:
         assert a.method == 'optiq' and a.temperature > 0
+    if a.dacer_target_entropy_per_dim is not None:
+        assert a.method=='optiq' and np.isfinite(a.dacer_target_entropy_per_dim)
     temperature_schedule=None
     if a.temperature_final is not None:
         assert a.method=='optiq' and a.temperature is not None
@@ -195,7 +198,8 @@ def main():
     else:
         learner = JaxLearner(a.method,(env.single_observation_space,env.single_action_space),
             a.task,folder,temperature=a.temperature,budget=planned_budget,
-            reward_profile=a.reward_profile,noveld=a.noveld=='on',temperature_schedule=temperature_schedule)
+            reward_profile=a.reward_profile,noveld=a.noveld=='on',temperature_schedule=temperature_schedule,
+            dacer_target_entropy_per_dim=a.dacer_target_entropy_per_dim)
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     budget = PREFLIGHT_STEPS if a.preflight else planned_budget
@@ -212,6 +216,7 @@ def main():
         eval_starts=a.eval_starts,primary_trajectory='policy-natural',
         noveld_coefficient=.01 if a.noveld=='on' else 0.,temperature=a.temperature,
         temperature_schedule=temperature_schedule,
+        dacer_target_entropy_per_dim=a.dacer_target_entropy_per_dim,
         native=learner.config,random_init=a.task=='v1',eval_interval=250000,
         eval_num_envs=EVAL_NUM_ENVS,interim_eval_episodes=a.interim_eval_episodes,
         final_eval_episodes=a.final_eval_episodes,
@@ -226,6 +231,8 @@ def main():
     temp_name=f'-T{a.temperature:g}' if a.temperature is not None else ''
     if temperature_schedule is not None:
         temp_name+=f'-to{a.temperature_final:g}-{a.temperature_decay}-{a.temperature_anneal_steps}postwarmup'
+    if a.dacer_target_entropy_per_dim is not None:
+        temp_name+=f'-Hdim{a.dacer_target_entropy_per_dim:g}'
     run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s0-{budget}steps'
     run = wandb.init(entity=WANDB_ENTITY,project=WANDB_PROJECT,group=os.environ.get('OPTIQ_CAMPAIGN',CAMPAIGN),
         name=run_name,dir=str(folder),config=config,
@@ -246,6 +253,13 @@ def main():
             record.update(temperature=float(info.get('train/temperature',a.temperature)),
                 temperature_anneal_progress=float(info.get('train/temperature_anneal_progress',0.)),
                 temperature_post_warmup_steps=max(0,step-warmup))
+        if a.dacer_target_entropy_per_dim is not None:
+            m=learner.model
+            record.update(temperature=float(info.get('train/temperature',learner.config['alg']['actor']['temperature'])),
+                dacer_target_entropy_per_dim=float(m.regulator_cfg.target_entropy_per_dim),
+                dacer_target_entropy=float(m.regulator_cfg.target_entropy_per_dim)*env.single_action_space.shape[0],
+                dacer_updates=int(m.regulator_count),dacer_noise_std=float(m.regulator_noise_std),
+                dacer_entropy_proxy=float(m.regulator_entropy) if np.isfinite(m.regulator_entropy) else None)
         write(folder/'progress.json',record);print(json.dumps(record),flush=True)
         run.log(dict(record,**info),step=step)
     try:
@@ -307,6 +321,9 @@ def main():
         if temperature_schedule is not None:
             result['temperature_schedule']=temperature_schedule
             result['final_temperature']=float(info['train/temperature'])
+        if a.dacer_target_entropy_per_dim is not None:
+            result['dacer_target_entropy_per_dim']=float(learner.model.regulator_cfg.target_entropy_per_dim)
+            result['dacer_regulator']=json.loads((folder/'dacer_regulator.json').read_text())
         write(folder/'result.json',result)
         # Keep final 100-episode evaluations separate from periodic 40-episode
         # metrics, including the reset distribution and zero-z control.

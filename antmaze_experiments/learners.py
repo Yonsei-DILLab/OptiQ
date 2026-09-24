@@ -128,7 +128,8 @@ class SpaceOnlyEnv:
 
 class JaxLearner:
     def __init__(self, method, spaces, task, folder, temperature=None, budget=None,
-                 reward_profile='sparse',noveld=True,temperature_schedule=None):
+                 reward_profile='sparse',noveld=True,temperature_schedule=None,
+                 dacer_target_entropy_per_dim=None):
         import jax
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
@@ -154,6 +155,9 @@ class JaxLearner:
                 'dacer.noise_scale=0.1', f'output_root={folder}']
             if temperature is not None:
                 overrides.append(f'alg.actor.temperature={temperature}')
+            if dacer_target_entropy_per_dim is not None:
+                assert np.isfinite(dacer_target_entropy_per_dim)
+                overrides.append(f'dacer.target_entropy_per_dim={dacer_target_entropy_per_dim}')
             if temperature_schedule is not None:
                 schedule=temperature_schedule
                 overrides.append('++alg.actor.temperature_schedule={enabled:true,'
@@ -185,6 +189,9 @@ class JaxLearner:
             self.config = OmegaConf.to_container(cfg, resolve=True)
             from .optiq_profile import verify_profile
             verify_profile(self, folder)
+            if dacer_target_entropy_per_dim is not None:
+                from .dacer_target import verify_target
+                verify_target(self, folder, dacer_target_entropy_per_dim)
         else:
             from .dependencies import load_mfpo_config
             self.config = load_mfpo_config(ROOT).to_dict()

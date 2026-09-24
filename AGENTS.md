@@ -178,3 +178,16 @@ SACv2 final result/checkpoint is complete despite controller cancellation; do
 not duplicate it. Preserve current T1/DIPO jobs and every old source/result.
 Use independent per-slot backfill, no cross-maze barrier, and W&B OptiQ/antmaze.
 See antmaze_experiments/ANNEAL_BASELINES_PROTOCOL.md.
+
+
+User DACER target sweep (2026-09-24, newest): launch fresh OptiQ only,
+v1/v3/v4 x target_entropy_per_dim {-1,-.8,-.5,-.3,-.1}, seed0,15 total.
+The user explicitly confirmed NEGATIVE per-dimension targets; eight-dimensional
+actions give total targets {-8,-6.4,-4,-2.4,-.8}. Keep teacher temperature1
+constant, dense reward/NovelD OFF, native3M/4M/5M budgets and all other latest
+OptiQ settings. Retain40 random-start intermediate episodes each250k and100
+final episodes/mode/reset, evaluation-only intermediate policies and final full
+state. Run on both four-5090 hosts using independent2second backfill and existing
+GPU locks. Commit/push/share frozen source before preflight/main runs. Preserve
+all previous results and cancelled queues; no v2/baselines/extra seeds.
+See antmaze_experiments/DACER_ENTROPY_PROTOCOL.md. W&B OptiQ/antmaze.
