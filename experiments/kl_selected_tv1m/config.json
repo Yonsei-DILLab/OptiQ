@@ -1,0 +1,11 @@
+{
+  "parent_commit": "5b2d79cd5aba408acaca469041e8cfb5cbfeb78f",
+  "checkpoint_step": 100000,
+  "methods": ["forward", "reverse"],
+  "seeds": [0, 1, 2, 3],
+  "sample_count": 1048576,
+  "sample_chunk": 32768,
+  "histogram_bins": 512,
+  "random_seed": 202609241,
+  "action_bound": 10.0
+}
