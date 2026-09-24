@@ -168,13 +168,14 @@ def main():
         script_sha256=sha(Path(__file__)))
     write(a.output / 'provenance.json', provenance)
     started = time.monotonic()
-    results, initial_states = {}, {}
+    results, initial_states, boundary_audits = {}, {}, {}
     try:
         for mode in ('policy', 'native'):
             xy = np.full((a.episodes, horizon + 1, 2), np.nan, np.float32)
             actions = np.full((a.episodes, horizon, 8), np.nan, np.float32)
             full_states, lengths = [], np.zeros(a.episodes, np.int64)
             returns, goals = np.zeros(a.episodes), np.zeros(a.episodes, np.int64)
+            physics_closest = np.full(a.episodes, np.inf, np.float64)
             for start in range(0, a.episodes, a.batch):
                 obs = []
                 for i, env in enumerate(envs):
@@ -212,6 +213,14 @@ def main():
                         else:
                             obs[i], reward, done, info = envs[i].step(act[i])
                             goal = int(info.get('success', 0))
+                        # Verify the physical success radius before XY is stored
+                        # as float32. Expanding the radius to compensate rounding
+                        # would incorrectly count near misses as successes.
+                        physical_xy = (envs[i].data.qpos[:2] if a.family == 'legacy'
+                                       else envs[i].physics_env.get_xy())
+                        physical_distance = np.linalg.norm(
+                            np.asarray(physical_xy, np.float64)-np.asarray(GOALS[a.task]),axis=-1).min()
+                        physics_closest[ix] = min(physics_closest[ix], physical_distance)
                         xy[ix, t + 1] = obs[i, :2]
                         lengths[ix] += 1
                         returns[ix] += reward
@@ -227,11 +236,17 @@ def main():
                 assert len(np.unique(full_states[:, :2], axis=0)) == a.episodes
             initial_states[mode] = full_states
             distance = np.linalg.norm(xy[:, :, None, :] - np.asarray(GOALS[a.task])[None, None, :, :], axis=-1)
-            np.testing.assert_array_equal(np.nanmin(distance, axis=(1, 2)) <= .50002, goals > 0)
+            np.testing.assert_array_equal(physics_closest <= .5, goals > 0)
+            stored_closest = np.nanmin(distance, axis=(1, 2))
+            np.testing.assert_allclose(stored_closest, physics_closest, atol=2e-5, rtol=2e-6)
+            boundary = np.flatnonzero(np.abs(stored_closest-.5) <= 2e-5)
+            boundary_audits[mode] = [dict(episode=int(ix),stored_float32_distance=float(stored_closest[ix]),
+                physics_float64_distance=float(physics_closest[ix]),goal_id=int(goals[ix])) for ix in boundary]
             np.testing.assert_allclose(-np.nansum(distance[:, 1:].min(axis=-1), axis=1), returns, rtol=2e-6, atol=.004)
             np.savez_compressed(a.output / f'{mode}.npz', xy=xy, actions=actions, lengths=lengths,
                 returns=returns, goal_ids=goals, initial_full_state=full_states,
-                initial_positions=positions, policy_batch_seeds=policy_seeds, env_seeds=env_seeds)
+                initial_positions=positions, policy_batch_seeds=policy_seeds, env_seeds=env_seeds,
+                closest_physics_distance=physics_closest)
             result = dict(episodes=a.episodes, successes=int((goals > 0).sum()),
                           goals={str(int(g)):int((goals == g).sum()) for g in np.unique(goals)},
                           mean_return=float(returns.mean()),
@@ -248,6 +263,8 @@ def main():
             model_optimizer_unchanged=True, paired_random_initial_states=not a.v1_origin_supplement,
             paired_identical_origin_states=a.v1_origin_supplement,
             goals_and_dense_returns_recomputed=True, initial_xy_iid_uniform=not a.v1_origin_supplement,
+            goals_recomputed_from_float64_physics=True,goal_radius=.5,
+            float32_goal_boundary_audit=boundary_audits,
             npz_sha256={p.name:sha(p) for p in a.output.glob('*.npz')}))
         write(a.output / 'result.json', dict(completed=True, seconds=time.monotonic()-started, results=results))
     finally:

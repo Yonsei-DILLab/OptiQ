@@ -29,3 +29,13 @@ Do not consume GPU slots or modify/cancel active training. Commit/push the
 reporting source before execution, and record it separately from5baa5b3.
 No4090 use. Source-only199 sharing waits for SSH recovery. Primary random-start
 datasets and all historical data remain unchanged.
+
+Post-hoc validator correction: the2.75M native probe hit one discrepancy in
+the old `stored_distance <= .50002` check. That check expands the physical
+success radius and can classify a near miss as success. Preserve its failed
+attempt, and repeat only this inference probe under a new reporting commit.
+Record the minimum float64 physics distance at every actual transition and
+check success against the unchanged exact radius .5. Compare stored float32
+coordinates with those distances separately, logging boundary cases; do not
+change environment success, rewards, actions or model parameters. Other
+already-verified probes retain their original reporting-source provenance.
