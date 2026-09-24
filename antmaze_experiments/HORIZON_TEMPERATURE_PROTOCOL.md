@@ -65,5 +65,9 @@ optimizer architecture, actual updates and checkpoint round-trip.
 Independent backfill every2seconds. Wait only while the predecessor campaign
 has unassigned pending jobs; once all are assigned, take free GPUs without an
 all-completed barrier. On predecessor failure hold the new pending queue.
+Predecessor running GPU assignments also reserve their slots before the child
+acquires its OS lock, closing the dispatch/lock-acquisition race. A controller
+source replacement before the first training job is recorded in a separate
+controller-provenance.json; the frozen training manifest/source remains unchanged.
 Never restart/cancel old jobs through this controller, and never use vast1/4090.
 Full failed/finished/early-screen data and frozen sources are preserved.

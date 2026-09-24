@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from .register_horizon_temperature import campaign_manifest, CONDITIONS, TOTAL_STEPS
 from .register_dacer_positive import campaign_manifest as reference
-from .controller import priority_queue_ready
+from .controller import priority_queue_ready, priority_reserved_gpus
 from .settings import expected_updates
 
 
@@ -46,6 +46,17 @@ class HorizonTests(unittest.TestCase):
                 ({'pending':[],'pending_held':True},False)]:
                 p.write_text(json.dumps(state))
                 self.assertEqual(priority_queue_ready(m),want)
+
+    def test_dispatched_job_reserves_slot_before_it_acquires_gpu_lock(self):
+        self.assertEqual(priority_reserved_gpus({}),set())
+        with tempfile.TemporaryDirectory() as folder:
+            m={'priority_campaign':folder};p=Path(folder)/'status.json'
+            self.assertEqual(priority_reserved_gpus(m),{0,1,2,3})
+            p.write_text(json.dumps({'pending':[],'running':[{'gpu':1,'pid':123},{'gpu':3,'pid':124}]}))
+            self.assertTrue(priority_queue_ready(m))
+            self.assertEqual(priority_reserved_gpus(m),{1,3})
+            p.write_text(json.dumps({'pending':[],'running':[{'gpu':3,'pid':124}]}))
+            self.assertEqual(priority_reserved_gpus(m),{3})
 
 
 if __name__=='__main__':unittest.main()

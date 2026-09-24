@@ -23,6 +23,15 @@ def priority_queue_ready(manifest):
     return 'pending' in state and not state['pending'] and not state.get('failed') and not state.get('pending_held')
 
 
+def priority_reserved_gpus(manifest):
+    """An assigned predecessor job owns its slot even before run-gpu takes flock."""
+    predecessor=manifest.get('priority_campaign')
+    if predecessor is None:return set()
+    path=Path(predecessor)/'status.json'
+    if not path.exists():return set(range(4))
+    return {int(job['gpu']) for job in json.loads(path.read_text()).get('running',[])}
+
+
 def job(root, identifier, gpu, phases=('preflight','runs')):
     manifest=json.loads((root/'manifest.json').read_text())
     entry=next(j for j in manifest['jobs'] if j['id']==identifier)
@@ -173,9 +182,10 @@ def controller(root):
                 failed.append(dict(id=entry['id'],returncode=code,gpu=gpu))
                 write(root/'failure.json',dict(failed=failed,pending_held=True,time=time.time()))
         priority_ready=priority_queue_ready(manifest)
+        reserved=priority_reserved_gpus(manifest)
         if not failed and priority_ready:
             for gpu in range(4):
-                if gpu in live or not pending:continue
+                if gpu in live or gpu in reserved or not pending:continue
                 lock_path=Path(f'/home/heechan/OptiQ-ops/locks/gpu-{gpu}.lock')
                 with lock_path.open('a') as probe:
                     try:fcntl.flock(probe,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -191,7 +201,8 @@ def controller(root):
         state=dict(source_commit=manifest['source_commit'],controller_pid=os.getpid(),time=time.time(),
             pending=[j['id'] for j in pending],running=[dict(**entry,gpu=gpu,pid=proc.pid) for gpu,(proc,entry) in live.items()],
             completed=completed,failed=failed,pending_held=bool(failed))
-        state.update(priority_campaign=manifest.get('priority_campaign'),priority_queue_ready=priority_ready)
+        state.update(priority_campaign=manifest.get('priority_campaign'),priority_queue_ready=priority_ready,
+                     priority_reserved_gpus=sorted(reserved))
         write(root/'status.json',state)
         if failed and not live: return 1
         time.sleep(2)
