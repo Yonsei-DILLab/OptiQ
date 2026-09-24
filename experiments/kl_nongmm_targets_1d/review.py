@@ -74,6 +74,7 @@ def main():
     ax.plot(x,target,'k--',lw=1.1,label='Target');ax.set(xlim=(-10,10),xlabel='Action',ylabel='Density')
     tvs=ft if method=='forward' else rt
     ax.set_title(f'{LABELS[ident].removeprefix("A. ")} | {method.capitalize()} KL\nMean seed TV={np.mean(tvs):.3f}',fontsize=10)
+    if method=='reverse':ax.text(.02,.96,f'Missing modes per seed: {miss}',transform=ax.transAxes,va='top',fontsize=8)
     if row==0:ax.legend(fontsize=8,loc='upper right')
    # Full seed panels remain accessible alongside each selected environment.
    shutil.copy2(args.reports/dirname/f'{ident}_all_seeds.png',out/f'{ident}_all_seeds.png')
@@ -82,7 +83,7 @@ def main():
   plt.close(fig)
   lines+=['','![후보 비교](candidate_comparison.png)','']
   for ident in selected:lines+=[f'[{ident}: 네 seed 개별 histogram]({ident}_all_seeds.png)','']
- lines+=['## 전체 결과와 설정','', '[기존 GMM 후보: 모든 성공·실패](../20260925_kl_diverse_targets/report.md)','', '[Non-GMM 후보: 모든 성공·실패 및 정확한 파라미터](../20260925_kl_nongmm_targets/report.md)','',
+ lines+=['**대칭 2-mode(t03) 주의:** 네 seed가 모두1mode만 복구해도, 서로 반대 mode를 선택하면 평균 histogram은 양쪽을 덮는다. 이 경우 평균 density가 아닌 개별seed곡선과 seed별TV/누락수를 해석해야 한다.','', '## 전체 결과와 설정','', '[기존 GMM 후보: 모든 성공·실패](../20260925_kl_diverse_targets/report.md)','', '[Non-GMM 후보: 모든 성공·실패 및 정확한 파라미터](../20260925_kl_nongmm_targets/report.md)','',
  '## 다음 단계','', '후보 검토 후 승인한 환경만 Reverse L=2²⁰,100K 본 실험으로 진행한다. 현재 결과만으로 L=2²⁰에서도 같은 양상이 유지된다고 단정하지 않는다.']
  (out/'report.md').write_text('\n'.join(lines)+'\n')
  (out/'SELECTION.json').write_text(json.dumps(dict(selected=selected,high_L_approved=False,high_L_jobs=[],all_stage_completed_runs={name:sum(map(len,data.values())) for name,cfg,data in families}),indent=2)+'\n')
