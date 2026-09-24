@@ -16,7 +16,7 @@ def main():
     cpus=sorted(os.sched_getaffinity(0));chosen=cpus[a.gpu*4:a.gpu*4+4];os.sched_setaffinity(0,chosen or cpus[:4])
     env=os.environ.copy();env.update(CUDA_VISIBLE_DEVICES=str(a.gpu),JAX_PLATFORMS='cuda',JAX_THREEFRY_PARTITIONABLE='false',
       XLA_PYTHON_CLIENT_PREALLOCATE='false',OMP_NUM_THREADS='2',OPENBLAS_NUM_THREADS='2',MKL_NUM_THREADS='2',
-      PYTHONNOUSERSITE='1',PYTHONUNBUFFERED='1',OPTIQ_FORWARD_EXT=str(root/'forward_parents'),
+      PYTHONNOUSERSITE='1',PYTHONUNBUFFERED='1',OPTIQ_FORWARD_EXT=str(root/'forward_parents'),XLA_FLAGS=cfg.get('xla_flags',''),
       JAX_COMPILATION_CACHE_DIR=str(root/'runtime/jax_cache'),JAX_PERSISTENT_CACHE_MIN_COMPILE_TIME_SECS='2')
     for name in ['LD_LIBRARY_PATH','PYTHONPATH','JAX_DEFAULT_MATMUL_PRECISION']:env.pop(name,None)
     status=root/f'runtime/worker{a.gpu}.json'

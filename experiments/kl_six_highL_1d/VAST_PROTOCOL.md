@@ -32,3 +32,8 @@ Dildata pulls only this subfolder into the existing study's vast_campaign every
 180 seconds, excluding transient compile cache. No credentials need copying and
 no new authorized_keys entry is required. Keep login4 campaign and Vast campaign
 separate so immutable provenance and run ownership remain unambiguous.
+
+The optional deployment xla_flags field is recorded explicitly. A preflight may
+use --xla_gpu_enable_triton_gemm=false to avoid very slow Blackwell Triton GEMM
+autotuning, selecting library GEMM without changing the mathematical update or
+precision requirements. Only a validated flag combination is used for training.
