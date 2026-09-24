@@ -207,7 +207,7 @@ class JaxLearner:
             p.reset_noise()
             action = np.asarray(p.sample_action(p.actor_state, obs, p.noise_key,
                 deterministic=mode == 'zero_z', sample_conditional_noise=mode in ('train','policy')))
-            if mode == 'train':
+            if mode == 'train' and self.model.regulator_enabled:
                 action = action + self.model.regulator_noise_std * self.model.regulator_rng.normal(size=action.shape)
             return np.clip(action, -1, 1)
         action, self.agent = (self.select if mode == 'native' else self.sample)(self.agent, obs)
@@ -241,10 +241,13 @@ class JaxLearner:
         if self.method == 'mfpo':
             return dict(agent=flax.serialization.to_bytes(self.agent))
         m, p = self.model, self.model.policy
-        return dict(policy=flax.serialization.to_bytes(dict(actor=p.actor_state,
+        state = dict(policy=flax.serialization.to_bytes(dict(actor=p.actor_state,
             critic=p.qf_state, target_actor=p.target_actor_state)),
             entropy=flax.serialization.to_bytes(m.ent_coef_state), key=np.asarray(m.key),
-            policy_key=np.asarray(p.key), noise_key=np.asarray(p.noise_key),
+            policy_key=np.asarray(p.key), noise_key=np.asarray(p.noise_key))
+        if not m.regulator_enabled:
+            return dict(state,regulator_enabled=False)
+        return dict(state,
             regulator=flax.serialization.to_bytes(dict(log_alpha=m.regulator_log_alpha,
                 optimizer=m.regulator_state, key=m.regulator_key)),
             regulator_rng=copy.deepcopy(m.regulator_rng.bit_generator.state),
