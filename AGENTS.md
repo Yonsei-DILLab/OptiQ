@@ -289,3 +289,15 @@ rollouts, native v1 random reset and v2-v4 fixed full-state reset. Use only
 vast-heechan-180/199's eight5090 GPUs, independent2second backfill. Preserve
 old runs and frozen sources. Commit/push/share before training; no defaults
 changed outside this profile. See antmaze_experiments/DACER_POSITIVE_PROTOCOL.md.
+
+Active user goal (2026-09-25): preserve the algorithm structure absolutely;
+use reward/hyperparameter experiments and early250k evidence to find sustained
+multimodal goal-reaching policies. The next bounded screen tests gamma.999,
+T3 and their combination at fixed DACER H/d+.7/interval500. v3/v4 each3conditions,
+v1 two gamma.999 conditions, seed0,250k post-warmup each, eight total. See
+antmaze_experiments/HORIZON_TEMPERATURE_PROTOCOL.md for evidence, preserved
+settings,50k evaluation checkpoints and exact algorithm-file invariants. New
+jobs yield priority to the existing16-target-grid jobs until pending jobs have
+been assigned; then independent free-slot backfill, not an all-completed gate.
+No frozen source, prior data, optimizer/actor/critic/TD/NLL implementation or
+vendored environment is edited; only existing gamma/temperature settings vary.

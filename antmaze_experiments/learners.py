@@ -133,7 +133,7 @@ class JaxLearner:
     def __init__(self, method, spaces, task, folder, temperature=None, budget=None,
                  reward_profile='sparse',noveld=True,temperature_schedule=None,
                  dacer_target_entropy_per_dim=None,dacer_enabled=True,dynamics_profile=None,
-                 dacer_interval_updates=None):
+                 dacer_interval_updates=None,discount=None):
         import jax
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
@@ -180,6 +180,9 @@ class JaxLearner:
             cfg.alg.critic.hs = [256, 256, 256]
             cfg.alg.optimizer.lr_actor = float(upstream_lr.actor_lr)
             cfg.alg.optimizer.lr_critic = float(upstream_lr.critic_lr)
+            if discount is not None:
+                assert np.isfinite(discount) and 0 < discount < 1
+                cfg.alg.gamma = float(discount)
             if dynamics_profile is not None:
                 from .dynamics_profiles import get_profile
                 profile = get_profile(dynamics_profile)
@@ -204,6 +207,8 @@ class JaxLearner:
             self.model.set_logger(configure(str(folder/'learner'), ['csv']))
             self.model.replay_buffer = self.view
             self.model._total_timesteps = self.budget
+            if discount is not None:
+                assert float(self.model.gamma) == discount
             self.config = OmegaConf.to_container(cfg, resolve=True)
             from .optiq_profile import verify_profile
             verify_profile(self, folder)

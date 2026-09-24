@@ -13,6 +13,16 @@ from .settings import reward_description, REWARD, DENSE_REWARD, NUM_ENVS, PREFLI
 from .dependencies import verify_dependencies
 
 
+def priority_queue_ready(manifest):
+    """Wait only for older queued jobs to be assigned, never for all to finish."""
+    predecessor=manifest.get('priority_campaign')
+    if predecessor is None:return True
+    path=Path(predecessor)/'status.json'
+    if not path.exists():return False
+    state=json.loads(path.read_text())
+    return 'pending' in state and not state['pending'] and not state.get('failed') and not state.get('pending_held')
+
+
 def job(root, identifier, gpu, phases=('preflight','runs')):
     manifest=json.loads((root/'manifest.json').read_text())
     entry=next(j for j in manifest['jobs'] if j['id']==identifier)
@@ -35,7 +45,7 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             cmd.extend(['--budget-steps',str(entry['steps'])])
         if 'final_eval_episodes' in entry:
             cmd.extend(['--final-eval-episodes',str(entry['final_eval_episodes'])])
-        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer','dynamics_profile','eval_interval','dacer_interval_updates'):
+        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer','dynamics_profile','eval_interval','dacer_interval_updates','discount'):
             if key in entry:cmd.extend(['--'+key.replace('_','-'),str(entry[key])])
         if entry.get('save_intermediate_policy',False):
             cmd.append('--save-intermediate-policy')
@@ -76,6 +86,8 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             actor=config['native']['alg']['actor']
             assert actor['temperature']==entry['temperature']
             assert (actor['log_std_min'],actor['log_std_max'],actor['initial_log_std'])==(-5.,-1.,-1.)
+        if 'discount' in entry:
+            assert config['discount']==config['native']['alg']['gamma']==proof['discount']==entry['discount']
         if 'temperature_schedule' in entry:
             schedule=entry['temperature_schedule']
             assert config['temperature_schedule']==schedule
@@ -160,7 +172,8 @@ def controller(root):
             else:
                 failed.append(dict(id=entry['id'],returncode=code,gpu=gpu))
                 write(root/'failure.json',dict(failed=failed,pending_held=True,time=time.time()))
-        if not failed:
+        priority_ready=priority_queue_ready(manifest)
+        if not failed and priority_ready:
             for gpu in range(4):
                 if gpu in live or not pending:continue
                 lock_path=Path(f'/home/heechan/OptiQ-ops/locks/gpu-{gpu}.lock')
@@ -178,6 +191,7 @@ def controller(root):
         state=dict(source_commit=manifest['source_commit'],controller_pid=os.getpid(),time=time.time(),
             pending=[j['id'] for j in pending],running=[dict(**entry,gpu=gpu,pid=proc.pid) for gpu,(proc,entry) in live.items()],
             completed=completed,failed=failed,pending_held=bool(failed))
+        state.update(priority_campaign=manifest.get('priority_campaign'),priority_queue_ready=priority_ready)
         write(root/'status.json',state)
         if failed and not live: return 1
         time.sleep(2)

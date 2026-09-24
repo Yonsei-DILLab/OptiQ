@@ -207,6 +207,7 @@ def main():
     p.add_argument('--temperature-decay',choices=['linear','log_linear'],default='linear')
     p.add_argument('--dacer-target-entropy-per-dim',type=float)
     p.add_argument('--dacer-interval-updates',type=int)
+    p.add_argument('--discount',type=float)
     p.add_argument('--dacer',choices=['on','off'])
     p.add_argument('--budget-steps',type=int)
     p.add_argument('--final-eval-episodes',type=int,default=100)
@@ -237,6 +238,9 @@ def main():
     if a.dacer is not None:assert a.method=='optiq'
     if a.dacer_interval_updates is not None:
         assert a.method=='optiq' and a.dacer!='off' and a.dacer_interval_updates > 0
+    if a.discount is not None:
+        assert a.method=='optiq' and np.isfinite(a.discount) and 0 < a.discount < 1
+        assert a.dynamics_profile is None, 'Use a separate horizon profile'
     temperature_schedule=None
     if a.temperature_final is not None:
         assert a.method=='optiq' and a.temperature is not None
@@ -278,7 +282,7 @@ def main():
             reward_profile=a.reward_profile,noveld=a.noveld=='on',temperature_schedule=temperature_schedule,
             dacer_target_entropy_per_dim=a.dacer_target_entropy_per_dim,
             dacer_enabled=a.dacer!='off',dynamics_profile=a.dynamics_profile,
-            dacer_interval_updates=a.dacer_interval_updates)
+            dacer_interval_updates=a.dacer_interval_updates,discount=a.discount)
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     learner.eval_fixed_starts = a.eval_starts=='fixed' or (a.eval_starts=='upstream' and a.task!='v1')
@@ -298,6 +302,7 @@ def main():
         primary_trajectory='policy-fixed' if learner.eval_fixed_starts else 'policy-natural',
         noveld_coefficient=.01 if a.noveld=='on' else 0.,temperature=a.temperature,
         temperature_schedule=temperature_schedule,
+        discount=float(learner.model.gamma) if a.method=='optiq' else None,
         dacer_target_entropy_per_dim=a.dacer_target_entropy_per_dim,
         dacer_interval_updates=int(learner.model.regulator_cfg.interval_updates) if a.method=='optiq' else None,
         dacer_enabled=bool(learner.model.regulator_enabled) if a.method=='optiq' else None,
@@ -325,6 +330,7 @@ def main():
     if a.dacer_target_entropy_per_dim is not None:
         temp_name+=f'-Hdim{a.dacer_target_entropy_per_dim:g}'
     if a.dacer_interval_updates is not None:temp_name+=f'-Hinterval{a.dacer_interval_updates}'
+    if a.discount is not None:temp_name+=f'-gamma{a.discount:g}'
     if a.dacer is not None:temp_name+='-dacer'+a.dacer
     if a.dynamics_profile is not None:temp_name+='-dyn-'+a.dynamics_profile
     run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s0-{budget}steps'
@@ -435,6 +441,9 @@ def main():
             steps=step,global_steps=step-warmup,updates=learner.updates,rnd_updates=learner.intrinsic.update_step,
             summaries=summaries,checkpoint=proof,timing=timing,seconds=time.monotonic()-started,
             training_successes=len(successes),training_episodes=episodes)
+        if a.discount is not None:
+            assert float(learner.model.gamma)==a.discount
+            result['discount']=float(learner.model.gamma)
         if temperature_schedule is not None:
             result['temperature_schedule']=temperature_schedule
             result['final_temperature']=float(info['train/temperature'])
