@@ -96,7 +96,7 @@ def main():
       r'$$p^\star(a)=\sum_k\eta_k f_k(a)/Z_k,\quad Z_k=\int_{-10}^{10} f_k(x)dx,\qquad Q(a)=0.25\log p^\star(a).$$','',
       '학습은 Q/gradient만 사용하며 정답 target sample과 component label은 제공하지 않는다. 최종 histogram은 각 seed에서 실제 2¹⁸ action,512 bins로 측정했다. KDE는 없다. 평균 그림 외에 모든 개별 seed 그림도 남긴다. Basin은 실제 density의 골짜기로 나누고 core는 config에 사전 지정한 봉우리/plateau 내부 구간이다. Core와 basin 질량은 수치적분으로 계산하고 512개 bin의 적분값을 독립적인 adaptive quadrature로 검증했다. Mode missing은 core와 basin 질량이 모두 정답의25% 미만인 경우다. 후보는 Forward의 모든 peak 복구 및 TV≤.15, Reverse의 최소1mode 누락이 네 seed 모두에서 유지되어야 한다.','',
       '이 자료는 차이가 드러나는 예시를 찾는 탐색 결과다. 전체 표의 실패·반대 결과도 보존했다. Mode 복구는 density가 완벽히 동일하다는 뜻이 아니며 실제 TV를 함께 보고한다.','',
-      '수식과 모든 shape parameter는 PROTOCOL.md 및 config.json에 기록했다.' if args.config=='shape_config.json' else '', '', '## 전체 target 후보','', '![목표분포 후보](target_candidates.png)','',
+      '수식과 모든 shape parameter는 PROTOCOL.md 및 config.json에 기록했다.', '', '## 전체 target 후보','', '![목표분포 후보](target_candidates.png)','',
       '|ID|Mode 수|Non-Gaussian shape|질량|Core 구간|','|---|---:|---|---|---|']
     for c in cases:lines.append(f'|{c["id"]}|{c["expected_modes"]}|{json.dumps(c["shapes"])}|{c["shape_masses"]}|{c["core_intervals"]}|')
     lines+=['','## 네 seed를 통과한 후보 (최대6개)','']

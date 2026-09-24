@@ -5,7 +5,7 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 import jax.scipy as jsp
-from scipy.integrate import quad, cumulative_simpson
+from scipy.integrate import quad
 from scipy.special import logsumexp
 from scipy.signal import find_peaks
 from scipy.optimize import minimize_scalar
@@ -50,7 +50,11 @@ def np_pdf(cfg,x):
 @lru_cache(None)
 def reference_grid(key):
     cfg=json.loads(key);x=np.linspace(-10,10,262145);pdf=np_pdf(cfg,x)
-    cdf=cumulative_simpson(pdf,x=x,initial=0)
+    # Composite Simpson on a uniform even grid, compatible with cluster SciPy.
+    h=x[1]-x[0];cdf=np.zeros_like(x)
+    pairs=h/3*(pdf[:-2:2]+4*pdf[1:-1:2]+pdf[2::2])
+    cdf[2::2]=np.cumsum(pairs)
+    cdf[1::2]=cdf[:-1:2]+h/12*(5*pdf[:-2:2]+8*pdf[1:-1:2]-pdf[2::2])
     assert abs(cdf[-1]-1)<1e-8
     return x,cdf
 
