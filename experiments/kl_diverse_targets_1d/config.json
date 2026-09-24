@@ -1,0 +1,381 @@
+{
+  "n": 128,
+  "m": 128,
+  "batch": 32,
+  "temperature": 0.25,
+  "learning_rate": 0.0003,
+  "hidden_dims": [
+    256,
+    256
+  ],
+  "log_std_min": -5.0,
+  "log_std_max": -1.0,
+  "initial_log_std": -1.0,
+  "teacher_std_floor": 0.006737946999085467,
+  "density_chunk": 256,
+  "action_bound": 10.0,
+  "target_width": 1.0,
+  "train_block": 100,
+  "checkpoint_interval": 1000,
+  "study": "20260925_kl_diverse_targets",
+  "steps": 100000,
+  "mean_output_init_scale": 3.0,
+  "seeds": [
+    0,
+    1
+  ],
+  "validation_seeds": [
+    2,
+    3
+  ],
+  "reverse_L": 1024,
+  "eval_samples": 32768,
+  "final_eval_samples": 262144,
+  "histogram_bins": 512,
+  "eval_steps": [
+    0,
+    1000,
+    10000,
+    25000,
+    50000,
+    75000,
+    100000
+  ],
+  "allow_large_L": false,
+  "cases": [
+    {
+      "id": "t00_reference",
+      "family": "reference",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ]
+    },
+    {
+      "id": "t01_two_offset",
+      "family": "two",
+      "target_centers": [
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "t02_two_unequal",
+      "family": "two",
+      "target_centers": [
+        0,
+        4.5
+      ],
+      "target_widths": [
+        0.6,
+        0.4
+      ],
+      "target_masses": [
+        0.7,
+        0.3
+      ]
+    },
+    {
+      "id": "t03_two_symmetric",
+      "family": "two",
+      "target_centers": [
+        -3,
+        3
+      ],
+      "target_widths": [
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "t04_asymmetric",
+      "family": "asymmetric",
+      "target_centers": [
+        -5,
+        0,
+        3.5
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ]
+    },
+    {
+      "id": "t05_unequal_mass",
+      "family": "mass",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.2,
+        0.5,
+        0.3
+      ]
+    },
+    {
+      "id": "t06_minor_mode",
+      "family": "mass",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.1,
+        0.65,
+        0.25
+      ]
+    },
+    {
+      "id": "t07_mixed_width",
+      "family": "width",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.3,
+        0.5,
+        0.8
+      ],
+      "target_masses": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ]
+    },
+    {
+      "id": "t08_mixed_all",
+      "family": "mixed",
+      "target_centers": [
+        -4,
+        0,
+        4.8
+      ],
+      "target_widths": [
+        0.35,
+        0.7,
+        0.5
+      ],
+      "target_masses": [
+        0.25,
+        0.45,
+        0.3
+      ]
+    },
+    {
+      "id": "t09_four_symmetric",
+      "family": "four",
+      "target_centers": [
+        -4.8,
+        -1.6,
+        1.6,
+        4.8
+      ],
+      "target_widths": [
+        0.45,
+        0.45,
+        0.45,
+        0.45
+      ],
+      "target_masses": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "id": "t10_four_center",
+      "family": "four",
+      "target_centers": [
+        -5,
+        -2,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.4,
+        0.4,
+        0.5,
+        0.55
+      ],
+      "target_masses": [
+        0.2,
+        0.15,
+        0.4,
+        0.25
+      ]
+    },
+    {
+      "id": "t11_four_unequal",
+      "family": "four",
+      "target_centers": [
+        -5,
+        -1.5,
+        1.5,
+        5
+      ],
+      "target_widths": [
+        0.4,
+        0.55,
+        0.55,
+        0.4
+      ],
+      "target_masses": [
+        0.15,
+        0.35,
+        0.35,
+        0.15
+      ]
+    },
+    {
+      "id": "t12_five_equal",
+      "family": "five",
+      "target_centers": [
+        -5.5,
+        -2.75,
+        0,
+        2.75,
+        5.5
+      ],
+      "target_widths": [
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4
+      ],
+      "target_masses": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ]
+    },
+    {
+      "id": "t13_five_weighted",
+      "family": "five",
+      "target_centers": [
+        -5,
+        -2.5,
+        0,
+        2.5,
+        5
+      ],
+      "target_widths": [
+        0.35,
+        0.5,
+        0.55,
+        0.45,
+        0.35
+      ],
+      "target_masses": [
+        0.1,
+        0.2,
+        0.4,
+        0.2,
+        0.1
+      ]
+    },
+    {
+      "id": "t14_six_equal",
+      "family": "six",
+      "target_centers": [
+        -6,
+        -3.6,
+        -1.2,
+        1.2,
+        3.6,
+        6
+      ],
+      "target_widths": [
+        0.35,
+        0.35,
+        0.35,
+        0.35,
+        0.35,
+        0.35
+      ],
+      "target_masses": [
+        0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666
+      ]
+    },
+    {
+      "id": "t15_six_weighted",
+      "family": "six",
+      "target_centers": [
+        -5.5,
+        -3.3,
+        -1.1,
+        1.1,
+        3.3,
+        5.5
+      ],
+      "target_widths": [
+        0.3,
+        0.4,
+        0.45,
+        0.45,
+        0.4,
+        0.3
+      ],
+      "target_masses": [
+        0.1,
+        0.15,
+        0.25,
+        0.25,
+        0.15,
+        0.1
+      ]
+    }
+  ]
+}
