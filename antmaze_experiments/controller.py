@@ -35,7 +35,7 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             cmd.extend(['--budget-steps',str(entry['steps'])])
         if 'final_eval_episodes' in entry:
             cmd.extend(['--final-eval-episodes',str(entry['final_eval_episodes'])])
-        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes'):
+        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer'):
             if key in entry:cmd.extend(['--'+key.replace('_','-'),str(entry[key])])
         if entry.get('save_intermediate_policy',False):
             cmd.append('--save-intermediate-policy')
@@ -94,6 +94,12 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             assert math.isclose(regulator['target_entropy'],target_entropy*8,abs_tol=1e-12)
             assert regulator['updates']>=1 and math.isfinite(regulator['entropy_proxy'])
             assert proof['dacer_target_entropy_per_dim']==target_entropy
+        if entry.get('dacer')=='off':
+            disabled=json.loads((target/'dacer-disabled-verification.json').read_text())
+            assert disabled['verified'] and disabled['train_equals_direct_policy_at_same_rng']
+            assert config['dacer_enabled'] is False and config['native']['dacer']['enabled'] is False
+            assert proof['dacer_enabled'] is False and proof['dacer_updates']==0 and proof['dacer_noise_std']==0.
+            assert not (target/'dacer_regulator.json').exists()
         if entry.get('save_intermediate_policy',False):
             assert config['save_intermediate_policy']
             snapshots=sorted((target/'policy-checkpoints').glob('*/verification.json'))

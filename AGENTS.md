@@ -191,3 +191,16 @@ state. Run on both four-5090 hosts using independent2second backfill and existin
 GPU locks. Commit/push/share frozen source before preflight/main runs. Preserve
 all previous results and cancelled queues; no v2/baselines/extra seeds.
 See antmaze_experiments/DACER_ENTROPY_PROTOCOL.md. W&B OptiQ/antmaze.
+
+
+User replacement (2026-09-24, newest): cancel all running/pending DACER
+target-entropy sweep jobs, preserving completed and interrupted artifacts.
+Launch only four fresh OptiQ v1-v4 seed0 policies with DACER disabled. Keep
+T=1,dense reward,NovelD OFF,256x3 actor/critics,256env,batch4096,8/256 updates,
+native3M/3M/4M/5M budgets and existing40/100episode evaluation settings.
+Disable only external behavior noise and its estimator/alpha updates; retain
+random latent and conditional sigma policy sampling. Commit/push/share before
+launch, two independent jobs per server. W&B OptiQ/antmaze. Calibrate entropy
+target/noise advice using preserved models/logs; no positive-target or other
+hyperparameter experiments are authorized by the analysis request. See
+antmaze_experiments/DACER_OFF_PROTOCOL.md. Cancelled campaigns stay cancelled.

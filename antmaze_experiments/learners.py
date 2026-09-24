@@ -129,7 +129,7 @@ class SpaceOnlyEnv:
 class JaxLearner:
     def __init__(self, method, spaces, task, folder, temperature=None, budget=None,
                  reward_profile='sparse',noveld=True,temperature_schedule=None,
-                 dacer_target_entropy_per_dim=None):
+                 dacer_target_entropy_per_dim=None,dacer_enabled=True):
         import jax
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
@@ -151,11 +151,12 @@ class JaxLearner:
             # retain their own model and optimizer configuration.
             upstream_lr = OmegaConf.load(ROOT/'antmaze/ddiffpg/cfg/algo/actor_critic.yaml')
             overrides = ['benchmark=ant', 'seed=0',
-                'alg.actor.mean_output_init_scale=1.0', 'dacer.enabled=true',
+                'alg.actor.mean_output_init_scale=1.0', f'dacer.enabled={str(bool(dacer_enabled)).lower()}',
                 'dacer.noise_scale=0.1', f'output_root={folder}']
             if temperature is not None:
                 overrides.append(f'alg.actor.temperature={temperature}')
             if dacer_target_entropy_per_dim is not None:
+                assert dacer_enabled, 'A DACER target requires an enabled regulator'
                 assert np.isfinite(dacer_target_entropy_per_dim)
                 overrides.append(f'dacer.target_entropy_per_dim={dacer_target_entropy_per_dim}')
             if temperature_schedule is not None:
@@ -192,6 +193,9 @@ class JaxLearner:
             if dacer_target_entropy_per_dim is not None:
                 from .dacer_target import verify_target
                 verify_target(self, folder, dacer_target_entropy_per_dim)
+            if not dacer_enabled:
+                from .dacer_mode import verify_disabled
+                verify_disabled(self, folder)
         else:
             from .dependencies import load_mfpo_config
             self.config = load_mfpo_config(ROOT).to_dict()
@@ -219,7 +223,7 @@ class JaxLearner:
             p.reset_noise()
             action = np.asarray(p.sample_action(p.actor_state, obs, p.noise_key,
                 deterministic=mode == 'zero_z', sample_conditional_noise=mode in ('train','policy')))
-            if mode == 'train':
+            if mode == 'train' and self.model.regulator_enabled:
                 action = action + self.model.regulator_noise_std * self.model.regulator_rng.normal(size=action.shape)
             return np.clip(action, -1, 1)
         action, self.agent = (self.select if mode == 'native' else self.sample)(self.agent, obs)
@@ -253,15 +257,20 @@ class JaxLearner:
         if self.method == 'mfpo':
             return dict(agent=flax.serialization.to_bytes(self.agent))
         m, p = self.model, self.model.policy
-        return dict(policy=flax.serialization.to_bytes(dict(actor=p.actor_state,
+        state = dict(policy=flax.serialization.to_bytes(dict(actor=p.actor_state,
             critic=p.qf_state, target_actor=p.target_actor_state)),
             entropy=flax.serialization.to_bytes(m.ent_coef_state), key=np.asarray(m.key),
-            policy_key=np.asarray(p.key), noise_key=np.asarray(p.noise_key),
-            regulator=flax.serialization.to_bytes(dict(log_alpha=m.regulator_log_alpha,
+            policy_key=np.asarray(p.key), noise_key=np.asarray(p.noise_key))
+        if m.regulator_enabled:
+            state.update(regulator=flax.serialization.to_bytes(dict(log_alpha=m.regulator_log_alpha,
                 optimizer=m.regulator_state, key=m.regulator_key)),
-            regulator_rng=copy.deepcopy(m.regulator_rng.bit_generator.state),
-            regulator_next_update=m.regulator_next_update, regulator_count=m.regulator_count,
-            regulator_entropy=m.regulator_entropy)
+                regulator_rng=copy.deepcopy(m.regulator_rng.bit_generator.state),
+                regulator_next_update=m.regulator_next_update, regulator_count=m.regulator_count,
+                regulator_entropy=m.regulator_entropy)
+        else:
+            state.update(regulator=None,regulator_rng=None,regulator_next_update=None,
+                         regulator_count=0,regulator_entropy=None,regulator_enabled=False)
+        return state
 
 
 @contextmanager
