@@ -36,7 +36,7 @@ def draw(ax, z, action_index, method):
     ax.axhline(ref, color='#333333', ls=':', lw=1.2, label=r'Independent $2^{24}$ MC reference')
     idx = np.flatnonzero(Ls == MARK)[0]
     ax.scatter([MARK], [mean[idx]], color='#b82455', s=44, zorder=5)
-    ax.text(.98, .97, r'$s_{2^{20}}=%.4f$' % mean[idx]+'\n'+r'$mathrm{SD}=%.4f$' % scores[:, idx].std(ddof=1),
+    ax.text(.98, .97, r'$s_{2^{20}}=%.4f$' % mean[idx]+'\n'+'SD = %.4f' % scores[:, idx].std(ddof=1),
             transform=ax.transAxes, ha='right', va='top', fontsize=9,
             bbox=dict(facecolor='white', alpha=.8, edgecolor='none'))
     axis_style(ax)
@@ -70,6 +70,18 @@ def main():
     fig.legend(handles, labels, loc='outside lower center', ncol=4,fontsize=9)
     fig.suptitle('Frozen 100K actors: score convergence as L increases\nSeed 0 | N=M=128 | fixed actions and parameters | 16 independent repetitions', fontsize=15)
     fig.savefig(args.output/'score_vs_L_main.png',dpi=180); plt.close(fig)
+
+    fig,axes=plt.subplots(2,3,figsize=(16,8),constrained_layout=True)
+    for row,method in enumerate(['forward','reverse']):
+        z=data[f'{method}_s0']
+        for col,ai in enumerate([132,135,138]):
+            ax=axes[row,col];draw(ax,z,ai,method)
+            ax.set_title(f'{method.capitalize()} | shared action a = {z["actions"][ai]:g}')
+            if col==0:ax.set_ylabel('Actor score')
+    handles,labels=axes[0,0].get_legend_handles_labels()
+    fig.legend(handles,labels,loc='outside lower center',ncol=4,fontsize=9)
+    fig.suptitle('Same action locations for both actors | Seed 0, 100K checkpoint\nReverse outer-mode probes have almost zero policy density; score estimates continue to drift',fontsize=14)
+    fig.savefig(args.output/'score_vs_L_shared_actions.png',dpi=180);plt.close(fig)
 
     # External probes: show every prespecified action, including low-density tails.
     fig,axes=plt.subplots(2,9,figsize=(30,7.2),constrained_layout=True)
@@ -108,6 +120,7 @@ def main():
     fig.savefig(args.output/'score_relative_error.png',dpi=180);plt.close(fig)
 
     lines=['# 고정 actor에서 L에 따른 score의 Monte Carlo 수렴', '',
+           '**결과: 최종 actor가 실제로 생성한 action들에서는 L=2²⁰에서 score 추정이 상당히 안정됐다.** 독립적인 큰 L MC 기준 대비 평균 상대 RMSE는 forward 네 seed에서 0.26–0.33%, reverse 네 seed에서 0.10–0.14%였다. 다만 reverse가 거의 방문하지 않는 외곽 mode 위치에서는 2²⁴까지도 drift가 남았다. 따라서 정당화 범위는 최종 policy가 주로 방문하는 구간이다.', '',
            '## 먼저 읽을 그림','', '![고정 action에서 score와 L](score_vs_L_main.png)', '',
            '최종100K checkpoint를 고정했다. 위는 사전에 지정한 seed0이고, 각 열은 actor가 실제로 생성한 행동의10%,50%,90% 분위수다. **같은 패널에서는 모든 L·반복에 완전히 동일한 action과 actor parameter를 사용한다.** Forward와 reverse는 분포가 다르므로 각자의 분위수 action도 다르다. 동일 action의 두 actor 비교는 아래 target-region 그림을 사용한다.', '',
            '- 실선: 독립16회 MC 추정의 평균. 얇은 선: 개별 반복.',
@@ -136,9 +149,13 @@ def main():
         row=[100*values[2**p]['policy_relative_RMSE_mean'] for p in [20,22,24]]
         se=100*s['reference_policy_SE_RMS']/s['reference_policy_score_RMS']
         lines.append(f'|{name}|{row[0]:.4f}%|{row[1]:.4f}%|{row[2]:.4f}%|{se:.4f}%|')
-    lines+=['','![고정 action 전체의 score 오차](score_relative_error.png)','',
+    lines+=['','L=2²⁰에서 16회 중 가장 큰 상대 RMSE도 forward 0.57%, reverse 0.23% 이하였다. 이 값은 128개 action에 걸친 RMS이며, 모든 action의 점별 오차 상한이라는 뜻은 아니다. 별도 큰-L reference 평균의 표준오차는 reference score RMS 대비 forward 0.027–0.037%, reverse 0.010–0.014%였다.', '',
+            r'$$E_L=\frac{\sqrt{\frac1{128}\sum_j(\widehat s_L(a_j)-s_{\mathrm{ref}}(a_j))^2}}{\sqrt{\frac1{128}\sum_j s_{\mathrm{ref}}(a_j)^2}}.$$', '',
+            '![고정 action 전체의 score 오차](score_relative_error.png)','',
             '## 모든 seed','', '![모든 seed의 score](score_vs_L_all_seeds.png)','',
             '## 목표 mode 주변의 고정 위치','',
+            '![동일한 action에서 비교](score_vs_L_shared_actions.png)','',
+            '**외곽에서는 수렴을 주장하기 어렵다.** Reverse seed 0의 a=−4.25에서 평균 score는 L=2²⁰의 18.61에서 2²⁴의 17.23으로 변했고, a=4.25에서는 −18.95에서 −17.38로 변했다. 이 영역의 큰-L reference도 반복 간 변동이 커서 정확한 답으로 사용할 수 없다. L=2²⁰이 모든 action에서 충분하다는 주장은 이 결과로 뒷받침되지 않는다.', '',
             '![target-region 고정 action](score_vs_L_target_probes.png)','',
             'Reverse는 외곽 mode를 거의 방문하지 않는다. 이런 낮은 policy density 영역에서의 추정 난이도와 실제 학습이 주로 받는 action에서의 난이도를 구분해야 한다. 이 그림의 점선도 해당 **actor**의 큰L score이며, 목표분포 score가 아니다.', '',
             '## 해석 범위','',
