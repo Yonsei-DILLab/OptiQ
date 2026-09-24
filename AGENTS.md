@@ -301,3 +301,13 @@ jobs yield priority to the existing16-target-grid jobs until pending jobs have
 been assigned; then independent free-slot backfill, not an all-completed gate.
 No frozen source, prior data, optimizer/actor/critic/TD/NLL implementation or
 vendored environment is edited; only existing gamma/temperature settings vary.
+
+Active goal candidate follow-up (2026-09-25): after the completed v3 gamma.999/T1
+250k screen retained direct-policy left54/right33 and mu-only left54/right20
+in100 episodes but zero goal successes, register one fresh seed0 1M post-warmup
+run with the identical settings on an otherwise free180 GPU. This is a longer
+same-seed experiment, not an independent seed or checkpoint resume. Keep all
+existing jobs/sources intact and prioritize the existing screen's pending jobs.
+No algorithm changes. Inspect successful paths and retention at500k/750k/1M.
+See antmaze_experiments/GAMMA_RETENTION_PROTOCOL.md. Share source with199 only;
+no AntMaze work on4090, no cancelled campaign resumes.
