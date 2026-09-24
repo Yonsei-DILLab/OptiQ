@@ -1,9 +1,17 @@
 # Third column: current-policy sampling and SNIS NLL
 
 User request: add a third column to the existing two-Gaussian figure, training
-with sampling and self-normalized importance-weighted NLL. The user selected
-256 IID mixture samples per update. Seed 0 is fixed before execution; do not
+with sampling and self-normalized importance-weighted NLL. The user now requests
+4096 IID mixture samples per update, replacing 256. Seed 0 is fixed before execution; do not
 select a seed based on recovery. This is a single illustrative trajectory.
+
+The prior 256-sample run remains frozen at source commit
+7c50def448077b06e3282b38c56ffb215e3bfd20. Only samples_per_update changes in
+the numerical configuration; use the identical optimizer and sampling code.
+Restart from the original initialization, not the previous final parameters.
+The new run ID is snis_n4096_seed0_run01. Across 6000 updates it draws 24576000
+training samples. The same seed does not imply identical or nested samples
+after batch size changes. Preserve prior results and compare endpoints.
 
 Reuse the saved forward/reverse baseline snapshots from source commit
 7622a42fa6a7c9c46762da649f6ec8344fd463dd; do not rerun or mutate that run.
@@ -12,7 +20,7 @@ Target, model, fixed mixture weights, direct mu/sigma parameters, initial state,
 learning rate 0.02, 6000 updates and 7 snapshot times are exactly the baseline.
 The baseline config.json remains unchanged; extension settings are snis_config.json.
 
-At update t, choose 256 component indices IID with probabilities (0.5,0.5),
+At update t, choose 4096 component indices IID with probabilities (0.5,0.5),
 then x_i = mu_{k_i} + sigma_{k_i} epsilon_i, epsilon_i ~ Normal(0,1).
 The proposal is the exact current two-component mixture q_t, not a component
 density, a target sampler, a uniform proposal or a wide auxiliary proposal.
@@ -27,7 +35,7 @@ is computed with full mixture responsibilities exactly as in the baseline.
 Update all four parameters simultaneously with plain gradient descent.
 No derivative flows through samples, proposal density or normalized weights.
 Weights are recomputed from the pre-update policy on each fresh batch; there
-is no extra division by 256 after weights have been normalized to sum to 1.
+is no extra division by batch size after weights have been normalized to sum to 1.
 Stable log weights prevent numerical underflow; no weight clipping or tempering.
 No momentum, Adam, sigma projection, target samples or forced right-mode samples.
 Fail explicitly if an update makes a scale nonpositive or a value nonfinite.
