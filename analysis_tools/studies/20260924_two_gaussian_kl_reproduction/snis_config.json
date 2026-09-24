@@ -1,0 +1,9 @@
+{
+  "samples_per_update": 256,
+  "seed": 0,
+  "proposal": "current_q",
+  "sampling": "iid_mixture",
+  "stop_gradient_samples": true,
+  "stop_gradient_weights": true,
+  "baseline_source_commit": "7622a42fa6a7c9c46762da649f6ec8344fd463dd"
+}
