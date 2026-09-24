@@ -12,13 +12,13 @@ def write(path,data):
     tmp=path.with_suffix('.tmp');tmp.write_text(json.dumps(data,indent=2)+'\n');tmp.replace(path)
 
 
-def train(root,cfg,case,seed,method,steps,L,stage,parent_root=None):
+def train(root,cfg,case,seed,method,steps,L,stage,parent_root=None,experiment_cls=Experiment,evaluate_fn=evaluate):
     out=root/'runtime'/stage/case['id']/f'{method}_s{seed}';out.mkdir(parents=True,exist_ok=True)
     if (out/'COMPLETE.json').exists():return
     cfg=dict(cfg,**case,steps=steps,density_chunk=4096 if L>1024 else 256,
              train_block=5 if L>1024 else 100,checkpoint_interval=100 if L>1024 else 1000)
     source=json.loads((root/'SOURCE_MANIFEST.json').read_text())
-    exp=Experiment(cfg,method,L,seed)
+    exp=experiment_cls(cfg,method,L,seed)
     metadata=dict(config=cfg,method=method,L=L,seed=seed,stage=stage,source_commit=source['commit'],
                   initial_parameter_sha256=hashlib.sha256(flax.serialization.to_bytes(exp.state.params)).hexdigest(),
                   hostname=platform.node(),job=os.environ.get('SLURM_JOB_ID'),started=time.time())
@@ -53,7 +53,7 @@ def train(root,cfg,case,seed,method,steps,L,stage,parent_root=None):
         for step in range(int(exp.state.step),steps+1,cfg['train_block']):
             write(out/'STATUS.json',dict(step=step,phase='training',time=time.time()))
             if step in cfg['eval_steps'] and not (out/f'metrics_{step:06d}.json').exists():
-                metric=evaluate(exp,out,step);write(out/f'metrics_{step:06d}.json',metric)
+                metric=evaluate_fn(exp,out,step);write(out/f'metrics_{step:06d}.json',metric)
                 print(json.dumps(dict(case=case['id'],method=method,seed=seed,**metric)),flush=True)
             if step%cfg['checkpoint_interval']==0:save()
             if stop:
