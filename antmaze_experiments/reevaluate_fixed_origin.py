@@ -27,11 +27,16 @@ def main():
     ap.add_argument('--output',type=Path,required=True)
     ap.add_argument('--episodes',type=int,default=40)
     ap.add_argument('--cpu-offset',type=int,default=0)
+    ap.add_argument('--v1-origin-supplement',action='store_true',
+                    help='Explicit supplementary v1 origin probe; primary native random evaluation remains unchanged')
     args=ap.parse_args()
     report_source=Path(__file__).resolve().parents[1]
     report_sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=report_source,text=True).strip()
     cfg=json.loads((args.run/'config.json').read_text())
-    assert cfg['task'] in ('v2','v3','v4'), 'v1 retains its native random-start evaluation'
+    if args.v1_origin_supplement:
+        assert cfg['task']=='v1'
+    else:
+        assert cfg['task'] in ('v2','v3','v4'), 'v1 origin probes require the explicit supplementary flag'
     source=Path('/home/heechan/OptiQ-ops/sources')/cfg['source_commit']
     assert cfg['method']=='optiq' and source.exists()
     assert subprocess.check_output(['git','rev-parse','HEAD'],cwd=source,text=True).strip()==cfg['source_commit']
@@ -103,7 +108,10 @@ def main():
         parent_run=str(args.run),checkpoint=str(args.checkpoint),checkpoint_sha256=expected_hash,
         checkpoint_steps=step,updates=updates,episodes_per_mode=args.episodes,task=cfg['task'],training_seed=cfg['seed'],
         training_config=cfg,reset='original origin [0,0], original pose/velocity, identical full state across all episodes',
-        evaluation_matches_training_resets=True,eval_starts='fixed',primary_trajectory='policy-fixed',
+        evaluation_matches_training_resets=not args.v1_origin_supplement,
+        supplementary_origin_probe=args.v1_origin_supplement,
+        replaces_primary_evaluation=False,eval_starts='fixed',
+        primary_trajectory=None if args.v1_origin_supplement else 'policy-fixed',
         modes=['policy','native'],policy='fresh random latent and conditional sigma; original sampler',
         native='fresh random latent, mu-only',evaluation_rng_seed=700000+step,
         external_noise=False,intrinsic_reward=False,inference_only=True))
@@ -137,12 +145,15 @@ def main():
     try:
         import wandb
         parent_meta=json.loads((args.run/'wandb.json').read_text())
-        identifier=hashlib.sha256(('fixed-origin:'+str(args.run)).encode()).hexdigest()[:12]
-        wb=wandb.init(entity='OptiQ',project='antmaze',group='antmaze-matched-start-eval-20260924',
-            id=identifier,resume='allow',name=args.run.name+'-fixed-eval',job_type='evaluation',mode='online',
+        prefix='v1-origin-supplement:' if args.v1_origin_supplement else 'fixed-origin:'
+        identifier=hashlib.sha256((prefix+str(args.run)).encode()).hexdigest()[:12]
+        group='antmaze-v1-origin-supplement-20260925' if args.v1_origin_supplement else 'antmaze-matched-start-eval-20260924'
+        wb=wandb.init(entity='OptiQ',project='antmaze',group=group,
+            id=identifier,resume='allow',name=args.run.name+'-origin-supplement' if args.v1_origin_supplement else args.run.name+'-fixed-eval',job_type='evaluation',mode='online',
             config=dict(training_source=cfg['source_commit'],evaluation_source=report_sha,
                 parent_run_id=parent_meta['id'],parent_run_url=parent_meta['url'],task=cfg['task'],
-                reward_profile=cfg['reward_profile'],eval_starts='original fixed origin/full state',training_seed=cfg['seed']),
+                reward_profile=cfg['reward_profile'],eval_starts='original fixed origin/full state',training_seed=cfg['seed'],
+                supplementary_origin_probe=args.v1_origin_supplement,replaces_primary_evaluation=False),
             settings=wandb.Settings(init_timeout=30))
         wb.define_metric('checkpoint_step')
         wb.define_metric('fixed/*',step_metric='checkpoint_step')
