@@ -204,3 +204,12 @@ launch, two independent jobs per server. W&B OptiQ/antmaze. Calibrate entropy
 target/noise advice using preserved models/logs; no positive-target or other
 hyperparameter experiments are authorized by the analysis request. See
 antmaze_experiments/DACER_OFF_PROTOCOL.md. Cancelled campaigns stay cancelled.
+
+User temperature-only approval (2026-09-24, newest): launch nine fresh OptiQ
+v1/v3/v4 x fixed temperature3/5/10, seed0, DACER OFF, dense reward and NovelD
+OFF. Keep replay1M and every other T1 control learning/evaluation setting;
+the discussed replay6M, clipping, actorLR and sigma changes are not approved.
+Preserve native3M/4M/5M budgets and use both four-5090 hosts with independent
+2second backfill. Preserve existing completed results and cancelled queues.
+Commit/push/share before launch; W&B OptiQ/antmaze. See
+antmaze_experiments/DACER_OFF_TEMPERATURE_PROTOCOL.md.
