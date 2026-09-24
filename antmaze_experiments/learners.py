@@ -128,7 +128,7 @@ class SpaceOnlyEnv:
 
 class JaxLearner:
     def __init__(self, method, spaces, task, folder, temperature=None, budget=None,
-                 reward_profile='sparse',noveld=True,seed=0):
+                 reward_profile='sparse',noveld=True,seed=0,dacer=True):
         import jax
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
@@ -150,7 +150,7 @@ class JaxLearner:
             # retain their own model and optimizer configuration.
             upstream_lr = OmegaConf.load(ROOT/'antmaze/ddiffpg/cfg/algo/actor_critic.yaml')
             overrides = ['benchmark=ant', f'seed={seed}',
-                'alg.actor.mean_output_init_scale=1.0', 'dacer.enabled=true',
+                'alg.actor.mean_output_init_scale=1.0', f'dacer.enabled={str(dacer).lower()}',
                 'dacer.noise_scale=0.1', f'output_root={folder}']
             if temperature is not None:
                 overrides.append(f'alg.actor.temperature={temperature}')

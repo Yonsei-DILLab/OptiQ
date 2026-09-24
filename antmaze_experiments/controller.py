@@ -28,7 +28,7 @@ def job(root, identifier, gpu):
             cmd.extend(['--budget-steps',str(entry['steps'])])
         if 'final_eval_episodes' in entry:
             cmd.extend(['--final-eval-episodes',str(entry['final_eval_episodes'])])
-        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes'):
+        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer'):
             if key in entry:cmd.extend(['--'+key.replace('_','-'),str(entry[key])])
         if entry.get('save_intermediate_policy',False):
             cmd.append('--save-intermediate-policy')
@@ -48,6 +48,7 @@ def job(root, identifier, gpu):
         assert config['seed']==entry.get('seed',0)
         if entry['method']=='optiq':
             assert config['native']['seed']==entry.get('seed',0)
+            assert config['native']['dacer']['enabled']==(entry.get('dacer','on')=='on')
         reward=REWARD if entry.get('reward_profile','sparse')=='sparse' else DENSE_REWARD
         assert config['reward']==reward and config['num_envs']==NUM_ENVS and config['batch_size']==4096
         assert config['noveld_enabled']==(entry.get('noveld','on')=='on')

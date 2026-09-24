@@ -151,6 +151,7 @@ def main():
     p.add_argument('--save-intermediate-policy',action='store_true')
     p.add_argument('--reward-profile',choices=['sparse','dense'],default='sparse')
     p.add_argument('--noveld',choices=['on','off'],default='on')
+    p.add_argument('--dacer',choices=['on','off'],default='on')
     p.add_argument('--eval-starts',choices=['upstream','random'],default='upstream')
     a = p.parse_args()
     assert 0 <= a.seed < 2**31
@@ -187,7 +188,7 @@ def main():
     else:
         learner = JaxLearner(a.method,(env.single_observation_space,env.single_action_space),
             a.task,folder,temperature=a.temperature,budget=planned_budget,
-            reward_profile=a.reward_profile,noveld=a.noveld=='on',seed=a.seed)
+            reward_profile=a.reward_profile,noveld=a.noveld=='on',seed=a.seed,dacer=a.dacer=='on')
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     budget = PREFLIGHT_STEPS if a.preflight else planned_budget
@@ -216,7 +217,7 @@ def main():
     write(folder/'config.json',config)
     import wandb
     temp_name=f'-T{a.temperature:g}' if a.temperature is not None else ''
-    run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s{a.seed}-{budget}steps'
+    run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-dacer{a.dacer}-s{a.seed}-{budget}steps'
     run = wandb.init(entity=WANDB_ENTITY,project=WANDB_PROJECT,group=os.environ.get('OPTIQ_CAMPAIGN',CAMPAIGN),
         name=run_name,dir=str(folder),config=config,
         mode='disabled' if a.preflight else os.environ.get('WANDB_MODE','online'))
