@@ -6,7 +6,7 @@ from ..kl_diverse_targets_1d.run import train,write
 from .core import implementation
 from .evaluate import evaluate
 
-EXT=Path('/scratch2/hobbit9882/OptiQ-SingleQ-N64-M256-K64-T025-20260921/extensions')
+EXT=Path(os.environ.get('OPTIQ_FORWARD_EXT', '/scratch2/hobbit9882/OptiQ-SingleQ-N64-M256-K64-T025-20260921/extensions'))
 
 def reuse_forward(root,cfg,case,seed):
     out=root/'runtime/confirm'/case['id']/f'forward_s{seed}';out.mkdir(parents=True,exist_ok=True)

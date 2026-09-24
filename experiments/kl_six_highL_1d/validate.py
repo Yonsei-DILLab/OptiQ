@@ -1,4 +1,4 @@
-import argparse,json,time,tempfile
+import argparse,json,time,tempfile,hashlib,importlib.metadata
 from pathlib import Path
 import jax
 import numpy as np
@@ -10,8 +10,19 @@ from .evaluate import evaluate
 
 def flat(t):return np.concatenate([np.asarray(x).ravel() for x in jax.tree_util.tree_leaves(t)])
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--gpu',action='store_true');p.add_argument('--out',type=Path,required=True);a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--gpu',action='store_true');p.add_argument('--out',type=Path,required=True);p.add_argument('--parent-ext',type=Path);a=p.parse_args()
     cfg=json.loads(Path(__file__).with_name('config.json').read_text());checks={};times=[]
+    if a.parent_ext:
+        assert jax.config.jax_threefry_partitionable is False
+        case=cfg['cases'][2]
+        for seed in range(4):
+            stage='screen' if seed<2 else 'validate_seeds'
+            parent=a.parent_ext/case['forward_campaign']/'runtime'/stage/case['id']/f'forward_s{seed}'
+            old=json.loads((parent/'RUN.json').read_text());e=implementation(case)(dict(cfg,**case),'forward',0,seed)
+            digest=hashlib.sha256(flax.serialization.to_bytes(e.state.params)).hexdigest()
+            assert digest==old['initial_parameter_sha256'];checks[f'paired_initial_seed{seed}']=digest
+            e.restore(parent/'checkpoint.msgpack');assert int(e.state.step)==100000
+        print('Original initialization and checkpoint compatibility: passed',flush=True)
     for case in cfg['cases']:
         c=dict(cfg,**case,n=8,m=11,batch=2,hidden_dims=[16,16],density_chunk=256)
         old_cls=OldNG if case['target_kind']=='nongmm' else OldGMM
@@ -34,6 +45,6 @@ def main():
             with tempfile.TemporaryDirectory() as tmp:
                 before=np.asarray(e.key).copy();metric=evaluate(e,Path(tmp),100000)
                 assert metric['sample_count']==1048576 and np.array_equal(before,np.asarray(e.key));checks[case['id']+'_final_eval_samples']=metric['sample_count']
-    result=dict(passed=True,backend=jax.default_backend(),devices=[str(x) for x in jax.devices()],checks=checks,timing=times,resume_rng_exact=True)
+    result=dict(versions={n:importlib.metadata.version(n) for n in ['jax','jaxlib','flax','optax','numpy','scipy']},threefry_partitionable=bool(jax.config.jax_threefry_partitionable),passed=True,backend=jax.default_backend(),devices=[str(x) for x in jax.devices()],checks=checks,timing=times,resume_rng_exact=True)
     a.out.parent.mkdir(parents=True,exist_ok=True);a.out.write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2))
 if __name__=='__main__':main()
