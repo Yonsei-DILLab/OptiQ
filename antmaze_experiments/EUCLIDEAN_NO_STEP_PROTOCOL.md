@@ -35,4 +35,10 @@ per-slot scheduling every2seconds; every job must pass the real256env/batch4096
 8448-transition/8-update preflight, replay reward check, checkpoint readback and
 settings validation before its fresh main run. Failure holds pending jobs.
 Use existing supervisor and GPU locks. W&B OptiQ/antmaze, group
-antmaze-optiq-euclidean-no-step-B0-T1-s0-20260925.
+antmaze-optiq-euclidean-no-step-B0-T1-s0-20260925-r2.
+
+The initial campaign without -r2 (sourcecab48faf07d41a86886355bfd6bef538fff29432)
+failed in configuration creation: reward_description did not recognize the new
+no-cost Euclidean profile. No warmup collection, learner updates or main runs
+started. Preserve those preflight logs and failure manifests; use a new committed
+source and separate -r2 campaign after fixing and testing the logging dispatch.

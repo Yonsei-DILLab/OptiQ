@@ -5,9 +5,16 @@ from .progress_reward import (EUCLIDEAN_NO_COST_PROFILE as PROFILE,
                               progress_reward, specification, maze_geometry)
 from .register_euclidean_no_step import campaign_manifest
 from .register_geodesic_no_step import campaign_manifest as geodesic_control
+from .settings import REWARD_PROFILES, reward_description
 
 
 class EuclideanNoStepTests(unittest.TestCase):
+    def test_runtime_logging_accepts_every_reward_profile(self):
+        for profile in REWARD_PROFILES:
+            self.assertTrue(reward_description(profile))
+        self.assertEqual(reward_description(PROFILE),
+            'nearest-goal Euclidean distance decrease *100; no step penalty; no success bonus')
+
     def test_exact_euclidean_formula_and_cost_removal(self):
         for task in ('v1', 'v2', 'v3', 'v4'):
             goals = maze_geometry(task)[1]

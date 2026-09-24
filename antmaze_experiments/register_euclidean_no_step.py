@@ -9,7 +9,7 @@ from .register_dacer_off import campaign_manifest as control_manifest
 from .progress_reward import EUCLIDEAN_NO_COST_PROFILE as NO_COST_PROFILE, specification
 
 HOSTS = {0: 'vast-heechan-180', 1: 'vast-heechan-199'}
-CAMPAIGN = 'antmaze-optiq-euclidean-no-step-B0-T1-s0-20260925'
+CAMPAIGN = 'antmaze-optiq-euclidean-no-step-B0-T1-s0-20260925-r2'
 SHARDS = {0: ('v3', 'v4'), 1: ('v1', 'v2')}
 
 
@@ -27,7 +27,8 @@ def campaign_manifest(source, sha, shard):
         jobs.append(entry)
     manifest.update(campaign=CAMPAIGN,host=HOSTS[shard],shard=shard,jobs=jobs,
         protocol='antmaze_experiments/EUCLIDEAN_NO_STEP_PROTOCOL.md',
-        parent_source='061e9888e1f3d0e59b5037441fa146c1eff25e2a',
+        parent_source='cab48faf07d41a86886355bfd6bef538fff29432',
+        supersedes_failed_preflight_campaign='antmaze-optiq-euclidean-no-step-B0-T1-s0-20260925',
         comparison_source='4d757159ef84e849250a6d5111f9931b2b392b21',
         comparison_campaign='antmaze-optiq-geodesic-no-step-B0-T1-s0-20260924',
         changed_learning_setting={'distance': {'previous':'geodesic','current':'Euclidean'}},
