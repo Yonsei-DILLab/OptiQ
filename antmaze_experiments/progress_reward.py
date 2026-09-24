@@ -17,7 +17,9 @@ SCALED_PROFILES = tuple(p.replace('progress_', 'progress100_') for p in LEGACY_P
 NO_COST_PROFILE = 'progress100_geodesic_no_step_no_bonus'
 EUCLIDEAN_NO_COST_PROFILE = 'progress100_euclidean_no_step_no_bonus'
 EUCLIDEAN_SCALE20_PROFILE = 'progress20_euclidean_no_step_no_bonus'
-NO_COST_PROFILES = (NO_COST_PROFILE, EUCLIDEAN_NO_COST_PROFILE, EUCLIDEAN_SCALE20_PROFILE)
+START_NORMALIZED_PROFILE = 'progress100_start_normalized_geodesic_no_step_no_bonus'
+NO_COST_PROFILES = (NO_COST_PROFILE, EUCLIDEAN_NO_COST_PROFILE, EUCLIDEAN_SCALE20_PROFILE,
+                    START_NORMALIZED_PROFILE)
 PROFILES = LEGACY_PROFILES + SCALED_PROFILES + NO_COST_PROFILES
 
 def progress_scale(profile):
@@ -133,9 +135,31 @@ def geodesic(task):
     return Geodesic(*maze_geometry(task))
 
 
+@lru_cache(None)
+def goal_reference_scales(task):
+    """Fixed maze-origin reference, not episode state or trajectory memory.
+
+    The remaining distance is to the existing radius-.5 success set. Reference
+    weights are <=1, retaining the original distance bound and meter scale.
+    No goal, wall, reset distribution, or terminal rule is changed.
+    """
+    remaining = geodesic(task).distances(np.zeros(2)) - .5
+    if not np.isfinite(remaining).all() or not np.all(remaining > 0):
+        raise ValueError('Reference origin must be outside every goal success set')
+    scale = float(remaining.min())
+    weights = scale / remaining
+    remaining.flags.writeable = False
+    weights.flags.writeable = False
+    return remaining, scale, weights
+
+
 def distance(points, task, profile):
     if profile not in PROFILES:raise ValueError(profile)
     points=np.asarray(points,dtype=np.float64)
+    if profile == START_NORMALIZED_PROFILE:
+        _, _, weights = goal_reference_scales(task)
+        remaining = np.maximum(geodesic(task).distances(points) - .5, 0.)
+        return (remaining * weights).min(axis=-1)
     if is_geodesic(profile):return geodesic(task).distances(points).min(axis=-1)
     goals=maze_geometry(task)[1]
     return np.linalg.norm(points[...,None,:]-goals,axis=-1).min(axis=-1)
@@ -160,7 +184,7 @@ def specification(task, profile):
     walls,goals,bounds=maze_geometry(task)
     formula=(f'{progress_scale(profile):g}*(d(current)-d(next))' if profile in NO_COST_PROFILES else
              '100*(d(current)-d(next))-1' if profile in SCALED_PROFILES else 'd(current)-d(next)-0.01')
-    return dict(formula=formula+('+upstream_success_bonus' if bonus_enabled(profile) else ''),
+    result = dict(formula=formula+('+upstream_success_bonus' if bonus_enabled(profile) else ''),
         success_bonus_enabled=bonus_enabled(profile),
         distance='nearest-goal Euclidean' if not is_geodesic(profile) else 'nearest-goal XY visibility-graph geodesic',
         step_cost=step_cost(profile),progress_scale=progress_scale(profile),discount_inside_reward=False,goals=goals.tolist(),
@@ -170,6 +194,15 @@ def specification(task, profile):
         geometry_margin_m=GEOMETRY_MARGIN if is_geodesic(profile) else 0.,
         physical_body_inflation_m=0.,map_scale_m=4.,
         upstream_geometry_sha256=hashlib.sha256(UPSTREAM.read_bytes()).hexdigest())
+    if profile == START_NORMALIZED_PROFILE:
+        remaining, scale, weights = goal_reference_scales(task)
+        result.update(distance='minimum start-normalized remaining XY geodesic distance',
+            distance_endpoint='existing success region: max(geodesic_to_goal_center - 0.5, 0)',
+            potential='min_i(max(d_geo(x, goal_i)-0.5,0) * reference_scale/reference_remaining_i)',
+            reference_xy=[0.,0.], reference_remaining_distances=remaining.tolist(),
+            reference_scale=scale, goal_distance_weights=weights.tolist(),
+            episode_start_dependent=False, terminal_zero_is_distance_to_success_set=True)
+    return result
 
 
 def value_support(task, profile, gamma=.99):

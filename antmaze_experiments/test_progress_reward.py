@@ -2,7 +2,8 @@
 import unittest
 import numpy as np
 from .progress_reward import (Geodesic,geodesic,maze_geometry,distance,progress_reward,
-                              success_bonus,specification,value_support,PROFILES,bonus_enabled,progress_scale,step_cost)
+                              success_bonus,specification,value_support,PROFILES,bonus_enabled,progress_scale,step_cost,
+                              START_NORMALIZED_PROFILE)
 from .settings import reward_description
 
 class ProgressRewardTests(unittest.TestCase):
@@ -82,11 +83,16 @@ class ProgressRewardTests(unittest.TestCase):
             self.assertAlmostEqual(float(stationary),-step_cost(profile))
             self.assertAlmostEqual(float(forward+backward),-2*step_cost(profile))
             self.assertGreater(forward,stationary)
-            # Terminal endpoint keeps the actual center distance; no artificial zero.
+            # Legacy profiles keep center distance; only the explicitly new
+            # success-set potential is zero within the original goal radius.
             end=np.array([-7.7,0.]);start=np.array([-7.4,0.])
             r,d0,d1=progress_reward(start,end,'v1',profile,10.)
-            self.assertAlmostEqual(float(d1),.3)
-            self.assertAlmostEqual(float(r),.3*progress_scale(profile)-step_cost(profile)+(10 if bonus_enabled(profile) else 0))
+            if profile == START_NORMALIZED_PROFILE:
+                self.assertAlmostEqual(float(d1),0.)
+                self.assertAlmostEqual(float(r),10.)
+            else:
+                self.assertAlmostEqual(float(d1),.3)
+                self.assertAlmostEqual(float(r),.3*progress_scale(profile)-step_cost(profile)+(10 if bonus_enabled(profile) else 0))
 
     def test_route_total_and_metadata_no_legacy_change(self):
         for profile in PROFILES:

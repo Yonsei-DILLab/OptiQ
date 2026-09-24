@@ -339,3 +339,17 @@ Keep current v3T3 running and fill unlocked180 slots independently. Commit/push
 and freeze before preflight/main; no cancelled199 resume and no4090 work.
 See antmaze_experiments/GEODESIC_RETENTION_PROTOCOL.md. Source-only199 sharing
 remains pending SSH recovery.
+
+Active-goal reward screen (2026-09-25): under the authorized reward/hyperparameter
+search, test v3 fixed-origin-normalized remaining geodesic progress at T1/T3,
+seed0,250k post-warmup. Original geodesic initially penalizes movement toward
+the farther v3 goal; test a fixed per-goal distance normalization plus distance
+to the existing radius-.5 success region. Do not change physics, resets,
+success/termination, observations or any algorithm file. Keep gamma.999,
+H/d+.7/500 and all other short geodesic controls. Preserve live v1/v4 geodesic1M
+jobs; the failed v3T3 Euclidean run was screened and stopped at598016total with
+its logs/checkpoints retained. Do not resume it. Use only unlocked180 slots,
+commit/push/freeze before preflight, and document delayed199 source sharing.
+See antmaze_experiments/START_NORMALIZED_GEODESIC_PROTOCOL.md. This reward is an
+explicit experiment profile, not a default change or a claim of equal discounted
+returns. Legacy reward behavior remains unchanged; no4090 AntMaze work.
