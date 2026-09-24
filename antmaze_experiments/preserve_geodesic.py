@@ -55,14 +55,13 @@ def prepare(root):
                  reason='User replaced Euclidean runs with geodesic B=0 / no step penalty',
                  prepared=False)
     write(receipt, audit)
-    # Kill only the old scheduler PID: supervisor group-stop would kill keepers.
-    controller.kill()
+    # Keep the scheduler present while cancelling descendants. Orphaning a
+    # process group while a member is stopped can deliver SIGHUP to keepers.
     victims=[]
     for entry in removed:
         try:
             parent=psutil.Process(entry['pid'])
             assert str(root) in parent.cmdline() and entry['id'] in parent.cmdline()
-            parent.send_signal(signal.SIGSTOP)
             tree=parent.children(recursive=True)+[parent]
             victims.extend(tree)
             for p in tree:
@@ -75,6 +74,8 @@ def prepare(root):
         except psutil.NoSuchProcess: pass
     _,remaining=psutil.wait_procs(remaining,timeout=5)
     assert all(p.status()==psutil.STATUS_ZOMBIE for p in remaining), remaining
+    # No stopped job parents remain. Only the controller PID is killed.
+    controller.kill()
     for key in audit['cancelled_running']+pending_cancelled:
         path=root/'jobs'/(key+'.json')
         old=json.loads(path.read_text()) if path.exists() else dict(id=key)
