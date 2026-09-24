@@ -1,6 +1,6 @@
 """Verify the bounded ablation isolates the existing teacher-only parameter."""
 import unittest
-from .teacher_proposal import validate_floor
+from .teacher_proposal import validate_floor, verify_update_summary
 from .register_teacher_floor_screen import campaign_manifest
 from .register_start_normalized_geodesic import campaign_manifest as control_manifest
 from .settings import expected_updates
@@ -30,6 +30,17 @@ class TeacherFloorTests(unittest.TestCase):
             with self.assertRaises(ValueError):validate_floor(value)
         for value in (.006737946999085467,.5,1.):
             self.assertEqual(validate_floor(value),value)
+
+    def test_valid_update_without_optional_diagnostic_metric(self):
+        info={'train/actor_std_mean':.36}
+        proof=verify_update_summary(.5,info,.5)
+        self.assertIsNone(proof['logged_teacher_floor'])
+        self.assertFalse(proof['periodic_diagnostic_available'])
+        with self.assertRaises(AssertionError):verify_update_summary(.0067,info,.5)
+        with self.assertRaises(AssertionError):
+            verify_update_summary(.5,{**info,'train/proposal_std_pretanh':1.},.5)
+        proof=verify_update_summary(.5,{**info,'train/proposal_std_pretanh':.5},.5)
+        self.assertTrue(proof['periodic_diagnostic_available'])
 
 
 if __name__=='__main__':unittest.main()

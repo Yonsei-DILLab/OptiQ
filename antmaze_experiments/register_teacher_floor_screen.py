@@ -11,7 +11,7 @@ from .register_start_normalized_geodesic import campaign_manifest as screen_mani
 from .register_horizon_temperature import CORE_FILES, PARENT
 from .register_increasing_temperature import CAMPAIGN as PRIORITY_CAMPAIGN
 
-CAMPAIGN = 'antmaze-optiq-v3-teacherfloor-250k-s0-20260925'
+CAMPAIGN = 'antmaze-optiq-v3-teacherfloor-250k-s0-20260925-r2'
 HOST = 'vast-heechan-180'
 SCREEN_SOURCE = 'db4ca0a446f5fe8df1dda02e261fa9154c66d9c9'
 
@@ -26,6 +26,9 @@ def campaign_manifest(source, sha):
                    hypothesis=f'teacher_floor_{floor:g}', teacher_std_floor=floor)
         jobs.append(job)
     manifest.update(campaign=CAMPAIGN, jobs=jobs, host=HOST, shard=0,
+        failed_preflight_campaign='antmaze-optiq-v3-teacherfloor-250k-s0-20260925',
+        failed_preflight_source='4607dd5c14e12fb87b395eb2d7192c742f77be22',
+        preflight_correction='Accept omitted periodic diagnostics; verify runtime config and always-logged actor std. No main training started in the prior attempt.',
         protocol='antmaze_experiments/TEACHER_FLOOR_SCREEN_PROTOCOL.md',
         parent_source=SCREEN_SOURCE, comparison_source=SCREEN_SOURCE,
         comparison_campaign=SCREEN_CAMPAIGN,

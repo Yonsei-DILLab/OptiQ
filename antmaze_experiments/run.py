@@ -454,10 +454,10 @@ def main():
             assert float(learner.model.gamma)==a.discount
             result['discount']=float(learner.model.gamma)
         if a.teacher_std_floor is not None:
-            actual=float(info['train/proposal_std_pretanh'])
-            assert np.isclose(actual,a.teacher_std_floor,rtol=1e-6)
-            assert float(info['train/actor_std_max']) <= np.exp(-1.) + 1e-6
-            result['teacher_std_floor']=actual
+            from .teacher_proposal import verify_update_summary
+            check=verify_update_summary(learner.model.cfg.alg.actor.proposal_std, info, a.teacher_std_floor)
+            result['teacher_std_floor']=check['runtime_cfg_teacher_floor']
+            result['teacher_update_verification']=check
         if temperature_schedule is not None:
             result['temperature_schedule']=temperature_schedule
             result['final_temperature']=float(info['train/temperature'])

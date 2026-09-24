@@ -40,8 +40,18 @@ slow learning; no automatic extension or success claim before measured results.
 
 Commit/push/freeze before real8448-transition/batch4096 preflight and training.
 Compare actual initial actor/critic hashes with the archived control and verify
-the logged runtime teacher floor. Run only two independently free180GPU slots,
+the runtime configuration argument, plus periodic logged floor when available.
+Run only two independently free180GPU slots,
 preserving active v1/v4 schedule jobs and all locks. W&B OptiQ/antmaze,group
-antmaze-optiq-v3-teacherfloor-250k-s0-20260925. No4090 or unknown199 job resumes;
+antmaze-optiq-v3-teacherfloor-250k-s0-20260925-r2. No4090 or unknown199 job resumes;
 share committed source with199 after verifying its recovered connection and clean checkout. This is an explicit
 ablation; omitted option and other benchmarks retain their existing defaults.
+
+The4607dd5 first attempt completed8real preflight updates and the numerical
+proposal check, then its new result validator wrongly required a periodic log
+metric at step8448. The existing diagnostic interval omits that metric there;
+this was not a learning failure. No main run started. Preserve the failed source,
+checkpoints and logs. r2 uses a newly committed verifier of the runtime config
+argument and always-logged actor_std_mean, with optional diagnostic comparison.
+The algorithm, diagnostics interval and requested hyperparameters stay unchanged.
+Register a fresh r2 campaign, never restart or overwrite the failed controller.

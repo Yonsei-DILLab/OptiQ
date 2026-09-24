@@ -16,6 +16,22 @@ def validate_floor(value):
     return value
 
 
+def verify_update_summary(runtime_floor, info, expected):
+    """Periodic diagnostic metrics may be absent even after valid updates."""
+    expected = validate_floor(expected)
+    actual = float(runtime_floor)
+    assert actual == expected
+    logged = info.get('train/proposal_std_pretanh')
+    if logged is not None:
+        assert math.isclose(float(logged), actual, rel_tol=1e-6)
+    # This metric is in the unchanged algorithm's always-logged core set.
+    mean = float(info['train/actor_std_mean'])
+    assert math.isfinite(mean) and math.exp(-5)-1e-6 <= mean <= math.exp(-1)+1e-6
+    return dict(runtime_cfg_teacher_floor=actual, logged_teacher_floor=logged,
+                periodic_diagnostic_available=logged is not None, actor_std_mean=mean,
+                unchanged_train_call_argument='model.cfg.alg.actor.proposal_std')
+
+
 def verify_teacher_floor(learner, folder, expected):
     import jax
     import jax.numpy as jnp
