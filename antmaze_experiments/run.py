@@ -10,7 +10,8 @@ import time
 import traceback
 import numpy as np
 
-from .settings import (CAMPAIGN, BUDGETS, REWARD, DENSE_REWARD, NUM_ENVS, EVAL_NUM_ENVS, UPDATES, WARMUP,
+from .progress_reward import PROFILES, specification, progress_reward, success_bonus
+from .settings import (REWARD_PROFILES, reward_description, CAMPAIGN, BUDGETS, REWARD, DENSE_REWARD, NUM_ENVS, EVAL_NUM_ENVS, UPDATES, WARMUP,
                        PREFLIGHT_STEPS, total_budget, expected_updates, WANDB_ENTITY, WANDB_PROJECT)
 
 
@@ -77,6 +78,9 @@ def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
         'xy uniform[-2,2], original pose/velocity' if task=='v1' or getattr(learner,'eval_random_starts',False)
         else 'original fixed full state')
     if fixed: assert result['identical_initial_full_state']
+    result['reward_profile']=learner.reward_profile
+    if learner.reward_profile in PROFILES:
+        result['reward_specification']=specification(task,learner.reward_profile)
     write(destination/'summary.json',result)
     return result
 
@@ -121,6 +125,22 @@ def checkpoint(learner, env, obs, folder, step, rng, config):
         expected=-distances.min(axis=1)
         assert np.allclose(actual,expected,rtol=2e-6,atol=2e-5)
         boundary=np.zeros(len(actual),bool)
+    elif config['reward_profile'] in PROFILES:
+        previous=loaded['replay']['buf_obs'][:,:2].numpy()
+        bonuses=success_bonus(positions,config['task'])
+        expected,_,_=progress_reward(previous,positions,config['task'],config['reward_profile'],bonuses)
+        boundary=np.min(np.abs(distances-.5),axis=1)<2e-5
+        assert np.allclose(actual[~boundary],expected[~boundary],rtol=2e-6,atol=2e-5)
+        # Float32 replay XY can round across the goal radius. Account for the
+        # original physics decision using terminal mask only on those rows.
+        if boundary.any():
+            terminal=loaded['replay']['buf_done'].numpy().ravel()[boundary]>0
+            nearest=distances[boundary].argmin(axis=1)
+            values=np.array([20 if tuple(g)==(-8,8) else 10 for g in target_goals])
+            bonus=np.where(terminal,values[nearest],0.)
+            expected_boundary,_,_=progress_reward(previous[boundary],positions[boundary],
+                config['task'],config['reward_profile'],bonus)
+            assert np.allclose(actual[boundary],expected_boundary,rtol=2e-6,atol=2e-5)
     else:
         expected=np.zeros(len(positions),np.float32)
         for goal in reversed(target_goals):
@@ -135,6 +155,7 @@ def checkpoint(learner, env, obs, folder, step, rng, config):
         environment_reward_verified=True,reward_profile=config['reward_profile'],
         sparse_replay_verified=config['reward_profile']=='sparse',
         dense_replay_verified=config['reward_profile']=='dense',
+        progress_replay_verified=config['reward_profile'] in PROFILES,
         intrinsic_enabled=learner.noveld_enabled,
         threshold_roundoff_rows=int(boundary.sum()))
     write(folder/'checkpoint-verification.json',proof)
@@ -157,10 +178,12 @@ def main():
     p.add_argument('--final-eval-episodes',type=int,default=100)
     p.add_argument('--interim-eval-episodes',type=int,default=EVAL_NUM_ENVS)
     p.add_argument('--save-intermediate-policy',action='store_true')
-    p.add_argument('--reward-profile',choices=['sparse','dense'],default='sparse')
+    p.add_argument('--reward-profile',choices=REWARD_PROFILES,default='sparse')
     p.add_argument('--noveld',choices=['on','off'],default='on')
     p.add_argument('--eval-starts',choices=['upstream','random'],default='upstream')
     a = p.parse_args()
+    if a.reward_profile in PROFILES and a.noveld!='off':
+        p.error("Progress profiles require --noveld off; intrinsic reward is a separate ablation")
     if a.temperature is not None:
         assert a.method == 'optiq' and a.temperature > 0
     if a.dacer_target_entropy_per_dim is not None:
@@ -219,7 +242,8 @@ def main():
         num_envs=NUM_ENVS,batch_size=4096,updates_per_vector_step=UPDATES,updates_per_transition=1/32,
         expected_updates=expected_updates(budget),warmup_transitions=warmup,
         upstream_max_step=BUDGETS[a.task],native_global_steps=budget-warmup,
-        reward=REWARD if a.reward_profile=='sparse' else DENSE_REWARD,
+        reward=reward_description(a.reward_profile),
+        reward_specification=specification(a.task,a.reward_profile),
         reward_profile=a.reward_profile,noveld_enabled=a.noveld=='on',
         eval_starts=a.eval_starts,primary_trajectory='policy-natural',
         noveld_coefficient=.01 if a.noveld=='on' else 0.,temperature=a.temperature,

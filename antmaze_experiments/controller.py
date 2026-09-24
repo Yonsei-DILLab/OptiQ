@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 from .run import write, CAMPAIGN
-from .settings import REWARD, DENSE_REWARD, NUM_ENVS, PREFLIGHT_STEPS, total_budget, expected_updates
+from .settings import reward_description, REWARD, DENSE_REWARD, NUM_ENVS, PREFLIGHT_STEPS, total_budget, expected_updates
 from .dependencies import verify_dependencies
 
 
@@ -52,7 +52,7 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
         assert proof['steps']==expected and proof['updates']==expected_updates(expected)
         assert proof['checkpoint']['environment_reward_verified']
         config=json.loads((target/'config.json').read_text())
-        reward=REWARD if entry.get('reward_profile','sparse')=='sparse' else DENSE_REWARD
+        reward=reward_description(entry.get('reward_profile','sparse'))
         assert config['reward']==reward and config['num_envs']==NUM_ENVS and config['batch_size']==4096
         assert config['noveld_enabled']==(entry.get('noveld','on')=='on')
         assert config['eval_starts']==entry.get('eval_starts','upstream')

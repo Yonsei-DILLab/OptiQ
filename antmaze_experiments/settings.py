@@ -22,3 +22,13 @@ def total_budget(task):
 def expected_updates(total_steps):
     assert (total_steps-WARMUP) % NUM_ENVS == 0
     return (total_steps-WARMUP) // NUM_ENVS * UPDATES
+
+
+REWARD_PROFILES = ('sparse', 'dense', 'progress_euclidean', 'progress_geodesic')
+
+def reward_description(profile):
+    return {
+        'sparse': REWARD, 'dense': DENSE_REWARD,
+        'progress_euclidean': 'nearest-goal Euclidean distance decrease -0.01 + upstream goal bonus10/20',
+        'progress_geodesic': 'nearest-goal XY geodesic distance decrease -0.01 + upstream goal bonus10/20',
+    }[profile]

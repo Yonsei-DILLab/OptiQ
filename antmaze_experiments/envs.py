@@ -5,6 +5,7 @@ import sys
 import copy
 import copyreg
 import numpy as np
+from .progress_reward import PROFILES, progress_reward, geodesic, maze_geometry
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "antmaze"))
@@ -29,12 +30,18 @@ copyreg.pickle(RandomNumberGenerator, reduce_gym_rng)
 
 
 class Recorded(gym.Wrapper):
-    def __init__(self, env, fixed=False, reward_profile='sparse'):
+    def __init__(self, env, fixed=False, reward_profile='sparse', task=None):
         super().__init__(env)
         self.fixed = fixed
         self.initial = None
         self.length = 0
         self.reward_profile = reward_profile
+        if reward_profile in PROFILES:
+            self.task = task
+            assert task in ("v1","v2","v3","v4")
+            assert self.physics_env._maze_size_scaling==4
+            actual_goals=np.asarray(self.physics_env.target_goal).reshape(-1,2)
+            np.testing.assert_array_equal(actual_goals,maze_geometry(task)[1])
 
     @property
     def physics_env(self):
@@ -71,6 +78,7 @@ class Recorded(gym.Wrapper):
         return np.asarray(obs, np.float32)
 
     def step(self, action):
+        before = self.physics_env.get_xy().copy() if self.reward_profile in PROFILES else None
         obs, reward, done, info = self.env.step(action)
         self.length += 1
         assert reward in (0, 10, 20), reward
@@ -80,6 +88,15 @@ class Recorded(gym.Wrapper):
                     distance=distance,upstream_sparse_reward=float(reward))
         if self.reward_profile == 'dense':
             reward = -distance
+        elif self.reward_profile in PROFILES:
+            reward, previous_distance, current_distance = progress_reward(
+                before, self.physics_env.get_xy(), self.task, self.reward_profile, reward)
+            info.update(reward_progress=float(previous_distance-current_distance),
+                reward_step_penalty=-.01,reward_success=info['upstream_sparse_reward'],
+                progress_distance_before=float(previous_distance),
+                progress_distance_after=float(current_distance),reward_profile=self.reward_profile)
+            if info['success']:
+                assert done, 'Success bonus must terminate, not repeat each step'
         assert np.isfinite(reward)
         return np.asarray(obs, np.float32), reward, done, info
 
@@ -93,11 +110,13 @@ def make_one(task, seed, fixed=False, reward_profile='sparse', random_init=None)
     # MuJoCo environment RNG used by the original reset_model implementation.
     env.unwrapped.wrapped_env.np_random, _ = gym.utils.seeding.np_random(seed)
     env.action_space.seed(seed)
-    assert reward_profile in ('sparse','dense')
-    return Recorded(env, fixed=fixed, reward_profile=reward_profile)
+    assert reward_profile in ('sparse','dense') + PROFILES
+    return Recorded(env, fixed=fixed, reward_profile=reward_profile, task=task)
 
 
 def vector(task, count, seed, asynchronous=True, fixed=False, reward_profile='sparse',random_init=None):
+    if reward_profile=='progress_geodesic':
+        geodesic(task)  # Precompute once before fork; workers inherit immutable graph.
     constructors = [partial(make_one, task, seed if fixed else seed + i, fixed, reward_profile,random_init)
                     for i in range(count)]
     if asynchronous:

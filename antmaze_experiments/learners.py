@@ -8,6 +8,7 @@ import copy
 import numpy as np
 import torch
 from .settings import BUDGETS, NUM_ENVS, UPDATES, WARMUP, total_budget, DIPO_DENSE_V_MIN, WANDB_ENTITY, WANDB_PROJECT
+from .progress_reward import PROFILES, value_support
 from .numerics import DisabledIntrinsic, stable_dipo_class
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,6 +35,8 @@ class Native:
         cfg.env.reward_type = reward_profile
         if method == 'dipo' and reward_profile == 'dense':
             cfg.algo.v_min = DIPO_DENSE_V_MIN
+        if method == 'dipo' and reward_profile in PROFILES:
+            cfg.algo.v_min,cfg.algo.v_max=value_support(task,reward_profile)
         cfg.env.env_kwargs = dict(gym.spec('antmaze-' + task).kwargs,
             reward_type=cfg.env.reward_type, random_init=cfg.env.random_init)
         self.config = OmegaConf.to_container(cfg, resolve=True)
