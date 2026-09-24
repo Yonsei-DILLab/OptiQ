@@ -37,8 +37,17 @@ def main():
     ap.add_argument('--episodes', type=int, required=True)
     ap.add_argument('--batch', type=int, default=50)
     ap.add_argument('--cpu-offset', type=int, default=0)
+    ap.add_argument('--v1-origin-supplement', action='store_true',
+                    help='Supplementary identical-origin probe; never replaces v1 native random evaluation')
+    ap.add_argument('--evaluation-seed', type=int, default=20260924)
+    ap.add_argument('--checkpoint', type=Path,
+                    help='Optional immutable official policy checkpoint inside --run')
     a = ap.parse_args()
     assert a.episodes > 0 and a.episodes % a.batch == 0
+    if a.v1_origin_supplement:
+        assert a.family == 'official' and a.task == 'v1'
+    if a.checkpoint is not None:
+        assert a.family == 'official' and a.checkpoint.is_relative_to(a.run)
     cpus = sorted(os.sched_getaffinity(0))
     os.sched_setaffinity(0, cpus[a.cpu_offset:a.cpu_offset + 4])
     assert not os.environ.get('CUDA_VISIBLE_DEVICES')
@@ -64,8 +73,11 @@ def main():
         import mujoco
         envs = [make_env(a.task) for _ in range(a.batch)]
     else:
-        checkpoint = a.run / 'checkpoint-final.pt'
-        proof = json.loads((a.run / 'checkpoint-verification.json').read_text())
+        checkpoint = a.checkpoint or a.run / 'checkpoint-final.pt'
+        proof_path = (checkpoint.parent/'verification.json' if checkpoint.name == 'policy.pt'
+                      else a.run/'checkpoint-verification.json')
+        proof = json.loads(proof_path.read_text())
+        assert proof['readback_verified']
         expected_sha = proof['sha256']
         from antmaze_experiments.envs import make_one
         envs = [make_one(a.task, 420000 + i, reward_profile='dense', random_init=True)
@@ -73,6 +85,11 @@ def main():
         GOALS = {a.task: np.asarray(envs[0].physics_env.target_goal).reshape(-1, 2)}
     assert sha(checkpoint) == expected_sha
     payload = torch.load(checkpoint, map_location='cpu', weights_only=False)
+    checkpoint_step = int(payload.get('step', cfg['steps']))
+    if a.family == 'official':
+        assert payload['config'] == cfg
+        assert checkpoint_step == int(proof.get('step', proof.get('steps')))
+        assert cfg['reward_profile'] == 'dense'
 
     class Descriptor(gym.Env):
         observation_space = gym.spaces.Box(-np.inf, np.inf, shape=(29,), dtype=np.float32)
@@ -129,15 +146,21 @@ def main():
     assert all(np.isfinite(np.asarray(x)).all() for x in jax.tree_util.tree_leaves(states))
     del payload
     horizon = 500 if a.task in ('v1', 'v2') else 700
-    seed = [20260924, 90177, int(a.task[1:])]
+    seed = [a.evaluation_seed, 90177, int(a.task[1:])]
     rng = np.random.default_rng(np.random.SeedSequence(seed))
-    positions = rng.uniform(-2., 2., size=(a.episodes, 2))
+    positions = (np.zeros((a.episodes, 2)) if a.v1_origin_supplement
+                 else rng.uniform(-2., 2., size=(a.episodes, 2)))
     policy_seeds = rng.integers(1, 2**30, size=a.episodes // a.batch)
     env_seeds = rng.integers(1, 2**30, size=a.episodes)
     provenance = dict(family=a.family, task=a.task, training_source=training_sha,
         evaluation_source=a.evaluation_source, checkpoint=str(checkpoint), checkpoint_sha256=expected_sha,
-        checkpoint_steps=cfg['steps'], learner_updates=updates, training_seed=cfg['seed'],
-        episodes_per_mode=a.episodes, batch=a.batch, start_distribution='iid xy uniform[-2,2]; original initial pose/velocity',
+        checkpoint_steps=checkpoint_step, learner_updates=updates, training_seed=cfg['seed'],
+        episodes_per_mode=a.episodes, batch=a.batch,
+        start_distribution=('identical original origin [0,0], pose and velocity; supplementary only'
+                            if a.v1_origin_supplement else 'iid xy uniform[-2,2]; original initial pose/velocity'),
+        supplementary_origin_probe=a.v1_origin_supplement,
+        replaces_primary_evaluation=False,
+        evaluation_override_v1=a.v1_origin_supplement,
         evaluation_override_v234=a.task != 'v1', seed_sequence=seed,
         modes=['policy', 'native'], policy='fresh random z + conditional sigma', native='fresh random z mu-only',
         external_exploration_noise=False, intrinsic_reward=False, training_config=cfg,
@@ -198,7 +221,10 @@ def main():
                       episodes_per_mode=a.episodes, seconds=time.monotonic()-started))
             full_states = np.asarray(full_states)
             np.testing.assert_allclose(full_states[:, :2], positions, atol=1e-12)
-            assert len(np.unique(full_states[:, :2], axis=0)) == a.episodes
+            if a.v1_origin_supplement:
+                np.testing.assert_array_equal(full_states, np.repeat(full_states[:1], a.episodes, axis=0))
+            else:
+                assert len(np.unique(full_states[:, :2], axis=0)) == a.episodes
             initial_states[mode] = full_states
             distance = np.linalg.norm(xy[:, :, None, :] - np.asarray(GOALS[a.task])[None, None, :, :], axis=-1)
             np.testing.assert_array_equal(np.nanmin(distance, axis=(1, 2)) <= .50002, goals > 0)
@@ -208,7 +234,10 @@ def main():
                 initial_positions=positions, policy_batch_seeds=policy_seeds, env_seeds=env_seeds)
             result = dict(episodes=a.episodes, successes=int((goals > 0).sum()),
                           goals={str(int(g)):int((goals == g).sum()) for g in np.unique(goals)},
-                          mean_return=float(returns.mean()), random_initial_states=a.episodes)
+                          mean_return=float(returns.mean()),
+                          random_initial_states=0 if a.v1_origin_supplement else a.episodes,
+                          unique_full_initial_states=len(np.unique(full_states, axis=0)),
+                          supplementary_origin_probe=a.v1_origin_supplement)
             write(a.output / f'{mode}.json', result)
             results[mode] = result
             print(json.dumps(dict(family=a.family, task=a.task, mode=mode, **result)), flush=True)
@@ -216,8 +245,9 @@ def main():
         assert hashlib.sha256(fs.to_bytes(states)).hexdigest() == before
         assert sha(checkpoint) == expected_sha
         write(a.output / 'verification.json', dict(passed=True, checkpoint_unchanged=True,
-            model_optimizer_unchanged=True, paired_random_initial_states=True,
-            goals_and_dense_returns_recomputed=True, initial_xy_iid_uniform=True,
+            model_optimizer_unchanged=True, paired_random_initial_states=not a.v1_origin_supplement,
+            paired_identical_origin_states=a.v1_origin_supplement,
+            goals_and_dense_returns_recomputed=True, initial_xy_iid_uniform=not a.v1_origin_supplement,
             npz_sha256={p.name:sha(p) for p in a.output.glob('*.npz')}))
         write(a.output / 'result.json', dict(completed=True, seconds=time.monotonic()-started, results=results))
     finally:
