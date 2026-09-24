@@ -353,3 +353,15 @@ commit/push/freeze before preflight, and document delayed199 source sharing.
 See antmaze_experiments/START_NORMALIZED_GEODESIC_PROTOCOL.md. This reward is an
 explicit experiment profile, not a default change or a claim of equal discounted
 returns. Legacy reward behavior remains unchanged; no4090 AntMaze work.
+
+Active-goal normalized-discount follow-up (2026-09-25): the v3 normalized
+reward T3 250k candidate retained16left/84right direct entries but only4right
+successes. Compare fresh same-seed longer-budget gamma.999 control with
+existing discount hyperparameter.99999, keeping this reward and T3 unchanged.
+Max1M post-warmup; inspect250k/500k/750k and screen failed route retention.
+No algorithm/runner/reward/physics changes, no gamma1 training. Historical
+successful-path reward rescoring motivates the test but is not new policy
+success or a causal Q-accuracy result. Commit/push/freeze and run real per-job
+preflights; preserve live v4T3/T10 on180. No199 unknown-job resume or4090 work;
+source sharing with199 remains pending SSH recovery. See
+antmaze_experiments/NORMALIZED_DISCOUNT_RETENTION_PROTOCOL.md.
