@@ -84,8 +84,11 @@ def main():
         else:np.testing.assert_array_equal(np.asarray(actual),np.asarray(wanted))
     equal(fs.to_state_dict(saved),original)
     policy.actor_state=saved['actor'];policy.qf_state=saved['critic'];policy.target_actor_state=saved['target_actor']
-    policy.key=jax.numpy.asarray(payload['learner']['policy_key'])
-    policy.noise_key=jax.numpy.asarray(payload['learner']['noise_key'])
+    # Evaluation deliberately has its own seed, just like the frozen evaluator.
+    # Saved optional/typed RNG placeholders may serialize as NumPy object arrays;
+    # they are not parameters and must not be coerced into numeric JAX arrays.
+    policy.key=jax.random.PRNGKey(700000+step)
+    policy.noise_key=jax.random.PRNGKey(700000+step)
     def states():return dict(actor=policy.actor_state,critic=policy.qf_state,target_actor=policy.target_actor_state)
     before=hashlib.sha256(fs.to_bytes(states())).hexdigest()
     assert all(np.isfinite(np.asarray(x)).all() for x in jax.tree_util.tree_leaves(states()))
@@ -102,7 +105,8 @@ def main():
         training_config=cfg,reset='original origin [0,0], original pose/velocity, identical full state across all episodes',
         evaluation_matches_training_resets=True,eval_starts='fixed',primary_trajectory='policy-fixed',
         modes=['policy','native'],policy='fresh random latent and conditional sigma; original sampler',
-        native='fresh random latent, mu-only',external_noise=False,intrinsic_reward=False,inference_only=True))
+        native='fresh random latent, mu-only',evaluation_rng_seed=700000+step,
+        external_noise=False,intrinsic_reward=False,inference_only=True))
     results={};full_starts=[];errors=[];started=time.monotonic()
     for mode in ('policy','native'):
         results[mode]=evaluator.evaluate(learner,cfg['task'],args.output,step,args.episodes,mode,fixed=True)

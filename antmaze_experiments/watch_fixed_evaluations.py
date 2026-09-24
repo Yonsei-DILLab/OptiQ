@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 
-CAMPAIGN='antmaze-matched-start-eval-20260924'
+CAMPAIGN='antmaze-matched-start-eval-20260924-r2'
 OLD='antmaze-optiq-progress100-2x2-T1-s0-20260924'
 NEW='antmaze-optiq-geodesic-no-step-B0-T1-s0-20260924'
 OPS=Path('/home/heechan/OptiQ-ops')
