@@ -20,7 +20,7 @@ def close(a,b,tol=1e-5):
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);p.add_argument('--gpu',action='store_true')
-    args=p.parse_args();cfg=json.loads(Path(__file__).with_name('config.json').read_text());checks={}
+    p.add_argument('--config',default='config.json',choices=['config.json','shape_config.json']);args=p.parse_args();cfg=json.loads(Path(__file__).with_name(args.config).read_text());checks={}
     a=jnp.linspace(-9.7,9.7,101)[:,None]
     small=dict(cfg,n=8,m=11,batch=2,hidden_dims=[16,16])
     for case in cfg['cases']:
@@ -31,7 +31,7 @@ def main():
         assert abs(integral-1)<1e-8;checks[case['id']+'_normalization_error']=abs(integral-1)
         geom=geometry(c);checks[case['id']+'_mode_count']=len(geom['peaks'])
         assert np.all(geom['target_core']>0) and np.all(geom['target_basin']>.02)
-    reference_case=cfg['cases'][0]
+    reference_case=dict(id='f05_parity',target_centers=[-4.25,0,4.25],target_widths=[.5]*3,target_masses=[1/3]*3)
     for method,L in [('forward',0),('reverse',1024)]:
         c=dict(small,**reference_case,target_width=.5);e=Experiment(c,method,L,0);old=Prior(c,method,L,0)
         assert flax.serialization.to_bytes(e.state)==flax.serialization.to_bytes(old.state)

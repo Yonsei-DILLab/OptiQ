@@ -73,13 +73,15 @@ def plot_case(cfg,c,runs,output):
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
-    args=p.parse_args();args.output.mkdir(parents=True,exist_ok=True)
-    cfg=json.loads(Path(__file__).with_name('config.json').read_text());cases=cfg['cases'];data=load(args.root,cases)
+    p.add_argument('--config',default='config.json',choices=['config.json','shape_config.json']);args=p.parse_args();args.output.mkdir(parents=True,exist_ok=True)
+    cfg=json.loads(Path(__file__).with_name(args.config).read_text());cases=cfg['cases'];data=load(args.root,cases)
     discovery=[c['id'] for c in cases if gate(data[c['id']],[0,1])];selected=shortlist(cases,data,[0,1,2,3])
     plt.style.use('default');plt.rcParams.update({'pdf.fonttype':42,'svg.fonttype':'none'})
-    fig,axes=plt.subplots(4,4,figsize=(14,10));x=np.linspace(-10,10,4097)
+    rows=(len(cases)+3)//4;fig,axes=plt.subplots(rows,4,figsize=(14,2.7*rows),squeeze=False);x=np.linspace(-10,10,4097)
     for ax,c in zip(axes.flat,cases):
         ax.plot(x,reference(dict(cfg,**c),x)[0],'k-',lw=1.2);ax.set_title(c['id'],fontsize=9);ax.set_xlim(-10,10);ax.tick_params(labelsize=8)
+    
+    for ax in list(axes.flat)[len(cases):]:ax.set_visible(False)
     fig.suptitle('Target-only candidate grid (not training results)');fig.tight_layout();fig.savefig(args.output/'target_candidates.png',dpi=180);plt.close(fig)
     for c in cases:
         if data[c['id']]:plot_case(cfg,c,data[c['id']],args.output)
@@ -94,9 +96,9 @@ def main():
       r'$$f(a)=\sum_k\rho_k\mathcal N(a;c_k,h_k^2),\qquad Q(a)=0.25\log f(a),\qquad p^\star(a)=f(a)/\int_{-10}^{10}f(x)dx.$$','',
       '학습은 Q/gradient만 사용하며 정답 target sample과 component label은 제공하지 않는다. 최종 histogram은 각 seed에서 실제 2¹⁸ action,512 bins로 측정했다. KDE는 없다. 평균 그림 외에 모든 개별 seed 그림도 남긴다. Basin은 정답 density의 골짜기로 나누고 core는 peak ± component std이다. Mode missing은 core와 basin 질량이 모두 정답의25% 미만인 경우다. 후보는 Forward의 모든 peak 복구 및 TV≤.15, Reverse의 최소1mode 누락이 네 seed 모두에서 유지되어야 한다.','',
       '이 자료는 차이가 드러나는 예시를 찾는 탐색 결과다. 전체 표의 실패·반대 결과도 보존했다. Mode 복구는 density가 완벽히 동일하다는 뜻이 아니며 실제 TV를 함께 보고한다.','',
-      '## 전체 target 후보','', '![목표분포 후보](target_candidates.png)','',
+      '폭·질량이 다른 그림형 후보의 질량 표기는 box 조건부 질량이다. 전체 Gaussian 혼합계수와 구분하며 SHAPE_PROTOCOL.md에 변환식을 기록했다.' if args.config=='shape_config.json' else '', '', '## 전체 target 후보','', '![목표분포 후보](target_candidates.png)','',
       '|ID|Mode 수|중심|폭|질량|','|---|---:|---|---|---|']
-    for c in cases:lines.append(f'|{c["id"]}|{len(c["target_centers"])}|{c["target_centers"]}|{c["target_widths"]}|{[round(x,3) for x in c["target_masses"]]}|')
+    for c in cases:lines.append(f'|{c["id"]}|{len(c["target_centers"])}|{c["target_centers"]}|{c["target_widths"]}|{[round(x,3) for x in c.get("box_component_masses",c["target_masses"])]}|')
     lines+=['','## 네 seed를 통과한 후보 (최대6개)','']
     if not selected:lines+=['아직 네 seed 검증을 마친 통과 후보가 없다. 아래의 완료 결과는 탐색 중간 결과이다.','']
     for c in selected:lines+=[f'### {c["id"]}', '',f'![평균]({c["id"]}.png)','',f'[개별 seed]({c["id"]}_all_seeds.png)','']

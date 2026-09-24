@@ -72,7 +72,7 @@ def train(root,cfg,case,seed,method,steps,L,stage,parent_root=None):
 def main():
     p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--index',type=int,required=True)
     p.add_argument('--stage',choices=['screen','validate_seeds'],default='screen')
-    args=p.parse_args();cfg=json.loads(Path(__file__).with_name('config.json').read_text())
+    p.add_argument('--config',default='config.json',choices=['config.json','shape_config.json']);args=p.parse_args();cfg=json.loads(Path(__file__).with_name(args.config).read_text())
     assert cfg['reverse_L']==1024 and not cfg['allow_large_L']
     assert jax.default_backend()=='gpu','Never train on login node'
     seeds=cfg['seeds'] if args.stage=='screen' else cfg['validation_seeds']

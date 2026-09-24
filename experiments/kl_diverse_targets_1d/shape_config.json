@@ -1,0 +1,207 @@
+{
+  "n": 128,
+  "m": 128,
+  "batch": 32,
+  "temperature": 0.25,
+  "learning_rate": 0.0003,
+  "hidden_dims": [
+    256,
+    256
+  ],
+  "log_std_min": -5.0,
+  "log_std_max": -1.0,
+  "initial_log_std": -1.0,
+  "teacher_std_floor": 0.006737946999085467,
+  "density_chunk": 256,
+  "action_bound": 10.0,
+  "target_width": 1.0,
+  "train_block": 100,
+  "checkpoint_interval": 1000,
+  "study": "20260925_kl_sharp_broad_targets",
+  "steps": 100000,
+  "mean_output_init_scale": 3.0,
+  "seeds": [
+    0,
+    1
+  ],
+  "validation_seeds": [
+    2,
+    3
+  ],
+  "reverse_L": 1024,
+  "eval_samples": 32768,
+  "final_eval_samples": 262144,
+  "histogram_bins": 512,
+  "eval_steps": [
+    0,
+    1000,
+    10000,
+    25000,
+    50000,
+    75000,
+    100000
+  ],
+  "allow_large_L": false,
+  "cases": [
+    {
+      "id": "s00_wide_control",
+      "family": "sharp_broad",
+      "target_centers": [
+        -4.25,
+        3.0
+      ],
+      "target_widths": [
+        0.2,
+        1.5
+      ],
+      "target_masses": [
+        0.1999997550996472,
+        0.8000002449003528
+      ],
+      "box_component_masses": [
+        0.2,
+        0.8
+      ]
+    },
+    {
+      "id": "s01_edge_balanced",
+      "family": "sharp_broad",
+      "target_centers": [
+        -4.25,
+        9.5
+      ],
+      "target_widths": [
+        0.2,
+        3.5
+      ],
+      "target_masses": [
+        0.12219071923328355,
+        0.8778092807667165
+      ],
+      "box_component_masses": [
+        0.2,
+        0.8
+      ]
+    },
+    {
+      "id": "s02_edge_small_spike",
+      "family": "sharp_broad",
+      "target_centers": [
+        -4.25,
+        9.5
+      ],
+      "target_widths": [
+        0.15,
+        3.5
+      ],
+      "target_masses": [
+        0.08946759894806457,
+        0.9105324010519354
+      ],
+      "box_component_masses": [
+        0.15,
+        0.85
+      ]
+    },
+    {
+      "id": "s03_edge_equal_mass",
+      "family": "sharp_broad",
+      "target_centers": [
+        -4.25,
+        9.5
+      ],
+      "target_widths": [
+        0.25,
+        3.5
+      ],
+      "target_masses": [
+        0.35765610632357436,
+        0.6423438936764257
+      ],
+      "box_component_masses": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "s04_edge_broad",
+      "family": "sharp_broad",
+      "target_centers": [
+        -4.25,
+        9.5
+      ],
+      "target_widths": [
+        0.2,
+        4.5
+      ],
+      "target_masses": [
+        0.11976258084641422,
+        0.8802374191535858
+      ],
+      "box_component_masses": [
+        0.2,
+        0.8
+      ]
+    },
+    {
+      "id": "s05_edge_narrower",
+      "family": "sharp_broad",
+      "target_centers": [
+        -4.25,
+        9.5
+      ],
+      "target_widths": [
+        0.2,
+        2.5
+      ],
+      "target_masses": [
+        0.12649636539397144,
+        0.8735036346060285
+      ],
+      "box_component_masses": [
+        0.2,
+        0.8
+      ]
+    },
+    {
+      "id": "s06_edge_shifted",
+      "family": "sharp_broad",
+      "target_centers": [
+        -2.5,
+        9.5
+      ],
+      "target_widths": [
+        0.2,
+        3.5
+      ],
+      "target_masses": [
+        0.12219071923328355,
+        0.8778092807667165
+      ],
+      "box_component_masses": [
+        0.2,
+        0.8
+      ]
+    },
+    {
+      "id": "s07_sharp_shoulder",
+      "family": "sharp_broad",
+      "target_centers": [
+        -4.25,
+        7.5
+      ],
+      "target_widths": [
+        0.2,
+        3.5
+      ],
+      "target_masses": [
+        0.16010048119205902,
+        0.839899518807941
+      ],
+      "box_component_masses": [
+        0.2,
+        0.8
+      ]
+    }
+  ]
+}

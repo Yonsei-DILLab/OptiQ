@@ -14,6 +14,6 @@ export MPLCONFIGDIR="$STUDY_ROOT/runtime/mpl_${SLURM_JOB_ID}"
 cd "$STUDY_ROOT/source"
 PY=/scratch2/hobbit9882/.venvs/optiq-mujoco-scalar/bin/python
 if [[ ${VALIDATION_ONLY:-0} == 1 ]]; then
- exec "$PY" -m experiments.kl_diverse_targets_1d.validate --gpu --out "$STUDY_ROOT/runtime/GPU_VALIDATION.json"
+ exec "$PY" -m experiments.kl_diverse_targets_1d.validate --config "${CONFIG_NAME:-config.json}" --gpu --out "$STUDY_ROOT/runtime/GPU_VALIDATION.json"
 fi
-exec "$PY" -m experiments.kl_diverse_targets_1d.run --root "$STUDY_ROOT" --index "$SLURM_ARRAY_TASK_ID" --stage "${STAGE:-screen}"
+exec "$PY" -m experiments.kl_diverse_targets_1d.run --config "${CONFIG_NAME:-config.json}" --root "$STUDY_ROOT" --index "$SLURM_ARRAY_TASK_ID" --stage "${STAGE:-screen}"
