@@ -320,3 +320,12 @@ except the distance metric. No algorithm, physics or reward implementation
 edits. Commit/push before preflight, preserve existing queues and source;
 record delayed source-only199 sharing if its SSH transport remains unavailable.
 See antmaze_experiments/GEODESIC_GAMMA_SCREEN_PROTOCOL.md.
+
+Active goal T3 follow-up (2026-09-25): preserve the longerT1 run and all geodesic
+screens; register one fresh v3 gamma.999/T3/Hperdim+.7/interval500 seed0 1M
+run on an unlocked180 slot. Match the completed250k gamma999_temp3 screen,
+which retains20left entries but succeeds only on the right33/100. Only budget
+and job identity change. Commit/push/freeze before preflight and training;
+no algorithm changes, no cancelled/unknown199 job resumes and no4090 work.
+See antmaze_experiments/GAMMA_T3_RETENTION_PROTOCOL.md. Source-only199 sync
+remains pending SSH recovery.
