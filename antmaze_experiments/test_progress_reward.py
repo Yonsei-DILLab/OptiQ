@@ -86,7 +86,7 @@ class ProgressRewardTests(unittest.TestCase):
             end=np.array([-7.7,0.]);start=np.array([-7.4,0.])
             r,d0,d1=progress_reward(start,end,'v1',profile,10.)
             self.assertAlmostEqual(float(d1),.3)
-            self.assertAlmostEqual(float(r),.29*progress_scale(profile)+(10 if bonus_enabled(profile) else 0))
+            self.assertAlmostEqual(float(r),.3*progress_scale(profile)-step_cost(profile)+(10 if bonus_enabled(profile) else 0))
 
     def test_route_total_and_metadata_no_legacy_change(self):
         for profile in PROFILES:

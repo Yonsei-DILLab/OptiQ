@@ -28,6 +28,8 @@ from .progress_reward import PROFILES
 REWARD_PROFILES = ('sparse', 'dense') + PROFILES
 
 def reward_description(profile):
+    if profile == 'progress100_geodesic_no_step_no_bonus':
+        return 'nearest-goal XY geodesic distance decrease *100; no step penalty; no success bonus'
     if profile.startswith('progress100_'):
         from .progress_reward import SCALED_PROFILES
         if profile not in SCALED_PROFILES: raise ValueError(profile)
