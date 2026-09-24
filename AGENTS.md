@@ -1,5 +1,13 @@
 # OptiQ experiment versioning
 
+Latest GMM40 user request (2026-09-25): train iBOLT N=M128/256/512,
+seeds0..3 each,100k actor updates on vast1 RTX4090 only. Keep the paper's
+tuned256x3/batch256/T1/mean-init16/logsigma[-5,-3.5]/initial-4/teacherfloor.05
+settings unchanged. This explicitly supersedes the old N=M64 search limit.
+Preserve unrelated workers and GPU locks. See gmm40/NM4090_PROTOCOL.md.
+Full-policy sigma-included samples are primary per latest user visualization
+request; retain mu-only samples and metrics separately.
+
 The user requested on 2026-09-17 that this work use branch `heejoon` and that
 experiments be committed before they are launched.
 
