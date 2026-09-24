@@ -192,6 +192,8 @@ def main():
                         state['qpos'][:2] = positions[ix]
                         o = env.restore(state)
                         st = np.r_[state['qpos'], state['qvel']]
+                    physics_closest[ix] = np.linalg.norm(
+                        positions[ix]-np.asarray(GOALS[a.task]),axis=-1).min()
                     obs.append(o)
                     full_states.append(st)
                     xy[ix, 0] = o[:2]
