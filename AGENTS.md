@@ -365,3 +365,16 @@ success or a causal Q-accuracy result. Commit/push/freeze and run real per-job
 preflights; preserve live v4T3/T10 on180. No199 unknown-job resume or4090 work;
 source sharing with199 remains pending SSH recovery. See
 antmaze_experiments/NORMALIZED_DISCOUNT_RETENTION_PROTOCOL.md.
+
+Active-goal increasing-temperature screen (2026-09-25): test fresh v1/v4
+original-geodesic gamma.999 policies with the existing linear temperature
+schedule1→3 over1M post-warmup transitions. This is an explicit schedule
+hyperparameter test; no loss, TD, optimizer, sampler, regulator, interpolation
+formula or pinned core file changes. Generalize only positive-endpoint input
+validation and simultaneous schedule/DACER-target verification. Preserve old
+valid schedule outputs and all frozen sources. Max1M post-warmup,40evaleach50k,
+100final, early route-retention screening. Keep v1 random primary evaluation
+and require supplementary same-origin checks before conditional diversity
+claims. Use independent free180 slots, preserving live v3 discount jobs and
+v4T10; no4090 or unknown199 resumes. Commit/push/freeze before actual preflights.
+See antmaze_experiments/INCREASING_TEMPERATURE_PROTOCOL.md.

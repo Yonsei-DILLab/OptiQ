@@ -114,7 +114,7 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             assert config['dacer_target_entropy_per_dim']==target_entropy
             assert config['native']['dacer']['target_entropy_per_dim']==target_entropy
             assert config['native']['dacer']['enabled'] and config['native']['dacer']['behavior_only']
-            assert config['temperature_schedule'] is None
+            assert config['temperature_schedule'] == entry.get('temperature_schedule')
             regulator=json.loads((target/'dacer_regulator.json').read_text())
             assert math.isclose(regulator['target_entropy'],target_entropy*8,abs_tol=1e-12)
             assert regulator['updates']>=1 and math.isfinite(regulator['entropy_proxy'])

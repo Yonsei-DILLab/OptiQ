@@ -245,7 +245,7 @@ def main():
     if a.temperature_final is not None:
         assert a.method=='optiq' and a.temperature is not None
         assert np.isfinite(a.temperature) and np.isfinite(a.temperature_final)
-        assert 0 < a.temperature_final <= a.temperature and a.temperature_anneal_steps > 0
+        assert a.temperature_final > 0 and a.temperature_anneal_steps > 0
         temperature_schedule=dict(enabled=True,final_temperature=a.temperature_final,
             anneal_steps=a.temperature_anneal_steps,decay=a.temperature_decay)
     if a.budget_steps is not None:

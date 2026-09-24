@@ -23,8 +23,8 @@ def parse_temperature_schedule(actor, backup_mode):
         raise ValueError("Teacher temperature annealing requires plain TD backup")
     initial = float(actor["temperature"])
     final = float(config.get("final_temperature", float("nan")))
-    if not math.isfinite(initial) or not math.isfinite(final) or not 0 < final <= initial:
-        raise ValueError("temperature_schedule requires finite initial >= final > 0")
+    if not math.isfinite(initial) or not math.isfinite(final) or not (initial > 0 and final > 0):
+        raise ValueError("temperature_schedule requires finite positive initial and final temperatures")
     steps = config.get("anneal_steps")
     if isinstance(steps, bool) or not isinstance(steps, int) or steps <= 0:
         raise ValueError("temperature_schedule.anneal_steps must be a positive integer")
