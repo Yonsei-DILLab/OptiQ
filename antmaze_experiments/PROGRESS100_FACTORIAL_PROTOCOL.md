@@ -46,3 +46,12 @@ B stays unscaled, so this is not100 times the entire previous reward. Report
 trajectory/coverage/success rather than directly comparing raw reward totals.
 Each setting has one seed; GPU architectures differ and timing is not a fair
 algorithm comparison. Preserve all cancelled and historical campaigns.
+
+Added-host runtime setup is prepare_vast1_progress100.py. It creates a separate
+native overlay, GPU locks and supervisor, reading existing DIPO Torch2.7.1cu128
+and OptiQ JAX0.4.33 environments without modifying them. Native Gym0.23.1,
+MuJoCo-py2.1.2.14,NumPy1.26.4 and MuJoCo210 come from the control runtime.
+Pin any differing adapter dependencies in the isolated overlay, record exact
+versions, and validate CUDA/JAX/MuJoCo before the per-job preflights. The user
+approved deleting only unused efficiency sbx-venv/sql-venv; retain all result
+and NM/ablation directories, including the NM-shared v2-transfer environment.
