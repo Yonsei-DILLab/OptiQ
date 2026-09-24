@@ -5,6 +5,17 @@ from pathlib import Path
 import numpy as np
 
 
+def verify_regulator_state(saved, restored, enabled):
+    """DACER-off checkpoints intentionally have no regulator payload."""
+    if enabled:
+        assert 'regulator' in saved and 'regulator' in restored
+        assert saved['regulator'] == restored['regulator']
+    else:
+        assert saved.get('regulator_enabled') is False
+        assert restored.get('regulator_enabled') is False
+        assert 'regulator' not in saved and 'regulator' not in restored
+
+
 def save_evaluation_checkpoint(learner, folder, step, config):
     import flax.serialization
     import jax
@@ -34,7 +45,8 @@ def save_evaluation_checkpoint(learner, folder, step, config):
     for before, after in zip(original_leaves, restored_leaves):
         assert np.array_equal(np.asarray(before), np.asarray(after))
     assert loaded['learner']['entropy'] == payload['learner']['entropy']
-    assert loaded['learner']['regulator'] == payload['learner']['regulator']
+    verify_regulator_state(payload['learner'], loaded['learner'],
+                           learner.model.regulator_enabled)
     for name in ('key', 'policy_key', 'noise_key'):
         assert np.array_equal(loaded['learner'][name], payload['learner'][name])
     temporary.replace(path)
