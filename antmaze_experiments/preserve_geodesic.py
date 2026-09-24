@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import signal
 import subprocess
+import sys
 import time
 import psutil
 
@@ -154,7 +155,7 @@ def register(root):
     conf=Path('/home/heechan/OptiQ-ops/supervisor/jobs')/(service+'.conf')
     assert not conf.exists()
     conf.write_text(f'''[program:{service}]
-command=/home/heechan/.venv-ddiffpg-native/bin/python -m antmaze_experiments.preserve_geodesic --root {root}
+command={sys.executable} -m antmaze_experiments.preserve_geodesic --root {root}
 directory={source}
 environment=PYTHONDONTWRITEBYTECODE="1",WANDB_MODE="online",OPTIQ_CAMPAIGN="{root.name}"
 autostart=false
