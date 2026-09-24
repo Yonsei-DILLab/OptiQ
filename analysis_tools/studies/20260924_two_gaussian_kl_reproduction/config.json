@@ -1,0 +1,16 @@
+{
+  "a": 10.0,
+  "weights": [0.5, 0.5],
+  "target_sigma": [1.0, 1.0],
+  "initial_mu": [0.0, 2.5],
+  "initial_sigma": [1.0, 1.0],
+  "parameterization": "sigma",
+  "learning_rate": 0.02,
+  "steps": 6000,
+  "snapshots": [0, 250, 1000, 2000, 3000, 4000, 6000],
+  "integration_min": -30.0,
+  "integration_max": 40.0,
+  "integration_dx": 0.01,
+  "plot_min": -4.0,
+  "plot_max": 14.0
+}
