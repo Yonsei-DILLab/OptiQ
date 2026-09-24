@@ -104,10 +104,10 @@ def main():
     for k,(ax,method) in enumerate(zip(axes,['forward','reverse'])):
         density=np.stack([hist[f'{method}_s{s}']/width for s in range(4)])
         mean=density.mean(0);sd=density.std(0,ddof=1)
-        ax.stairs(mean,edges,color=f'C{k}',lw=1.2,label='Learned policy (4-seed mean)')
+        ax.stairs(mean,edges,color=f'C{k}',lw=1.2,label='Policy (mean)')
         ax.fill_between(edges,np.r_[np.maximum(mean-sd,0),max(mean[-1]-sd[-1],0)],np.r_[mean+sd,mean[-1]+sd[-1]],
-                        color=f'C{k}',alpha=.2,step='post',linewidth=0,label=r'Seed variation ($\pm$1 SD)')
-        ax.plot(x,target_pdf,'k--',lw=1.8,label='Target density')
+                        color=f'C{k}',alpha=.2,step='post',linewidth=0,label=r'$\pm$1 SD across seeds')
+        ax.plot(x,target_pdf,'k--',lw=1.8,label='Target')
         ax.set_title(f'{method.capitalize()} KL')
         tv=all_metrics['4096'][method]
         ax.text(.035,.93,f'Mean TV = {tv["TV_mean"]:.4f}\nMean W1 = {wasserstein[method]["mean"]:.4f}',transform=ax.transAxes,ha='left',va='top')
