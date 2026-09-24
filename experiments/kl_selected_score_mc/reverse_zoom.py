@@ -22,9 +22,7 @@ def plot(z, output, stem, min_power):
         lower=min(lo.min(),ref-2*se);upper=max(hi.max(),ref+2*se)
         pad=.14*(upper-lower);ylim=(float(lower-pad),float(upper+pad));limits.append(ylim)
         color='C0'
-        ax.axhspan(ref-2*se,ref+2*se,color='.4',alpha=.12,linewidth=0)
         ax.axhline(ref,color='.25',ls=':',lw=1.7,zorder=3)
-        ax.fill_between(Ls,lo,hi,color=color,alpha=.28,linewidth=0,zorder=1)
         ax.plot(Ls,mu,color=color,marker='o',ms=4,lw=2.3,zorder=4)
         ax.axvline(2**20,color='.35',ls='--',lw=1.6,zorder=2)
         ax.set_xscale('log',base=2)
@@ -59,11 +57,11 @@ def main():
         'axes.labelsize':12,'pdf.fonttype':42,'svg.fonttype':'none'})
     limits=plot(z,args.output,'score_vs_L_reverse_zoom',7)
     late_limits=plot(z,args.output,'score_vs_L_reverse_zoom_large_L',16)
-    caption=r'''**Score convergence with independent vertical scales.** A frozen reverse-KL actor (seed 0, 100K updates) is evaluated at its fixed 10th-, 50th-, and 90th-percentile actions. Each panel retains the original score units and uses its own y-axis limits, chosen to contain the full displayed 10–90% Monte Carlo range with padding. Solid curves and shaded bands show the mean and 10–90% range of 16 independent repetitions. Horizontal dotted lines show independent reference means from four banks of size $2^{24}$; these are Monte Carlo estimates, not exact scores. The faint gray band spans the reference mean plus or minus two standard errors. Vertical dashed lines indicate the training density bank size $L=2^{20}$. A supplementary close-up restricts the x-axis to $L\ge2^{16}$ and independently rescales each y-axis. No observations within the shown x-axis ranges are omitted from the reported mean or percentile bands.'''
+    caption=r'''**Score convergence with independent vertical scales.** A frozen reverse-KL actor (seed 0, 100K updates) is evaluated at its fixed 10th-, 50th-, and 90th-percentile actions. Each panel retains the original score units and uses its own y-axis limits, unchanged from the preceding shaded version for direct visual comparison. Solid curves show the mean of 16 independent repetitions. No Monte Carlo range or reference-uncertainty shading is displayed. Horizontal dotted lines show independent reference means from four banks of size $2^{24}$; these are Monte Carlo estimates, not exact scores. Vertical dashed lines indicate the training density bank size $L=2^{20}$. A supplementary close-up restricts the x-axis to $L\ge2^{16}$ and independently rescales each y-axis. All 16 repetitions contribute to each displayed mean.'''
     (args.output/'caption_reverse_zoom.md').write_text(caption+'\n')
     meta={'plot_commit':args.commit,'source_scores_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),
           'actor':'reverse_s0','actions':z['actions'][128:131].tolist(),'training_updates':100000,
-          'main_y_limits':limits,'large_L_y_limits':late_limits,'numerical_data_changed':False,'all_policy_colors':'C0','MC_range_legend_shown':False,
+          'main_y_limits':limits,'large_L_y_limits':late_limits,'numerical_data_changed':False,'all_policy_colors':'C0','MC_range_legend_shown':False,'MC_range_shading_shown':False,'reference_shading_shown':False,
           'y_limits_rule':'10–90% MC envelope plus reference ±2SE, with 14% padding on either side'}
     (args.output/'REVERSE_ZOOM_PROVENANCE.json').write_text(json.dumps(meta,indent=2)+'\n')
     report=args.output/'report.md';s=report.read_text()
@@ -75,12 +73,12 @@ def main():
 **세 action을 별도 패널로 나누고, 각 패널의 y축을 score 변동 범위에 맞게 확대했다.** 원래 score 값과 단위를 그대로 사용하며, y축을 0부터 시작시키거나 공유하지 않는다. Seed 0의 100K actor, 세 고정 action, 기존 16회 MC 추정 자료 모두 동일하다.
 
 - 패널 제목: 학습된 policy action의 10%·50%·90% 분위수와 실제 action 값.
-- 곡선·음영·패널 제목은 모두 파란색이다. 음영의 범례 항목만 생략했으며, 음영 자체는 유지했다.
-- 굵은 실선: 16회 MC 평균. 색 음영: 추정값의 10–90% 구간이며 평균의 신뢰구간이 아니다.
-- 가로 점선: 독립 L=2²⁴ bank 4개의 MC 기준 평균. 희미한 회색 띠: 기준 평균 ±2 SE. 정확한 적분값은 아니다.
+- 세 action의 평균 곡선과 패널 제목은 모두 같은 파란색이다. MC range 음영과 회색 reference 띠는 모두 제거했다.
+- 굵은 실선: 독립 16회 MC 추정의 평균.
+- 가로 점선: 독립 L=2²⁴ bank 4개의 MC 기준 평균. 정확한 적분값은 아니다.
 - 세로 점선: 실제 학습에 사용한 L=2²⁰.
 
-각 y축 범위는 표시된 모든 L의 10–90% 구간과 기준 평균 ±2 SE를 포함한 뒤 위아래 14% 여유를 두어 정했다. **패널마다 y축 범위가 다르므로 그림에서의 높이만으로 오차 크기를 비교하지 않는다.**
+y축 범위는 직전 음영 버전과 동일하게 유지했다. 원래 모든 L의 10–90% 구간과 기준 평균 ±2 SE에 14% 여유를 두어 정한 범위이며, 이번 그림에서는 해당 띠를 표시하지 않는다. **패널마다 y축 범위가 다르므로 그림에서의 높이만으로 오차 크기를 비교하지 않는다.**
 
 [전체 L 범위 PDF](score_vs_L_reverse_zoom.pdf) · [SVG](score_vs_L_reverse_zoom.svg)
 
