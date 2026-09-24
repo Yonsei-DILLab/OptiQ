@@ -58,6 +58,8 @@ def main():
     parser.add_argument('--host', choices=list(HOSTS.values()), required=True)
     parser.add_argument('--dry-run', action='store_true')
     args = parser.parse_args()
+    if args.host == 'vast1':
+        parser.error('vast1 is reserved for GMM40; AntMaze is prohibited there (2026-09-25).')
     assert HOSTS[args.shard] == args.host
     source = Path(__file__).resolve().parents[1]
     sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip()

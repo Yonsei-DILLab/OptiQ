@@ -252,3 +252,13 @@ Keep T1,DACER OFF,NovelD OFF and other latest settings. Evaluation matches train
 v1random,v2-v4fixed original full state. Commit/push/share before preflight/main
 launch; independent slots on180/199,source-only sharing tovast1. See
 antmaze_experiments/EUCLIDEAN_NO_STEP_PROTOCOL.md. Cancelled campaigns stay stopped.
+
+User host reservation (2026-09-25, newest): the RTX4090x4 server `vast1`
+(175.155.64.161:19329) is reserved for the user's GMM40 work. Do not schedule
+or run AntMaze training, preflights, evaluation or background watchers there.
+Remove its AntMaze services from the active supervisor registry, preserving
+configs, frozen sources, logs, checkpoints and NM/ablation data. AntMaze uses
+only vast-heechan-180 and vast-heechan-199; their current learners continue.
+Do not stop the server instance or start new GMM40 jobs without a concrete
+experiment request. Historical manifests retain vast1 only as provenance.
+See antmaze_experiments/HOST_POLICY.md.
