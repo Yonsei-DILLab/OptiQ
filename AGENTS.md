@@ -397,3 +397,11 @@ metrics. Commit/push/freeze before real preflight; verify initial parameters
 against archived db4ca0a T3 control. Preserve live v1/v4 schedule jobs and fill
 independently free180 slots; no cancelled199 resume or4090 work. No automatic
 extension. See antmaze_experiments/TEACHER_FLOOR_SCREEN_PROTOCOL.md.
+
+Active-goal v4 teacher-floor screen (2026-09-25): after original T1 and T1->3
+lose the upper route, compare existing teacher_std_floor .5/1 on fresh v4 seed0
+original-geodesic/T1/gamma.999250k controls. No algorithm, reward, actor sigma,
+physics or other setting changes. Use recovered199 unlocked GPUs, never resume
+cancelled/unknown jobs. Commit/push/share/freeze before real preflight; require
+initial-parameter and teacher sampling/density verification. No automatic
+extension. See antmaze_experiments/V4_TEACHER_FLOOR_PROTOCOL.md. No4090 work.
