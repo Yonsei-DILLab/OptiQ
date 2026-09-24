@@ -96,3 +96,8 @@ The selected six environments were chosen after an earlier Forward/Reverse scree
 ## Execution and provenance
 
 Commit source, config, scripts, and this protocol on `heejoon` before GPU validation/production. Save the full SHA and SHA256 file manifest beside each immutable campaign. Use login4, one GPU and two CPUs per four-seed job, at most 12 concurrent jobs. Keep the currently running high-L experiments unchanged. Back up all outputs to dildata under `studies/20260925_finite_gmm_six/` using the existing read-only route.
+
+
+### CPU execution option (2026-09-25)
+
+The initial GPU validation waited for priority while GPU nodes were fully allocated. The CPU partition had free cores. The same float64 numerical code can therefore execute on `dell_cpu/cpu_qos`, two CPU cores per four-seed job, at most 12 jobs concurrently. Validate on the cluster CPU before launching production. This changes hardware only, not any numerical objective, parameter, seed, or update count. Store the CPU attempt under `attempt_cpu/`, preserving the unused initial GPU source and submission record.

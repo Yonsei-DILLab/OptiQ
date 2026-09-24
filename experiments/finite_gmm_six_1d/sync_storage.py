@@ -12,5 +12,5 @@ while True:
         result=dict(time=time.time(),exit_code=r.returncode,stderr=r.stderr[-2000:])
     except Exception as e:result=dict(time=time.time(),error=repr(e))
     (OUT/'SYNC_STATUS.json').write_text(json.dumps(result,indent=2)+'\n')
-    if result.get('exit_code')==0 and len(list((OUT/'campaign/runs').glob('*/*/COMPLETE.json')))==75:break
+    if result.get('exit_code')==0 and len(list((OUT/'campaign/runs').rglob('COMPLETE.json')))==75:break
     time.sleep(180)
