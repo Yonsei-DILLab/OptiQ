@@ -206,6 +206,7 @@ def main():
     p.add_argument('--temperature-anneal-steps',type=int,default=1000000)
     p.add_argument('--temperature-decay',choices=['linear','log_linear'],default='linear')
     p.add_argument('--dacer-target-entropy-per-dim',type=float)
+    p.add_argument('--dacer-interval-updates',type=int)
     p.add_argument('--dacer',choices=['on','off'])
     p.add_argument('--budget-steps',type=int)
     p.add_argument('--final-eval-episodes',type=int,default=100)
@@ -234,6 +235,8 @@ def main():
         assert a.method=='optiq' and np.isfinite(a.dacer_target_entropy_per_dim)
         assert a.dacer!='off', 'A DACER target cannot be set while DACER is off'
     if a.dacer is not None:assert a.method=='optiq'
+    if a.dacer_interval_updates is not None:
+        assert a.method=='optiq' and a.dacer!='off' and a.dacer_interval_updates > 0
     temperature_schedule=None
     if a.temperature_final is not None:
         assert a.method=='optiq' and a.temperature is not None
@@ -274,7 +277,8 @@ def main():
             a.task,folder,temperature=a.temperature,budget=planned_budget,
             reward_profile=a.reward_profile,noveld=a.noveld=='on',temperature_schedule=temperature_schedule,
             dacer_target_entropy_per_dim=a.dacer_target_entropy_per_dim,
-            dacer_enabled=a.dacer!='off',dynamics_profile=a.dynamics_profile)
+            dacer_enabled=a.dacer!='off',dynamics_profile=a.dynamics_profile,
+            dacer_interval_updates=a.dacer_interval_updates)
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     learner.eval_fixed_starts = a.eval_starts=='fixed' or (a.eval_starts=='upstream' and a.task!='v1')
@@ -295,6 +299,7 @@ def main():
         noveld_coefficient=.01 if a.noveld=='on' else 0.,temperature=a.temperature,
         temperature_schedule=temperature_schedule,
         dacer_target_entropy_per_dim=a.dacer_target_entropy_per_dim,
+        dacer_interval_updates=int(learner.model.regulator_cfg.interval_updates) if a.method=='optiq' else None,
         dacer_enabled=bool(learner.model.regulator_enabled) if a.method=='optiq' else None,
         native=learner.config,random_init=a.task=='v1',eval_interval=a.eval_interval,
         eval_num_envs=EVAL_NUM_ENVS,interim_eval_episodes=a.interim_eval_episodes,
@@ -319,6 +324,7 @@ def main():
         temp_name+=f'-to{a.temperature_final:g}-{a.temperature_decay}-{a.temperature_anneal_steps}postwarmup'
     if a.dacer_target_entropy_per_dim is not None:
         temp_name+=f'-Hdim{a.dacer_target_entropy_per_dim:g}'
+    if a.dacer_interval_updates is not None:temp_name+=f'-Hinterval{a.dacer_interval_updates}'
     if a.dacer is not None:temp_name+='-dacer'+a.dacer
     if a.dynamics_profile is not None:temp_name+='-dyn-'+a.dynamics_profile
     run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s0-{budget}steps'
@@ -348,6 +354,7 @@ def main():
                 dacer_target_entropy_per_dim=float(m.regulator_cfg.target_entropy_per_dim),
                 dacer_target_entropy=float(m.regulator_cfg.target_entropy_per_dim)*env.single_action_space.shape[0],
                 dacer_updates=int(m.regulator_count),dacer_noise_std=float(m.regulator_noise_std),
+                dacer_interval_updates=int(m.regulator_cfg.interval_updates),
                 dacer_entropy_proxy=float(m.regulator_entropy) if np.isfinite(m.regulator_entropy) else None)
         if a.dacer=='off':
             assert not learner.model.regulator_enabled
@@ -434,6 +441,8 @@ def main():
         if a.dacer_target_entropy_per_dim is not None:
             result['dacer_target_entropy_per_dim']=float(learner.model.regulator_cfg.target_entropy_per_dim)
             result['dacer_regulator']=json.loads((folder/'dacer_regulator.json').read_text())
+            result['dacer_interval_updates']=int(learner.model.regulator_cfg.interval_updates)
+            result['dacer_next_update']=int(learner.model.regulator_next_update)
         if a.dacer=='off':
             assert not (folder/'dacer_regulator.json').exists()
             result.update(dacer_enabled=False,dacer_updates=0,dacer_noise_std=0.)

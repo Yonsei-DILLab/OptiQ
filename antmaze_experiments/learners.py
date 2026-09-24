@@ -132,7 +132,8 @@ class SpaceOnlyEnv:
 class JaxLearner:
     def __init__(self, method, spaces, task, folder, temperature=None, budget=None,
                  reward_profile='sparse',noveld=True,temperature_schedule=None,
-                 dacer_target_entropy_per_dim=None,dacer_enabled=True,dynamics_profile=None):
+                 dacer_target_entropy_per_dim=None,dacer_enabled=True,dynamics_profile=None,
+                 dacer_interval_updates=None):
         import jax
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
@@ -163,6 +164,9 @@ class JaxLearner:
                 assert dacer_enabled, 'A DACER target requires an enabled regulator'
                 assert np.isfinite(dacer_target_entropy_per_dim)
                 overrides.append(f'dacer.target_entropy_per_dim={dacer_target_entropy_per_dim}')
+            if dacer_interval_updates is not None:
+                assert dacer_enabled and isinstance(dacer_interval_updates, int) and dacer_interval_updates > 0
+                overrides.append(f'dacer.interval_updates={dacer_interval_updates}')
             if temperature_schedule is not None:
                 schedule=temperature_schedule
                 overrides.append('++alg.actor.temperature_schedule={enabled:true,'
@@ -205,7 +209,8 @@ class JaxLearner:
             verify_profile(self, folder)
             if dacer_target_entropy_per_dim is not None:
                 from .dacer_target import verify_target
-                verify_target(self, folder, dacer_target_entropy_per_dim)
+                verify_target(self, folder, dacer_target_entropy_per_dim,
+                              10000 if dacer_interval_updates is None else dacer_interval_updates)
             if not dacer_enabled:
                 from .dacer_mode import verify_disabled
                 verify_disabled(self, folder)
@@ -238,6 +243,8 @@ class JaxLearner:
                 deterministic=mode == 'zero_z', sample_conditional_noise=mode in ('train','policy')))
             if mode == 'train' and self.model.regulator_enabled:
                 action = action + self.model.regulator_noise_std * self.model.regulator_rng.normal(size=action.shape)
+                self.model.logger.record('exploration/behavior_noise_std', self.model.regulator_noise_std)
+                self.model.logger.record('exploration/behavior_clip_fraction', float(np.mean(np.abs(action) >= 1.)))
             return np.clip(action, -1, 1)
         action, self.agent = (self.select if mode == 'native' else self.sample)(self.agent, obs)
         return np.asarray(action)

@@ -278,3 +278,14 @@ Commit/push/share before preflight/main launch on180/199 only, respect existing
 GPU locks and preserve existing v4 training, all old sources/results and
 cancelled queues. No AntMaze work on4090. See
 antmaze_experiments/CRITIC_DYNAMICS_PROTOCOL.md.
+
+User DACER positive-target approval (2026-09-25, newest): launch OptiQ only,
+v1-v4 x per-action-dimension targets +0.1,+0.5,+0.7,+0.9, seed0, 16 jobs.
+DACER ON, regulator interval500 learner updates, fixed T1; use the discussed
+500k post-warmup diagnostic budget. Keep current100*Euclidean-distance-decrease
+reward, bonus0, step penalty0, NovelD OFF and all other latest OptiQ settings.
+Evaluation/checkpoints each100k total transitions,40 intermediate/100 final
+rollouts, native v1 random reset and v2-v4 fixed full-state reset. Use only
+vast-heechan-180/199's eight5090 GPUs, independent2second backfill. Preserve
+old runs and frozen sources. Commit/push/share before training; no defaults
+changed outside this profile. See antmaze_experiments/DACER_POSITIVE_PROTOCOL.md.

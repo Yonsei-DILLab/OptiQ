@@ -89,7 +89,8 @@ class BehaviorRegulatedOptiQ(OptiQDIME):
             obs = data.observations.numpy()
             self.regulator_key, key = jax.random.split(self.regulator_key)
             actions = np.asarray(self.regulator_draw(self.policy.actor_state, jnp.asarray(obs), key))
-            actions = noisy_action(actions, self.regulator_rng.normal(size=actions.shape), self.regulator_noise_std)
+            noise_std_before = self.regulator_noise_std
+            actions = noisy_action(actions, self.regulator_rng.normal(size=actions.shape), noise_std_before)
             h, converged = entropy_proxy(actions, c.components, c.entropy_seed)
             target = float(c.target_entropy_per_dim) * actions.shape[-1]
             # Official log-alpha optimizer: dL/d(log alpha) = H_hat - H_target.
@@ -102,11 +103,15 @@ class BehaviorRegulatedOptiQ(OptiQDIME):
             self.regulator_next_update += int(c.interval_updates)
             metrics = dict(entropy_proxy=h, target_entropy=target,
                            alpha=float(jnp.exp(self.regulator_log_alpha)), noise_std=self.regulator_noise_std,
+                           noise_std_before=noise_std_before,
+                           entropy_probe_clip_fraction=float(np.mean(np.abs(actions) >= 1.)),
                            updates=self.regulator_count, gmm_converged_fraction=converged,
                            estimation_seconds=time.monotonic()-started)
             for k,v in metrics.items(): self.logger.record('exploration/'+k, v)
             path = Path(self.cfg.output_root) / 'dacer_regulator.json'
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(json.dumps(dict(metrics, env_steps=self.num_timesteps,
-                                           learner_updates=self._n_updates),indent=2)+'\n')
+            record=dict(metrics, env_steps=self.num_timesteps, learner_updates=self._n_updates)
+            path.write_text(json.dumps(record,indent=2)+'\n')
+            with path.with_name('dacer_regulator_history.jsonl').open('a') as history:
+                history.write(json.dumps(record)+'\n')
         return super().train(batch_size, gradient_steps)
