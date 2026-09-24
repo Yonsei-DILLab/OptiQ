@@ -378,3 +378,12 @@ and require supplementary same-origin checks before conditional diversity
 claims. Use independent free180 slots, preserving live v3 discount jobs and
 v4T10; no4090 or unknown199 resumes. Commit/push/freeze before actual preflights.
 See antmaze_experiments/INCREASING_TEMPERATURE_PROTOCOL.md.
+
+Active-goal diagnostic (2026-09-25): evaluate the frozen v3 normalized-geodesic
+T3/gamma.999 258304-step checkpoint at native700 and supplementary1400 episode
+limits,100 paired direct-policy CPU rollouts each. This is inference only,
+not a training/horizon change or permission to count extended-limit success
+as native benchmark success. Verify exact paired prefixes, full start, reward,
+model/RNG and checkpoint preservation. Preserve all live jobs; nice19CPU only
+on180, no4090. Commit/push/freeze report source before execution. See
+antmaze_experiments/ROLLOUT_HORIZON_DIAGNOSTIC_PROTOCOL.md.
