@@ -329,3 +329,13 @@ and job identity change. Commit/push/freeze before preflight and training;
 no algorithm changes, no cancelled/unknown199 job resumes and no4090 work.
 See antmaze_experiments/GAMMA_T3_RETENTION_PROTOCOL.md. Source-only199 sync
 remains pending SSH recovery.
+
+Active goal geodesic candidate follow-up (2026-09-25): register only fresh
+v4/v1 seed0 1M-budget versions of their completed geodesic gamma.999/T1/Hperdim+.7
+250k screens. Only budget/id differ; no algorithm/reward implementation changes.
+v1 had direct successfulupper17/lower9;v4 direct0successes but mu-only one per
+route. These are acquisition/retention candidates, not verified solutions.
+Keep current v3T3 running and fill unlocked180 slots independently. Commit/push
+and freeze before preflight/main; no cancelled199 resume and no4090 work.
+See antmaze_experiments/GEODESIC_RETENTION_PROTOCOL.md. Source-only199 sharing
+remains pending SSH recovery.
