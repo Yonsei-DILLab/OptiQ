@@ -37,3 +37,9 @@ The optional deployment xla_flags field is recorded explicitly. A preflight may
 use --xla_gpu_enable_triton_gemm=false to avoid very slow Blackwell Triton GEMM
 autotuning, selecting library GEMM without changing the mathematical update or
 precision requirements. Only a validated flag combination is used for training.
+
+Preflight progress and a Python traceback every90s diagnose compiler stalls.
+Steady-state timing reuses the SAME5-update compiled block rather than timing a
+new10-update shape. If needed, --xla_disable_hlo_passes=constant_folding disables
+a compile-time optimization, not any part of the runtime mathematical update;
+validate and record the complete XLA_FLAGS before training.
