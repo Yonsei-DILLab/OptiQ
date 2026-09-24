@@ -311,3 +311,12 @@ existing jobs/sources intact and prioritize the existing screen's pending jobs.
 No algorithm changes. Inspect successful paths and retention at500k/750k/1M.
 See antmaze_experiments/GAMMA_RETENTION_PROTOCOL.md. Share source with199 only;
 no AntMaze work on4090, no cancelled campaign resumes.
+
+Active goal reward-only follow-up (2026-09-25): preserve the running v3 gamma.999
+1M experiment and register three fresh250k seed0 screens on idle180 slots:
+v3/v4/v1, existing geodesic progress100 reward without bonus or step cost.
+Match the gamma.999/T1/Hperdim+.7/interval500 screen in every learning setting
+except the distance metric. No algorithm, physics or reward implementation
+edits. Commit/push before preflight, preserve existing queues and source;
+record delayed source-only199 sharing if its SSH transport remains unavailable.
+See antmaze_experiments/GEODESIC_GAMMA_SCREEN_PROTOCOL.md.
