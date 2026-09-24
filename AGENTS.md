@@ -1,5 +1,11 @@
 # OptiQ experiment versioning
 
+Latest request (2026-09-25): finish a DACER-off GMM40 comparison for N=M
+64/128/256/512, four seeds and 100k updates each, and export the comparison
+figure at alpha .2 / point area 1.05 pt². Fixed-Q GMM40 already has no DACER;
+reuse the completed 128/256/512 4090 runs, train the missing 64 on vast1 only,
+then verify and visualize all 16. See gmm40/NM4090_DACER_OFF_PROTOCOL.md.
+
 Latest GMM40 user request (2026-09-25): train iBOLT N=M128/256/512,
 seeds0..3 each,100k actor updates on vast1 RTX4090 only. Keep the paper's
 tuned256x3/batch256/T1/mean-init16/logsigma[-5,-3.5]/initial-4/teacherfloor.05

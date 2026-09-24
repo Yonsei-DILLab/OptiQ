@@ -62,8 +62,8 @@ def make_jobs(plan):
     return jobs
 
 
-def prepare(root):
-    plan = read(SOURCE/'gmm40/nm4090_plan.json')
+def prepare(root, plan_path=None):
+    plan = read(plan_path or SOURCE/'gmm40/nm4090_plan.json')
     sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=SOURCE, text=True).strip()
     assert not subprocess.check_output(['git', 'status', '--porcelain'], cwd=SOURCE, text=True).strip()
     hashes = invariant_hashes(plan)
@@ -267,7 +267,9 @@ def report(root):
     assert all(verified(root, j) for j in m['jobs'])
     target = Target(); rows = []; summary = root/'summary'; summary.mkdir(exist_ok=True)
     for mode, suffix in [('full_policy', ''), ('mu_only', '_mu_only')]:
-        fig, axes = plt.subplots(3, 4, figsize=(15, 12), constrained_layout=True)
+        fig, axes = plt.subplots(len(m['plan']['nm']), 4,
+                                 figsize=(15, 4*len(m['plan']['nm'])), constrained_layout=True)
+        axes = np.atleast_2d(axes)
         for job in m['jobs']:
             folder = root/'results'/job['name']/'evaluations'/'step_0100000'
             metrics = read(folder/('metrics'+suffix+'.json'))
@@ -278,7 +280,9 @@ def report(root):
             rows.append(row)
             ax = axes[m['plan']['nm'].index(job['nm']), job['seed']]
             background(ax, target)
-            ax.scatter(*samples.T, s=2.1, alpha=.4, c='#0000ff', linewidths=0, rasterized=True)
+            ax.scatter(*samples.T, s=m['plan'].get('plot_point_area_pt2', 2.1),
+                       alpha=m['plan'].get('plot_alpha', .4), c='#0000ff',
+                       linewidths=0, rasterized=True)
             ax.set_title(f"iBOLT N=M={job['nm']} | seed{job['seed']}\n{row['coverage']}/40 | MMD {row['mmd']:.4f}")
         fig.suptitle(f'GMM40 | 100k actor updates | {mode}')
         for ext in ('png', 'pdf'):
@@ -298,8 +302,8 @@ def report(root):
         writer = csv.DictWriter(f, fieldnames=list(rows[0])); writer.writeheader(); writer.writerows(rows)
 
 
-def register(root):
-    m = prepare(root); name = m['plan']['name']; conf = OPS/'supervisor/jobs'/(name+'.conf')
+def register(root, plan_path=None):
+    m = prepare(root, plan_path); name = m['plan']['name']; conf = OPS/'supervisor/jobs'/(name+'.conf')
     assert not conf.exists(), 'Already registered; do not duplicate'
     conf.write_text('\n'.join([f'[program:{name}]',
         f"command={m['plan']['python']} -B -u -m gmm40.nm4090_campaign run --root {root}",
@@ -318,9 +322,10 @@ def main():
     p.add_argument('action', choices=['register', 'run', 'job', 'preflight', 'report'])
     p.add_argument('--root', required=True, type=Path)
     p.add_argument('--name'); p.add_argument('--nm', type=int)
+    p.add_argument('--plan', type=Path)
     a = p.parse_args(); root = a.root.resolve(); root.mkdir(parents=True, exist_ok=True)
     os.environ.update(GMM40_REPO_ROOT=str(SOURCE), GMM40_RESULTS_ROOT=str(root/'results'))
-    if a.action == 'register': register(root)
+    if a.action == 'register': register(root, a.plan)
     elif a.action == 'job': run_job(root, a.name)
     elif a.action == 'preflight': preflight(root, read(root/'manifest.json'), a.nm)
     elif a.action == 'report': report(root)
