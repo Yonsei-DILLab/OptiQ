@@ -8,7 +8,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-from matplotlib.patches import Patch
 from matplotlib.ticker import FixedLocator, FuncFormatter, MaxNLocator
 
 
@@ -22,7 +21,7 @@ def plot(z, output, stem, min_power):
         refs=z['reference_scores'][:,i];ref=refs.mean();se=refs.std(ddof=1)/np.sqrt(len(refs))
         lower=min(lo.min(),ref-2*se);upper=max(hi.max(),ref+2*se)
         pad=.14*(upper-lower);ylim=(float(lower-pad),float(upper+pad));limits.append(ylim)
-        color=f'C{j}'
+        color='C0'
         ax.axhspan(ref-2*se,ref+2*se,color='.4',alpha=.12,linewidth=0)
         ax.axhline(ref,color='.25',ls=':',lw=1.7,zorder=3)
         ax.fill_between(Ls,lo,hi,color=color,alpha=.28,linewidth=0,zorder=1)
@@ -39,12 +38,11 @@ def plot(z, output, stem, min_power):
         ax.set_xlabel(r'Density-bank size $L$')
         ax.grid(alpha=.18)
     axes[0].set_ylabel(r'Actor score $\widehat{s}_L(a)$')
-    legend=[Line2D([0],[0],color='.2',lw=2.3,marker='o',ms=4,label='MC mean (16 repetitions)'),
-            Patch(facecolor='.4',alpha=.28,label='10–90% MC range'),
+    legend=[Line2D([0],[0],color='C0',lw=2.3,marker='o',ms=4,label='MC mean (16 repetitions)'),
             Line2D([0],[0],color='.25',ls=':',lw=1.7,label=r'Independent $2^{24}$ reference'),
             Line2D([0],[0],color='.35',ls='--',lw=1.6,label=r'Training $L=2^{20}$')]
-    fig.legend(handles=legend,loc='lower center',ncol=4,frameon=False,bbox_to_anchor=(.5,.015),fontsize=10)
-    fig.suptitle('Reverse KL: score convergence (independent y-axis zoom)',fontsize=15,y=.98)
+    fig.legend(handles=legend,loc='lower center',ncol=3,frameon=False,bbox_to_anchor=(.5,.015),fontsize=10)
+    fig.suptitle('Reverse KL: score convergence',fontsize=15,y=.98)
     fig.subplots_adjust(left=.07,right=.98,top=.77,bottom=.24,wspace=.29)
     for ext in ['png','pdf','svg']:fig.savefig(output/f'{stem}.{ext}',dpi=300)
     plt.close(fig)
@@ -65,7 +63,7 @@ def main():
     (args.output/'caption_reverse_zoom.md').write_text(caption+'\n')
     meta={'plot_commit':args.commit,'source_scores_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),
           'actor':'reverse_s0','actions':z['actions'][128:131].tolist(),'training_updates':100000,
-          'main_y_limits':limits,'large_L_y_limits':late_limits,'numerical_data_changed':False,
+          'main_y_limits':limits,'large_L_y_limits':late_limits,'numerical_data_changed':False,'all_policy_colors':'C0','MC_range_legend_shown':False,
           'y_limits_rule':'10–90% MC envelope plus reference ±2SE, with 14% padding on either side'}
     (args.output/'REVERSE_ZOOM_PROVENANCE.json').write_text(json.dumps(meta,indent=2)+'\n')
     report=args.output/'report.md';s=report.read_text()
@@ -77,6 +75,7 @@ def main():
 **세 action을 별도 패널로 나누고, 각 패널의 y축을 score 변동 범위에 맞게 확대했다.** 원래 score 값과 단위를 그대로 사용하며, y축을 0부터 시작시키거나 공유하지 않는다. Seed 0의 100K actor, 세 고정 action, 기존 16회 MC 추정 자료 모두 동일하다.
 
 - 패널 제목: 학습된 policy action의 10%·50%·90% 분위수와 실제 action 값.
+- 곡선·음영·패널 제목은 모두 파란색이다. 음영의 범례 항목만 생략했으며, 음영 자체는 유지했다.
 - 굵은 실선: 16회 MC 평균. 색 음영: 추정값의 10–90% 구간이며 평균의 신뢰구간이 아니다.
 - 가로 점선: 독립 L=2²⁴ bank 4개의 MC 기준 평균. 희미한 회색 띠: 기준 평균 ±2 SE. 정확한 적분값은 아니다.
 - 세로 점선: 실제 학습에 사용한 L=2²⁰.
