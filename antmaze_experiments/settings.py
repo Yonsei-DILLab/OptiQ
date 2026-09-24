@@ -29,8 +29,9 @@ REWARD_PROFILES = ('sparse', 'dense') + PROFILES
 
 def reward_description(profile):
     if profile in NO_COST_PROFILES:
+        from .progress_reward import progress_scale
         metric = 'XY geodesic' if is_geodesic(profile) else 'Euclidean'
-        return f'nearest-goal {metric} distance decrease *100; no step penalty; no success bonus'
+        return f'nearest-goal {metric} distance decrease *{progress_scale(profile):g}; no step penalty; no success bonus'
     if profile.startswith('progress100_'):
         from .progress_reward import SCALED_PROFILES
         if profile not in SCALED_PROFILES: raise ValueError(profile)

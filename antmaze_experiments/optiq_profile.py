@@ -8,16 +8,24 @@ def verify_profile(learner, folder):
     import jax.numpy as jnp
     policy = learner.model.policy
     cfg = learner.config['alg']
+    dynamics = getattr(learner, 'dynamics_profile', None)
+    if dynamics is not None:
+        from .dynamics_profiles import get_profile
+        expected_profile = get_profile(dynamics)
+    else:
+        expected_profile = dict(critic_lr=5e-4, tau=.005, policy_delay=1)
     assert list(cfg['actor']['hidden_dims']) == [256, 256, 256]
     assert list(cfg['critic']['hs']) == [256, 256, 256]
     assert cfg['optimizer']['lr_actor'] == 3e-4
-    assert cfg['optimizer']['lr_critic'] == 5e-4
-    assert cfg['tau'] == .005
+    assert cfg['optimizer']['lr_critic'] == expected_profile['critic_lr']
+    assert cfg['tau'] == expected_profile['tau']
+    if dynamics is not None:
+        assert cfg['policy_delay'] == expected_profile['policy_delay']
     checks = {}
     # Isolated one-scalar optimizer states: do not update learner parameters,
     # counters, RNG, or the actual optimizer states.
     for label, state, expected in [('actor', policy.actor_state, 3e-4),
-                                    ('critic', policy.qf_state, 5e-4)]:
+                                    ('critic', policy.qf_state, expected_profile['critic_lr'])]:
         probe = {'probe': jnp.ones((1,), dtype=jnp.float32)}
         update, _ = state.tx.update(probe, state.tx.init(probe), probe)
         observed = -float(np.asarray(update['probe'])[0])
@@ -42,7 +50,8 @@ def verify_profile(learner, folder):
                if learner.noveld_enabled else [])
     assert all(lr == 1e-4 for lr in rnd_lrs)
     result = dict(verified=True, actor_hidden_dims=[256, 256, 256],
-                  critic_hidden_dims=[256, 256, 256], tau=.005,
+                  critic_hidden_dims=[256, 256, 256], tau=cfg['tau'],
+                  policy_delay=cfg['policy_delay'], dynamics_profile=dynamics,
                   rnd_lrs=rnd_lrs, optimizers=checks,
                   probe='Independent scratch optimizer states; learner state and RNG unchanged')
     (Path(folder)/'optiq-profile-verification.json').write_text(json.dumps(result, indent=2)+'\n')

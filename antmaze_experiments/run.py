@@ -22,6 +22,18 @@ def write(path, value):
     temporary.replace(path)
 
 
+def numeric_metrics(value, prefix):
+    """Flatten finite diagnostic scalars for W&B; raw arrays stay on disk."""
+    result = {}
+    for key, item in value.items():
+        name = f'{prefix}/{key}'
+        if isinstance(item, dict):
+            result.update(numeric_metrics(item, name))
+        elif isinstance(item, (int, float)) and not isinstance(item, bool) and np.isfinite(item):
+            result[name] = item
+    return result
+
+
 def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
     from .envs import vector, transition
     from .learners import evaluation_rng
@@ -32,6 +44,10 @@ def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
     destination = folder/'evaluations'/f'{step:010d}'/label
     destination.mkdir(parents=True, exist_ok=True)
     paths, returns, goals, lengths, starts = [], [], [], [], []
+    recorder = None
+    if mode == 'policy' and getattr(learner, 'dynamics_profile', None) is not None:
+        from .critic_diagnostics import EvaluationTraceRecorder
+        recorder = EvaluationTraceRecorder()
     with evaluation_rng(learner, 700000 + step):
         env = vector(task, count, seed=87231, asynchronous=False, fixed=fixed,
                      reward_profile=learner.reward_profile,
@@ -48,10 +64,13 @@ def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
                 full_starts = [e.state() for e in env.envs]
                 rets = np.zeros(count); lens = np.zeros(count, int)
                 goal = np.zeros(count, int)
+                if recorder is not None: recorder.start_batch(active)
                 for _ in range(500 if task in ('v1','v2') else 700):
                     actions = learner.act(obs, mode)
                     nxt, reward, done, infos = env.step(actions)
-                    final, _ = transition(nxt, done, infos)
+                    final, terminal = transition(nxt, done, infos)
+                    if recorder is not None:
+                        recorder.record(obs, actions, reward, final, done, terminal, active)
                     for i in np.flatnonzero(active):
                         tracks[i].append(final[i,:2].copy()); rets[i] += reward[i]; lens[i] += 1
                         if done[i]:
@@ -63,6 +82,7 @@ def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
                     paths.append(np.asarray(tracks[i])); returns.append(rets[i])
                     goals.append(goal[i]); lengths.append(lens[i])
                     starts.append(np.r_[full_starts[i]['qpos'],full_starts[i]['qvel']])
+                if recorder is not None: recorder.end_batch()
         finally:
             env.close()
     max_length = max(map(len, paths))
@@ -87,6 +107,10 @@ def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
     result['reward_profile']=learner.reward_profile
     if learner.reward_profile in PROFILES:
         result['reward_specification']=specification(task,learner.reward_profile)
+    if recorder is not None:
+        from .dynamics_profiles import get_profile
+        result['critic_diagnostics'] = recorder.save(learner, task, destination, step, mode,
+            reward_multiplier=get_profile(learner.dynamics_profile)['reward_multiplier'],goals=goals)
     write(destination/'summary.json',result)
     return result
 
@@ -187,10 +211,21 @@ def main():
     p.add_argument('--final-eval-episodes',type=int,default=100)
     p.add_argument('--interim-eval-episodes',type=int,default=EVAL_NUM_ENVS)
     p.add_argument('--save-intermediate-policy',action='store_true')
+    p.add_argument('--eval-interval',type=int,default=250000)
+    from .dynamics_profiles import PROFILES as DYNAMICS_PROFILES, get_profile
+    p.add_argument('--dynamics-profile',choices=tuple(DYNAMICS_PROFILES))
     p.add_argument('--reward-profile',choices=REWARD_PROFILES,default='sparse')
     p.add_argument('--noveld',choices=['on','off'],default='on')
     p.add_argument('--eval-starts',choices=['upstream','random','fixed'],default='upstream')
     a = p.parse_args()
+    assert a.eval_interval > 0
+    if a.dynamics_profile is not None:
+        dynamics = get_profile(a.dynamics_profile)
+        assert a.method == 'optiq' and a.task in ('v3', 'v4')
+        assert a.reward_profile == dynamics['reward_profile']
+        assert a.temperature == dynamics['temperature']
+        assert a.noveld == 'off' and a.dacer == 'off' and a.eval_starts == 'upstream'
+        assert a.temperature_final is None and a.dacer_target_entropy_per_dim is None
     if a.reward_profile in PROFILES and a.noveld!='off':
         p.error("Progress profiles require --noveld off; intrinsic reward is a separate ablation")
     if a.temperature is not None:
@@ -239,7 +274,7 @@ def main():
             a.task,folder,temperature=a.temperature,budget=planned_budget,
             reward_profile=a.reward_profile,noveld=a.noveld=='on',temperature_schedule=temperature_schedule,
             dacer_target_entropy_per_dim=a.dacer_target_entropy_per_dim,
-            dacer_enabled=a.dacer!='off')
+            dacer_enabled=a.dacer!='off',dynamics_profile=a.dynamics_profile)
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     learner.eval_fixed_starts = a.eval_starts=='fixed' or (a.eval_starts=='upstream' and a.task!='v1')
@@ -261,16 +296,22 @@ def main():
         temperature_schedule=temperature_schedule,
         dacer_target_entropy_per_dim=a.dacer_target_entropy_per_dim,
         dacer_enabled=bool(learner.model.regulator_enabled) if a.method=='optiq' else None,
-        native=learner.config,random_init=a.task=='v1',eval_interval=250000,
+        native=learner.config,random_init=a.task=='v1',eval_interval=a.eval_interval,
         eval_num_envs=EVAL_NUM_ENVS,interim_eval_episodes=a.interim_eval_episodes,
         final_eval_episodes=a.final_eval_episodes,
         save_intermediate_policy=a.save_intermediate_policy,
-        policy_checkpoint_interval=250000 if a.save_intermediate_policy else None,
+        policy_checkpoint_interval=a.eval_interval if a.save_intermediate_policy else None,
         policy_checkpoint_kind='evaluation-only; model/optimizer/RNG, no replay or simulator',
         checkpoint='final only',step_definition='step includes warmup; global_steps excludes warmup as upstream; stop global_steps>max_step',
         evaluation=('primary=policy-fixed at original origin/pose/velocity; ' if learner.eval_fixed_starts else 'primary=policy-natural; ')+
             'policy: direct draws, no extra exploration noise; native: SAC mean, MFPO Q-best-of10, OptiQ random-z mu-only, DIPO native diffusion',
         runtime=dict(python=os.sys.version,torch=torch.__version__,numpy=np.__version__))
+    if a.dynamics_profile is not None:
+        config.update(dynamics_profile=a.dynamics_profile,dynamics_settings=dynamics,
+                      reward_multiplier=dynamics['reward_multiplier'],
+                      diagnostic_interval=25000,
+                      comparison_reward='100*(d(current)-d(next)); convert rewards/Q by reward_multiplier',
+                      requested_global_budget=500000)
     write(folder/'config.json',config)
     import wandb
     temp_name=f'-T{a.temperature:g}' if a.temperature is not None else ''
@@ -279,6 +320,7 @@ def main():
     if a.dacer_target_entropy_per_dim is not None:
         temp_name+=f'-Hdim{a.dacer_target_entropy_per_dim:g}'
     if a.dacer is not None:temp_name+='-dacer'+a.dacer
+    if a.dynamics_profile is not None:temp_name+='-dyn-'+a.dynamics_profile
     run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s0-{budget}steps'
     run = wandb.init(entity=WANDB_ENTITY,project=WANDB_PROJECT,group=os.environ.get('OPTIQ_CAMPAIGN',CAMPAIGN),
         name=run_name,dir=str(folder),config=config,
@@ -288,7 +330,8 @@ def main():
         write(folder/'wandb.json',dict(id=run.id,url=None if offline else run.url,
             entity=WANDB_ENTITY,project=WANDB_PROJECT,
             mode='offline' if offline else 'online',sync_pending=offline))
-    rng=np.random.default_rng(0);step=0;started=time.monotonic();next_eval=250000
+    rng=np.random.default_rng(0);step=0;started=time.monotonic();next_eval=a.eval_interval
+    next_diagnostic=25000
     timing=dict(collection=0.,learner=0.,evaluation=0.,checkpoint=0.)
     xy=np.empty((budget,2),np.float32);successes=[];episodes=0;info={}
     def progress():
@@ -309,6 +352,14 @@ def main():
         if a.dacer=='off':
             assert not learner.model.regulator_enabled
             record.update(dacer_enabled=False,dacer_updates=0,dacer_noise_std=0.)
+        if a.dynamics_profile is not None:
+            from .dynamics_profiles import expected_actor_updates
+            actor_updates = int(learner.model.policy.actor_state.step)
+            critic_updates = int(learner.model.policy.qf_state.step)
+            assert actor_updates == expected_actor_updates(learner.updates, a.dynamics_profile)
+            assert critic_updates == learner.updates == learner.model._n_updates
+            record.update(actor_updates=actor_updates,critic_updates=critic_updates,
+                          critic_tau=dynamics['tau'],policy_delay=dynamics['policy_delay'])
         write(folder/'progress.json',record);print(json.dumps(record),flush=True)
         run.log(dict(record,**info),step=step)
     try:
@@ -330,6 +381,14 @@ def main():
                 assert all(np.isfinite(float(v)) for v in info.values()), info
                 assert learner.updates==expected_updates(step)
                 assert learner.intrinsic.update_step==(learner.updates if learner.noveld_enabled else 0)
+            if a.dynamics_profile is not None and (step>=next_diagnostic or (a.preflight and step==budget)):
+                from .critic_diagnostics import replay_diagnostics
+                t=time.monotonic()
+                diagnostic=replay_diagnostics(learner,step,folder,
+                    reward_multiplier=dynamics['reward_multiplier'])
+                run.log(numeric_metrics(diagnostic,'diagnostic/replay'),step=step)
+                timing['evaluation']+=time.monotonic()-t
+                next_diagnostic+=25000
             if step>=next_eval and step<budget:
                 if a.save_intermediate_policy:
                     from .policy_checkpoints import save_evaluation_checkpoint
@@ -341,8 +400,10 @@ def main():
                     s=evaluate(learner,a.task,folder,step,a.interim_eval_episodes,mode)
                     run.log({f'eval/{mode}/success_rate':s['success_rate'],
                              f'eval/{mode}/return':s['mean_return']},step=step)
+                    if 'critic_diagnostics' in s:
+                        run.log(numeric_metrics(s['critic_diagnostics'],'diagnostic/policy'),step=step)
                 timing['evaluation']+=time.monotonic()-t
-                next_eval+=250000
+                next_eval+=a.eval_interval
             if step%4096==0 or step==budget: progress()
         final_audit=audit(learner)
         for key in (('actor','critic','rnd_predictor') if learner.noveld_enabled else ('actor','critic')):
@@ -376,6 +437,22 @@ def main():
         if a.dacer=='off':
             assert not (folder/'dacer_regulator.json').exists()
             result.update(dacer_enabled=False,dacer_updates=0,dacer_noise_std=0.)
+        if a.dynamics_profile is not None:
+            from .dynamics_profiles import expected_actor_updates
+            actor_steps=int(learner.model.policy.actor_state.step)
+            critic_steps=int(learner.model.policy.qf_state.step)
+            assert actor_steps==expected_actor_updates(learner.updates,a.dynamics_profile)
+            assert critic_steps==learner.updates==learner.model._n_updates
+            verification=dict(verified=True,dynamics_profile=a.dynamics_profile,settings=dynamics,
+                actor_updates=actor_steps,critic_updates=critic_steps,
+                runtime_tau=float(learner.model.tau),runtime_policy_delay=int(learner.model.policy_delay),
+                initial_parameters=initial,source_commit=source,
+                direct_policy_diagnostics=[str(p.relative_to(folder)) for p in
+                    sorted((folder/'evaluations').glob('*/policy-*/critic-diagnostics.json'))])
+            assert verification['runtime_tau']==dynamics['tau']
+            assert verification['runtime_policy_delay']==dynamics['policy_delay']
+            write(folder/'dynamics-verification.json',verification)
+            result['dynamics_verification']=verification
         write(folder/'result.json',result)
         # Keep final 100-episode evaluations separate from periodic 40-episode
         # metrics, including the reset distribution and zero-z control.

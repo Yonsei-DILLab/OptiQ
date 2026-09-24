@@ -132,12 +132,13 @@ class SpaceOnlyEnv:
 class JaxLearner:
     def __init__(self, method, spaces, task, folder, temperature=None, budget=None,
                  reward_profile='sparse',noveld=True,temperature_schedule=None,
-                 dacer_target_entropy_per_dim=None,dacer_enabled=True):
+                 dacer_target_entropy_per_dim=None,dacer_enabled=True,dynamics_profile=None):
         import jax
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
         self.method, self.updates = method, 0
         self.reward_profile,self.noveld_enabled = reward_profile,noveld
+        self.dynamics_profile = dynamics_profile
         self.budget = total_budget(task) if budget is None else budget
         self.replay = ReplayBuffer(1000000, (29,), 8, device='cuda')
         self.intrinsic = (IntrinsicM((29,), env_name='antmaze-'+task,
@@ -175,6 +176,15 @@ class JaxLearner:
             cfg.alg.critic.hs = [256, 256, 256]
             cfg.alg.optimizer.lr_actor = float(upstream_lr.actor_lr)
             cfg.alg.optimizer.lr_critic = float(upstream_lr.critic_lr)
+            if dynamics_profile is not None:
+                from .dynamics_profiles import get_profile
+                profile = get_profile(dynamics_profile)
+                assert task in ('v3', 'v4') and not noveld and not dacer_enabled
+                assert temperature_schedule is None and reward_profile == profile['reward_profile']
+                assert temperature == profile['temperature']
+                cfg.alg.tau = profile['tau']
+                cfg.alg.policy_delay = profile['policy_delay']
+                cfg.alg.optimizer.lr_critic = profile['critic_lr']
             cfg.env_name = 'DDiffPG-' + task + '-upstream-' + reward_profile
             cfg.task = 'antmaze'
             cfg.wandb.entity = WANDB_ENTITY

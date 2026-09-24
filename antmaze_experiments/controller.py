@@ -35,7 +35,7 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             cmd.extend(['--budget-steps',str(entry['steps'])])
         if 'final_eval_episodes' in entry:
             cmd.extend(['--final-eval-episodes',str(entry['final_eval_episodes'])])
-        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer'):
+        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer','dynamics_profile','eval_interval'):
             if key in entry:cmd.extend(['--'+key.replace('_','-'),str(entry[key])])
         if entry.get('save_intermediate_policy',False):
             cmd.append('--save-intermediate-policy')
@@ -70,7 +70,7 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             assert profile['optimizers']['actor']['expected_lr']==entry['optiq_profile']['actor_lr']
             assert profile['optimizers']['critic']['expected_lr']==entry['optiq_profile']['critic_lr']
             expected_rnd_lrs = [1e-4] if config['noveld_enabled'] else []
-            assert profile['rnd_lrs']==expected_rnd_lrs and profile['tau']==.005
+            assert profile['rnd_lrs']==expected_rnd_lrs and profile['tau']==entry['optiq_profile'].get('tau',.005)
             assert config['wandb_project']==manifest['wandb_project']=='antmaze'
         if 'temperature' in entry:
             actor=config['native']['alg']['actor']
@@ -107,12 +107,27 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
         if entry.get('save_intermediate_policy',False):
             assert config['save_intermediate_policy']
             snapshots=sorted((target/'policy-checkpoints').glob('*/verification.json'))
-            expected_count=1 if phase=='preflight' else (expected-1)//250000
+            expected_count=1 if phase=='preflight' else (expected-1)//entry.get('eval_interval',250000)
             assert len(snapshots)==expected_count,(len(snapshots),expected_count)
             for saved in snapshots:
                 verification=json.loads(saved.read_text())
                 assert verification['readback_verified'] and verification['restored_policy_state_exact']
                 assert verification['source_commit']==manifest['source_commit']
+        if 'dynamics_profile' in entry:
+            from .dynamics_profiles import get_profile, expected_actor_updates
+            settings=get_profile(entry['dynamics_profile'])
+            verification=json.loads((target/'dynamics-verification.json').read_text())
+            assert verification['verified'] and verification['settings']==settings
+            assert config['dynamics_settings']==settings and config['eval_interval']==entry['eval_interval']
+            assert verification['actor_updates']==expected_actor_updates(proof['updates'],entry['dynamics_profile'])
+            assert verification['critic_updates']==proof['updates']
+            assert verification['runtime_tau']==settings['tau']
+            assert verification['runtime_policy_delay']==settings['policy_delay']
+            assert verification['direct_policy_diagnostics']
+            for other in (root/phase).glob('*/parameter-audit.json'):
+                baseline=json.loads(other.read_text())['initial']
+                for label in ('actor','critic'):
+                    assert verification['initial_parameters'][label]['sha256']==baseline[label]['sha256'], (other,label)
     write(root/'jobs'/f'{identifier}.json',dict(**entry,gpu=gpu,status='completed'))
     return 0
 

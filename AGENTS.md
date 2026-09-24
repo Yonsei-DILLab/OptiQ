@@ -262,3 +262,19 @@ only vast-heechan-180 and vast-heechan-199; their current learners continue.
 Do not stop the server instance or start new GMM40 jobs without a concrete
 experiment request. Historical manifests retain vast1 only as provenance.
 See antmaze_experiments/HOST_POLICY.md.
+
+User diagnostic approval (2026-09-25, newest): register bounded fresh OptiQ
+critic-dynamics experiments and start eligible jobs immediately. Test v3/v4
+seed0 with control, reward/T times.2, critic tau.01, critic LR1e-3,
+actor delay2, and reward/T times.2 plus tau.01; twelve policies total.
+Use500k post-warmup transitions (508416 total by native block accounting),
+Euclidean progress reward100*delta-distance or20*delta-distance in scale.2
+conditions, bonus0, step cost0, DACER OFF and NovelD OFF. Preserve other
+current settings,256env/batch4096/eightcriticupdatesper256 and replay1M.
+Evaluate40 episodes each100k total and100 final, keeping direct full policy
+and mu-only results distinct; v3/v4 use original fixed full starts. Record
+TD-fit/target/MC/teacher/route diagnostics without changing training RNG.
+Commit/push/share before preflight/main launch on180/199 only, respect existing
+GPU locks and preserve existing v4 training, all old sources/results and
+cancelled queues. No AntMaze work on4090. See
+antmaze_experiments/CRITIC_DYNAMICS_PROTOCOL.md.
