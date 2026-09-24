@@ -1,0 +1,17 @@
+{
+  "parent_source_commit": "5b2d79cd5aba408acaca469041e8cfb5cbfeb78f",
+  "checkpoint_step": 100000,
+  "seeds": [0, 1, 2, 3],
+  "methods": ["forward", "reverse"],
+  "L_powers": [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
+  "repeats": 16,
+  "independent_reference_repeats": 4,
+  "reference_L": 16777216,
+  "actor_chunk": 4096,
+  "kernel_chunk": 4096,
+  "fixed_policy_probes": 128,
+  "policy_quantiles": [0.1, 0.5, 0.9],
+  "fixed_target_probes": [-4.75, -4.25, -3.75, -0.5, 0.0, 0.5, 3.75, 4.25, 4.75],
+  "random_seed": 92426000,
+  "training_L": 1048576
+}
