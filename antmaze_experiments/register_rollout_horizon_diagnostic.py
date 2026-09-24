@@ -48,15 +48,21 @@ def main():
         environment=environment, evaluation_source=sha, training_source=TRAINING_SOURCE,
         checkpoint_sha256=proof['sha256'], inference_only=True, primary_evaluation_preserved=True,
         native_limit=700, extended_limit=1400, episodes_per_condition=100,
-        shared199='pending SSH recovery', protocol='antmaze_experiments/ROLLOUT_HORIZON_DIAGNOSTIC_PROTOCOL.md')
+        shared199='pending SSH recovery', credential_activation='/home/heechan/OptiQ-ops/activate.sh v5-direct-gmm',
+        protocol='antmaze_experiments/ROLLOUT_HORIZON_DIAGNOSTIC_PROTOCOL.md')
     if args.dry_run:
         print(json.dumps(manifest, indent=2))
         return
     conf = Path('/home/heechan/OptiQ-ops/supervisor/jobs') / (CAMPAIGN + '.conf')
     assert not root.exists() and not conf.exists()
     root.mkdir()
+    launcher = root / 'launch.sh'
+    launcher.write_text('#!/bin/bash\nset -euo pipefail\n'
+        'source /home/heechan/OptiQ-ops/activate.sh v5-direct-gmm >/dev/null\n'
+        + '\n'.join('export ' + k + '=' + shlex.quote(v) for k, v in environment.items())
+        + '\ncd ' + shlex.quote(str(source)) + '\nexec ' + shlex.join(command) + '\n')
     conf.write_text(f'''[program:{CAMPAIGN}]
-command={shlex.join(command)}
+command=/bin/bash {launcher}
 directory={source}
 environment={','.join(k+'="'+v+'"' for k,v in environment.items())}
 autostart=false
