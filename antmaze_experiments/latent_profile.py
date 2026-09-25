@@ -17,6 +17,7 @@ def verify_fixed_latent(learner, folder, stage):
     import numpy as np
     from optiq_dime.latent import FiniteMixtureTrainState, finite_latent_codes, sample_latents, stratified_finite_latents
     from optiq_dime.box_gaussian import sample_box
+    from .learners import audit
     assert stage in ('initial', 'final') and learner.latent_profile == 'fixed64'
     model, policy = learner.model, learner.model.policy
     actor = model.cfg.alg.actor
@@ -75,6 +76,6 @@ def verify_fixed_latent(learner, folder, stage):
         deterministic_control='component0_mu, not z=0',full_stratified_components=True,
         sample_counts=counts.tolist(),direct_sampler_verified=True,native_sampler_verified=True,
         serialization_roundtrip_verified=True,model_optimizer_rng_unchanged=True,
-        scratch_rng_seed=194831,actor_updates=int(state.step))
+        scratch_rng_seed=194831,actor_updates=int(state.step),parameters=audit(learner))
     (Path(folder)/f'latent-profile-{stage}-verification.json').write_text(json.dumps(result,indent=2)+'\n')
     return result
