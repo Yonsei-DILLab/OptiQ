@@ -22,7 +22,8 @@ def main() -> None:
     parser.add_argument("--training-source", required=True)
     parser.add_argument("--transfer-plan-commit", required=True)
     parser.add_argument("--plan", type=Path, required=True)
-    parser.add_argument("--source-host", choices=("180", "199"), required=True)
+    parser.add_argument("--source-host", choices=("180", "199", "vast1_repair"),
+                        required=True)
     parser.add_argument("--destination", required=True)
     args = parser.parse_args()
     plan = json.loads(args.plan.read_text())
@@ -41,7 +42,7 @@ def main() -> None:
         entries = {entry["name"]: entry for entry in state["jobs"]}
         if any(name not in entries or entries[name]["state"] != "pending" for name in names):
             raise ValueError("a requested transfer job was claimed or is absent")
-        sidecar = root / "transfer-to-vast1.json"
+        sidecar = root / f"transfer-to-{args.destination}.json"
         if sidecar.exists():
             raise FileExistsError(sidecar)
         now = time.time()
@@ -53,6 +54,8 @@ def main() -> None:
             entries[name].update(state="transferred", destination=args.destination,
                                  transferred_at=now)
         state["updated"] = now
+        if all(entry["state"] == "transferred" for entry in state["jobs"]):
+            state["state"] = "transferred"
         atomic_json(sidecar, audit)
         atomic_json(queue_path, state)
     print(json.dumps({"transferred": names, "destination": args.destination}))

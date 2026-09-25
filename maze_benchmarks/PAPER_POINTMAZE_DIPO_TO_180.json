@@ -1,0 +1,20 @@
+{
+  "training_source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "previous_queue_host": "vast1",
+  "previous_queue_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-dipo-envfix-20260926",
+  "new_host": "vast-heechan-180",
+  "new_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-dipo-180-20260926",
+  "reason": "The RTX 4090 repair queue remained unclaimed because unrelated fixed-sigma compute processes now occupy GPUs 2 and 3. The 5090 host completed its prior PointMaze shard and has an idle guarded slot.",
+  "transfer_from_vast1_repair": [
+    "pm_hard-dipo-s0",
+    "pm_simple-dipo-s0",
+    "pm_medium-dipo-s0"
+  ],
+  "new_queue_order": [
+    "pm_hard-dipo-s0",
+    "pm_simple-dipo-s0",
+    "pm_medium-dipo-s0"
+  ],
+  "method_and_learning_settings_unchanged": true,
+  "preserve_failed_4090_preflights": true
+}

@@ -17,10 +17,12 @@ from .report_pointmaze import (MAZES, METHODS, render_curves, render_medium_hard
 
 REMOTE_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926"
 REPAIR_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-dipo-envfix-20260926"
+FINAL_DIPO_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-dipo-180-20260926"
 SOURCES = (("vast-heechan-180", REMOTE_ROOT, "vast-heechan-180"),
            ("vast-heechan-199", REMOTE_ROOT, "vast-heechan-199"),
            ("vast1", REMOTE_ROOT, "vast1"),
-           ("vast1", REPAIR_ROOT, "vast1-dipo-envfix"))
+           ("vast1", REPAIR_ROOT, "vast1-dipo-envfix"),
+           ("vast-heechan-180", FINAL_DIPO_ROOT, "vast-heechan-180-dipo"))
 
 
 def sync(source: str, destination: Path):
@@ -95,7 +97,9 @@ def main():
         if state["source_commit"] != args.source_commit:
             raise ValueError(f"unexpected frozen source on {label}")
         if any(entry["state"] == "transferred" for entry in state["jobs"]):
-            audit = "envfix-recovery.json" if label == "vast1" else "transfer-to-vast1.json"
+            audit = ("envfix-recovery.json" if label == "vast1" else
+                     "transfer-to-vast-heechan-180.json" if label == "vast1-dipo-envfix" else
+                     "transfer-to-vast1.json")
             sync(f"{host}:{remote_root}/{audit}", meta / audit)
         for entry in state["jobs"]:
             if entry["state"] == "failed":

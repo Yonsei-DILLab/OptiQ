@@ -56,6 +56,11 @@ documents the environment-only correction, its successful independent real
 update smoke test, and the separate queue for the three DIPO policies. The
 original main queue continues the non-DIPO work. Reporting combines both
 queues while retaining the failed-attempt audits and the frozen training SHA.
+Before the 4090 repair queue claimed any DIPO jobs, unrelated GPU processes
+occupied its two guarded slots. `PAPER_POINTMAZE_DIPO_TO_180.json` records a
+second schedule-only migration of all three still-pending DIPO runs to an idle
+5090 slot. The 4090 repair queue marks them transferred and keeps its audit;
+the 5090 uses the same frozen source and verified 256-env/4096-batch profile.
 The exact environment-corrected `vast1` supervisor launch configurations are
 in `maze_benchmarks/supervisor/`; these were committed after the initial
 4090 launch, and are used only for new workers after the two already-running
