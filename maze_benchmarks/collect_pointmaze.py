@@ -90,10 +90,9 @@ def main():
         state = json.loads((meta / "queue.json").read_text())
         if state["source_commit"] != args.source_commit:
             raise ValueError(f"unexpected frozen source on {host}")
-        if host != "vast1":
-            subprocess.run(["rsync", "-a", "--checksum", "--ignore-missing-args",
-                            f"{host}:{REMOTE_ROOT}/transfer-to-vast1.json",
-                            str(meta / "transfer-to-vast1.json")], check=True)
+        if any(entry["state"] == "transferred" for entry in state["jobs"]):
+            sync(f"{host}:{REMOTE_ROOT}/transfer-to-vast1.json",
+                 meta / "transfer-to-vast1.json")
         for entry in state["jobs"]:
             if entry["state"] != "complete":
                 continue
