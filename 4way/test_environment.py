@@ -2,7 +2,10 @@
 
 import importlib.util
 from pathlib import Path
+import sys
+import types
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -13,6 +16,38 @@ SPEC.loader.exec_module(MODULE)
 
 
 class FourWayTests(unittest.TestCase):
+    def test_vector_port_matches_author_dynamics_and_native_reward(self):
+        # The author's old Gym file imports Keras solely for a cross-policy
+        # novelty option. Stub that unused import, leaving the source untouched.
+        keras = types.ModuleType("keras")
+        models = types.ModuleType("keras.models")
+        models.load_model = lambda *args, **kwargs: None
+        with patch.dict(sys.modules, {"keras": keras, "keras.models": models}):
+            original_path = Path(__file__).parent / "upstream/simpler_path_finding.py"
+            spec = importlib.util.spec_from_file_location("fourway_author", original_path)
+            original_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(original_module)
+        reference = original_module.SimplerPathFinding()
+        batch = MODULE.FourWayBatch(1, seed=8, reward_profile="native")
+        np.testing.assert_array_equal(reference.grid_map, batch.grid[0])
+        rng = np.random.default_rng(83)
+        starts = ((0., 0.), (-2.5, 0.), (2.5, 0.), (0., 2.5), (0., -2.5))
+        for x, y in starts:
+            reference.point_pos = np.array([x, y], dtype=np.float64)
+            reference.point_vel = rng.uniform(-1., 1., 2)
+            batch.pos[0] = reference.point_pos.copy()
+            batch.vel[0] = reference.point_vel.copy()
+            for _ in range(80):
+                action = rng.uniform(-1., 1., 2)
+                expected_obs, reward_parts, expected_done, _ = reference._step(action)
+                actual_obs, actual_reward, actual_done, _truncated, _ = batch.step(action[None])
+                np.testing.assert_allclose(actual_obs[0], expected_obs, rtol=2e-6, atol=2e-6)
+                self.assertAlmostEqual(float(actual_reward[0]), float(reward_parts[0]), places=5)
+                self.assertEqual(bool(actual_done[0]), bool(expected_done))
+                np.testing.assert_array_equal(reference.grid_map, batch.grid[0])
+                if expected_done:
+                    break
+
     def test_goal_symmetry_and_native_asymmetry(self):
         goals = ((0, -12, 0), (1, 12, 0), (2, 0, 12), (3, 0, -12))
         for profile in ("symmetric", "native"):
