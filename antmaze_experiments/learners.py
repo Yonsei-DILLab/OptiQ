@@ -133,13 +133,17 @@ class JaxLearner:
     def __init__(self, method, spaces, task, folder, temperature=None, budget=None,
                  reward_profile='sparse',noveld=True,temperature_schedule=None,
                  dacer_target_entropy_per_dim=None,dacer_enabled=True,dynamics_profile=None,
-                 dacer_interval_updates=None,discount=None,teacher_std_floor=None):
+                 dacer_interval_updates=None,discount=None,teacher_std_floor=None,latent_profile=None):
         import jax
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
         self.method, self.updates = method, 0
         self.reward_profile,self.noveld_enabled = reward_profile,noveld
         self.dynamics_profile = dynamics_profile
+        self.latent_profile = latent_profile
+        assert latent_profile in (None, 'fixed64')
+        if latent_profile is not None:
+            assert method == 'optiq'
         self.budget = total_budget(task) if budget is None else budget
         self.replay = ReplayBuffer(1000000, (29,), 8, device='cuda')
         self.intrinsic = (IntrinsicM((29,), env_name='antmaze-'+task,
@@ -163,6 +167,14 @@ class JaxLearner:
             if teacher_std_floor is not None:
                 from .teacher_proposal import validate_floor
                 overrides.append(f'alg.actor.teacher_std_floor={validate_floor(teacher_std_floor)}')
+            if latent_profile == 'fixed64':
+                overrides += ['++alg.actor.latent_prior=finite',
+                              '++alg.actor.latent_components=64',
+                              '++alg.actor.latent_codebook_seed=20260911',
+                              # The unused standalone MuJoCo evaluator requires
+                              # a normal prior. AntMaze's own evaluator runs both
+                              # direct and mu-only modes with the finite prior.
+                              'dual_mu_eval=false']
             if dacer_target_entropy_per_dim is not None:
                 assert dacer_enabled, 'A DACER target requires an enabled regulator'
                 assert np.isfinite(dacer_target_entropy_per_dim)
@@ -220,6 +232,9 @@ class JaxLearner:
             if teacher_std_floor is not None:
                 from .teacher_proposal import verify_teacher_floor
                 verify_teacher_floor(self, folder, teacher_std_floor)
+            if latent_profile is not None:
+                from .latent_profile import verify_fixed_latent
+                verify_fixed_latent(self, folder, 'initial')
             if dacer_target_entropy_per_dim is not None:
                 from .dacer_target import verify_target
                 verify_target(self, folder, dacer_target_entropy_per_dim,

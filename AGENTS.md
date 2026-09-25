@@ -425,3 +425,15 @@ trajectory equality and checkpoint/model/RNG preservation. Preserve its primary
 automatic retry. Commit/push/share/freeze evaluation source before execution.
 See antmaze_experiments/WALL_CONTACT_DIAGNOSTIC_PROTOCOL.md. No body-inflation or
 other reward/algorithm change is authorized by this diagnostic registration.
+
+Active-goal fixed-latent screen (2026-09-25): compare existing finite64 latent
+prior against completed v3 teacherfloor1/T3 and v4 teacherfloor.5/T1 controls,
+fresh seed0 each250k on independent199GPU slots. Only forward the existing
+finite prior/count/codebook seed settings; preserve all nine pinned algorithm/
+latent/box-sampler files. Native/direct actions choose uniformly from the same
+codebook every action; retain conditional sigma in direct, label deterministic
+component0 mean honestly. No episode-persistent latent or algorithm/reward/
+physics change. Validate actual sampler/serialization/8update preflight and
+initial parameters, commit/push/share/freeze before launch, preserve Q on180.
+No automatic extension/retry or4090 work. See
+antmaze_experiments/FIXED_LATENT_SCREEN_PROTOCOL.md.

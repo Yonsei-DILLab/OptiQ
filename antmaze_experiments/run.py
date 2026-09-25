@@ -39,7 +39,9 @@ def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
     from .learners import evaluation_rng
     origin_fixed = getattr(learner, 'eval_fixed_starts', False)
     fixed = bool(fixed or origin_fixed)
-    label = f'{mode}-' + ('fixed' if fixed else 'natural')
+    from .latent_profile import evaluation_mode_label
+    display_mode = evaluation_mode_label(learner, mode)
+    label = f'{display_mode}-' + ('fixed' if fixed else 'natural')
     count = min(EVAL_NUM_ENVS, episodes)
     destination = folder/'evaluations'/f'{step:010d}'/label
     destination.mkdir(parents=True, exist_ok=True)
@@ -90,8 +92,8 @@ def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
     for i,p in enumerate(paths): xy[i,:len(p)] = p
     np.savez_compressed(destination/'rollouts.npz', xy=xy, returns=returns,
         goals=goals, lengths=lengths, initial_full_state=starts,
-        env_steps=np.array(step), mode=mode, fixed=fixed)
-    result = dict(step=step, mode=mode, fixed=fixed, episodes=episodes,
+        env_steps=np.array(step), mode=display_mode, fixed=fixed)
+    result = dict(step=step, mode=display_mode, fixed=fixed, episodes=episodes,
         success_rate=float(np.mean(np.array(goals)>0)), mean_return=float(np.mean(returns)),
         goal_counts={str(g):int(np.sum(np.array(goals)==g)) for g in sorted(set(goals))},
         mean_length=float(np.mean(lengths)),
@@ -209,6 +211,7 @@ def main():
     p.add_argument('--dacer-interval-updates',type=int)
     p.add_argument('--discount',type=float)
     p.add_argument('--teacher-std-floor',type=float)
+    p.add_argument('--latent-profile',choices=['fixed64'])
     p.add_argument('--dacer',choices=['on','off'])
     p.add_argument('--budget-steps',type=int)
     p.add_argument('--final-eval-episodes',type=int,default=100)
@@ -245,6 +248,8 @@ def main():
     if a.teacher_std_floor is not None:
         from .teacher_proposal import validate_floor
         validate_floor(a.teacher_std_floor)
+        assert a.method=='optiq' and a.dynamics_profile is None
+    if a.latent_profile is not None:
         assert a.method=='optiq' and a.dynamics_profile is None
     temperature_schedule=None
     if a.temperature_final is not None:
@@ -288,7 +293,7 @@ def main():
             dacer_target_entropy_per_dim=a.dacer_target_entropy_per_dim,
             dacer_enabled=a.dacer!='off',dynamics_profile=a.dynamics_profile,
             dacer_interval_updates=a.dacer_interval_updates,discount=a.discount,
-            teacher_std_floor=a.teacher_std_floor)
+            teacher_std_floor=a.teacher_std_floor,latent_profile=a.latent_profile)
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     learner.eval_fixed_starts = a.eval_starts=='fixed' or (a.eval_starts=='upstream' and a.task!='v1')
@@ -324,6 +329,12 @@ def main():
         runtime=dict(python=os.sys.version,torch=torch.__version__,numpy=np.__version__))
     if a.teacher_std_floor is not None:
         config['teacher_std_floor_override']=a.teacher_std_floor
+    if a.latent_profile is not None:
+        config.update(latent_profile=a.latent_profile,latent_prior='finite',latent_components=64,
+                      latent_codebook_seed=20260911,
+                      latent_sampling='Uniform choice from the same fixed64 codebook at every action; not held per episode',
+                      deterministic_control='component0_mu; NOT zero latent')
+        config['evaluation']=config['evaluation'].replace('OptiQ random-z mu-only', 'OptiQ fixed-codebook uniform-component mu-only')
     if a.dynamics_profile is not None:
         config.update(dynamics_profile=a.dynamics_profile,dynamics_settings=dynamics,
                       reward_multiplier=dynamics['reward_multiplier'],
@@ -340,6 +351,7 @@ def main():
     if a.dacer_interval_updates is not None:temp_name+=f'-Hinterval{a.dacer_interval_updates}'
     if a.discount is not None:temp_name+=f'-gamma{a.discount:g}'
     if a.teacher_std_floor is not None:temp_name+=f'-teacherfloor{a.teacher_std_floor:g}'
+    if a.latent_profile is not None:temp_name+='-'+a.latent_profile
     if a.dacer is not None:temp_name+='-dacer'+a.dacer
     if a.dynamics_profile is not None:temp_name+='-dyn-'+a.dynamics_profile
     run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s0-{budget}steps'
@@ -443,7 +455,8 @@ def main():
         for mode in (['native','policy','zero_z'] if a.method=='optiq' else ['native','policy']):
             for fixed in ((True,) if learner.eval_fixed_starts else (False,) if a.eval_starts=='upstream' else (False,True)):
                 t=time.monotonic()
-                label=mode+('-fixed' if fixed else '-natural')
+                from .latent_profile import evaluation_mode_label
+                label=evaluation_mode_label(learner,mode)+('-fixed' if fixed else '-natural')
                 summaries[label]=evaluate(learner,a.task,folder,step,2 if a.preflight else a.final_eval_episodes,mode,fixed)
                 timing['evaluation']+=time.monotonic()-t
         result=dict(completed=True,source_commit=source,method=a.method,task=a.task,
@@ -458,6 +471,9 @@ def main():
             check=verify_update_summary(learner.model.cfg.alg.actor.proposal_std, info, a.teacher_std_floor)
             result['teacher_std_floor']=check['runtime_cfg_teacher_floor']
             result['teacher_update_verification']=check
+        if a.latent_profile is not None:
+            from .latent_profile import verify_fixed_latent
+            result['latent_profile_verification']=verify_fixed_latent(learner,folder,'final')
         if temperature_schedule is not None:
             result['temperature_schedule']=temperature_schedule
             result['final_temperature']=float(info['train/temperature'])

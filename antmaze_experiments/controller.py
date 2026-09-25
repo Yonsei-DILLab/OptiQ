@@ -54,7 +54,7 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             cmd.extend(['--budget-steps',str(entry['steps'])])
         if 'final_eval_episodes' in entry:
             cmd.extend(['--final-eval-episodes',str(entry['final_eval_episodes'])])
-        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer','dynamics_profile','eval_interval','dacer_interval_updates','discount','teacher_std_floor'):
+        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer','dynamics_profile','eval_interval','dacer_interval_updates','discount','teacher_std_floor','latent_profile'):
             if key in entry:cmd.extend(['--'+key.replace('_','-'),str(entry[key])])
         if entry.get('save_intermediate_policy',False):
             cmd.append('--save-intermediate-policy')
@@ -104,6 +104,14 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             assert config['teacher_std_floor_override']==floor
             assert config['native']['alg']['actor']['proposal_std']==floor
             assert math.isclose(proof['teacher_std_floor'],floor,rel_tol=1e-6)
+        if 'latent_profile' in entry:
+            assert entry['latent_profile']==config['latent_profile']=='fixed64'
+            verification=proof['latent_profile_verification']
+            assert verification['verified'] and verification['latent_components']==64
+            assert verification['latent_codebook_seed']==20260911
+            initial=json.loads((target/'latent-profile-initial-verification.json').read_text())
+            assert initial['verified'] and initial['codebook_sha256']==verification['codebook_sha256']
+            assert 'component0_mu-fixed' in proof['summaries'] and 'zero_z-fixed' not in proof['summaries']
         if 'temperature_schedule' in entry:
             schedule=entry['temperature_schedule']
             assert config['temperature_schedule']==schedule
