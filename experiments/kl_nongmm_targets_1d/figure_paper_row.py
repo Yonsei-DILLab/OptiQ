@@ -7,7 +7,6 @@ from pathlib import Path
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 import numpy as np
 
 from .figure_three import CASES
@@ -28,8 +27,8 @@ def main():
         'axes.spines.top': True, 'axes.spines.right': True,
         'pdf.fonttype': 42, 'svg.fonttype': 'none',
     })
-    fig, axes = plt.subplots(1, 4, figsize=(17.6, 5.2))
-    fig.subplots_adjust(left=.05, right=.995, bottom=.245, top=.78, wspace=.28)
+    fig, axes = plt.subplots(1, 4, figsize=(18.8, 4.0))
+    fig.subplots_adjust(left=.048, right=.995, bottom=.19, top=.84, wspace=.30)
     colors = ['#1f77b4', '#e67e22']
     x = np.linspace(-10, 10, 16385)
     provenance = {'reverse_L': 1024, 'updates': 100000, 'N': 128, 'M': 128,
@@ -71,23 +70,12 @@ def main():
             ax.tick_params(direction='out', length=4, width=.8)
             if method_index == 0:
                 ax.set_ylabel('Density')
-            ax.set_title(f'({"abcd"[2*pair+method_index]}) {method.capitalize()} KL', pad=12)
+            ax.set_title(f'({"abcd"[2*pair+method_index]}) {method.capitalize()} KL, TV={np.mean(tvs):.3f}', pad=12)
             provenance['metrics'][f'{ident}/{method}'] = {'TV_seeds': tvs, 'mean_TV': float(np.mean(tvs))}
-        left = axes[2*pair].get_position().x0
-        right = axes[2*pair+1].get_position().x1
-        fig.text((left+right)/2, .94, ['Three Gaussian modes', 'Spike + ramp'][pair],
-                 ha='center', va='center', fontsize=19)
-    handles = [Line2D([],[],color='black',ls='--',lw=1.45,label='True target'),
-               Line2D([],[],color=colors[0],lw=1.8,label='Forward KL'),
-               Line2D([],[],color=colors[1],lw=1.8,label='Reverse KL')]
-    legend = fig.legend(handles=handles, loc='lower center', bbox_to_anchor=(.5,.008),
-                        ncol=3, frameon=False, fontsize=13, handlelength=2.8,
-                        columnspacing=2.6)
     fig.canvas.draw()
-    # Legend must remain below the full axes area, including x-axis labels.
     renderer = fig.canvas.get_renderer()
-    lb = legend.get_window_extent(renderer)
-    assert all(lb.y1 < ax.get_tightbbox(renderer).y0 for ax in axes)
+    titles = [ax.title.get_window_extent(renderer) for ax in axes]
+    assert all(left.x1 < right.x0 for left, right in zip(titles, titles[1:]))
     for ext in ['png','pdf','svg']:
         fig.savefig(out/f'forward_vs_reverse_1x4.{ext}', dpi=300, bbox_inches='tight', pad_inches=.08)
     plt.close(fig)
@@ -98,7 +86,7 @@ Three Gaussian modes: (a) Forward KL, (b) Reverse KL. Spike + ramp: (c) Forward 
 
 All panels use the completed L=2^10 screening experiment: 100K updates, N=M=128, batch 32, seeds 0–3. Forward has no auxiliary density bank; L applies to Reverse. These are not L=2^20 confirmation results.
 
-Black dashed curves are the exact target. The learned densities are 512-bin sample histograms from 262,144 actions per seed, averaged over four seeds, without smoothing. Light fills show the learned density; thin curves show individual seeds. Vertical scales are independent, as in the preceding figure. Font: DejaVu Sans (sans-serif); all four axes use a boxed frame. The shared legend is outside the axes. Numerical data and target definitions are unchanged.
+Black dashed curves are the exact target. The learned densities are 512-bin sample histograms from 262,144 actions per seed, averaged over four seeds, without smoothing. Light fills show the learned density; thin curves show individual seeds. Vertical scales are independent, as in the preceding figure. Font: DejaVu Sans (sans-serif); all four axes use a boxed frame. Environment headings and legend are omitted; TV in each panel title is the mean of per-seed TV values (not TV of the mean histogram). Numerical data and target definitions are unchanged.
 
 Mean per-seed TV: three Gaussian modes, Forward 0.0387 / Reverse 0.6666; spike + ramp, Forward 0.0432 / Reverse 0.1977. Exact values and source hashes are recorded in PROVENANCE.json. The examples were selected during screening and do not establish universal performance ordering.
 ''')
