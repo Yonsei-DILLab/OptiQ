@@ -17,7 +17,7 @@ from .visualize_4way import GOAL_XY, _goal_proximity, render
 
 
 ORDER = ("optiq", "sac", "sql", "meow", "mfpo", "dipo", "td3")
-LABEL = dict(optiq="OptiQ T=1", sac="SAC", sql="SVGD SQL", meow="MEOW",
+LABEL = dict(optiq="OptiQ", sac="SAC", sql="SVGD SQL", meow="MEOW",
              mfpo="MFPO", dipo="DIPO", td3="TD3")
 COLORS = ("#da492e", "#3487ba", "#269c55", "#9a58ac")
 
@@ -60,7 +60,9 @@ def validate(method: str, folder: Path):
     dominant_x = np.abs(first[:, 0]) >= np.abs(first[:, 1])
     first_direction = np.where(dominant_x, np.where(first[:, 0] >= 0, 0, 1),
                                np.where(first[:, 1] >= 0, 2, 3))
-    item = dict(method=method, label=LABEL[method], source_commit=config["source_commit"],
+    label = (f"OptiQ T={config.get('temperature', config['agent']['alg']['actor']['temperature']):g}"
+             if method == "optiq" else LABEL[method])
+    item = dict(method=method, label=label, source_commit=config["source_commit"],
                 steps=100000, updates=progress["updates"], seed=0,
                 success=summary["success"], goal_counts=counts.tolist(),
                 failures=summary["failure"], first_direction_counts=np.bincount(first_direction, minlength=4).tolist(),
