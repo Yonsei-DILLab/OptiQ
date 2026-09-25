@@ -39,3 +39,10 @@ resolved config, and the source commit. The main plot separates actual
 goal-reaching frequencies from first-action direction masses. One seed and
 10k transitions are exploratory evidence only; entering four directions is
 not equivalent to reaching four goals.
+
+## 20k follow-up
+
+The T=3 duration check is a fresh 20k-transition run with the same seed and
+profile, evaluated at 10k and 20k. The 10k diagnostic only saves policy
+parameters, not optimizer, replay, or RNG state, so it cannot be described as a
+faithful continuation from that checkpoint.

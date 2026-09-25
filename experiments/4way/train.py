@@ -289,7 +289,7 @@ def main():
     env = FourWayEnv()
     env.action_space.seed(args.seed)
     obs, _ = env.reset(seed=args.seed)
-    checkpoints = {0, args.warmup, 2_000, 5_000, args.steps}
+    checkpoints = {0, args.warmup, 2_000, 5_000, 10_000, args.steps}
     checkpoints = sorted(step for step in checkpoints if step <= args.steps)
     history = []
     eval_history = []

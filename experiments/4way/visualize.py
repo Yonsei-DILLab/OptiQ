@@ -42,7 +42,7 @@ def main():
         ax.scatter(*goal, marker="X", s=110, color=COLORS[i], label=f"{name} goal")
         ax.add_patch(plt.Circle(goal, 1.0, fill=False, color=COLORS[i], alpha=.6))
     ax.set(xlim=(-7, 7), ylim=(-7, 7), xlabel="x", ylabel="y",
-           title=f"10k policy rollouts ({len(trajectories)} episodes)")
+           title=f"{final_step:,} policy rollouts ({len(trajectories)} episodes)")
     ax.set_aspect("equal")
     ax.grid(alpha=.2)
     ax.legend(fontsize=8, ncol=2)
@@ -123,7 +123,7 @@ def main():
         report.append(f"| {row['step']} | {row['mode']} | {row['success_rate']:.3f} | "
                       f"{gc[0]} | {gc[1]} | {gc[2]} | {gc[3]} | "
                       f"{row['episodes']-sum(gc)} | {row['mean_return']:.3f} |")
-    report += ["", "One seed and 10k transitions are a short diagnostic, not evidence of asymptotic multimodality.", ""]
+    report += ["", f"One seed and {final_step:,} transitions are a short diagnostic, not evidence of asymptotic multimodality.", ""]
     (args.out / "REPORT.md").write_text("\n".join(report))
     print(png)
 
