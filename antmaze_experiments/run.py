@@ -443,6 +443,7 @@ def main():
                       requested_global_budget=500000)
     write(folder/'config.json',config)
     import wandb
+    logging_project = os.environ.get('OPTIQ_WANDB_PROJECT', WANDB_PROJECT)
     temp_name=f'-T{a.temperature:g}' if a.temperature is not None else ''
     if temperature_schedule is not None:
         temp_name+=f'-to{a.temperature_final:g}-{a.temperature_decay}-{a.temperature_anneal_steps}postwarmup'
@@ -457,13 +458,13 @@ def main():
     if a.dacer is not None:temp_name+='-dacer'+a.dacer
     if a.dynamics_profile is not None:temp_name+='-dyn-'+a.dynamics_profile
     run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s0-{budget}steps'
-    run = wandb.init(entity=WANDB_ENTITY,project=WANDB_PROJECT,group=os.environ.get('OPTIQ_CAMPAIGN',CAMPAIGN),
+    run = wandb.init(entity=WANDB_ENTITY,project=logging_project,group=os.environ.get('OPTIQ_CAMPAIGN',CAMPAIGN),
         name=run_name,dir=str(folder),config=config,
         mode='disabled' if a.preflight else os.environ.get('WANDB_MODE','online'))
     if not a.preflight:
         offline=os.environ.get('WANDB_MODE','online')=='offline'
         write(folder/'wandb.json',dict(id=run.id,url=None if offline else run.url,
-            entity=WANDB_ENTITY,project=WANDB_PROJECT,
+            entity=WANDB_ENTITY,project=logging_project,
             mode='offline' if offline else 'online',sync_pending=offline))
     rng=np.random.default_rng(0);step=0;started=time.monotonic();next_eval=a.eval_interval
     eval_index=1
@@ -524,6 +525,9 @@ def main():
                 from .single_video import record as record_video
                 t=time.monotonic()
                 video=record_video(learner,a.task,folder,step)
+                if not a.preflight:
+                    run.log({'eval/rollout_video': wandb.Video(str(video), format='mp4'),
+                             'eval/video_training_step': step}, step=step)
                 timing['evaluation']+=time.monotonic()-t
                 print(json.dumps(dict(video=str(video),step=step)),flush=True)
                 next_video+=a.video_interval

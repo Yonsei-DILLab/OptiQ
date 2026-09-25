@@ -15,7 +15,8 @@ User also requests videos every5000 total training transitions: full-policy
 native v1 rollout, fixed evaluation seed90500 for paired comparison. Save MP4
 and per-video return/success/trajectory metadata, isolate policy/training RNG.
 Twenty main videos from5k to100k; these rollouts do not enter replay or counts.
-W&B OptiQ/antmaze, group antmaze-v1-single-utd1-100k-20260925.
+W&B OptiQ/jaehun-antmaze, group antmaze-v1-single-utd1-100k-20260925.
+Videos are also uploaded as eval/rollout_video with their training-step label.
 Use free vast1 GPU2 only; do not stop/resume other jobs. Commit frozen source
 before GPU preflight (10000 random transitions plus8 real batch256 updates,
 checkpoint readback and six evaluation episodes), then launch fresh main run

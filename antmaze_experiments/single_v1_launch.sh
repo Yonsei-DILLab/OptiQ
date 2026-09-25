@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 export OPTIQ_CAMPAIGN=antmaze-v1-single-utd1-100k-20260925
+export OPTIQ_WANDB_PROJECT=jaehun-antmaze
 root=/home/heechan/optiq-experiments/antmaze-v1-single-utd1-100k-20260925
 args=(--method optiq --task v1 --temperature 1 --budget-steps 100000
       --reward-profile progress100_euclidean_no_step_no_bonus
