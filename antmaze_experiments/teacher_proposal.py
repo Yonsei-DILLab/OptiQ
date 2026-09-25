@@ -45,7 +45,9 @@ def verify_teacher_floor(learner, folder, expected):
     assert float(actor.get('soft_proximal_ess_fraction', 0.)) == 0.
     assert actor.density_correction and actor.density_beta == 1.
     assert actor.teacher_std_floor == actor.proposal_std == actor.proposal_std_pretanh == expected
-    assert (actor.log_std_min, actor.log_std_max, actor.initial_log_std) == (-5., -1., -1.)
+    from .actor_sigma_profile import settings as sigma_settings
+    sigma = sigma_settings(getattr(learner, 'actor_sigma_profile', None))
+    assert (actor.log_std_min, actor.log_std_max, actor.initial_log_std) == tuple(sigma.values())
     assert (actor.num_policy_samples, actor.proposals_per_policy_sample) == (64, 1)
     means = jnp.asarray([[[-.85], [0.], [.85]]], dtype=jnp.float32)
     logs = jnp.asarray([[[-5.], [-1.], [-2.]]], dtype=jnp.float32)
@@ -69,11 +71,12 @@ def verify_teacher_floor(learner, folder, expected):
     no_floor = ConditionalGaussianProposal(means, logs, 0.)
     np.testing.assert_array_equal(control.sample(key, 4096, 'exact')[0], no_floor.sample(key, 4096, 'exact')[0])
     result = dict(verified=True, teacher_std_floor=expected,
-        actor_log_std_bounds=[-5., -1.], actor_initial_log_std=-1.,
+        actor_log_std_bounds=[sigma['log_std_min'], sigma['log_std_max']],
+        actor_initial_log_std=sigma['initial_log_std'],
         exact_sampling_and_density_scales=True, normalized_density_integral=integral,
         default_floor_identity=True, finite_bounded_samples=True,
         sample_sha256=hashlib.sha256(np.asarray(samples).tobytes()).hexdigest(),
         learner_rng_untouched=True, scratch_rng_seed=41357,
-        scope='Existing teacher-only proposal scale; behavior/evaluation actor sigma unchanged')
+        scope='Existing teacher-only proposal scale; actor bounds are verified separately and recorded above')
     (Path(folder) / 'teacher-proposal-verification.json').write_text(json.dumps(result, indent=2) + '\n')
     return result

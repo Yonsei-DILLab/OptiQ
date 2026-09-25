@@ -212,6 +212,8 @@ def main():
     p.add_argument('--discount',type=float)
     p.add_argument('--teacher-std-floor',type=float)
     p.add_argument('--latent-profile',choices=['fixed64'])
+    from .actor_sigma_profile import PROFILES as ACTOR_SIGMA_PROFILES
+    p.add_argument('--actor-sigma-profile',choices=ACTOR_SIGMA_PROFILES)
     from .collection_profile import PROFILES as COLLECTION_PROFILES, get_profile as collection_settings
     from .collection_profile import expected_updates as collection_updates, aligned_eval_step
     p.add_argument('--collection-profile',choices=COLLECTION_PROFILES)
@@ -260,6 +262,9 @@ def main():
         assert a.method=='optiq' and a.dynamics_profile is None
     if a.latent_profile is not None:
         assert a.method=='optiq' and a.dynamics_profile is None
+    if a.actor_sigma_profile is not None:
+        assert a.method=='optiq' and a.dynamics_profile is None
+        assert a.latent_profile is None and a.collection_profile is None
     temperature_schedule=None
     if a.temperature_final is not None:
         assert a.method=='optiq' and a.temperature is not None
@@ -303,7 +308,7 @@ def main():
             dacer_enabled=a.dacer!='off',dynamics_profile=a.dynamics_profile,
             dacer_interval_updates=a.dacer_interval_updates,discount=a.discount,
             teacher_std_floor=a.teacher_std_floor,latent_profile=a.latent_profile,
-            collection_profile=a.collection_profile)
+            collection_profile=a.collection_profile,actor_sigma_profile=a.actor_sigma_profile)
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     learner.eval_fixed_starts = a.eval_starts=='fixed' or (a.eval_starts=='upstream' and a.task!='v1')
@@ -339,6 +344,8 @@ def main():
         runtime=dict(python=os.sys.version,torch=torch.__version__,numpy=np.__version__))
     if a.teacher_std_floor is not None:
         config['teacher_std_floor_override']=a.teacher_std_floor
+    if a.actor_sigma_profile is not None:
+        config['actor_sigma_profile']=a.actor_sigma_profile
     if a.collection_profile is not None:
         config.update(collection_profile=a.collection_profile,
                       eval_transition_quantum=NUM_ENVS,
@@ -375,6 +382,7 @@ def main():
     if a.teacher_std_floor is not None:temp_name+=f'-teacherfloor{a.teacher_std_floor:g}'
     if a.latent_profile is not None:temp_name+='-'+a.latent_profile
     if a.collection_profile is not None:temp_name+='-'+a.collection_profile
+    if a.actor_sigma_profile is not None:temp_name+='-'+a.actor_sigma_profile
     if a.dacer is not None:temp_name+='-dacer'+a.dacer
     if a.dynamics_profile is not None:temp_name+='-dyn-'+a.dynamics_profile
     run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s0-{budget}steps'
@@ -512,6 +520,9 @@ def main():
         if a.latent_profile is not None:
             from .latent_profile import verify_fixed_latent
             result['latent_profile_verification']=verify_fixed_latent(learner,folder,'final')
+        if a.actor_sigma_profile is not None:
+            from .actor_sigma_profile import verify as verify_actor_sigma
+            result['actor_sigma_verification']=verify_actor_sigma(learner,folder,'final')
         if temperature_schedule is not None:
             result['temperature_schedule']=temperature_schedule
             result['final_temperature']=float(info['train/temperature'])

@@ -134,7 +134,7 @@ class JaxLearner:
                  reward_profile='sparse',noveld=True,temperature_schedule=None,
                  dacer_target_entropy_per_dim=None,dacer_enabled=True,dynamics_profile=None,
                  dacer_interval_updates=None,discount=None,teacher_std_floor=None,latent_profile=None,
-                 collection_profile=None):
+                 collection_profile=None,actor_sigma_profile=None):
         import jax
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
@@ -142,6 +142,11 @@ class JaxLearner:
         self.reward_profile,self.noveld_enabled = reward_profile,noveld
         self.dynamics_profile = dynamics_profile
         self.latent_profile = latent_profile
+        self.actor_sigma_profile = actor_sigma_profile
+        if actor_sigma_profile is not None:
+            from .actor_sigma_profile import settings as sigma_settings
+            sigma_settings(actor_sigma_profile)
+            assert method == 'optiq' and latent_profile is None
         from .collection_profile import get_profile
         self.updates_per_collection = get_profile(collection_profile)['updates_per_vector_step']
         if collection_profile is not None:
@@ -202,6 +207,9 @@ class JaxLearner:
             cfg.alg.critic.hs = [256, 256, 256]
             cfg.alg.optimizer.lr_actor = float(upstream_lr.actor_lr)
             cfg.alg.optimizer.lr_critic = float(upstream_lr.critic_lr)
+            if actor_sigma_profile is not None:
+                for name, value in sigma_settings(actor_sigma_profile).items():
+                    cfg.alg.actor[name] = value
             if discount is not None:
                 assert np.isfinite(discount) and 0 < discount < 1
                 cfg.alg.gamma = float(discount)
@@ -234,6 +242,9 @@ class JaxLearner:
             self.config = OmegaConf.to_container(cfg, resolve=True)
             from .optiq_profile import verify_profile
             verify_profile(self, folder)
+            if actor_sigma_profile is not None:
+                from .actor_sigma_profile import verify as verify_actor_sigma
+                verify_actor_sigma(self, folder, 'initial')
             if teacher_std_floor is not None:
                 from .teacher_proposal import verify_teacher_floor
                 verify_teacher_floor(self, folder, teacher_std_floor)

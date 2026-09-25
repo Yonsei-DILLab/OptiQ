@@ -450,3 +450,16 @@ the old256-env rounded steps exactly. Real eight-update GPU preflights, actual
 fixed64 runs on199; use free180 slots, no4090/cancelled resumes/extra seeds or
 automatic retry/extension. Commit/push/share/freeze first. See
 antmaze_experiments/ENV32_SCREEN_PROTOCOL.md.
+
+Active-goal actor-sigma ablation (2026-09-25): test v3/v4 seed0 x conditional
+log_std cap/initial {-2,-3}, lower-5,250k screens on free199GPU slots. This is an
+explicit experiment-only exception; default[-5,-1]/initial-1 is unchanged.
+Keep original256env/8updates, O/P teacher-floor controls and all other settings,
+including random latent, broad teacher proposals and actual conditional-noise
+direct evaluation. Cap and initialization change together. Preserve all nine
+pinned computational files, upstream environment/reward/physics, existing
+env32 final evaluations and frozen/stopped results. Real8update preflight,
+sampler/serialization/model-RNG checks, exact initial critic and actor hash
+after scratch sigma-bias restoration are required. Commit/push/share/freeze
+before launch. No4090/cancelled resumes/extra seeds/automatic extension/retry.
+See antmaze_experiments/ACTOR_SIGMA_SCREEN_PROTOCOL.md.

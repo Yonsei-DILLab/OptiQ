@@ -54,7 +54,7 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             cmd.extend(['--budget-steps',str(entry['steps'])])
         if 'final_eval_episodes' in entry:
             cmd.extend(['--final-eval-episodes',str(entry['final_eval_episodes'])])
-        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer','dynamics_profile','eval_interval','dacer_interval_updates','discount','teacher_std_floor','latent_profile','collection_profile'):
+        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer','dynamics_profile','eval_interval','dacer_interval_updates','discount','teacher_std_floor','latent_profile','collection_profile','actor_sigma_profile'):
             if key in entry:cmd.extend(['--'+key.replace('_','-'),str(entry[key])])
         if entry.get('save_intermediate_policy',False):
             cmd.append('--save-intermediate-policy')
@@ -109,7 +109,19 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
         if 'temperature' in entry:
             actor=config['native']['alg']['actor']
             assert actor['temperature']==entry['temperature']
-            assert (actor['log_std_min'],actor['log_std_max'],actor['initial_log_std'])==(-5.,-1.,-1.)
+            from .actor_sigma_profile import settings as sigma_settings
+            sigma=sigma_settings(entry.get('actor_sigma_profile'))
+            assert (actor['log_std_min'],actor['log_std_max'],actor['initial_log_std'])==tuple(sigma.values())
+        if 'actor_sigma_profile' in entry:
+            verification=proof['actor_sigma_verification']
+            initial=json.loads((target/'actor-sigma-initial-verification.json').read_text())
+            assert initial['verified'] and verification['verified']
+            assert initial['profile']==verification['profile']==config['actor_sigma_profile']==entry['actor_sigma_profile']
+            assert initial['actor_updates']==initial['critic_updates']==0
+            assert verification['actor_updates']==verification['critic_updates']==proof['updates']
+            control=manifest['initial_parameter_control']
+            assert initial['parameters']['critic']==control['critic']
+            assert initial['control_actor_after_restoring_only_initial_sigma_bias']==control['actor']
         if 'discount' in entry:
             assert config['discount']==config['native']['alg']['gamma']==proof['discount']==entry['discount']
         if 'teacher_std_floor' in entry:
