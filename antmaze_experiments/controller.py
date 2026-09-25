@@ -93,7 +93,10 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
         if 'reward_specification' in entry:
             assert config['reward_profile']==entry['reward_profile']
             assert config['reward_specification']==entry['reward_specification']
-            assert proof['checkpoint']['progress_replay_verified']
+            if entry['reward_profile']=='dense':
+                assert proof['checkpoint']['dense_replay_verified']
+            else:
+                assert proof['checkpoint']['progress_replay_verified']
         assert config['noveld_enabled']==(entry.get('noveld','on')=='on')
         assert config['eval_starts']==entry.get('eval_starts','upstream')
         assert config['train_starts']==entry.get('train_starts','upstream')
@@ -109,6 +112,17 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             assert min(starts['initial_xy_peak_to_peak'])>1.
             natural=proof['summaries']['native-natural']
             assert natural['episodes']>=2 and not natural['identical_initial_full_state']
+        if entry.get('train_starts')=='fixed':
+            assert config['fixed_full_state_start'] and not config['random_init']
+            starts=json.loads((target/'train-starts-verification.json').read_text())
+            assert starts['verified'] and starts['profile']=='fixed-full-state'
+            assert starts['observed_envs']==collection['num_envs']
+            assert starts['identical_initial_full_state'] and starts['goal_count']==2
+            for summary_path in target.glob('evaluations/*/*/summary.json'):
+                summary=json.loads(summary_path.read_text())
+                assert summary['fixed'] and summary['identical_initial_full_state']
+                assert sum(summary['route_counts'].values())==summary['episodes']
+                assert abs(sum(summary['route_proportions'].values())-1.)<1e-9
         assert proof['rnd_updates']==(proof['updates'] if config['noveld_enabled'] else 0)
         assert config['interim_eval_episodes']==entry.get('interim_eval_episodes',20)
         if 'optiq_profile' in entry:
@@ -258,6 +272,8 @@ def controller(root):
     assert subprocess.check_output(['git','rev-parse','HEAD'],cwd=source,text=True).strip()==manifest['source_commit']
     verify_dependencies(source, {entry['method'] for entry in manifest['jobs']})
     pending=list(manifest['jobs']);live={};completed=[];failed=[]
+    eligible_gpus=[int(gpu) for gpu in manifest.get('eligible_gpus',range(4))]
+    assert eligible_gpus and all(0<=gpu<4 for gpu in eligible_gpus)
     for directory in ('jobs','logs','preflight','runs'): (root/directory).mkdir(exist_ok=True)
     if (root/'status.json').exists():raise RuntimeError('Existing controller state: do not restart automatically')
     while pending or live:
@@ -272,7 +288,7 @@ def controller(root):
         priority_ready=priority_queue_ready(manifest)
         reserved=priority_reserved_gpus(manifest)
         if not failed and priority_ready:
-            for gpu in range(4):
+            for gpu in eligible_gpus:
                 if gpu in live or gpu in reserved or not pending:continue
                 lock_path=Path(f'/home/heechan/OptiQ-ops/locks/gpu-{gpu}.lock')
                 with lock_path.open('a') as probe:

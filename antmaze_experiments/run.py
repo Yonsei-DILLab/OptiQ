@@ -34,6 +34,43 @@ def numeric_metrics(value, prefix):
     return result
 
 
+def route_summary(task, paths, successes):
+    """Count mutually exclusive maze-side labels for fixed-start rollouts."""
+    from collections import Counter
+    from .critic_diagnostics import route_label
+    labels = [route_label(task, path)[0] for path in paths]
+    if task == 'v3':
+        categories = ('left', 'right', 'both', 'uncommitted')
+    elif task == 'v4':
+        categories = ('upper', 'lower', 'uncommitted')
+    else:
+        raise ValueError(f'Route proportions are only defined for v3/v4, got {task}')
+    counts = Counter(labels)
+    route_counts = {name: int(counts.get(name, 0)) for name in categories}
+    total = len(labels)
+    route_proportions = {name: (count / total if total else 0.)
+                         for name, count in route_counts.items()}
+    route_success_counts = {name: int(sum(1 for label, success in zip(labels, successes)
+                                         if label == name and success))
+                            for name in categories}
+    return dict(route_counts=route_counts, route_proportions=route_proportions,
+                route_success_counts=route_success_counts,
+                route_definition=('entered x<-8 or x>8 gate(s); both if both sides entered'
+                                  if task == 'v3' else 'first x=-4 crossing: upper y>2, lower y<-2'))
+
+
+def dense_reward_specification(task):
+    """Describe the existing dense reward over the maze's fixed goal set."""
+    from .progress_reward import maze_geometry
+    goals = maze_geometry(task)[1]
+    return dict(formula='r_t = -min_g ||p_{t+1} - g||_2',
+                distance='nearest-goal Euclidean',
+                goals=goals.tolist(), goal_count=int(len(goals)),
+                goal_set='fixed maze goal coordinates; no random goal selection',
+                step_penalty=0., success_bonus=0., noveld_separate=False,
+                success_termination='unchanged upstream behavior')
+
+
 def select_execution_defaults(args):
     """Fill omitted CLI settings without changing explicit experiment overrides."""
     if args.method == 'optiq':
@@ -119,10 +156,14 @@ def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
     if fixed: assert result['identical_initial_full_state']
     if origin_fixed:
         np.testing.assert_array_equal(np.asarray(starts)[:, :2], np.zeros((episodes, 2)))
+    if task in ('v3', 'v4'):
+        result.update(route_summary(task, paths, goals))
     result['original_origin_fixed'] = origin_fixed
     result['reward_profile']=learner.reward_profile
     if learner.reward_profile in PROFILES:
         result['reward_specification']=specification(task,learner.reward_profile)
+    elif learner.reward_profile == 'dense':
+        result['reward_specification']=dense_reward_specification(task)
     if recorder is not None:
         from .dynamics_profiles import get_profile
         result['critic_diagnostics'] = recorder.save(learner, task, destination, step, mode,
@@ -219,7 +260,7 @@ def main():
     p.add_argument('--preflight',action='store_true')
     p.add_argument('--temperature',type=float)
     p.add_argument('--optiq-config-profile',choices=['basic','legacy'],default='basic')
-    p.add_argument('--nm',type=int,choices=[128,256])
+    p.add_argument('--nm',type=int,choices=[64,128,256])
     p.add_argument('--temperature-final',type=float)
     p.add_argument('--temperature-anneal-steps',type=int,default=1000000)
     p.add_argument('--temperature-decay',choices=['linear','log_linear'],default='linear')
@@ -244,7 +285,7 @@ def main():
     p.add_argument('--reward-profile',choices=REWARD_PROFILES,default='sparse')
     p.add_argument('--noveld',choices=['on','off'])
     p.add_argument('--eval-starts',choices=['upstream','random','fixed'],default='upstream')
-    p.add_argument('--train-starts',choices=['upstream','random'],default='upstream')
+    p.add_argument('--train-starts',choices=['upstream','random','fixed'],default='upstream')
     a = select_execution_defaults(p.parse_args())
     collection = collection_settings(a.collection_profile)
     num_envs = collection['num_envs']
@@ -298,6 +339,9 @@ def main():
     assert 1 <= a.interim_eval_episodes <= 1000
     if a.train_starts == 'random':
         assert a.eval_starts == 'random', 'Random training starts require matching random primary evaluation'
+    if a.train_starts == 'fixed':
+        assert a.task in ('v2','v3','v4'), 'Explicit fixed full-state starts are for fixed-start mazes'
+        assert a.eval_starts in ('upstream','fixed'), 'Fixed training starts require fixed-start evaluation'
     if a.save_intermediate_policy:
         assert a.method == 'optiq', 'Intermediate policy saving is currently OptiQ-only'
     root = Path(__file__).resolve().parents[1]
@@ -310,9 +354,10 @@ def main():
     os.sched_setaffinity(0,cpus[gpu::4] or cpus)
     # Fork workers before importing torch/JAX or initializing a GPU context.
     from .envs import vector, transition
-    train_random_init = a.train_starts == 'random' or a.task == 'v1'
+    train_random_init = a.train_starts == 'random' or (a.train_starts == 'upstream' and a.task == 'v1')
+    train_fixed_start = a.train_starts == 'fixed'
     env = vector(a.task,num_envs,seed=0,reward_profile=a.reward_profile,
-                 random_init=train_random_init)
+                 fixed=train_fixed_start, random_init=train_random_init)
     obs = env.reset()
     if a.train_starts == 'random':
         xy_initial = np.asarray(obs[:, :2], np.float64)
@@ -326,6 +371,45 @@ def main():
             initial_xy_max=xy_initial.max(axis=0).tolist(),
             initial_xy_peak_to_peak=np.ptp(xy_initial,axis=0).tolist(),
             expected_xy_range=[-2.,2.]))
+    elif train_fixed_start:
+        states = env.call('state')
+        reference = states[0]
+        assert all(np.array_equal(state['qpos'], reference['qpos']) and
+                   np.array_equal(state['qvel'], reference['qvel']) and
+                   state['time'] == reference['time'] for state in states), \
+            'Vector workers do not share the same fixed initial full state'
+        np.testing.assert_allclose(reference['qpos'][:2], np.zeros(2), atol=1e-7)
+        first_observation = np.asarray(obs).copy()
+        repeated_observation = env.reset()
+        repeated_states = env.call('state')
+        assert np.array_equal(first_observation, repeated_observation), \
+            'Fixed-start reset changed the vector observation'
+        assert all(np.array_equal(state['qpos'], reference['qpos']) and
+                   np.array_equal(state['qvel'], reference['qvel']) and
+                   state['time'] == reference['time'] for state in repeated_states), \
+            'A repeated reset changed a worker full state'
+        obs = repeated_observation
+        from .envs import make_one
+        probe = make_one(a.task, 0, fixed=True, reward_profile=a.reward_profile,
+                         random_init=False)
+        try:
+            probe.reset()
+            goals = np.asarray(probe.physics_env.target_goal, np.float64).reshape(-1, 2)
+            reward_spec = dense_reward_specification(a.task)
+            expected_goals = np.asarray(reward_spec['goals'], np.float64)
+            np.testing.assert_array_equal(goals, expected_goals)
+            initial_digest = hashlib.sha256(
+                np.asarray(reference['qpos'], np.float64).tobytes() +
+                np.asarray(reference['qvel'], np.float64).tobytes()).hexdigest()
+            write(folder/'train-starts-verification.json',dict(
+                verified=True, profile='fixed-full-state', upstream_random_init=False,
+                observed_envs=num_envs, identical_initial_full_state=True,
+                initial_xy=reference['qpos'][:2].tolist(),
+                initial_full_state_sha256=initial_digest,
+                goal_coordinates=goals.tolist(), goal_count=int(len(goals)),
+                reward='negative Euclidean distance to nearest fixed goal'))
+        finally:
+            probe.close()
     import torch
     torch.set_num_threads(1);torch.manual_seed(0)
     random.seed(0);np.random.seed(0)
@@ -359,7 +443,8 @@ def main():
         expected_updates=collection_updates(budget,a.collection_profile),warmup_transitions=warmup,
         upstream_max_step=BUDGETS[a.task],native_global_steps=budget-warmup,
         reward=reward_description(a.reward_profile),
-        reward_specification=specification(a.task,a.reward_profile),
+        reward_specification=(specification(a.task,a.reward_profile) if a.reward_profile in PROFILES
+                              else dense_reward_specification(a.task) if a.reward_profile == 'dense' else None),
         reward_profile=a.reward_profile,noveld_enabled=a.noveld=='on',
         optiq_config_profile=a.optiq_config_profile if a.method=='optiq' else None,
         nm=a.nm if a.method=='optiq' else None,
@@ -373,7 +458,8 @@ def main():
         dacer_interval_updates=int(learner.model.regulator_cfg.interval_updates) if a.method=='optiq' else None,
         dacer_enabled=bool(learner.model.regulator_enabled) if a.method=='optiq' else None,
         native=learner.config,train_starts=a.train_starts,
-        random_init=train_random_init,eval_interval=a.eval_interval,
+        random_init=train_random_init,fixed_full_state_start=train_fixed_start,
+        eval_interval=a.eval_interval,
         eval_num_envs=EVAL_NUM_ENVS,interim_eval_episodes=a.interim_eval_episodes,
         final_eval_episodes=a.final_eval_episodes,
         save_intermediate_policy=a.save_intermediate_policy,
@@ -522,8 +608,17 @@ def main():
                 t=time.monotonic()
                 for mode in ('native','policy'):
                     s=evaluate(learner,a.task,folder,step,a.interim_eval_episodes,mode)
-                    run.log({f'eval/{mode}/success_rate':s['success_rate'],
-                             f'eval/{mode}/return':s['mean_return']},step=step)
+                    evaluation_log={f'eval/{mode}/success_rate':s['success_rate'],
+                                    f'eval/{mode}/return':s['mean_return']}
+                    for route,count in s.get('route_counts',{}).items():
+                        evaluation_log[f'eval/{mode}/route_count/{route}']=count
+                    for route,proportion in s.get('route_proportions',{}).items():
+                        evaluation_log[f'eval/{mode}/route_proportion/{route}']=proportion
+                    for route,count in s.get('route_success_counts',{}).items():
+                        evaluation_log[f'eval/{mode}/route_success_count/{route}']=count
+                    run.log(evaluation_log,step=step)
+                    print(json.dumps(dict(event='intermediate-evaluation', **s),
+                                     allow_nan=False),flush=True)
                     if 'critic_diagnostics' in s:
                         run.log(numeric_metrics(s['critic_diagnostics'],'diagnostic/policy'),step=step)
                 timing['evaluation']+=time.monotonic()-t
