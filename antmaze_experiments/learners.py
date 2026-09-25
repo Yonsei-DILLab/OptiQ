@@ -134,7 +134,7 @@ class JaxLearner:
                  reward_profile='sparse',noveld=False,temperature_schedule=None,
                  dacer_target_entropy_per_dim=None,dacer_enabled=False,dynamics_profile=None,
                  dacer_interval_updates=None,discount=None,teacher_std_floor=None,latent_profile=None,
-                 collection_profile=None,actor_sigma_profile=None,optiq_config_profile='basic'):
+                 collection_profile=None,actor_sigma_profile=None,optiq_config_profile='basic',nm=None):
         import jax
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
@@ -145,6 +145,10 @@ class JaxLearner:
         self.actor_sigma_profile = actor_sigma_profile
         assert optiq_config_profile in ('basic', 'legacy')
         self.optiq_config_profile = optiq_config_profile
+        assert nm in (None, 128, 256)
+        if nm is not None:
+            assert method == 'optiq' and latent_profile is None
+        self.nm = nm
         if actor_sigma_profile is not None:
             from .actor_sigma_profile import settings as sigma_settings
             sigma_settings(actor_sigma_profile)
@@ -180,6 +184,10 @@ class JaxLearner:
                 temperature = 1.0
             if temperature is not None:
                 overrides.append(f'alg.actor.temperature={temperature}')
+            if nm is not None:
+                overrides.extend((f'alg.actor.num_policy_samples={nm}',
+                                  f'experiment.components={nm}',
+                                  f'experiment.candidates={nm}'))
             if teacher_std_floor is not None:
                 from .teacher_proposal import validate_floor
                 overrides.append(f'alg.actor.teacher_std_floor={validate_floor(teacher_std_floor)}')
@@ -203,7 +211,10 @@ class JaxLearner:
                 overrides.append('++alg.actor.temperature_schedule={enabled:true,'
                     f'final_temperature:{schedule["final_temperature"]},'
                     f'anneal_steps:{schedule["anneal_steps"]},decay:{schedule["decay"]}'+'}')
-            cfg = module.compose_config(overrides)
+            cfg = module.compose_config(overrides, allowed_policy_samples=nm or 64)
+            assert cfg.alg.actor.num_policy_samples == (nm or 64)
+            assert cfg.alg.actor.proposals_per_policy_sample == 1
+            assert cfg.alg.actor.num_policy_samples * cfg.alg.actor.proposals_per_policy_sample == (nm or 64)
             if teacher_std_floor is not None:
                 cfg.experiment.teacher_extra_floor = True
             # Older AntMaze campaigns used a deeper DDiffPG-matched model.

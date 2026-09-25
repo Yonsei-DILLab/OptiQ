@@ -43,6 +43,8 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
              '--method',entry['method'],'--task',entry['task'],'--output',str(target)]
         if 'temperature' in entry:
             cmd.extend(['--temperature',str(entry['temperature'])])
+        if 'nm' in entry:
+            cmd.extend(['--nm',str(entry['nm'])])
         if 'dacer_target_entropy_per_dim' in entry:
             cmd.extend(['--dacer-target-entropy-per-dim',str(entry['dacer_target_entropy_per_dim'])])
         if 'temperature_schedule' in entry:
@@ -113,6 +115,19 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             from .actor_sigma_profile import settings as sigma_settings
             sigma=sigma_settings(entry.get('actor_sigma_profile'))
             assert (actor['log_std_min'],actor['log_std_max'],actor['initial_log_std'])==tuple(sigma.values())
+        if 'nm' in entry:
+            n = entry['nm']
+            actor = config['native']['alg']['actor']
+            assert (actor['num_policy_samples'], actor['proposals_per_policy_sample']) == (n, 1)
+            assert (config['nm'], config['native']['experiment']['components'],
+                    config['native']['experiment']['candidates']) == (n, n, n)
+            initial = json.loads((target/'nm-initial-verification.json').read_text())
+            final = proof['nm_verification']
+            assert initial['verified'] and final['verified']
+            assert all(item['num_policy_samples'] == item['teacher_candidates'] == n and
+                       item['proposals_per_policy_sample'] == 1 for item in (initial, final))
+            assert initial['actor_updates'] == initial['critic_updates'] == 0
+            assert final['actor_updates'] == final['critic_updates'] == proof['updates']
         if 'actor_sigma_profile' in entry:
             verification=proof['actor_sigma_verification']
             initial=json.loads((target/'actor-sigma-initial-verification.json').read_text())
@@ -189,7 +204,12 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
         if entry.get('save_intermediate_policy',False):
             assert config['save_intermediate_policy']
             snapshots=sorted((target/'policy-checkpoints').glob('*/verification.json'))
-            expected_count=1 if phase=='preflight' else (expected-1)//entry.get('eval_interval',250000)
+            if phase=='preflight':
+                expected_count=1
+            elif 'collection_profile' in entry:
+                expected_count=len(proof['collection_profile_verification']['expected_eval_steps'])
+            else:
+                expected_count=(expected-1)//entry.get('eval_interval',250000)
             assert len(snapshots)==expected_count,(len(snapshots),expected_count)
             for saved in snapshots:
                 verification=json.loads(saved.read_text())

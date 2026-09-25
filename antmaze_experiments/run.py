@@ -219,6 +219,7 @@ def main():
     p.add_argument('--preflight',action='store_true')
     p.add_argument('--temperature',type=float)
     p.add_argument('--optiq-config-profile',choices=['basic','legacy'],default='basic')
+    p.add_argument('--nm',type=int,choices=[128,256])
     p.add_argument('--temperature-final',type=float)
     p.add_argument('--temperature-anneal-steps',type=int,default=1000000)
     p.add_argument('--temperature-decay',choices=['linear','log_linear'],default='linear')
@@ -262,6 +263,8 @@ def main():
         p.error("Progress profiles require --noveld off; intrinsic reward is a separate ablation")
     if a.temperature is not None:
         assert a.method == 'optiq' and a.temperature > 0
+    if a.nm is not None:
+        assert a.method == 'optiq' and a.latent_profile is None
     if a.dacer_target_entropy_per_dim is not None:
         assert a.method=='optiq' and np.isfinite(a.dacer_target_entropy_per_dim)
         assert a.dacer!='off', 'A DACER target cannot be set while DACER is off'
@@ -324,7 +327,7 @@ def main():
             dacer_interval_updates=a.dacer_interval_updates,discount=a.discount,
             teacher_std_floor=a.teacher_std_floor,latent_profile=a.latent_profile,
             collection_profile=a.collection_profile,actor_sigma_profile=a.actor_sigma_profile,
-            optiq_config_profile=a.optiq_config_profile)
+            optiq_config_profile=a.optiq_config_profile,nm=a.nm)
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     learner.eval_fixed_starts = a.eval_starts=='fixed' or (a.eval_starts=='upstream' and a.task!='v1')
@@ -342,6 +345,7 @@ def main():
         reward_specification=specification(a.task,a.reward_profile),
         reward_profile=a.reward_profile,noveld_enabled=a.noveld=='on',
         optiq_config_profile=a.optiq_config_profile if a.method=='optiq' else None,
+        nm=a.nm if a.method=='optiq' else None,
         eval_starts=a.eval_starts,effective_eval_starts='fixed' if learner.eval_fixed_starts else 'random',
         primary_trajectory='policy-fixed' if learner.eval_fixed_starts else 'policy-natural',
         noveld_coefficient=.01 if a.noveld=='on' else 0.,temperature=a.temperature,
@@ -362,6 +366,15 @@ def main():
         runtime=dict(python=os.sys.version,torch=torch.__version__,numpy=np.__version__))
     if a.teacher_std_floor is not None:
         config['teacher_std_floor_override']=a.teacher_std_floor
+    if a.nm is not None:
+        actor = learner.model.cfg.alg.actor
+        assert (int(actor.num_policy_samples), int(actor.proposals_per_policy_sample)) == (a.nm, 1)
+        verification = dict(verified=True, num_policy_samples=a.nm,
+                            proposals_per_policy_sample=1, teacher_candidates=a.nm,
+                            actor_updates=int(learner.model.policy.actor_state.step),
+                            critic_updates=int(learner.model.policy.qf_state.step))
+        assert verification['actor_updates'] == verification['critic_updates'] == 0
+        write(folder/'nm-initial-verification.json', verification)
     if a.actor_sigma_profile is not None:
         config['actor_sigma_profile']=a.actor_sigma_profile
         upper=learner.config['alg']['actor']['log_std_max']
@@ -531,11 +544,20 @@ def main():
                 actual_transitions=step,updates_per_transition=updates_per_collection/num_envs,
                 global_steps=step-warmup,env_steps_each=step//num_envs,
                 expected_eval_steps=[aligned_eval_step(i,a.eval_interval)
-                    for i in range(1,(step-1)//a.eval_interval+1)])
+                    for i in range(1,(step-1)//a.eval_interval+1)
+                    if aligned_eval_step(i,a.eval_interval)<step])
             write(folder/'collection-profile-final-verification.json',result['collection_profile_verification'])
         if a.discount is not None:
             assert float(learner.model.gamma)==a.discount
             result['discount']=float(learner.model.gamma)
+        if a.nm is not None:
+            actor = learner.model.cfg.alg.actor
+            assert (int(actor.num_policy_samples), int(actor.proposals_per_policy_sample)) == (a.nm, 1)
+            result['nm_verification'] = dict(verified=True, num_policy_samples=a.nm,
+                proposals_per_policy_sample=1, teacher_candidates=a.nm,
+                actor_updates=int(learner.model.policy.actor_state.step),
+                critic_updates=int(learner.model.policy.qf_state.step))
+            assert result['nm_verification']['actor_updates'] == result['nm_verification']['critic_updates'] == learner.updates
         if a.teacher_std_floor is not None:
             from .teacher_proposal import verify_update_summary
             actor_cfg=learner.model.cfg.alg.actor

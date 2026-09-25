@@ -512,3 +512,13 @@ frozen sources/results are unchanged. No new training is approved by this reset.
 See antmaze_experiments/DEFAULT_RESET_AUDIT_20260925.md for the exact default,
 adapter differences, environment and evaluation audit. Do not use vast1/4090
 for AntMaze; it remains reserved for GMM40.
+
+Latest user override (2026-09-25): the RTX4090x4 server `vast1` is now
+available for the requested AntMaze experiments. Stop its existing GPU learners
+and NM workers, preserving all source/results, and do not auto-resume them.
+Use it together with the two RTX5090 hosts for the explicitly requested
+v3/v4 seed0 N=M128/256, T1, `100*(d_current-d_next)` Euclidean reward,
+1M total-transition campaign. The prior GMM40-only host reservation and
+historical N=M64 restriction do not apply to this explicit experiment.
+Keep the current T3 v3/v4 5090 learners intact. Follow
+antmaze_experiments/HOST_POLICY.md and UTD256_NM_PROTOCOL.md.

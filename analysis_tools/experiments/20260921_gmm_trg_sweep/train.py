@@ -31,7 +31,8 @@ REGULATOR = dict(enabled=False, target_entropy_per_dim=-0.9, initial_alpha=0.27,
                  alpha_lr=0.03, interval_updates=10000, components=3, samples=200,
                  noise_scale=0.1, entropy_seed=42, behavior_only=True)
 
-def compose_config(overrides=()):
+def compose_config(overrides=(), allowed_policy_samples=64):
+    assert allowed_policy_samples in (64, 128, 256)
     extra = ['wandb.project=gmm-trg', 'wandb.job_type=gmm-trg-sweep',
              'run_name=${task}-gmm-trg-T${alg.actor.temperature}-b${alg.actor.density_beta}-s${seed}',
              'wandb.group=${env_name}_T${alg.actor.temperature}_b${alg.actor.density_beta}',
@@ -40,7 +41,7 @@ def compose_config(overrides=()):
         cfg = compose(config_name='mujoco_v5', overrides=base.OVERRIDES + extra + list(overrides))
     runner.validate_config(cfg)
     a = cfg.alg.actor
-    assert a.distillation_loss == 'direct_gmm_nll' and a.num_policy_samples == 64
+    assert a.distillation_loss == 'direct_gmm_nll' and a.num_policy_samples == allowed_policy_samples
     assert a.proposals_per_policy_sample == 1 and a.proposal_sampling_mode == 'exact'
     assert a.log_std_min == -5 and a.log_std_max == -1 and a.initial_log_std == -1
     assert a.temperature > 0 and a.density_beta in (0.5, 0.9, 1.0)
