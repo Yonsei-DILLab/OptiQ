@@ -1,0 +1,106 @@
+"""Queue four reward-only AntMaze comparisons behind the running UTD=1 control."""
+import argparse
+import copy
+import json
+from pathlib import Path
+import subprocess
+import time
+
+from .progress_reward import (
+    EUCLIDEAN_SCALE10_PROFILE,
+    EUCLIDEAN_SCALE100_COST01_PROFILE,
+    EUCLIDEAN_SCALE10_COST01_PROFILE,
+    specification,
+)
+from .register_utd256 import HOSTS, campaign_manifest as control_manifest
+
+
+CAMPAIGN = 'antmaze-optiq-utd1-reward-grid-v1234-s0-20260925'
+PREDECESSOR = 'antmaze-optiq-utd1-basic-euclidean-v1234-s0-20260925'
+REWARDS = (
+    ('progress10', EUCLIDEAN_SCALE10_PROFILE),
+    ('progress100_cost01', EUCLIDEAN_SCALE100_COST01_PROFILE),
+    ('progress10_cost01', EUCLIDEAN_SCALE10_COST01_PROFILE),
+    ('negative_distance', 'dense'),
+)
+
+
+def campaign_manifest(source, sha, shard):
+    base = control_manifest(source, sha, shard, 'basic_euclidean')
+    original_jobs = base.pop('jobs')
+    jobs = []
+    for label, reward in REWARDS:
+        for original in original_jobs:
+            entry = copy.deepcopy(original)
+            entry['id'] = f"{entry['task']}-optiq-utd1-{label}-s0"
+            entry['reward_profile'] = reward
+            entry.pop('reward_specification', None)
+            if reward != 'dense':
+                entry['reward_specification'] = specification(entry['task'], reward)
+            jobs.append(entry)
+    base.update(campaign=CAMPAIGN, jobs=jobs, condition='reward_grid',
+                comparison='Reward-only variants of the running basic_euclidean UTD=1 control',
+                protocol='antmaze_experiments/UTD256_REWARD_GRID_PROTOCOL.md',
+                reward_profiles={label: reward for label, reward in REWARDS},
+                priority_campaign=f'/home/heechan/optiq-experiments/{PREDECESSOR}',
+                launch_policy='Protect running control GPUs; fill each eligible idle GPU immediately, then backfill independently')
+    base.pop('reward_profile', None)
+    assert len(jobs) == 8 and len({j['id'] for j in jobs}) == 8
+    return base
+
+
+def main():
+    parser = argparse.ArgumentParser(allow_abbrev=False)
+    parser.add_argument('--shard', type=int, choices=tuple(HOSTS), required=True)
+    parser.add_argument('--host', choices=tuple(HOSTS.values()), required=True)
+    parser.add_argument('--dry-run', action='store_true')
+    args = parser.parse_args()
+    assert HOSTS[args.shard] == args.host
+    source = Path(__file__).resolve().parents[1]
+    sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip()
+    assert source == Path('/home/heechan/OptiQ-ops/sources') / sha
+    assert not subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'],
+                                       cwd=source, text=True).strip()
+    manifest = campaign_manifest(source, sha, args.shard)
+    if args.dry_run:
+        print(json.dumps(manifest, indent=2))
+        return
+    root = Path('/home/heechan/optiq-experiments') / CAMPAIGN
+    conf_root = Path('/home/heechan/OptiQ-ops/supervisor/jobs')
+    services = [(CAMPAIGN, 'controller'), (CAMPAIGN + '-wandb-sync', 'sync_wandb')]
+    assert not root.exists(), root
+    for name, _ in services:
+        assert not (conf_root / (name + '.conf')).exists(), name
+    root.mkdir()
+    (root / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+    for name, module in services:
+        (conf_root / (name + '.conf')).write_text(f'''[program:{name}]
+command=/home/heechan/.venv-ddiffpg-native/bin/python -m antmaze_experiments.{module} --root {root}
+directory={source}
+environment=PYTHONDONTWRITEBYTECODE="1",WANDB_MODE="online",OPTIQ_CAMPAIGN="{CAMPAIGN}"
+autostart=false
+autorestart=false
+startsecs=2
+stopasgroup=true
+killasgroup=true
+stopwaitsecs=30
+stdout_logfile={root}/{module}.log
+stderr_logfile={root}/{module}.err
+stdout_logfile_maxbytes=0
+stderr_logfile_maxbytes=0
+''')
+    ctl = ['/usr/local/bin/supervisorctl', '-c',
+           '/home/heechan/OptiQ-ops/supervisor/supervisord.conf']
+    subprocess.run(ctl + ['reread'], check=True)
+    for name, _ in services:
+        subprocess.run(ctl + ['update', name], check=True)
+        subprocess.run(ctl + ['start', name], check=True)
+    (root / 'registration.json').write_text(json.dumps(dict(
+        time=time.time(), host=args.host, services=[n for n, _ in services],
+        source_commit=sha, jobs=[j['id'] for j in manifest['jobs']]), indent=2) + '\n')
+    print(json.dumps(dict(root=str(root), host=args.host, source_commit=sha,
+                          jobs=[j['id'] for j in manifest['jobs']])))
+
+
+if __name__ == '__main__':
+    main()

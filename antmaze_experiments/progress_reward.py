@@ -17,18 +17,24 @@ SCALED_PROFILES = tuple(p.replace('progress_', 'progress100_') for p in LEGACY_P
 NO_COST_PROFILE = 'progress100_geodesic_no_step_no_bonus'
 EUCLIDEAN_NO_COST_PROFILE = 'progress100_euclidean_no_step_no_bonus'
 EUCLIDEAN_SCALE20_PROFILE = 'progress20_euclidean_no_step_no_bonus'
+EUCLIDEAN_SCALE10_PROFILE = 'progress10_euclidean_no_step_no_bonus'
+EUCLIDEAN_SCALE100_COST01_PROFILE = 'progress100_euclidean_step0p1_no_bonus'
+EUCLIDEAN_SCALE10_COST01_PROFILE = 'progress10_euclidean_step0p1_no_bonus'
 START_NORMALIZED_PROFILE = 'progress100_start_normalized_geodesic_no_step_no_bonus'
 NO_COST_PROFILES = (NO_COST_PROFILE, EUCLIDEAN_NO_COST_PROFILE, EUCLIDEAN_SCALE20_PROFILE,
-                    START_NORMALIZED_PROFILE)
-PROFILES = LEGACY_PROFILES + SCALED_PROFILES + NO_COST_PROFILES
+                    EUCLIDEAN_SCALE10_PROFILE, START_NORMALIZED_PROFILE)
+COST01_PROFILES = (EUCLIDEAN_SCALE100_COST01_PROFILE, EUCLIDEAN_SCALE10_COST01_PROFILE)
+PROFILES = LEGACY_PROFILES + SCALED_PROFILES + NO_COST_PROFILES + COST01_PROFILES
 
 def progress_scale(profile):
     if profile not in PROFILES: raise ValueError(profile)
+    if profile in (EUCLIDEAN_SCALE10_PROFILE, EUCLIDEAN_SCALE10_COST01_PROFILE): return 10.
     if profile == EUCLIDEAN_SCALE20_PROFILE: return 20.
-    return 100. if profile in SCALED_PROFILES or profile in NO_COST_PROFILES else 1.
+    return 100. if profile in SCALED_PROFILES or profile in NO_COST_PROFILES or profile == EUCLIDEAN_SCALE100_COST01_PROFILE else 1.
 
 def step_cost(profile):
     if profile in NO_COST_PROFILES: return 0.
+    if profile in COST01_PROFILES: return .1
     return STEP_COST * progress_scale(profile)
 
 def bonus_enabled(profile):
@@ -182,7 +188,8 @@ def progress_reward(before, after, task, profile, bonus):
 def specification(task, profile):
     if profile not in PROFILES:return None
     walls,goals,bounds=maze_geometry(task)
-    formula=(f'{progress_scale(profile):g}*(d(current)-d(next))' if profile in NO_COST_PROFILES else
+    formula=(f'{progress_scale(profile):g}*(d(current)-d(next))-0.1' if profile in COST01_PROFILES else
+             f'{progress_scale(profile):g}*(d(current)-d(next))' if profile in NO_COST_PROFILES else
              '100*(d(current)-d(next))-1' if profile in SCALED_PROFILES else 'd(current)-d(next)-0.01')
     result = dict(formula=formula+('+upstream_success_bonus' if bonus_enabled(profile) else ''),
         success_bonus_enabled=bonus_enabled(profile),

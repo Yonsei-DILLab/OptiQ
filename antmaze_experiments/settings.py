@@ -24,16 +24,17 @@ def expected_updates(total_steps):
     return (total_steps-WARMUP) // NUM_ENVS * UPDATES
 
 
-from .progress_reward import PROFILES, NO_COST_PROFILES, START_NORMALIZED_PROFILE, is_geodesic
+from .progress_reward import PROFILES, NO_COST_PROFILES, COST01_PROFILES, START_NORMALIZED_PROFILE, is_geodesic, progress_scale
 REWARD_PROFILES = ('sparse', 'dense') + PROFILES
 
 def reward_description(profile):
     if profile == START_NORMALIZED_PROFILE:
         return 'minimum start-normalized remaining XY geodesic distance decrease *100; reference XY[0,0]; existing success radius0.5; no step penalty; no success bonus'
     if profile in NO_COST_PROFILES:
-        from .progress_reward import progress_scale
         metric = 'XY geodesic' if is_geodesic(profile) else 'Euclidean'
         return f'nearest-goal {metric} distance decrease *{progress_scale(profile):g}; no step penalty; no success bonus'
+    if profile in COST01_PROFILES:
+        return f'nearest-goal Euclidean distance decrease *{progress_scale(profile):g} -0.1 per step; no success bonus'
     if profile.startswith('progress100_'):
         from .progress_reward import SCALED_PROFILES
         if profile not in SCALED_PROFILES: raise ValueError(profile)
