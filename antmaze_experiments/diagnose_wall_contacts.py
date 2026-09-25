@@ -248,6 +248,12 @@ def main():
             arrays.update({k: padded(k) for k in ('qpos', 'qvel', 'wall_count', 'wall_min_distance')})
         for i, r in enumerate(records):
             path, n = r['xy'], r['length']
+            assert 1 <= n <= 700 and np.isfinite(r['returns'])
+            for key in ('xy', 'actions', 'initial'):
+                assert np.isfinite(r[key]).all(), key
+            if condition == 'instrumented':
+                for key in ('qpos', 'qvel', 'wall_count', 'wall_min_distance'):
+                    assert np.isfinite(r[key]).all(), key
             route, _ = route_label(cfg['task'], path)
             routes[route] = routes.get(route, 0) + 1
             if r['goal']:
@@ -279,7 +285,7 @@ def main():
         restored_policy_exact=True,
         evaluation_rng_restored=True, paired_xy_actions_returns_exact=True,
         identical_initial_full_state=True, native_horizon_unchanged=True,
-        contact_definition='dist<=0; exactly one block_* geom, other belongs to non-world body; floor excluded; pre-action readout',
+        contact_definition='dist<=0; exactly one block_* geom, other belongs to non-world body; floor excluded; pre-action readout of last physics substep contact cache',
         max_reward_error=max_error)
     result = dict(completed=True, inference_only=True, training_source=cfg['source_commit'],
         evaluation_source=report_sha, checkpoint_step=step, conditions=summaries,
