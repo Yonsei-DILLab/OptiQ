@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import importlib.util
 
 import matplotlib
 matplotlib.use("Agg")
@@ -10,13 +11,21 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import numpy as np
 
-from pointmaze.drac_paper import MAP_NAMES, upstream_modules
+MAP_NAMES = ("simple", "medium", "hard")
+
+
+def get_map(name: str):
+    # Reporting can run on a CPU-only machine without MuJoCo/Gymnasium.
+    source = Path(__file__).resolve().parents[1] / "pointmaze/drac_upstream/envs/mgmaze/maps.py"
+    spec = importlib.util.spec_from_file_location("drac_paper_maps_reporting", source)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.get_map(name)
 
 
 def plot_map(ax, maze: str, obstacle: bool = False):
     if maze not in MAP_NAMES:
         raise ValueError(maze)
-    get_map, _ = upstream_modules()
     cells = get_map(maze)
     height, width = len(cells), len(cells[0])
     for row, values in enumerate(cells):
