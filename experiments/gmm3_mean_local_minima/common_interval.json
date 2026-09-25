@@ -1,0 +1,9 @@
+{
+  "study": "20260925_gmm3_common_interval",
+  "centers": [-1.5, 1.5, 6.0],
+  "initialization_range": [5.0, 6.0],
+  "fixed_initializations": [[5.0, 5.00000001, 6.0], [5.0, 5.000000000001, 6.0], [5.0, 5.0, 6.0], [5.5, 5.5, 5.5]],
+  "uniform_seeds": [0, 1, 2, 3],
+  "steps": 100000,
+  "learning_rate": 0.01
+}

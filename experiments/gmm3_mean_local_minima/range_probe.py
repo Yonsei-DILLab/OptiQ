@@ -7,12 +7,12 @@ from .core import load_config,Trainer,adaptive
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);a=p.parse_args();a.root.mkdir(parents=True,exist_ok=True)
-    pc=json.loads(Path(__file__).with_name('range_probe.json').read_text());cfg=load_config();cfg.update(steps=pc['steps'],learning_rate=pc['learning_rate'])
-    case=dict(id='init_range_0_6',centers=pc['centers']);t=Trainer(case,cfg)
+    p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--config',type=Path,default=Path(__file__).with_name('range_probe.json'));a=p.parse_args();a.root.mkdir(parents=True,exist_ok=True)
+    pc=json.loads(a.config.read_text());cfg=load_config();cfg.update(steps=pc['steps'],learning_rate=pc['learning_rate'])
+    case=dict(id=pc['study'],centers=pc['centers']);t=Trainer(case,cfg)
     rows=[dict(kind='explicit',index=i,initial_means=m) for i,m in enumerate(pc['fixed_initializations'])]
     rows += [dict(kind='uniform',seed=s,initial_means=np.random.default_rng(s).uniform(*pc['initialization_range'],3).tolist()) for s in pc['uniform_seeds']]
-    initial=np.array([r['initial_means'] for r in rows]);assert ((initial>=0)&(initial<=6)).all();t.mu=jnp.array(initial)
+    initial=np.array([r['initial_means'] for r in rows]);assert ((initial>=pc['initialization_range'][0])&(initial<=pc['initialization_range'][1])).all();t.mu=jnp.array(initial)
     _,g=t.vg(t.mu)
     for i,r in enumerate(rows):r['initial_gradient']=np.asarray(g[i]).tolist()
     manifest=json.loads((a.root/'SOURCE_MANIFEST.json').read_text());commit=manifest['commit'];start=time.time()
