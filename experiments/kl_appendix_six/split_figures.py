@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from .render import CASES, SEEDS, density_axis, limits, load, save, score_axis, sha, style
 
 
-def render_split(density, scores, out, rows, kind):
+def render_split(density, scores, out, rows, kind, compact_labels=False):
     # Use the original combined figure's physical panel sizes and positions.
     # bbox_inches='tight' crops the unused rows/columns when exporting.
     fig, axes = plt.subplots(6, 5, figsize=(24, 4.05 * 6), squeeze=False)
@@ -22,7 +22,8 @@ def render_split(density, scores, out, rows, kind):
                 ax.remove()
                 continue
             case, _ = CASES[row]
-            panel = f'({row + 1}-{chr(97 + col)})'
+            separator = '' if compact_labels else '-'
+            panel = f'({row + 1}{separator}{chr(97 + col)})'
             if kind == 'density':
                 method = ['forward', 'reverse'][col]
                 density_axis(ax, density[case, method], method,
@@ -50,15 +51,16 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--workspace', type=Path, required=True)
     parser.add_argument('--render-commit', required=True)
+    parser.add_argument('--compact-labels', action='store_true')
     args = parser.parse_args()
     report = args.workspace / 'reports/20260926_kl_appendix_six'
-    out = report / 'split'
+    out = report / ('split_compact' if args.compact_labels else 'split')
     out.mkdir(exist_ok=True)
     style()
     density, scores, _, _, _ = load(args.workspace / 'studies/20260926_kl_appendix_six')
     for rows in [5, 6]:
         for kind in ['density', 'score']:
-            render_split(density, scores, out, rows, kind)
+            render_split(density, scores, out, rows, kind, args.compact_labels)
     provenance = {
         'render_commit': args.render_commit,
         'parent_provenance_sha256': sha(report / 'PROVENANCE.json'),
@@ -67,11 +69,12 @@ def main():
         'six_row_cases': [case for case, _ in CASES],
         'paired_density_seeds': SEEDS,
         'score_seed': 0,
+        'panel_label_format': '(1a)' if args.compact_labels else '(1-a)',
         'change': 'Presentation only: shared column headers, bottom-row x labels, numbered row-panel labels; original data and axis limits retained.',
         'five_row_selection': 'First five original rows; six-row versions preserve all original environments.',
     }
     (out / 'PROVENANCE.json').write_text(json.dumps(provenance, indent=2) + '\n')
-    (out / 'README.md').write_text('''# Density and score: separate figures
+    readme = '''# Density and score: separate figures
 
 The requested 5 × 2 density and 5 × 3 score figures contain the first five rows
 of the original 6 × 5 figure, in unchanged order. The sixth environment is not
@@ -85,7 +88,11 @@ Panel labels are (1-a), (1-b), (2-a), (2-b), etc. for density and (1-c),
 (1-d), (1-e), (2-c), etc. for score. Each score panel retains its fixed action.
 
 See the parent report and PROVENANCE.json for the full experimental details.
-''')
+'''
+    if args.compact_labels:
+        import re
+        readme = re.sub(r'\((\d+)-([a-e])\)', r'(\1\2)', readme)
+    (out / 'README.md').write_text(readme)
     hashes = {p.name: sha(p) for p in sorted(out.iterdir())
               if p.is_file() and p.name != 'SHA256.json'}
     (out / 'SHA256.json').write_text(json.dumps(hashes, indent=2) + '\n')
