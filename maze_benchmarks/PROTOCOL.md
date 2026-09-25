@@ -44,6 +44,21 @@ rollouts, subject to a high success rate, rather than hiding a rare goal in
 aggregate success. No environment, reward, UTD, network, or sigma setting
 changes in this comparison.
 
+## Longer T=1 critic check
+
+The 100k comparison showed all four goals under T=1, but the user also wants
+the learned Q surface to converge for the paper-style figure. Run a separate,
+fresh seed-0 OptiQ T=1 policy for 500k environment transitions using
+`launch_4way_t1_500k.sh`. This is **not** a continuation of the 100k run:
+the saved 100k checkpoint does not contain the full environment and RNG state.
+Retain the same wall-free task, 16 collectors, batch 256, UTD 1, 1,024 warmup,
+256×2 networks, N=M=64, log sigma [−5,−1], DACER off, reward, and optimizer.
+At each 50k transitions, retain 100 direct-policy and 100 mu-only center-start
+trajectories, the policy/Q grid probe and an evaluation-only checkpoint; save
+replay with the final checkpoint. Inspect four-goal reach **and** the learned
+Q surface over time. A smoother surface alone is not proof of value accuracy;
+compare its goal ranking and sampled-policy returns before claiming that.
+
 ## Visualization
 
 At each checkpoint, retain 100 independent center-start sampled-policy
