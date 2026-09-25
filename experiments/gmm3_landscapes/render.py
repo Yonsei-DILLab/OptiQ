@@ -15,7 +15,7 @@ def save(fig,out,name):
     fig.savefig(out/(name+'.png'),dpi=210,bbox_inches='tight');fig.savefig(out/(name+'.pdf'),bbox_inches='tight');plt.close(fig)
 def legend(fig):fig.legend(handles=[Patch(color=c,label=l) for c,l in zip(COLORS,LABELS)],loc='lower center',ncol=4,frameon=False)
 def cbar(fig,im,axes):
-    cb=fig.colorbar(im,ax=axes,shrink=.8,pad=.02);ticks=np.array([0,.1,1,3,10,30,100]);cb.set_ticks(np.log1p(ticks),[f'{x:g}' for x in ticks]);cb.set_label('Forward KL (log color scale)')
+    cb=fig.colorbar(im,ax=axes,shrink=.8,pad=.02);ticks=np.array([0,.1,1,3,10,30,100]);cb.set_ticks(np.log1p(ticks),labels=[f'{x:g}' for x in ticks]);cb.set_label('Forward KL (log color scale)')
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--analysis-commit',required=True);a=p.parse_args();a.out.mkdir(exist_ok=True,parents=True)
@@ -68,7 +68,7 @@ def main():
         im=ax.pcolormesh(xx,yy,delta,cmap='RdBu_r',norm=SymLogNorm(linthresh=1e-4,vmin=-.1,vmax=.1),shading='auto',rasterized=True)
         levels=[0,.0001,.001,.005,.01,.03];cs=ax.contour(xx,yy,delta,levels=levels,colors='black',linewidths=.7);ax.clabel(cs,fmt='%g',fontsize=8)
         ax.plot(0,0,'ko',ms=5);ax.set_title('A local well around the bad minimum');ax.set_xlabel('u');ax.set_ylabel('v');fig.colorbar(im,ax=ax,label='KL minus KL at bad minimum')
-        ax=axs[1];mask=s['path_t']<=.2;ax.plot(s['path_t'][mask],s['path_kl'][mask],color='#1f77b4',lw=2);ax.axhline(s['anchor_kl'],color='gray',ls='--',lw=1)
+        ax=axs[1];mask=s['path_t']<=.4;ax.plot(s['path_t'][mask],s['path_kl'][mask],color='#1f77b4',lw=2);ax.axhline(s['anchor_kl'],color='gray',ls='--',lw=1)
         imax=int(np.argmax(s['path_kl']));bar=float(s['path_kl'][imax]-s['anchor_kl']);ax.plot(s['path_t'][imax],s['path_kl'][imax],'ro',ms=5)
         ax.set_title(f'Straight-path barrier: {bar:.5f} KL');ax.set_xlabel('u along the line to the global solution');ax.set_ylabel('Forward KL');ax.grid(alpha=.2)
         fig.tight_layout();save(fig,a.out,'local_well_and_barrier')
