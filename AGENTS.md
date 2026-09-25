@@ -490,3 +490,18 @@ Existing nonfinite guards remain; preserve numerical failures, no sampler rewrit
 Validation reads actual explicit bounds; no training algorithm changes.
 Commit/push/share/freeze before launch.
 No automatic extension/retry. See antmaze_experiments/ACTOR_SIGMA_HIGHER_PROTOCOL.md.
+
+Latest user stop/reset (2026-09-25; supersedes all preceding AntMaze launch
+approvals): stop all ongoing AntMaze experiments and queues. Do not resume,
+relaunch, retry failed conditions, or start a new AntMaze experiment from the
+historical profiles. Both 5090 servers have no running learners; four remaining
+AntMaze W&B-sync watcher services were stopped. Preserve every frozen source,
+status/log/result/checkpoint. Old status files may contain stale pending/running
+entries, but their controllers are stopped and supervisor autostart/autorestart
+are false. The canonical Direct GMM/TRG OptiQ configuration is the selected
+baseline for future work, not the prior v3/v4 reward/teacher/sigma/DACER
+experiments. The current AntMaze adapter still forces several nondefault
+settings and must not be called a default OptiQ run or relaunched unchanged.
+See antmaze_experiments/DEFAULT_RESET_AUDIT_20260925.md for the exact default,
+adapter differences, environment and evaluation audit. Do not use vast1/4090
+for AntMaze; it remains reserved for GMM40.
