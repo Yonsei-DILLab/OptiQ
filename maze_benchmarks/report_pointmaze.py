@@ -122,6 +122,39 @@ def render_medium_hard(root: Path, destination: Path):
     plt.close(fig)
 
 
+def render_optiq_modes(root: Path, maze: str, destination: Path):
+    """Compare sampled policy and random-z means from one OptiQ checkpoint."""
+    folder = root / "runs" / f"pm_{maze}-optiq-s0" / "evaluations"
+    summaries = sorted(folder.glob("*_summary.json"))
+    if not summaries:
+        return False
+    item = json.loads(summaries[-1].read_text())
+    step = item["step"]
+    sources = (("policy", "Direct policy, including conditional σ"),
+               ("mu_only", "Random-z μ-only, no conditional σ"))
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5.4), constrained_layout=True)
+    for ax, (mode, label) in zip(axes, sources):
+        source = folder / f"{step:09d}_{mode}.npz"
+        if not source.is_file():
+            raise FileNotFoundError(source)
+        plot_map(ax, maze)
+        actual = plot_rollouts(ax, source)
+        summary = item[mode]
+        counts = actual["goals"] + [0] * (len(summary["goals"]) - len(actual["goals"]))
+        if (actual["episodes"] != summary["episodes"] or
+                not np.isclose(actual["success"], summary["success"]) or
+                counts != summary["goals"]):
+            raise ValueError(f"OptiQ evaluation summary mismatch: {source}")
+        ax.set_title(f"{label}\nSuccess {summary['success']:.1%} · "
+                     f"goals {summary['goals']}")
+    fig.suptitle(f"OptiQ {maze.title()} · seed 0 · {step:,} transitions · "
+                 "first 100 trajectories per panel")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(destination, dpi=170)
+    plt.close(fig)
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser(allow_abbrev=False)
     parser.add_argument("--root", type=Path, required=True)
@@ -132,6 +165,8 @@ def main():
     for maze in MAZES:
         render_trajectories(args.root, maze,
                             args.output / f"trajectories_{maze}.png")
+        render_optiq_modes(args.root, maze,
+                           args.output / f"optiq_{maze}_policy_vs_mu_only.png")
     render_medium_hard(args.root, args.output / "trajectories_medium_hard.png")
     print(json.dumps({"output": str(args.output), "seed": 0,
                       "methods": METHODS, "mazes": MAZES}))

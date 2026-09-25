@@ -57,6 +57,9 @@ Keep all raw `(x,y)` trajectories, returns, lengths and goal IDs. OptiQ
 random-latent μ-only trajectories are a separate supplement; the direct-policy
 plots include conditional Gaussian noise. Figure panels and metrics use the
 same direct-policy raw samples for every method.
+For each completed OptiQ maze, an additional two-panel figure compares the
+direct policy with random-z μ-only from the same checkpoint. Each panel prints
+all-episode success and per-goal counts; the visible tracks are the first 100.
 
 - Success rate: fraction of direct-policy episodes that reach any goal.
 - Reachable goals: number of distinct reached goals in that policy's episodes.

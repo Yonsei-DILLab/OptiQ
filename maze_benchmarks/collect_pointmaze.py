@@ -11,7 +11,8 @@ import zipfile
 
 import numpy as np
 
-from .report_pointmaze import MAZES, METHODS, render_curves, render_medium_hard, render_trajectories
+from .report_pointmaze import (MAZES, METHODS, render_curves, render_medium_hard,
+                               render_optiq_modes, render_trajectories)
 
 
 HOSTS = ("vast-heechan-180", "vast-heechan-199")
@@ -115,6 +116,8 @@ def main():
         render_curves(root, figures / "learning_curves.png")
         for maze in MAZES:
             render_trajectories(root, maze, figures / f"trajectories_{maze}.png")
+            render_optiq_modes(root, maze,
+                               figures / f"optiq_{maze}_policy_vs_mu_only.png")
         render_medium_hard(root, figures / "trajectories_medium_hard.png")
     print(json.dumps(dict(completed=len(results), expected=21,
                           output=str(root)), indent=2))
