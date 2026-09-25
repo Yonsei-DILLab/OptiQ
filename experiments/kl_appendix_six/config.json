@@ -1,0 +1,157 @@
+{
+  "parent_source_commit": "5c918efad2a78f797da6eb928fadc697a691de8c",
+  "checkpoint_step": 100000,
+  "seeds": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "L_powers": [
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+  ],
+  "repeats": 16,
+  "independent_reference_repeats": 4,
+  "reference_L": 16777216,
+  "actor_chunk": 4096,
+  "kernel_chunk": 4096,
+  "fixed_policy_probes": 128,
+  "policy_quantiles": [
+    0.1,
+    0.5,
+    0.9
+  ],
+  "random_seed": 92626500,
+  "training_L": 1048576,
+  "cases": [
+    "n07_spike_flat_ramp",
+    "t01_two_offset",
+    "t05_unequal_mass",
+    "t06_minor_mode"
+  ],
+  "target_probes": {
+    "n07_spike_flat_ramp": [
+      -5.25,
+      -5,
+      -4.75,
+      -0.5,
+      0,
+      0.5,
+      4,
+      5.5,
+      6.8
+    ],
+    "t01_two_offset": [
+      -0.5,
+      0,
+      0.5,
+      2,
+      3.75,
+      4.25,
+      4.75,
+      5.5,
+      6
+    ],
+    "t05_unequal_mass": [
+      -4.75,
+      -4.25,
+      -3.75,
+      -0.5,
+      0,
+      0.5,
+      3.75,
+      4.25,
+      4.75
+    ],
+    "t06_minor_mode": [
+      -4.75,
+      -4.25,
+      -3.75,
+      -0.5,
+      0,
+      0.5,
+      3.75,
+      4.25,
+      4.75
+    ]
+  },
+  "tasks": [
+    {
+      "case": "n07_spike_flat_ramp",
+      "seed": 0
+    },
+    {
+      "case": "n07_spike_flat_ramp",
+      "seed": 1
+    },
+    {
+      "case": "n07_spike_flat_ramp",
+      "seed": 2
+    },
+    {
+      "case": "n07_spike_flat_ramp",
+      "seed": 3
+    },
+    {
+      "case": "t01_two_offset",
+      "seed": 0
+    },
+    {
+      "case": "t01_two_offset",
+      "seed": 1
+    },
+    {
+      "case": "t01_two_offset",
+      "seed": 2
+    },
+    {
+      "case": "t01_two_offset",
+      "seed": 3
+    },
+    {
+      "case": "t05_unequal_mass",
+      "seed": 0
+    },
+    {
+      "case": "t05_unequal_mass",
+      "seed": 1
+    },
+    {
+      "case": "t05_unequal_mass",
+      "seed": 2
+    },
+    {
+      "case": "t05_unequal_mass",
+      "seed": 3
+    },
+    {
+      "case": "t06_minor_mode",
+      "seed": 0
+    },
+    {
+      "case": "t06_minor_mode",
+      "seed": 1
+    },
+    {
+      "case": "t06_minor_mode",
+      "seed": 2
+    }
+  ]
+}
