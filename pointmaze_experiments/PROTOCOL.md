@@ -46,3 +46,13 @@ Two independent serial queues on idle vast2 RTX5090 GPU0(T3)/GPU3(T5), each
 Simple then Medium then Hard. Failures preserve results and do not block the
 next independent maze; no retries or checkpoint resumes. Exact source frozen
 in a separate worktree. Preflight both new temperatures before main launch.
+
+### Scheduling correction
+User requests concurrent execution rather than two serial queues. Keep already
+running Simple T3/T5 on vast2 GPUs0/3. Move the four pending Medium/Hard T3/T5
+to idle vast4 RTX3090 GPUs0..3, one job each, real per-job preflight.
+On vast2 create explicit MIGRATED.json placeholders for those four outputs:
+the existing frozen fresh-only workers will skip these paths, preventing duplicate
+training without editing live source or interrupting Simple. Their aggregate exit
+status may be nonzero because migrated jobs are skipped; inspect per-job status.
+No new temperatures/seeds or unbounded retries; all six requested runs concurrent.
