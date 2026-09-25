@@ -192,7 +192,6 @@ def score_figures(scores, out):
             for j, ax in enumerate(axes[row]):
                 lim = limits(data, [128 + j] if zoom else [128, 129, 130])
                 score_axis(ax, data, j, f'({"abcdef"[3*row+j]}) {[10,50,90][j]}% policy quantile', lim, j == 0)
-            fig.text(.53, [.979, .515][row], title, ha='center', va='top', fontsize=19)
         score_legend(fig)
         save(fig, out, f'score_convergence_{suffix}')
     for case, title in CASES:

@@ -1,6 +1,5 @@
 """Write a self-contained Markdown report with metrics derived from raw outputs."""
 from pathlib import Path
-import numpy as np
 
 
 def write_report(out, provenance):
