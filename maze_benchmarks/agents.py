@@ -440,6 +440,10 @@ class DIPO:
         from omegaconf import OmegaConf
 
         del folder, budget, temperature
+        # Pinned DDiffPG Diffusers references an annotation removed by recent
+        # JAX. Restore only that compatibility alias in this isolated process.
+        if not hasattr(jax.random, "KeyArray"):
+            jax.random.KeyArray = jax.Array
         sys.path.insert(0, str(ROOT / "antmaze"))
         from ddiffpg.replay.simple_replay import ReplayBuffer
         from antmaze_experiments.numerics import DisabledIntrinsic, stable_dipo_class

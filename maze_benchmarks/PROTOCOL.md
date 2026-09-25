@@ -52,6 +52,10 @@ delayed actor update every second critic update, and target smoothing.
 Thus a shared *critic* UTD of one does not imply the same actor-update count
 or compute budget across methods. Report each method's source revision,
 architecture, reward support, action-sampling rule and actual update counts.
+The native DIPO import needs `/home/heechan/.mujoco/mujoco210/bin` on
+`LD_LIBRARY_PATH`; its pinned Diffusers release also references the removed
+`jax.random.KeyArray` annotation, so the isolated DIPO adapter restores that
+alias to `jax.Array` before import. Neither fix changes the learner equations.
 For MEOW and MFPO the pinned Git submodule revisions must be copied into each
 immutable training snapshot before either method launches; a `git archive` of
 this repository alone contains empty submodule directories.
