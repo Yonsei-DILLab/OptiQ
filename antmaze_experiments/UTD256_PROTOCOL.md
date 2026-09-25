@@ -23,8 +23,9 @@ The two selectable conditions are:
 |---|---|---|---|
 | `control` | `100*(nearest-goal Euclidean distance decrease)`; zero step penalty and bonus | historical 256x3 actor/twin critics, mean-head scale 1, actor LR 3e-4, critic LR 5e-4 | existing v3/v4 route-collapse controls at UTD=1/32 |
 | `basic` | original DDiffPG sparse goal reward; NovelD disabled | restored OptiQ 256x2 actor/twin critics, mean-head scale 1e-4, actor/critic LR 3e-4 | restored basic OptiQ profile; no matching completed 8-update run is claimed |
+| `basic_euclidean` | `100*(nearest-goal Euclidean distance decrease)`; zero step penalty and bonus | restored OptiQ 256x2 actor/twin critics, mean-head scale 1e-4, actor/critic LR 3e-4 | user correction after the sparse run; prior Euclidean controls also differ in model/init/LR |
 
-Both use T=1, DACER off, NovelD off, random normal latent at every action,
+All conditions use T=1, DACER off, NovelD off, random normal latent at every action,
 N=M=64, beta=1, Direct GMM marginal NLL, log sigma bounds [-5,-1]
 with initial -1, gamma .99, tau .005 and replay 1M. Ant physics, 8D
 actions in [-1,1], original success/termination and starting states remain
@@ -59,3 +60,11 @@ evaluation settings. A failure holds pending jobs and preserves the logs;
 there is no automatic retry or parameter change. Source is committed,
 pushed and copied to both immutable `sources/<full SHA>` directories before
 registration. The manifest and every result carry the full learning SHA.
+
+The `basic` sparse campaign was stopped by the user before its first 50k
+evaluation. Its source, status, preflights, partial logs and W&B run IDs are
+preserved. The selected replacement is `basic_euclidean`, started fresh from
+seed 0; it changes only the reward from that first registration while keeping
+the restored basic OptiQ model and UTD=1. The preexisting Euclidean route-collapse
+controls used the distinct legacy architecture and learning rates, so they are
+not exact single-variable UTD controls.

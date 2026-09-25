@@ -15,6 +15,7 @@ TASKS = {0: ('v1', 'v3'), 1: ('v2', 'v4')}
 CAMPAIGNS = {
     'control': 'antmaze-optiq-utd1-euclidean-control-v1234-s0-20260925',
     'basic': 'antmaze-optiq-utd1-basic-v1234-s0-20260925',
+    'basic_euclidean': 'antmaze-optiq-utd1-basic-euclidean-v1234-s0-20260925',
 }
 PROFILE = 'env256-update256'
 EVAL_INTERVAL = 50000
@@ -24,7 +25,7 @@ def campaign_manifest(source, sha, shard, condition):
     if shard not in HOSTS or condition not in CAMPAIGNS:
         raise ValueError((shard, condition))
     control = condition == 'control'
-    reward = EUCLIDEAN_NO_COST_PROFILE if control else 'sparse'
+    reward = 'sparse' if condition == 'basic' else EUCLIDEAN_NO_COST_PROFILE
     optiq_profile = dict(actor_hidden_dims=[256] * (3 if control else 2),
                          critic_hidden_dims=[256] * (3 if control else 2),
                          actor_lr=3e-4, critic_lr=5e-4 if control else 3e-4,
@@ -40,7 +41,7 @@ def campaign_manifest(source, sha, shard, condition):
                      temperature=1., eval_starts='upstream',
                      eval_interval=EVAL_INTERVAL, interim_eval_episodes=40,
                      final_eval_episodes=100, save_intermediate_policy=True)
-        if control:
+        if reward == EUCLIDEAN_NO_COST_PROFILE:
             entry['reward_specification'] = specification(task, reward)
         jobs.append(entry)
     collection = get_profile(PROFILE)
@@ -48,7 +49,12 @@ def campaign_manifest(source, sha, shard, condition):
     return dict(campaign=CAMPAIGNS[condition], source=str(source), source_commit=sha,
                 shard=shard, host=HOSTS[shard], jobs=jobs,
                 protocol='antmaze_experiments/UTD256_PROTOCOL.md',
-                condition=condition, comparison='same condition at 8 updates per 256 transitions',
+                condition=condition,
+                comparison={
+                    'control': 'Historical Euclidean v3/v4 controls use 8 updates/256 and the same legacy model',
+                    'basic': 'No exact 8-update sparse basic control is available',
+                    'basic_euclidean': 'Historical Euclidean 8-update controls use a different legacy model/init/LRs',
+                }[condition],
                 collection_profile=PROFILE, num_envs=256, batch_size=4096,
                 updates_per_vector_step=256, updates_per_transition=1.,
                 warmup_transitions=WARMUP, replay_capacity=1000000,

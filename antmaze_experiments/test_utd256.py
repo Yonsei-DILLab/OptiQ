@@ -12,6 +12,7 @@ class Utd256CampaignTests(unittest.TestCase):
         for condition, reward, dimensions, critic_lr in (
             ('control', EUCLIDEAN_NO_COST_PROFILE, [256, 256, 256], 5e-4),
             ('basic', 'sparse', [256, 256], 3e-4),
+            ('basic_euclidean', EUCLIDEAN_NO_COST_PROFILE, [256, 256], 3e-4),
         ):
             jobs = [job for shard in (0, 1)
                     for job in campaign_manifest('/unused', 'sha', shard, condition)['jobs']]
