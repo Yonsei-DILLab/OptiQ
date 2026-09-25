@@ -70,6 +70,9 @@ seven methods side by side for each maze and a 4×3 learning-curve grid for
 success, reachable goals, removal SR5 and obstacle SR5. Seed 0 alone has no
 confidence band. Goal counts, raw rollouts, actual reset states, selected
 vector/batch profile and preflight/final checkpoint proofs remain inspectable.
+An additional two-row seven-column plate stacks the medium and hard mazes,
+matching the layout of the paper's Figures 10 and 11 while labeling every
+panel with its own success and reachable-goal counts.
 
 Reference: [Wang, Liu & Pan, *Learning Intractable Multimodal Policies with
 Reparameterization and Diversity Regularization*, §5.1 and Appendix A.2](https://arxiv.org/abs/2511.01374).

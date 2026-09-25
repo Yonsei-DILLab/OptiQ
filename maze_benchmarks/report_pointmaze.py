@@ -89,6 +89,39 @@ def render_trajectories(root: Path, maze: str, destination: Path):
     plt.close(fig)
 
 
+def render_medium_hard(root: Path, destination: Path):
+    """Two-row, seven-method trajectory plate like paper Figures 10 and 11."""
+    fig, axes = plt.subplots(2, len(METHODS), figsize=(21, 7.2),
+                             constrained_layout=True)
+    for row, maze in enumerate(("medium", "hard")):
+        for column, method in enumerate(METHODS):
+            ax = axes[row, column]
+            plot_map(ax, maze)
+            folder = root / "runs" / f"pm_{maze}-{method}-s0" / "evaluations"
+            summaries = sorted(folder.glob("*_summary.json"))
+            if summaries:
+                item = json.loads(summaries[-1].read_text())
+                path = folder / f"{item['step']:09d}_policy.npz"
+                if path.is_file():
+                    plot_rollouts(ax, path)
+                    detail = (f"{item['policy']['success']:.0%} success · "
+                              f"{item['policy']['reachable_goals']}/{8 if maze == 'hard' else 4} goals")
+                else:
+                    detail = "raw trajectories missing"
+            else:
+                detail = "pending"
+            ax.set(title=f"{method.upper()}\n{detail}", xlabel="", ylabel="")
+            ax.set_xticks([])
+            ax.set_yticks([])
+        axes[row, 0].text(-.13, .5, maze.title(), transform=axes[row, 0].transAxes,
+                          rotation=90, ha="center", va="center", fontweight="bold")
+    fig.suptitle("Medium and Hard PointMaze · first 100 sampled-policy trajectories per panel · seed 0\n"
+                 "Success and reachable-goal counts use all episodes at the latest checkpoint")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(destination, dpi=180)
+    plt.close(fig)
+
+
 def main():
     parser = argparse.ArgumentParser(allow_abbrev=False)
     parser.add_argument("--root", type=Path, required=True)
@@ -99,6 +132,7 @@ def main():
     for maze in MAZES:
         render_trajectories(args.root, maze,
                             args.output / f"trajectories_{maze}.png")
+    render_medium_hard(args.root, args.output / "trajectories_medium_hard.png")
     print(json.dumps({"output": str(args.output), "seed": 0,
                       "methods": METHODS, "mazes": MAZES}))
 
