@@ -24,6 +24,8 @@ def main() -> None:
     parser.add_argument("--plan", type=Path, required=True)
     parser.add_argument("--plan-commit", required=True)
     parser.add_argument("--smoke", type=Path, required=True)
+    parser.add_argument("--repair-queue-proof", type=Path,
+                        help="Snapshot of a repair queue on another host")
     args = parser.parse_args()
     plan = json.loads(args.plan.read_text())
     commit = plan["training_source_commit"]
@@ -31,7 +33,8 @@ def main() -> None:
     if (proof["steps"], proof["updates"]) != (4352, 16):
         raise ValueError("DIPO smoke update proof mismatch")
     repair = Path(plan["new_root"])
-    repair_state = json.loads((repair / "queue.json").read_text())
+    repair_queue_path = args.repair_queue_proof or repair / "queue.json"
+    repair_state = json.loads(repair_queue_path.read_text())
     if (repair_state["source_commit"] != commit or
             [item["name"] for item in repair_state["jobs"]] != plan["new_queue_order"] or
             repair_state["state"] not in ("running", "complete") or
@@ -66,10 +69,14 @@ def main() -> None:
         state["state"] = "running"
         state["recovered_error"] = state.pop("error")
         state["recovery"] = dict(at=now, plan_commit=args.plan_commit,
-                                 repair_root=str(repair), dipo_smoke=proof)
+                                 repair_root=str(repair),
+                                 repair_host=plan.get("new_host", plan.get("host")),
+                                 repair_queue_proof=str(repair_queue_path),
+                                 dipo_smoke=proof)
         state["updated"] = now
         atomic_json(sidecar, dict(before=original, after=state,
                                   plan_commit=args.plan_commit,
+                                  repair_queue=repair_state,
                                   dipo_smoke=proof))
         atomic_json(path, state)
     print(json.dumps({"main_queue": state["state"],

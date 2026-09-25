@@ -1,0 +1,20 @@
+{
+  "campaign": "paper-pointmaze-seven-t3-20260926",
+  "training_source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "host": "vast1",
+  "new_host": "vast-heechan-180",
+  "new_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-dipo-180-20260926",
+  "new_queue_order": [
+    "pm_hard-dipo-s0",
+    "pm_simple-dipo-s0",
+    "pm_medium-dipo-s0"
+  ],
+  "previous_failed": [
+    "pm_simple-dipo-s0",
+    "pm_hard-dipo-s0"
+  ],
+  "transfer_pending": "pm_medium-dipo-s0",
+  "reason": "The original 4090 DIPO preflights failed because their supervisor environment lacked the MuJoCo library path. An independent 4090 DIPO smoke passed. The three DIPO jobs were transferred unclaimed to the 5090 repair queue, where the first job passed its native preflight. Resume only non-DIPO work on the paused 4090 main queue.",
+  "preserve_original_failures_and_logs": true,
+  "learning_source_and_hyperparameters_unchanged": true
+}
