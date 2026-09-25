@@ -1,0 +1,69 @@
+# Online four-goal navigation comparison
+
+The comparison uses seed 0 for each of SAC, JAX SVGD SQL, DIPO, MFPO and
+Direct GMM OptiQ (iBOLT) in **both** environments. A single policy is learned
+per method and task. Goals reached by different training seeds must never be
+pooled to imply a single multimodal policy.
+
+## Tasks
+
+- `4way`: the **existing wall-free** task previously trained for 10k/20k,
+  as the user explicitly selected after inspecting the walled ICML layout.
+  State/action are both 2D, with central reset and goals `(±5,0),(0,±5)`.
+  Reward is `−30||a||² − min_goal ||s'−g||² + 10 on success`, identical in
+  all four directions. Episode limit 20. Train for **100,000 environment
+  transitions**. The author's different, walled ICML task stays in `4way/`
+  as source provenance only and is not used in these runs.
+- `pointmaze`: official installed Farama `PointMazeEnv` MuJoCo physics with a
+  four-goal cross map and one fixed central reset cell. The sampled native
+  single-goal target is hidden and ignored. Reward is exp(−distance to the
+  nearest of the four goals), success radius 0.45, episode limit 300. This
+  task mapping and reward are a disclosed adaptation, not an official ID.
+
+The wall-free 4way policies see `(x,y)` and choose a displacement in `[−1,1]²`;
+PointMaze policies see `(x,y,vx,vy)` and choose a continuous force in `[−1,1]²`.
+The five algorithms use the same task reward, reset distribution, evaluation
+states, environment-transition budget, replay sampling and UTD within a task.
+Policy rollouts use the directly sampled action (including conditional noise
+for OptiQ); OptiQ μ-only random-latent rollouts are supplementary.
+
+The first wall-free 4-Way profile uses 16 simultaneous collectors, batch 256,
+and 16 learner updates per collection of 16 transitions: UTD=1, as in the
+successful 20k OptiQ diagnostic. Warmup is 1,024 transitions, included in
+the 100k budget. Evaluate 100 rollouts at each 20k transition checkpoint
+and save the policy/critic together with the independent policy/Q grid probe.
+Run each method in a separate process. Results from this profile must not be
+mixed with the author's distinct walled ICML environment.
+
+## Visualization
+
+At each checkpoint, retain 100 independent center-start sampled-policy
+rollouts, four goal hit counts, returns and raw `(x,y)` tracks. The 4-Way
+paper-style panel has two rows for each method:
+
+1. The same normalized nearest-goal proximity contour for every method,
+   overlaid with independent red policy-action samples at the same valid
+   states. Arrow length is proportional to action magnitude. This background
+   is a task-geometry reference, **not** policy density or the full reward
+   (which also penalizes action energy).
+2. The method's own `E_{a∼π}[Q((x,y),a)]` surface. Each critic's
+   objective/aggregation is labeled. These
+   are learned estimates, not ground-truth returns; absolute scales need not
+   agree across algorithms.
+
+The top panels also report four goal hits and failures. For OptiQ, retain a
+separate μ-only panel so conditional Gaussian noise cannot be mistaken for
+random-latent behavior. A trajectory-only figure is retained alongside the
+two-row representation figure for unambiguous goal/path inspection.
+
+## Provenance and launch gate
+
+Commit exact source, config, launch and reporting scripts before any training.
+Use an immutable source SHA per run and independent GPU jobs with backfill.
+Do not displace already running unrelated GPU jobs. On completion, verify
+transition/update counters, source/config, per-method checkpoints and raw
+rollouts before cross-method comparison. The 30-minute scheduled watcher
+checks live process handles, controller status, errors, eval coverage and
+four-goal OptiQ reach; it does not relaunch solely because a status read times
+out. If iBOLT collapses, preserve evidence, stop that run, diagnose, commit
+the changed setting and launch a new identifiable run.
