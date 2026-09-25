@@ -1,0 +1,32 @@
+{
+  "campaign": "4way-wallfree-baselines-100k-20260926",
+  "source_commit": "67469caf8641222f9458b9a871b6e46e78e94a5d",
+  "frozen_dependencies": {
+    "mfpo": "d8b3977d29d4ef2d315e871337e5826f2eb79eb2",
+    "meow": "b786d27aa9b03e4242ee8904ff884b21fe65e2f7"
+  },
+  "task": "existing symmetric wall-free four-goal",
+  "seed": 0,
+  "transitions": 100000,
+  "collectors": 16,
+  "batch_size": 256,
+  "critic_updates_per_16_transitions": 16,
+  "warmup_transitions": 1024,
+  "preflight_transitions": 1040,
+  "evaluation_interval": 20000,
+  "evaluation_episodes": 100,
+  "temperature_when_applicable": 1.0,
+  "root": "/home/heechan/optiq-experiments/4way-wallfree-baselines-100k-20260926",
+  "jobs": [
+    {"method": "sql", "host": "vast-heechan-180", "gpu": 0},
+    {"method": "meow", "host": "vast-heechan-180", "gpu": 0},
+    {"method": "td3", "host": "vast-heechan-180", "gpu": 0},
+    {"method": "dipo", "host": "vast-heechan-180", "gpu": 3},
+    {"method": "mfpo", "host": "vast-heechan-199", "gpu": 0}
+  ],
+  "existing_sac_run": {
+    "host": "vast-heechan-180",
+    "source_commit": "f82c71a4251e1cc7e5b55646c9343241cdaa2cdb",
+    "output": "/home/heechan/optiq-experiments/4way-wallfree-100k-20260926/runs/sac-s0"
+  }
+}
