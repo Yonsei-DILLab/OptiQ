@@ -1,0 +1,21 @@
+{
+  "campaign": "4way-wallfree-optiq-t1-500k-s0-20260926",
+  "host": "vast-heechan-180",
+  "gpu": 3,
+  "source_commit": "e01050d325d7be51713b2a9257d738317d573c94",
+  "source_directory": "/home/heechan/OptiQ-ops/sources/e01050d325d7be51713b2a9257d738317d573c94",
+  "output_directory": "/home/heechan/optiq-experiments/4way-wallfree-optiq-t1-500k-s0-20260926",
+  "supervisor_service": "4way-wallfree-optiq-t1-500k-s0-20260926",
+  "launcher": "maze_benchmarks/launch_4way_t1_500k.sh",
+  "seed": 0,
+  "steps": 500000,
+  "temperature": 1.0,
+  "num_envs": 16,
+  "updates_per_collect": 16,
+  "batch_size": 256,
+  "warmup": 1024,
+  "eval_every": 50000,
+  "eval_episodes_per_mode": 100,
+  "fresh_run": true,
+  "reference_run": "4way-wallfree-100k-20260926/runs/optiq-t1-s0"
+}
