@@ -18,11 +18,13 @@ from .report_pointmaze import (MAZES, METHODS, render_curves, render_medium_hard
 REMOTE_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926"
 REPAIR_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-dipo-envfix-20260926"
 FINAL_DIPO_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-dipo-180-20260926"
+OVERFLOW_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-overflow-180-20260926"
 SOURCES = (("vast-heechan-180", REMOTE_ROOT, "vast-heechan-180"),
            ("vast-heechan-199", REMOTE_ROOT, "vast-heechan-199"),
            ("vast1", REMOTE_ROOT, "vast1"),
            ("vast1", REPAIR_ROOT, "vast1-dipo-envfix"),
-           ("vast-heechan-180", FINAL_DIPO_ROOT, "vast-heechan-180-dipo"))
+           ("vast-heechan-180", FINAL_DIPO_ROOT, "vast-heechan-180-dipo"),
+           ("vast-heechan-180", OVERFLOW_ROOT, "vast-heechan-180-overflow"))
 
 
 def sync(source: str, destination: Path):
@@ -101,6 +103,9 @@ def main():
                      "transfer-to-vast-heechan-180.json" if label == "vast1-dipo-envfix" else
                      "transfer-to-vast1.json")
             sync(f"{host}:{remote_root}/{audit}", meta / audit)
+            if label == "vast1":
+                sync(f"{host}:{remote_root}/transfer-to-vast-heechan-180.json",
+                     meta / "transfer-to-vast-heechan-180.json")
         for entry in state["jobs"]:
             if entry["state"] == "failed":
                 sync(f"{host}:{remote_root}/jobs/{entry['name']}.json",

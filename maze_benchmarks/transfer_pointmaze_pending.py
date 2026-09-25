@@ -22,7 +22,7 @@ def main() -> None:
     parser.add_argument("--training-source", required=True)
     parser.add_argument("--transfer-plan-commit", required=True)
     parser.add_argument("--plan", type=Path, required=True)
-    parser.add_argument("--source-host", choices=("180", "199", "vast1_repair"),
+    parser.add_argument("--source-host", choices=("180", "199", "vast1", "vast1_repair"),
                         required=True)
     parser.add_argument("--destination", required=True)
     args = parser.parse_args()

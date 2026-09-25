@@ -1,0 +1,24 @@
+{
+  "campaign": "paper-pointmaze-seven-t3-20260926",
+  "training_source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "source_host": "vast1",
+  "source_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926",
+  "new_host": "vast-heechan-180",
+  "new_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-overflow-180-20260926",
+  "transfer_from_vast1": [
+    "pm_simple-sac-s0",
+    "pm_simple-meow-s0",
+    "pm_medium-sql-s0",
+    "pm_medium-mfpo-s0"
+  ],
+  "new_queue_order": [
+    "simple:sac",
+    "simple:meow",
+    "medium:sql",
+    "medium:mfpo"
+  ],
+  "destination_gpu": 0,
+  "reason": "The vast1 GPU guards are waiting behind four unrelated fixed-sigma compute processes. The 180 N-Way GPU0 shard completed, so an independent guarded overflow queue can backfill four non-DIPO jobs when its GPU becomes available. The transfer is atomic under the original queue lock; running jobs are never moved.",
+  "learning_source_and_hyperparameters_unchanged": true,
+  "preserve_other_gpu_processes_and_locks": true
+}

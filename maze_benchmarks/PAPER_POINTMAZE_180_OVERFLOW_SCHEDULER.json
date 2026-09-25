@@ -1,0 +1,22 @@
+{
+  "campaign": "paper-pointmaze-seven-t3-overflow-180-20260926",
+  "host": "vast-heechan-180",
+  "gpu": 0,
+  "source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "transfer_plan": "maze_benchmarks/PAPER_POINTMAZE_180_OVERFLOW.json",
+  "origin_host": "vast1",
+  "origin_campaign": "paper-pointmaze-seven-t3-20260926",
+  "jobs_in_order": [
+    "pm_simple-sac-s0",
+    "pm_simple-meow-s0",
+    "pm_medium-sql-s0",
+    "pm_medium-mfpo-s0"
+  ],
+  "seed": 0,
+  "first_candidate_num_envs": 256,
+  "first_candidate_batch_size": 4096,
+  "first_candidate_updates_per_256_transitions": 16,
+  "independent_backfill": true,
+  "preserve_unrelated_gpu_processes": true,
+  "training_hyperparameters_unchanged": true
+}
