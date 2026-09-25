@@ -522,3 +522,10 @@ v3/v4 seed0 N=M128/256, T1, `100*(d_current-d_next)` Euclidean reward,
 historical N=M64 restriction do not apply to this explicit experiment.
 Keep the current T3 v3/v4 5090 learners intact. Follow
 antmaze_experiments/HOST_POLICY.md and UTD256_NM_PROTOCOL.md.
+
+Later 2026-09-25 user correction: if N=M256 runs out of memory, do not run
+it. The original full-batch preflight OOMed; both subsequent microbatch
+N=M256 jobs were stopped and must not be resumed or retried. Preserve logs,
+config, source, preflight proofs and partial W&B records. Continue only the
+N=M128 v3/v4 jobs on vast1 and the independent preexisting T=3 jobs on
+the RTX5090 hosts. This supersedes the N=M256 launch portion above.

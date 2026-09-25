@@ -19,3 +19,9 @@ snapshots and respect per-GPU locks. The `vast1` canonical checkout has local
 commits ahead of GitHub: do not reset or overwrite that branch while sharing
 new source. Historical three-host manifests, archived supervisor configs,
 and the 2026-09-25 GMM40 reservation describe past allocations only.
+
+Later user correction, 2026-09-25: N=M256 is cancelled because its original
+full-batch preflight exhausted GPU memory. Both later gradient-accumulation
+N=M256 runs and sync services were also stopped, despite passing preflight.
+Do not resume or retry them. N=M128 v3/v4 continue on vast1; T=3 v3/v4
+continue on the two RTX5090 hosts. Keep all stopped N=M256 data and logs.
