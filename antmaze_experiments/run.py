@@ -346,6 +346,7 @@ def main():
         reward_profile=a.reward_profile,noveld_enabled=a.noveld=='on',
         optiq_config_profile=a.optiq_config_profile if a.method=='optiq' else None,
         nm=a.nm if a.method=='optiq' else None,
+        actor_microbatch_size=256 if a.nm==256 else None,
         eval_starts=a.eval_starts,effective_eval_starts='fixed' if learner.eval_fixed_starts else 'random',
         primary_trajectory='policy-fixed' if learner.eval_fixed_starts else 'policy-natural',
         noveld_coefficient=.01 if a.noveld=='on' else 0.,temperature=a.temperature,
@@ -371,6 +372,7 @@ def main():
         assert (int(actor.num_policy_samples), int(actor.proposals_per_policy_sample)) == (a.nm, 1)
         verification = dict(verified=True, num_policy_samples=a.nm,
                             proposals_per_policy_sample=1, teacher_candidates=a.nm,
+                            actor_microbatch_size=256 if a.nm==256 else None,
                             actor_updates=int(learner.model.policy.actor_state.step),
                             critic_updates=int(learner.model.policy.qf_state.step))
         assert verification['actor_updates'] == verification['critic_updates'] == 0
@@ -555,6 +557,7 @@ def main():
             assert (int(actor.num_policy_samples), int(actor.proposals_per_policy_sample)) == (a.nm, 1)
             result['nm_verification'] = dict(verified=True, num_policy_samples=a.nm,
                 proposals_per_policy_sample=1, teacher_candidates=a.nm,
+                actor_microbatch_size=256 if a.nm==256 else None,
                 actor_updates=int(learner.model.policy.actor_state.step),
                 critic_updates=int(learner.model.policy.qf_state.step))
             assert result['nm_verification']['actor_updates'] == result['nm_verification']['critic_updates'] == learner.updates

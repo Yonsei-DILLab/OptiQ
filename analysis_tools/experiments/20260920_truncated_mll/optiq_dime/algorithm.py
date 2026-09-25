@@ -592,7 +592,8 @@ class OptiQDIME(DIME):
         key, latent_key, proposal_key, dropout_key = jax.random.split(key, 4)
         batch_size, observation_dim = observations.shape
 
-        def actor_loss(actor_params):
+        def actor_loss(actor_params, observations, latent_key, proposal_key, dropout_key):
+            batch_size, observation_dim = observations.shape
             output_layer = "mu" if semi_implicit else f"Dense_{len(actor_params) - 1}"
             action_dim = actor_params[output_layer]["bias"].shape[0]
             z_key, eps_key = jax.random.split(latent_key) if semi_implicit else (latent_key, latent_key)
@@ -1075,9 +1076,47 @@ class OptiQDIME(DIME):
                 )
             return loss, metrics
 
-        (loss, metrics), grads = jax.value_and_grad(actor_loss, has_aux=True)(
-            actor_state.params
-        )
+        # N=M256 with batch4096 materializes a very large [B,N,M] likelihood
+        # tensor. Accumulate one full-batch mean gradient over state-independent
+        # chunks, then apply Adam once. This preserves the batch and update
+        # count; only the per-chunk PRNG realization differs from a single draw.
+        if distillation_loss == "direct_gmm_nll" and num_policy_samples >= 256 and batch_size > 256:
+            microbatch = 256
+            if batch_size % microbatch:
+                raise ValueError("The direct-GMM actor microbatch must divide the full batch")
+            chunks = batch_size // microbatch
+            inputs = (
+                observations.reshape(chunks, microbatch, observation_dim),
+                jax.random.split(latent_key, chunks),
+                jax.random.split(proposal_key, chunks),
+                jax.random.split(dropout_key, chunks),
+            )
+            value_and_grad = jax.value_and_grad(actor_loss, has_aux=True)
+            (first_loss, first_metrics), first_grad = value_and_grad(
+                actor_state.params, *(array[0] for array in inputs))
+            def add_chunk(carry, item):
+                grad_sum, loss_sum, metric_sum = carry
+                (chunk_loss, chunk_metrics), chunk_grad = value_and_grad(actor_state.params, *item)
+                grad_sum = jax.tree_util.tree_map(jnp.add, grad_sum, chunk_grad)
+                loss_sum = loss_sum + chunk_loss
+                metric_sum = {
+                    name: (jnp.minimum(metric_sum[name], value) if name.endswith("_min")
+                           else jnp.maximum(metric_sum[name], value) if name.endswith("_max")
+                           else metric_sum[name] + value)
+                    for name, value in chunk_metrics.items()
+                }
+                return (grad_sum, loss_sum, metric_sum), None
+            (grads, loss, metrics), _ = jax.lax.scan(
+                add_chunk, (first_grad, first_loss, first_metrics),
+                tuple(array[1:] for array in inputs))
+            grads = jax.tree_util.tree_map(lambda value: value / chunks, grads)
+            loss = loss / chunks
+            metrics = {name: value if name.endswith(("_min", "_max")) else value / chunks
+                       for name, value in metrics.items()}
+        else:
+            (loss, metrics), grads = jax.value_and_grad(actor_loss, has_aux=True)(
+                actor_state.params, observations, latent_key, proposal_key, dropout_key
+            )
         actor_state = actor_state.apply_gradients(grads=grads)
         return actor_state, loss, key, metrics
 

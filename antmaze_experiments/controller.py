@@ -126,6 +126,9 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             assert initial['verified'] and final['verified']
             assert all(item['num_policy_samples'] == item['teacher_candidates'] == n and
                        item['proposals_per_policy_sample'] == 1 for item in (initial, final))
+            assert all(item['actor_microbatch_size'] == (256 if n==256 else None)
+                       for item in (initial, final))
+            assert config['actor_microbatch_size'] == entry.get('actor_microbatch_size', 256 if n==256 else None)
             assert initial['actor_updates'] == initial['critic_updates'] == 0
             assert final['actor_updates'] == final['critic_updates'] == proof['updates']
         if 'actor_sigma_profile' in entry:
