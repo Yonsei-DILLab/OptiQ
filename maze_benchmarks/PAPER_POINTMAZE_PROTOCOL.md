@@ -35,8 +35,11 @@ batch 4096, the learner takes 16 updates per 256 fresh transitions. This is
 reduces optimizer calls and changes learning dynamics. Compare actual
 environment and optimizer counts; do not label it an exact DrAC replication.
 The method-specific policy architectures and optimizers follow the repository's
-existing baseline adapters. OptiQ Direct GMM/TRG keeps T=1, DACER off,
+existing baseline adapters. OptiQ Direct GMM/TRG uses T=3, DACER off,
 N=M64, random latent, 256x2, mean init 1e-4 and log sigma [-5,-1].
+SQL retains its baseline T=1; the other methods retain their own native
+entropy settings. The T=3 PointMaze queue replaces an unstarted T=1 queue;
+the original registration and its zero-run cancellation remain archived.
 
 The server-local queue has no method/maze completion gate. Any worker whose
 GPU lock becomes available claims the next pending job under a file lock.
@@ -77,8 +80,9 @@ panel with its own success and reachable-goal counts.
 Reference: [Wang, Liu & Pan, *Learning Intractable Multimodal Policies with
 Reparameterization and Diversity Regularization*, §5.1 and Appendix A.2](https://arxiv.org/abs/2511.01374).
 
-The separate post-launch collector (`python -m maze_benchmarks.collect_pointmaze
---output artifacts/paper_pointmaze_seven_20260926`) downloads completed runs,
+The separate collector (`python -m maze_benchmarks.collect_pointmaze
+--output artifacts/paper_pointmaze_seven_t3_20260926 --source-commit <frozen SHA>`)
+downloads completed runs,
 checks raw goal counts, checkpoint SHA256 and replay archive integrity, then
 renders the combined seven-method figures. Its source revision is recorded
 separately from the frozen learning revision.

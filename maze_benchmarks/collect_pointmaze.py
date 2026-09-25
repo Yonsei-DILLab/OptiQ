@@ -15,8 +15,7 @@ from .report_pointmaze import MAZES, METHODS, render_curves, render_medium_hard,
 
 
 HOSTS = ("vast-heechan-180", "vast-heechan-199")
-REMOTE_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-20260926"
-TRAINING_COMMIT = "c2d08d0767a2f625ba70906fae7a45dd3a719fe1"
+REMOTE_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926"
 
 
 def sync(source: str, destination: Path):
@@ -32,13 +31,15 @@ def digest(path: Path) -> str:
     return checksum.hexdigest()
 
 
-def verify_run(run: Path, job: dict):
+def verify_run(run: Path, job: dict, training_commit: str):
     config = json.loads((run / "config.json").read_text())
     progress = json.loads((run / "progress.json").read_text())
     if progress["status"] != "complete" or job["state"] != "complete":
         raise ValueError(f"incomplete job: {run.name}")
-    if config["source_commit"] != TRAINING_COMMIT:
+    if config["source_commit"] != training_commit:
         raise ValueError(f"source mismatch: {run.name}")
+    if config["temperature"] != (3.0 if config["method"] == "optiq" else 1.0):
+        raise ValueError(f"temperature profile mismatch: {run.name}")
     last = progress["latest_evaluation"]
     if last["step"] != progress["steps"]:
         raise ValueError(f"evaluation step mismatch: {run.name}")
@@ -66,6 +67,7 @@ def verify_run(run: Path, job: dict):
 def main():
     parser = argparse.ArgumentParser(allow_abbrev=False)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--source-commit", required=True)
     args = parser.parse_args()
     root = args.output.resolve()
     root.mkdir(parents=True, exist_ok=True)
@@ -76,7 +78,7 @@ def main():
         sync(f"{host}:{REMOTE_ROOT}/queue.json", meta / "queue.json")
         sync(f"{host}:{REMOTE_ROOT}/scheduler-manifest.json", meta / "scheduler-manifest.json")
         state = json.loads((meta / "queue.json").read_text())
-        if state["source_commit"] != TRAINING_COMMIT:
+        if state["source_commit"] != args.source_commit:
             raise ValueError(f"unexpected frozen source on {host}")
         for entry in state["jobs"]:
             if entry["state"] != "complete":
@@ -88,9 +90,10 @@ def main():
                 destination.mkdir(parents=True)
             sync(f"{host}:{REMOTE_ROOT}/runs/{name}/", destination)
             job = json.loads((meta / f"{name}.json").read_text())
-            results[name] = dict(host=host, sha256=verify_run(destination, job),
+            results[name] = dict(host=host, sha256=verify_run(destination, job,
+                                                              args.source_commit),
                                  selected=job["selected"], result=job["result"])
-    manifest = dict(training_source_commit=TRAINING_COMMIT,
+    manifest = dict(training_source_commit=args.source_commit,
                     reporting_source="see current Git HEAD",
                     completed=len(results), expected=len(MAZES) * len(METHODS),
                     runs=results)

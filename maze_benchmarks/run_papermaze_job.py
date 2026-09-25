@@ -26,6 +26,11 @@ PREFLIGHT_WARMUP = 4096
 # groups those sample accesses into larger batches to reduce GPU launch cost.
 CANDIDATES = ((256, 4096), (128, 4096), (64, 4096),
               (64, 2048), (64, 1024), (64, 256))
+TEMPERATURES = {"optiq": 3.0}
+
+
+def temperature(method: str) -> float:
+    return TEMPERATURES.get(method, 1.0)
 
 
 def parameters(env_count: int, batch_size: int):
@@ -58,7 +63,7 @@ def command(source: Path, commit: str, maze: str, method: str,
             "--batch-size", str(batch_size), "--warmup", str(warmup),
             "--eval-every", str(eval_every), "--eval-episodes", str(episodes),
             "--final-eval-episodes", str(final_episodes),
-            "--temperature", "1", "--render-each-eval",
+            "--temperature", str(temperature(method)), "--render-each-eval",
             "--source-commit", commit]
 
 
@@ -75,6 +80,8 @@ def verify_run(output: Path, commit: str, maze: str, method: str,
     if (config["source_commit"], config["task"], config["method"]) != (
             commit, f"pm_{maze}", method):
         raise ValueError("source/task/method mismatch")
+    if config["temperature"] != temperature(method):
+        raise ValueError("temperature profile mismatch")
     if (config["num_envs"], config["batch_size"], config["updates_per_collect"]) != (
             env_count, batch_size, parameters(env_count, batch_size)):
         raise ValueError("vector/update profile mismatch")
