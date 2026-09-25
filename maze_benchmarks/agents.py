@@ -535,16 +535,27 @@ class MFPO:
     critic_label = "MFPO clipped-double distributional value"
 
     def __init__(self, seed, folder, budget, observation_dim, batch_size=256, temperature=None):
-        from antmaze_experiments.dependencies import load_mfpo_config
-        self.config = load_mfpo_config(ROOT).to_dict()
+        # Frozen training sources contain the exact pinned submodule files but
+        # deliberately omit their Git metadata. Load the author's config from
+        # that snapshot; its parent gitlink and source sidecar pin the revision.
+        config_path = ROOT / "gmm40-baseline/MFPO/configs/mfpo_config.py"
+        if not config_path.is_file():
+            raise FileNotFoundError("pinned MFPO source is absent from training snapshot")
+        spec = importlib.util.spec_from_file_location("maze_mfpo_config", config_path)
+        config_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(config_module)
+        self.config = config_module.get_config().to_dict()
         self.config.pop("model_cls")
+        self.config["upstream_commit"] = "d8b3977d29d4ef2d315e871337e5826f2eb79eb2"
         sys.path.insert(0, str(ROOT / "gmm40-baseline/MFPO"))
         from jaxrl5.agents.mean_flow_learner import MeanFlowLearner
         descriptor = SpaceOnlyEnv(observation_dim)
         descriptor.observation_space.seed(seed)
         descriptor.action_space.seed(seed)
+        training_config = {key: value for key, value in self.config.items()
+                           if key != "upstream_commit"}
         self.agent = MeanFlowLearner.create(
-            seed, descriptor.observation_space, descriptor.action_space, **self.config)
+            seed, descriptor.observation_space, descriptor.action_space, **training_config)
         self.replay = Replay(seed=seed, observation_dim=observation_dim)
         self.batch_size = batch_size
         self.count = 0

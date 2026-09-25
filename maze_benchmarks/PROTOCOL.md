@@ -55,6 +55,10 @@ architecture, reward support, action-sampling rule and actual update counts.
 For MEOW and MFPO the pinned Git submodule revisions must be copied into each
 immutable training snapshot before either method launches; a `git archive` of
 this repository alone contains empty submodule directories.
+`python -m maze_benchmarks.prepare_source --commit <SHA> --output <NEW_DIR>`
+verifies the gitlinks, exports only the required upstream source files, and
+writes per-file SHA256 hashes in `maze_source_manifest.json`. The snapshot
+must then be shared unchanged across servers and preflighted before launch.
 
 After the T=3, 100k OptiQ run reached all goals but only 8/100 west-goal
 episodes, run the user-selected temperature grid T=1,3,5,10 with the same
