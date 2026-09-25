@@ -133,7 +133,8 @@ class JaxLearner:
     def __init__(self, method, spaces, task, folder, temperature=None, budget=None,
                  reward_profile='sparse',noveld=True,temperature_schedule=None,
                  dacer_target_entropy_per_dim=None,dacer_enabled=True,dynamics_profile=None,
-                 dacer_interval_updates=None,discount=None,teacher_std_floor=None,latent_profile=None):
+                 dacer_interval_updates=None,discount=None,teacher_std_floor=None,latent_profile=None,
+                 collection_profile=None):
         import jax
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
@@ -141,6 +142,10 @@ class JaxLearner:
         self.reward_profile,self.noveld_enabled = reward_profile,noveld
         self.dynamics_profile = dynamics_profile
         self.latent_profile = latent_profile
+        from .collection_profile import get_profile
+        self.updates_per_collection = get_profile(collection_profile)['updates_per_vector_step']
+        if collection_profile is not None:
+            assert method == 'optiq'
         assert latent_profile in (None, 'fixed64')
         if latent_profile is not None:
             assert method == 'optiq'
@@ -282,7 +287,7 @@ class JaxLearner:
 
     def update(self, step):
         info = {}
-        for _ in range(UPDATES):
+        for _ in range(self.updates_per_collection):
             if self.method == 'optiq':
                 m = self.model
                 m.num_timesteps = step

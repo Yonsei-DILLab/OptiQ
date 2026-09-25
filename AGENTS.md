@@ -437,3 +437,16 @@ physics change. Validate actual sampler/serialization/8update preflight and
 initial parameters, commit/push/share/freeze before launch, preserve Q on180.
 No automatic extension/retry or4090 work. See
 antmaze_experiments/FIXED_LATENT_SCREEN_PROTOCOL.md.
+
+Active-goal collection-cadence screen (2026-09-25): test two fresh v3/v4 seed0
+250k candidates with32env/one update per32transitions, matching the completed
+random-prior teacherfloor1/T3 v3 and teacherfloor.5/T1 v4 controls. Preserve
+global1/32update ratio,batch4096,replay1M,warmup8192,total258304/7816updates,
+every learning/reward/physics setting and all nine pinned algorithm files.
+This changes per-environment trajectory duration and collection/update cadence;
+do not claim identical training data. Intermediate evaluation clocks must match
+the old256-env rounded steps exactly. Real eight-update GPU preflights, actual
+32simulator readback and initial parameter equality are required. Preserve live
+fixed64 runs on199; use free180 slots, no4090/cancelled resumes/extra seeds or
+automatic retry/extension. Commit/push/share/freeze first. See
+antmaze_experiments/ENV32_SCREEN_PROTOCOL.md.

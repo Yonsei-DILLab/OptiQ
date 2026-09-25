@@ -54,7 +54,7 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             cmd.extend(['--budget-steps',str(entry['steps'])])
         if 'final_eval_episodes' in entry:
             cmd.extend(['--final-eval-episodes',str(entry['final_eval_episodes'])])
-        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer','dynamics_profile','eval_interval','dacer_interval_updates','discount','teacher_std_floor','latent_profile'):
+        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer','dynamics_profile','eval_interval','dacer_interval_updates','discount','teacher_std_floor','latent_profile','collection_profile'):
             if key in entry:cmd.extend(['--'+key.replace('_','-'),str(entry[key])])
         if entry.get('save_intermediate_policy',False):
             cmd.append('--save-intermediate-policy')
@@ -68,11 +68,26 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
         proof=json.loads((target/'result.json').read_text())
         assert proof['completed'] and proof['source_commit']==manifest['source_commit']
         expected=PREFLIGHT_STEPS if phase=='preflight' else entry.get('steps',total_budget(entry['task']))
-        assert proof['steps']==expected and proof['updates']==expected_updates(expected)
+        from .collection_profile import get_profile as collection_settings, expected_updates as collection_updates
+        collection=collection_settings(entry.get('collection_profile'))
+        assert proof['steps']==expected and proof['updates']==collection_updates(expected,entry.get('collection_profile'))
         assert proof['checkpoint']['environment_reward_verified']
         config=json.loads((target/'config.json').read_text())
         reward=reward_description(entry.get('reward_profile','sparse'))
-        assert config['reward']==reward and config['num_envs']==NUM_ENVS and config['batch_size']==4096
+        assert config['reward']==reward and config['num_envs']==collection['num_envs'] and config['batch_size']==4096
+        assert config['updates_per_vector_step']==collection['updates_per_vector_step']
+        if 'collection_profile' in entry:
+            verification=proof['collection_profile_verification']
+            assert verification['verified'] and verification['profile']==entry['collection_profile']
+            assert verification['settings']==collection and verification['actual_updates']==proof['updates']
+            assert verification['simulator_count']==proof['checkpoint']['simulator_count']==collection['num_envs']
+            initial=json.loads((target/'collection-profile-initial-verification.json').read_text())
+            assert initial['verified'] and initial['actor_updates']==initial['critic_updates']==0
+            assert initial['actual_envs']==collection['num_envs']
+            assert initial['actual_updates_per_collection']==collection['updates_per_vector_step']
+            if phase!='preflight':
+                actual_steps=sorted(int(p.name) for p in (target/'evaluations').glob('*') if int(p.name)<expected)
+                assert actual_steps==verification['expected_eval_steps']
         if 'reward_specification' in entry:
             assert config['reward_profile']==entry['reward_profile']
             assert config['reward_specification']==entry['reward_specification']

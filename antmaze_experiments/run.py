@@ -212,6 +212,9 @@ def main():
     p.add_argument('--discount',type=float)
     p.add_argument('--teacher-std-floor',type=float)
     p.add_argument('--latent-profile',choices=['fixed64'])
+    from .collection_profile import PROFILES as COLLECTION_PROFILES, get_profile as collection_settings
+    from .collection_profile import expected_updates as collection_updates, aligned_eval_step
+    p.add_argument('--collection-profile',choices=COLLECTION_PROFILES)
     p.add_argument('--dacer',choices=['on','off'])
     p.add_argument('--budget-steps',type=int)
     p.add_argument('--final-eval-episodes',type=int,default=100)
@@ -224,6 +227,12 @@ def main():
     p.add_argument('--noveld',choices=['on','off'],default='on')
     p.add_argument('--eval-starts',choices=['upstream','random','fixed'],default='upstream')
     a = p.parse_args()
+    collection = collection_settings(a.collection_profile)
+    num_envs = collection['num_envs']
+    updates_per_collection = collection['updates_per_vector_step']
+    if a.collection_profile is not None:
+        assert a.method == 'optiq' and a.dynamics_profile is None
+        assert a.eval_interval >= NUM_ENVS
     assert a.eval_interval > 0
     if a.dynamics_profile is not None:
         dynamics = get_profile(a.dynamics_profile)
@@ -259,8 +268,8 @@ def main():
         temperature_schedule=dict(enabled=True,final_temperature=a.temperature_final,
             anneal_steps=a.temperature_anneal_steps,decay=a.temperature_decay)
     if a.budget_steps is not None:
-        assert a.budget_steps >= WARMUP + NUM_ENVS
-        assert a.budget_steps % NUM_ENVS == 0
+        assert a.budget_steps >= WARMUP + num_envs
+        assert a.budget_steps % num_envs == 0
     assert 1 <= a.final_eval_episodes <= 1000
     assert 1 <= a.interim_eval_episodes <= 1000
     if a.save_intermediate_policy:
@@ -275,7 +284,7 @@ def main():
     os.sched_setaffinity(0,cpus[gpu::4] or cpus)
     # Fork workers before importing torch/JAX or initializing a GPU context.
     from .envs import vector, transition
-    env = vector(a.task,NUM_ENVS,seed=0,reward_profile=a.reward_profile)
+    env = vector(a.task,num_envs,seed=0,reward_profile=a.reward_profile)
     obs = env.reset()
     import torch
     torch.set_num_threads(1);torch.manual_seed(0)
@@ -293,7 +302,8 @@ def main():
             dacer_target_entropy_per_dim=a.dacer_target_entropy_per_dim,
             dacer_enabled=a.dacer!='off',dynamics_profile=a.dynamics_profile,
             dacer_interval_updates=a.dacer_interval_updates,discount=a.discount,
-            teacher_std_floor=a.teacher_std_floor,latent_profile=a.latent_profile)
+            teacher_std_floor=a.teacher_std_floor,latent_profile=a.latent_profile,
+            collection_profile=a.collection_profile)
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     learner.eval_fixed_starts = a.eval_starts=='fixed' or (a.eval_starts=='upstream' and a.task!='v1')
@@ -303,8 +313,8 @@ def main():
         method=a.method,task=a.task,seed=0,preflight=a.preflight,steps=budget,
         source_dependencies=dependencies,
         wandb_entity=WANDB_ENTITY,wandb_project=WANDB_PROJECT,
-        num_envs=NUM_ENVS,batch_size=4096,updates_per_vector_step=UPDATES,updates_per_transition=1/32,
-        expected_updates=expected_updates(budget),warmup_transitions=warmup,
+        num_envs=num_envs,batch_size=4096,updates_per_vector_step=updates_per_collection,updates_per_transition=1/32,
+        expected_updates=collection_updates(budget,a.collection_profile),warmup_transitions=warmup,
         upstream_max_step=BUDGETS[a.task],native_global_steps=budget-warmup,
         reward=reward_description(a.reward_profile),
         reward_specification=specification(a.task,a.reward_profile),
@@ -329,6 +339,18 @@ def main():
         runtime=dict(python=os.sys.version,torch=torch.__version__,numpy=np.__version__))
     if a.teacher_std_floor is not None:
         config['teacher_std_floor_override']=a.teacher_std_floor
+    if a.collection_profile is not None:
+        config.update(collection_profile=a.collection_profile,
+                      eval_transition_quantum=NUM_ENVS,
+                      collection_comparison='Same global transitions, batch4096 and 1/32 updates per transition; fewer environments and smaller update blocks')
+        assert env.num_envs == num_envs and learner.updates_per_collection == updates_per_collection
+        write(folder/'collection-profile-initial-verification.json',dict(
+            verified=True,profile=a.collection_profile,settings=collection,
+            actual_envs=env.num_envs,actual_updates_per_collection=learner.updates_per_collection,
+            warmup_transitions=warmup,parameters=initial,
+            actor_updates=int(learner.model.policy.actor_state.step),
+            critic_updates=int(learner.model.policy.qf_state.step),
+            eval_transition_quantum=NUM_ENVS))
     if a.latent_profile is not None:
         config.update(latent_profile=a.latent_profile,latent_prior='finite',latent_components=64,
                       latent_codebook_seed=20260911,
@@ -352,6 +374,7 @@ def main():
     if a.discount is not None:temp_name+=f'-gamma{a.discount:g}'
     if a.teacher_std_floor is not None:temp_name+=f'-teacherfloor{a.teacher_std_floor:g}'
     if a.latent_profile is not None:temp_name+='-'+a.latent_profile
+    if a.collection_profile is not None:temp_name+='-'+a.collection_profile
     if a.dacer is not None:temp_name+='-dacer'+a.dacer
     if a.dynamics_profile is not None:temp_name+='-dyn-'+a.dynamics_profile
     run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s0-{budget}steps'
@@ -364,6 +387,8 @@ def main():
             entity=WANDB_ENTITY,project=WANDB_PROJECT,
             mode='offline' if offline else 'online',sync_pending=offline))
     rng=np.random.default_rng(0);step=0;started=time.monotonic();next_eval=a.eval_interval
+    eval_index=1
+    if a.collection_profile is not None:next_eval=aligned_eval_step(eval_index,a.eval_interval)
     next_diagnostic=25000
     timing=dict(collection=0.,learner=0.,evaluation=0.,checkpoint=0.)
     xy=np.empty((budget,2),np.float32);successes=[];episodes=0;info={}
@@ -399,21 +424,21 @@ def main():
     try:
         while step<budget:
             t=time.monotonic()
-            action=rng.uniform(-1,1,(NUM_ENVS,8)).astype(np.float32) if step<warmup else learner.act(obs)
-            assert action.shape==(NUM_ENVS,8) and np.isfinite(action).all()
+            action=rng.uniform(-1,1,(num_envs,8)).astype(np.float32) if step<warmup else learner.act(obs)
+            assert action.shape==(num_envs,8) and np.isfinite(action).all()
             nxt,reward,done,infos=env.step(np.clip(action,-1,1))
             final,terminal=transition(nxt,done,infos)
             if isinstance(learner,Native): learner.record_collection(obs,reward,done)
             learner.store(obs,action,reward,final,terminal)
-            xy[step:step+NUM_ENVS]=final[:,:2]
+            xy[step:step+num_envs]=final[:,:2]
             for i,entry in enumerate(infos):
                 if done[i]: episodes+=1
                 if entry.get('success',0): successes.append(dict(step=step+i+1,env=i,goal=int(entry['success'])))
-            obs=nxt;step+=NUM_ENVS;timing['collection']+=time.monotonic()-t
+            obs=nxt;step+=num_envs;timing['collection']+=time.monotonic()-t
             if step>warmup:
                 t=time.monotonic();info=learner.update(step);timing['learner']+=time.monotonic()-t
                 assert all(np.isfinite(float(v)) for v in info.values()), info
-                assert learner.updates==expected_updates(step)
+                assert learner.updates==collection_updates(step,a.collection_profile)
                 assert learner.intrinsic.update_step==(learner.updates if learner.noveld_enabled else 0)
             if a.dynamics_profile is not None and (step>=next_diagnostic or (a.preflight and step==budget)):
                 from .critic_diagnostics import replay_diagnostics
@@ -437,7 +462,9 @@ def main():
                     if 'critic_diagnostics' in s:
                         run.log(numeric_metrics(s['critic_diagnostics'],'diagnostic/policy'),step=step)
                 timing['evaluation']+=time.monotonic()-t
-                next_eval+=a.eval_interval
+                eval_index+=1
+                next_eval=(aligned_eval_step(eval_index,a.eval_interval) if a.collection_profile is not None
+                           else next_eval+a.eval_interval)
             if step%4096==0 or step==budget: progress()
         final_audit=audit(learner)
         for key in (('actor','critic','rnd_predictor') if learner.noveld_enabled else ('actor','critic')):
@@ -463,6 +490,17 @@ def main():
             steps=step,global_steps=step-warmup,updates=learner.updates,rnd_updates=learner.intrinsic.update_step,
             summaries=summaries,checkpoint=proof,timing=timing,seconds=time.monotonic()-started,
             training_successes=len(successes),training_episodes=episodes)
+        if a.collection_profile is not None:
+            assert proof['simulator_count']==num_envs
+            assert learner.updates==collection_updates(step,a.collection_profile)
+            result['collection_profile_verification']=dict(verified=True,
+                profile=a.collection_profile,settings=collection,
+                actual_updates=learner.updates,simulator_count=proof['simulator_count'],
+                actual_transitions=step,updates_per_transition=1/32,
+                global_steps=step-warmup,env_steps_each=step//num_envs,
+                expected_eval_steps=[aligned_eval_step(i,a.eval_interval)
+                    for i in range(1,(step-1)//a.eval_interval+1)])
+            write(folder/'collection-profile-final-verification.json',result['collection_profile_verification'])
         if a.discount is not None:
             assert float(learner.model.gamma)==a.discount
             result['discount']=float(learner.model.gamma)
