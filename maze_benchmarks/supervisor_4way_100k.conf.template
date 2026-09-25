@@ -1,0 +1,10 @@
+[program:__SERVICE__]
+directory=__SOURCE__
+command=/usr/bin/flock -n /home/heechan/OptiQ-ops/locks/gpu-__GPU__.lock /bin/bash __SOURCE__/maze_benchmarks/launch_4way_100k.sh __METHOD__ __OUTPUT__
+environment=OPTIQ_SOURCE_COMMIT="__SHA__",OPTIQ_PYTHON="/home/heechan/.venv-ddiffpg-native/bin/python",CUDA_VISIBLE_DEVICES="__GPU__",XLA_PYTHON_CLIENT_PREALLOCATE="false"
+autostart=false
+autorestart=false
+startsecs=0
+stdout_logfile=__OUTPUT_PARENT__/__SERVICE__.log
+stderr_logfile=__OUTPUT_PARENT__/__SERVICE__.log
+redirect_stderr=true
