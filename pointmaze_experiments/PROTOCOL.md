@@ -36,3 +36,13 @@ evaluation and native named-map episode limits. It is not an exact replication
 of upstream's list-map constructor (which defaults to500steps).
 No goal-removal experiment, extra seeds, temperatures or baseline launches.
 Run real 16-update preflights with geometry checks and obstacle evaluation first.
+
+## Approved temperature extension
+Latest user explicitly adds T3 and T5 for all Simple/Medium/Hard, seed0: six
+fresh jobs,100K/200K/300K including10K warmup. No learning/evaluation change
+other than temperature; retain original sparse reward and final obstacle tests.
+Preserve running T1 Medium/Hard on vast2 GPUs1/2 and MaxEntDP on other hosts.
+Two independent serial queues on idle vast2 RTX5090 GPU0(T3)/GPU3(T5), each
+Simple then Medium then Hard. Failures preserve results and do not block the
+next independent maze; no retries or checkpoint resumes. Exact source frozen
+in a separate worktree. Preflight both new temperatures before main launch.
