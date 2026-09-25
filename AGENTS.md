@@ -415,3 +415,13 @@ changes. Preserve teacherfloor1,T3,gamma.999 and all short-run settings. Inspect
 three consecutive checkpoints. Use one free180GPU, source-only199 sharing,
 commit/push/freeze before preflight/main. Do not extend v4 screens or restart
 cancelled runs. See antmaze_experiments/TEACHER_FLOOR_RETENTION_PROTOCOL.md.
+
+Active-goal frozen-policy diagnostic (2026-09-25): inspect the completed v4
+teacherfloor.5 checkpoint using40paired plain/instrumented native700-step CPU
+direct rollouts. Record physical wall contacts and full pose/velocity without
+changing policy, reward, physics, resets or horizon; require exact paired action/
+trajectory equality and checkpoint/model/RNG preservation. Preserve its primary
+100episode results and live v3Q training. Nice19CPU only on199, no4090/newtraining/
+automatic retry. Commit/push/share/freeze evaluation source before execution.
+See antmaze_experiments/WALL_CONTACT_DIAGNOSTIC_PROTOCOL.md. No body-inflation or
+other reward/algorithm change is authorized by this diagnostic registration.
