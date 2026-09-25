@@ -68,9 +68,9 @@ def main():
             ax.set(xlim=(-10,10), ylim=(0,None), xlabel=r'$a$')
             ax.set_xticks([-10,-5,0,5,10])
             ax.tick_params(direction='out', length=4, width=.8)
-            if method_index == 0:
+            if pair == 0 and method_index == 0:
                 ax.set_ylabel('Density')
-            ax.set_title(f'({"abcd"[2*pair+method_index]}) {method.capitalize()} KL, TV={np.mean(tvs):.3f}', pad=12)
+            ax.set_title(f'({"abcd"[2*pair+method_index]}) {method.capitalize()} KL', pad=12)
             provenance['metrics'][f'{ident}/{method}'] = {'TV_seeds': tvs, 'mean_TV': float(np.mean(tvs))}
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
@@ -86,7 +86,7 @@ Three Gaussian modes: (a) Forward KL, (b) Reverse KL. Spike + ramp: (c) Forward 
 
 All panels use the completed L=2^10 screening experiment: 100K updates, N=M=128, batch 32, seeds 0–3. Forward has no auxiliary density bank; L applies to Reverse. These are not L=2^20 confirmation results.
 
-Black dashed curves are the exact target. The learned densities are 512-bin sample histograms from 262,144 actions per seed, averaged over four seeds, without smoothing. Light fills show the learned density; thin curves show individual seeds. Vertical scales are independent, as in the preceding figure. Font: DejaVu Sans (sans-serif); all four axes use a boxed frame. Environment headings and legend are omitted; TV in each panel title is the mean of per-seed TV values (not TV of the mean histogram). Numerical data and target definitions are unchanged.
+Black dashed curves are the exact target. The learned densities are 512-bin sample histograms from 262,144 actions per seed, averaged over four seeds, without smoothing. Light fills show the learned density; thin curves show individual seeds. Vertical scales are independent, as in the preceding figure. Font: DejaVu Sans (sans-serif); all four axes use a boxed frame. Environment headings, legend, and TV labels are omitted; only the first panel has a Density label. Numerical data and target definitions are unchanged.
 
 Mean per-seed TV: three Gaussian modes, Forward 0.0387 / Reverse 0.6666; spike + ramp, Forward 0.0432 / Reverse 0.1977. Exact values and source hashes are recorded in PROVENANCE.json. The examples were selected during screening and do not establish universal performance ordering.
 ''')
