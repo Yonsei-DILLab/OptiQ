@@ -82,9 +82,9 @@ def load_trainer():
     return module
 
 
-def load_policy_config(trainer, out, budget, warmup):
+def load_policy_config(trainer, out, budget, warmup, temperature):
     cfg = trainer.compose_config([
-        "benchmark=ant", "seed=0", "alg.actor.temperature=1.0",
+        "benchmark=ant", "seed=0", f"alg.actor.temperature={temperature}",
         "alg.actor.mean_output_init_scale=0.0001",
         "alg.actor.log_std_min=-5.0", "alg.actor.log_std_max=-1.0",
         "alg.actor.initial_log_std=-1.0",
@@ -241,6 +241,7 @@ def main():
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--steps", type=int, default=10_000)
     parser.add_argument("--warmup", type=int, default=1_000)
+    parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--interim-episodes", type=int, default=40)
     parser.add_argument("--final-episodes", type=int, default=100)
@@ -254,7 +255,7 @@ def main():
     (args.out / "checkpoints").mkdir()
 
     trainer = load_trainer()
-    cfg = load_policy_config(trainer, args.out, args.steps, args.warmup)
+    cfg = load_policy_config(trainer, args.out, args.steps, args.warmup, args.temperature)
     from omegaconf import OmegaConf
     resolved = OmegaConf.to_container(cfg, resolve=True)
     (args.out / "config.json").write_text(json.dumps(resolved, indent=2) + "\n")
@@ -267,7 +268,7 @@ def main():
         seed=args.seed, environment_transitions=args.steps, warmup_transitions=args.warmup,
         updates_per_transition=1, batch_size=256, evaluation_start="fixed origin",
         goals=FourWayEnv().goal_positions.tolist(), reward="-30*||a||^2 - min_g ||s_next-g||^2 + 10 on success",
-        temperature=1.0, beta=1.0, num_policy_samples=64, proposals_per_policy_sample=1,
+        temperature=args.temperature, beta=1.0, num_policy_samples=64, proposals_per_policy_sample=1,
         actor_hidden_dims=[256, 256], critic_hidden_dims=[256, 256],
         mean_output_init_scale=1e-4, log_std_bounds=[-5.0, -1.0], initial_log_std=-1.0,
         gamma=0.99, critic_tau=0.005, dacer=False, noveld=False,
@@ -334,7 +335,7 @@ def main():
         learner_updates=model._n_updates, evaluations=eval_history,
     ), indent=2) + "\n")
     print(json.dumps(dict(status="complete", steps=args.steps,
-                          learner_updates=model._n_updates, out=str(args.out)), flush=True))
+                          learner_updates=model._n_updates, out=str(args.out))), flush=True)
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.patches import Patch
 
 NAMES = ("east", "west", "north", "south")
 COLORS = ("#d55e00", "#0072b2", "#009e73", "#cc79a7")
@@ -61,41 +62,51 @@ def main():
     ax.grid(axis="y", alpha=.2)
 
     ax = axes[1, 0]
-    width = .36
-    for mode_rows, offset, label in ((full, -width/2, "policy: z + conditional σ"),
-                                     (mu, width/2, "μ-only: random z")):
-        for d, (name, color) in enumerate(zip(NAMES, COLORS)):
-            vals = np.asarray([row["direction_counts"][d] / row["episodes"] for row in mode_rows])
-            ax.bar(x + offset, vals, width/4, color=color, alpha=.9 if offset < 0 else .48,
-                   label=f"{name} ({label})" if d == 0 else None)
-        other = np.asarray([row["uncommitted_first_actions"] / row["episodes"] for row in mode_rows])
-        ax.plot(x + offset, other, "k--" if offset < 0 else "k:", marker="o", ms=3,
-                label=f"uncommitted ({label})")
-    ax.set_xticks(x, [str(row["step"]) for row in full])
+    slot = 0
+    tick_positions, tick_labels = [], []
+    for mode_rows, mode_label in ((full, "policy"), (mu, "μ-only")):
+        for row in mode_rows:
+            counts = list(row["direction_counts"])
+            counts.append(row["uncommitted_first_actions"])
+            fractions = np.asarray(counts, dtype=float) / row["episodes"]
+            bottom = 0.0
+            for d, color in enumerate((*COLORS, "#999999")):
+                ax.bar(slot, fractions[d], bottom=bottom, width=.72, color=color,
+                       alpha=.92 if mode_label == "policy" else .48)
+                bottom += fractions[d]
+            tick_positions.append(slot)
+            tick_labels.append(f"{row['step']}\n{mode_label}")
+            slot += 1
+        slot += .45
+    ax.set_xticks(tick_positions, tick_labels)
     ax.set_ylim(0, 1)
     ax.set(xlabel="environment transitions", ylabel="fraction", title="First-action direction mass")
     ax.grid(axis="y", alpha=.2)
-    ax.legend(fontsize=7, ncol=2)
+    ax.legend(handles=[Patch(facecolor=color, label=name)
+                       for name, color in zip((*NAMES, "uncommitted"), (*COLORS, "#999999"))],
+              fontsize=7, ncol=2)
 
     ax = axes[1, 1]
-    training_path = args.run / "training.csv"
-    with training_path.open() as handle:
-        rows = list(csv.DictReader(handle))
-    if rows:
-        tr_steps = np.asarray([int(r["step"]) for r in rows])
-        for key, label, style in (
-            ("train/source_ess_absolute", "teacher source ESS", "-"),
-            ("train/source_q_std", "candidate Q std", "--"),
-            ("train/q_to_density_logit_std_ratio", "Q/density logit std", ":"),
-        ):
-            values = np.asarray([float(r[key]) if r.get(key) else np.nan for r in rows])
-            if np.isfinite(values).any():
-                ax.plot(tr_steps, values, style, label=label, alpha=.9)
-        ax.set(xlabel="environment transitions", title="Learner responsibility diagnostics")
-        ax.legend(fontsize=8)
+    q_steps = []
+    q_values = []
+    for step in steps:
+        q_path = args.run / "evaluations" / f"origin_action_cloud_{step:05d}.npz"
+        if q_path.exists():
+            q_steps.append(step)
+            q_values.append(np.load(q_path)["directional_q"])
+    if q_steps:
+        q_values = np.asarray(q_values)  # checkpoint × twin critic × direction
+        for d, (name, color) in enumerate(zip(NAMES, COLORS)):
+            q_low = q_values[:, :, d].min(axis=1)
+            q_high = q_values[:, :, d].max(axis=1)
+            ax.plot(q_steps, (q_low + q_high) / 2, color=color, marker="o", label=name)
+            ax.fill_between(q_steps, q_low, q_high, color=color, alpha=.16)
+        ax.set(xlabel="environment transitions", ylabel="Q at origin for unit-axis action",
+               title="Twin-critic directional Q probes")
+        ax.legend(fontsize=8, ncol=2)
         ax.grid(alpha=.2)
     else:
-        ax.text(.5, .5, "No learner diagnostics were recorded", ha="center", va="center")
+        ax.text(.5, .5, "No directional Q probes were recorded", ha="center", va="center")
         ax.set_axis_off()
 
     fig.suptitle("Direct GMM OptiQ / iBOLT — symmetric four-goal diagnostic", fontsize=15)
