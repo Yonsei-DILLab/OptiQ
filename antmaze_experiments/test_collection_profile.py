@@ -1,4 +1,4 @@
-"""Accounting regressions for the optional smaller collection block."""
+"""Accounting regressions for optional collection/update schedules."""
 import unittest
 
 from .collection_profile import get_profile, expected_updates, aligned_eval_step
@@ -18,6 +18,16 @@ class CollectionAccounting(unittest.TestCase):
             self.assertEqual(expected_updates(total, 'env32-update1'), legacy_updates(total))
         for i, step in enumerate(range(WARMUP+32, 258304+1, 32), 1):
             self.assertEqual(expected_updates(step, 'env32-update1'), i)
+
+    def test_256_updates_per_256_new_transitions(self):
+        profile = get_profile('env256-update256')
+        self.assertEqual(profile, dict(num_envs=256, updates_per_vector_step=256))
+        self.assertEqual(expected_updates(WARMUP, 'env256-update256'), 0)
+        self.assertEqual(expected_updates(WARMUP+256, 'env256-update256'), 256)
+        self.assertEqual(expected_updates(WARMUP+512, 'env256-update256'), 512)
+        self.assertEqual(expected_updates(WARMUP+512), 16)
+        with self.assertRaises(ValueError):
+            expected_updates(WARMUP+257, 'env256-update256')
 
     def test_identical_evaluation_checkpoints(self):
         for interval in (50000, 250000):

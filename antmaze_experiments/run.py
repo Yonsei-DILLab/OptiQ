@@ -334,7 +334,8 @@ def main():
         method=a.method,task=a.task,seed=0,preflight=a.preflight,steps=budget,
         source_dependencies=dependencies,
         wandb_entity=WANDB_ENTITY,wandb_project=WANDB_PROJECT,
-        num_envs=num_envs,batch_size=4096,updates_per_vector_step=updates_per_collection,updates_per_transition=1/32,
+        num_envs=num_envs,batch_size=4096,updates_per_vector_step=updates_per_collection,
+        updates_per_transition=updates_per_collection/num_envs,
         expected_updates=collection_updates(budget,a.collection_profile),warmup_transitions=warmup,
         upstream_max_step=BUDGETS[a.task],native_global_steps=budget-warmup,
         reward=reward_description(a.reward_profile),
@@ -369,7 +370,10 @@ def main():
     if a.collection_profile is not None:
         config.update(collection_profile=a.collection_profile,
                       eval_transition_quantum=NUM_ENVS,
-                      collection_comparison='Same global transitions, batch4096 and 1/32 updates per transition; fewer environments and smaller update blocks')
+                      collection_comparison=(
+                          'Same global transitions and batch4096; 256 updates per 256 transitions'
+                          if a.collection_profile == 'env256-update256' else
+                          'Same global transitions, batch4096 and 1/32 updates per transition; fewer environments and smaller update blocks'))
         assert env.num_envs == num_envs and learner.updates_per_collection == updates_per_collection
         write(folder/'collection-profile-initial-verification.json',dict(
             verified=True,profile=a.collection_profile,settings=collection,
@@ -524,7 +528,7 @@ def main():
             result['collection_profile_verification']=dict(verified=True,
                 profile=a.collection_profile,settings=collection,
                 actual_updates=learner.updates,simulator_count=proof['simulator_count'],
-                actual_transitions=step,updates_per_transition=1/32,
+                actual_transitions=step,updates_per_transition=updates_per_collection/num_envs,
                 global_steps=step-warmup,env_steps_each=step//num_envs,
                 expected_eval_steps=[aligned_eval_step(i,a.eval_interval)
                     for i in range(1,(step-1)//a.eval_interval+1)])
