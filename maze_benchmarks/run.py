@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 from pathlib import Path
 import random
@@ -16,11 +17,13 @@ from .agents import OptiQ, SAC, SQL, MEOW, MFPO, DIPO, TD3
 from .visualize_4way import probe_policy
 from .visualize_nway import render as render_nway
 from .nway import GOAL_RADIUS, HORIZON as NWAY_HORIZON, STATE_LIMIT, SUCCESS_RADIUS, SUPPORTED_GOALS
+from pointmaze.drac_paper import HORIZONS as PAPER_HORIZONS, GOAL_COUNTS as PAPER_GOALS, MAP_NAMES as PAPER_MAP_NAMES
 
 
 AGENTS = {"optiq": OptiQ, "sac": SAC, "sql": SQL, "meow": MEOW,
           "mfpo": MFPO, "dipo": DIPO, "td3": TD3}
 NWAY_TASKS = tuple(f"{count}way" for count in SUPPORTED_GOALS)
+PAPER_TASKS = tuple(f"pm_{name}" for name in PAPER_MAP_NAMES)
 
 
 def atomic_json(path: Path, value):
@@ -29,18 +32,38 @@ def atomic_json(path: Path, value):
     temporary.replace(path)
 
 
-def evaluate(agent, task, seed, episodes, mode, destination):
+def removal_sr5(goals: np.ndarray, goal_count: int) -> float:
+    """Original DrAC half-goal-removal expectation over five-trial groups."""
+    if len(goals) % 5:
+        raise ValueError("five-trial robustness requires a multiple of five episodes")
+    removed = goal_count // 2
+    scores = []
+    for group in goals.reshape(-1, 5):
+        reached = len(set(int(goal) for goal in group if goal >= 0))
+        scores.append(1.0 if reached >= goal_count - removed else
+                      1.0 - math.comb(goal_count - reached, removed) / math.comb(goal_count, removed))
+    return float(np.mean(scores))
+
+
+def obstacle_sr5(goals: np.ndarray) -> float:
+    if len(goals) % 5:
+        raise ValueError("five-trial robustness requires a multiple of five episodes")
+    return float(np.mean(np.any(goals.reshape(-1, 5) >= 0, axis=1)))
+
+
+def evaluate(agent, task, seed, episodes, mode, destination, obstacle=False):
     if episodes <= 0:
         raise ValueError(episodes)
-    horizon = 300 if task == "pointmaze" else (20 if task == "4way" else NWAY_HORIZON)
-    dim = 4 if task == "pointmaze" else 2
+    horizon = (PAPER_HORIZONS[task[3:]] if task in PAPER_TASKS else
+               300 if task == "pointmaze" else 20 if task == "4way" else NWAY_HORIZON)
+    dim = 4 if task == "pointmaze" or task in PAPER_TASKS else 2
     histories = np.full((episodes, horizon + 1, 2), np.nan, np.float32)
     returns = np.zeros(episodes, np.float32)
     goal_ids = np.full(episodes, -1, np.int8)
     lengths = np.zeros(episodes, np.int32)
     for offset in range(0, episodes, 128):
         stop = min(offset + 128, episodes)
-        env = TaskBatch(task, count=stop - offset, seed=seed + offset)
+        env = TaskBatch(task, count=stop - offset, seed=seed + offset, obstacle=obstacle)
         active = np.ones(stop - offset, bool)
         history_chunk = histories[offset:stop]
         return_chunk = returns[offset:stop]
@@ -67,17 +90,23 @@ def evaluate(agent, task, seed, episodes, mode, destination):
         raise FloatingPointError("invalid evaluation rollout")
     np.savez_compressed(destination, xy=histories, returns=returns,
                         lengths=lengths, goal_ids=goal_ids, mode=mode,
-                        observation_dim=dim)
-    goal_count = int(task[:-3]) if task in NWAY_TASKS else 4
+                        observation_dim=dim, obstacle=obstacle)
+    goal_count = (int(task[:-3]) if task in NWAY_TASKS else
+                  PAPER_GOALS[task[3:]] if task in PAPER_TASKS else 4)
     counts = np.bincount(goal_ids[goal_ids >= 0], minlength=goal_count)
-    return dict(episodes=episodes, success=float(np.mean(goal_ids >= 0)),
+    result = dict(episodes=episodes, success=float(np.mean(goal_ids >= 0)),
                 goals=counts.tolist(), failure=int(np.sum(goal_ids < 0)),
+                reachable_goals=int(np.count_nonzero(counts)),
                 mean_return=float(returns.mean()), mean_length=float(lengths.mean()))
+    if task in PAPER_TASKS:
+        result["sr5_obstacle" if obstacle else "sr5_removal"] = (
+            obstacle_sr5(goal_ids) if obstacle else removal_sr5(goal_ids, goal_count))
+    return result
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--task", choices=("4way", "pointmaze", *NWAY_TASKS), required=True)
+    parser.add_argument("--task", choices=("4way", "pointmaze", *NWAY_TASKS, *PAPER_TASKS), required=True)
     parser.add_argument("--method", choices=tuple(AGENTS), required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--seed", type=int, default=0)
@@ -101,8 +130,11 @@ def main():
         raise ValueError("invalid updates or evaluation cadence")
     if args.eval_episodes <= 0 or (args.final_eval_episodes is not None and args.final_eval_episodes <= 0):
         raise ValueError("evaluation episode counts must be positive")
-    if args.render_each_eval and args.task not in NWAY_TASKS:
-        raise ValueError("automatic N-Way figures require an N-Way task")
+    if args.render_each_eval and args.task not in (*NWAY_TASKS, *PAPER_TASKS):
+        raise ValueError("automatic figures require an N-Way or paper PointMaze task")
+    if args.task in PAPER_TASKS and (args.eval_episodes % 5 or
+                                    (args.final_eval_episodes is not None and args.final_eval_episodes % 5)):
+        raise ValueError("paper PointMaze SR5 evaluation needs multiples of five episodes")
     args.output.mkdir(parents=True, exist_ok=False)
     (args.output / "evaluations").mkdir()
     (args.output / "checkpoints").mkdir()
@@ -111,11 +143,13 @@ def main():
     np.random.seed(args.seed)
     random.seed(args.seed)
     rng = np.random.default_rng(args.seed)
-    observation_dim = 4 if args.task == "pointmaze" else 2
+    observation_dim = 4 if args.task == "pointmaze" or args.task in PAPER_TASKS else 2
     kwargs = dict(temperature=args.temperature) if args.method in ("optiq", "sql") else {}
     if args.method == "dipo":
-        kwargs.update(task=args.task, horizon=20 if args.task == "4way" else
-                      (300 if args.task == "pointmaze" else NWAY_HORIZON))
+        kwargs.update(task=args.task, horizon=(20 if args.task == "4way" else
+                      PAPER_HORIZONS[args.task[3:]] if args.task in PAPER_TASKS else
+                      300 if args.task == "pointmaze" else NWAY_HORIZON),
+                      num_envs=args.num_envs)
     agent = AGENTS[args.method](args.seed, args.output, args.steps,
                                 observation_dim, args.batch_size, **kwargs)
     environment = TaskBatch(args.task, count=args.num_envs, seed=args.seed)
@@ -124,7 +158,14 @@ def main():
     config["agent"] = agent.config
     config["task_mode"] = ("existing wall-free symmetric four-goal" if args.task == "4way"
                            else "Farama PointMaze adapted four-goal" if args.task == "pointmaze"
+                           else "original DrAC multi-goal PointMaze sparse +100" if args.task in PAPER_TASKS
                            else "wall-free symmetric N-goal ring")
+    if args.task in PAPER_TASKS:
+        config["geometry"] = dict(goal_positions=environment.goal_positions.tolist(),
+                                  horizon=PAPER_HORIZONS[args.task[3:]],
+                                  reward="100 on reaching any goal, 0 otherwise",
+                                  obstacle="original upstream latent wall cells enabled at evaluation only",
+                                  removal="half goals removed, five-trial expected success")
     if args.task in NWAY_TASKS:
         config["geometry"] = dict(goal_positions=environment.goal_positions.tolist(),
                                   goal_radius=GOAL_RADIUS, success_radius=SUCCESS_RADIUS,
@@ -162,17 +203,30 @@ def main():
                     record[mode] = evaluate(agent, args.task,
                                             args.seed + 17_000 + step,
                                             episodes, mode, destination)
+                if args.task in PAPER_TASKS:
+                    obstacle_path = args.output / "evaluations" / f"{step:09d}_obstacle_policy.npz"
+                    record["obstacle_policy"] = evaluate(agent, args.task,
+                        args.seed + 27_000 + step, episodes, "policy", obstacle_path,
+                        obstacle=True)
                 if args.task == "4way" or args.task in NWAY_TASKS:
                     probe = args.output / "evaluations" / f"{step:09d}_probe.npz"
                     probe_policy(agent, probe)
                 agent.save(args.output / "checkpoints", step, full=step == args.steps)
                 if args.render_each_eval:
-                    figure = args.output / "figures" / f"{step:09d}_policy_q_trajectories.png"
-                    render_nway(args.task,
-                                args.output / "evaluations" / f"{step:09d}_policy.npz",
-                                probe, figure,
-                                title=f"{args.task.upper()} · {args.method.upper()} · {step:,} steps · seed {args.seed}")
+                    figure = args.output / "figures" / f"{step:09d}_trajectories.png"
+                    if args.task in NWAY_TASKS:
+                        render_nway(args.task,
+                                    args.output / "evaluations" / f"{step:09d}_policy.npz",
+                                    probe, figure,
+                                    title=f"{args.task.upper()} · {args.method.upper()} · {step:,} steps · seed {args.seed}")
+                    else:
+                        from .visualize_pointmaze import render_trajectories
+                        render_trajectories(args.task,
+                            args.output / "evaluations" / f"{step:09d}_policy.npz",
+                            figure, title=f"{args.task} · {args.method.upper()} · {step:,} steps · seed {args.seed}",
+                            obstacle_npz=obstacle_path)
                     record["figure"] = str(figure)
+                atomic_json(args.output / "evaluations" / f"{step:09d}_summary.json", record)
                 progress.update(steps=step, updates=agent.updates, latest_evaluation=record,
                                 updated=time.time())
                 atomic_json(args.output / "progress.json", progress)

@@ -434,7 +434,7 @@ class DIPO:
     critic_label = "minimum of two DIPO distributional Q expectations"
 
     def __init__(self, seed, folder, budget, observation_dim, batch_size=256, temperature=None,
-                 task=None, horizon=None):
+                 task=None, horizon=None, num_envs=16):
         from types import SimpleNamespace
         import torch
         from hydra import compose, initialize_config_dir
@@ -452,7 +452,7 @@ class DIPO:
         with initialize_config_dir(config_dir=str(ROOT / "antmaze/ddiffpg/cfg"), version_base=None):
             cfg = compose(config_name="default", overrides=["algo=dipo_algo", f"seed={seed}"])
         cfg.device = "cuda"
-        cfg.num_envs = 16
+        cfg.num_envs = num_envs
         cfg.algo.batch_size = batch_size
         # The shared runner performs one optimizer update per call. Its default
         # 16 calls per 16 collected transitions give every method UTD=1.

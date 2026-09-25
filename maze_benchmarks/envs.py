@@ -10,6 +10,7 @@ import numpy as np
 
 from .nway import (HORIZON as NWAY_HORIZON, NWayBatch, STATE_LIMIT,
                    SUPPORTED_GOALS)
+from pointmaze.drac_paper import HORIZONS as PAPER_HORIZONS, MAP_NAMES as PAPER_MAP_NAMES, PaperPointMaze
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -41,7 +42,7 @@ def _load(relative: str, name: str):
     return module
 
 
-def make_one(task: str, seed: int = 0):
+def make_one(task: str, seed: int = 0, obstacle: bool = False):
     del seed
     if task == "4way":
         module = _load("4way/environment.py", "benchmark_fourway")
@@ -49,6 +50,8 @@ def make_one(task: str, seed: int = 0):
     if task == "pointmaze":
         module = _load("pointmaze/environment.py", "benchmark_pointmaze")
         return module.FourGoalPointMaze(reward_type="dense", max_episode_steps=300)
+    if task.startswith("pm_") and task[3:] in PAPER_MAP_NAMES:
+        return PaperPointMaze(task[3:], obstacle=obstacle)
     if task.endswith("way") and task[:-3].isdigit() and int(task[:-3]) in SUPPORTED_GOALS:
         return NWayEnv(int(task[:-3]))
     raise ValueError(task)
@@ -57,7 +60,8 @@ def make_one(task: str, seed: int = 0):
 def spaces(task: str):
     env = make_one(task)
     try:
-        observation = gym.spaces.Box(-np.inf, np.inf, (4 if task == "pointmaze" else 2,), np.float32)
+        observation = gym.spaces.Box(-np.inf, np.inf,
+                                     (4 if task == "pointmaze" or task.startswith("pm_") else 2,), np.float32)
         action = gym.spaces.Box(-1., 1., (2,), np.float32)
         assert env.observation_space.shape == observation.shape
         assert env.action_space.shape == action.shape
@@ -69,11 +73,12 @@ def spaces(task: str):
 class TaskBatch:
     """A batch step returns final observations; resets are explicit."""
 
-    def __init__(self, task: str, count: int, seed: int):
+    def __init__(self, task: str, count: int, seed: int, obstacle: bool = False):
         if count <= 0:
             raise ValueError(count)
-        self.task, self.count, self.seed = task, count, seed
-        self.horizon = 300 if task == "pointmaze" else (20 if task == "4way" else NWAY_HORIZON)
+        self.task, self.count, self.seed, self.obstacle = task, count, seed, bool(obstacle)
+        self.horizon = (PAPER_HORIZONS[task[3:]] if task.startswith("pm_") else
+                        300 if task == "pointmaze" else 20 if task == "4way" else NWAY_HORIZON)
         if task == "4way":
             module = _load("4way/vector_environment.py", "benchmark_fourway_batch")
             self.batch = module.FourWayBatch(count, seed=seed)
@@ -81,15 +86,16 @@ class TaskBatch:
         elif task.endswith("way") and task[:-3].isdigit() and int(task[:-3]) in SUPPORTED_GOALS:
             self.batch = NWayBatch(count, int(task[:-3]), seed=seed)
             self.envs = None
-        elif task == "pointmaze":
+        elif task == "pointmaze" or task.startswith("pm_"):
             self.batch = None
-            self.envs = [make_one(task) for _ in range(count)]
+            self.envs = [make_one(task, obstacle=obstacle) for _ in range(count)]
         else:
             raise ValueError(task)
         self.goal_positions = (self.batch.goal_positions.copy()
                                if isinstance(self.batch, NWayBatch)
-                               else None)
-        self.current = np.zeros((count, 4 if task == "pointmaze" else 2), np.float32)
+                               else self.envs[0].goal_positions.copy() if self.envs is not None
+                               and hasattr(self.envs[0], "goal_positions") else None)
+        self.current = np.zeros((count, 4 if task == "pointmaze" or task.startswith("pm_") else 2), np.float32)
         self.reset(np.arange(count))
 
     def reset(self, indices):
