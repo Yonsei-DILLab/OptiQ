@@ -131,10 +131,10 @@ class SpaceOnlyEnv:
 
 class JaxLearner:
     def __init__(self, method, spaces, task, folder, temperature=None, budget=None,
-                 reward_profile='sparse',noveld=True,temperature_schedule=None,
-                 dacer_target_entropy_per_dim=None,dacer_enabled=True,dynamics_profile=None,
+                 reward_profile='sparse',noveld=False,temperature_schedule=None,
+                 dacer_target_entropy_per_dim=None,dacer_enabled=False,dynamics_profile=None,
                  dacer_interval_updates=None,discount=None,teacher_std_floor=None,latent_profile=None,
-                 collection_profile=None,actor_sigma_profile=None):
+                 collection_profile=None,actor_sigma_profile=None,optiq_config_profile='basic'):
         import jax
         from ddiffpg.utils.intrinsic import IntrinsicM
         from ddiffpg.replay.simple_replay import ReplayBuffer
@@ -143,6 +143,8 @@ class JaxLearner:
         self.dynamics_profile = dynamics_profile
         self.latent_profile = latent_profile
         self.actor_sigma_profile = actor_sigma_profile
+        assert optiq_config_profile in ('basic', 'legacy')
+        self.optiq_config_profile = optiq_config_profile
         if actor_sigma_profile is not None:
             from .actor_sigma_profile import settings as sigma_settings
             sigma_settings(actor_sigma_profile)
@@ -166,12 +168,16 @@ class JaxLearner:
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             from omegaconf import OmegaConf
-            # AntMaze-only defaults approved on 2026-09-23. Other benchmarks
-            # retain their own model and optimizer configuration.
-            upstream_lr = OmegaConf.load(ROOT/'antmaze/ddiffpg/cfg/algo/actor_critic.yaml')
+            # Compose the committed Direct GMM/TRG configuration first. The
+            # basic AntMaze profile keeps its model/init/LRs and explicitly
+            # selects T=1. Historical experiments retain their frozen sources.
             overrides = ['benchmark=ant', 'seed=0',
-                'alg.actor.mean_output_init_scale=1.0', f'dacer.enabled={str(bool(dacer_enabled)).lower()}',
+                f'dacer.enabled={str(bool(dacer_enabled)).lower()}',
                 'dacer.noise_scale=0.1', f'output_root={folder}']
+            if optiq_config_profile == 'legacy':
+                overrides.append('alg.actor.mean_output_init_scale=1.0')
+            if temperature is None and optiq_config_profile == 'basic':
+                temperature = 1.0
             if temperature is not None:
                 overrides.append(f'alg.actor.temperature={temperature}')
             if teacher_std_floor is not None:
@@ -200,13 +206,14 @@ class JaxLearner:
             cfg = module.compose_config(overrides)
             if teacher_std_floor is not None:
                 cfg.experiment.teacher_extra_floor = True
-            # The shared MuJoCo loader validates its 256x2 base profile. Apply
-            # AntMaze's approved overrides after that validation, before model
-            # construction; verify_profile checks the actual modules/optimizers.
-            cfg.alg.actor.hidden_dims = [256, 256, 256]
-            cfg.alg.critic.hs = [256, 256, 256]
-            cfg.alg.optimizer.lr_actor = float(upstream_lr.actor_lr)
-            cfg.alg.optimizer.lr_critic = float(upstream_lr.critic_lr)
+            # Older AntMaze campaigns used a deeper DDiffPG-matched model.
+            # Only the explicitly named legacy profile reproduces that adapter.
+            if optiq_config_profile == 'legacy':
+                upstream_lr = OmegaConf.load(ROOT/'antmaze/ddiffpg/cfg/algo/actor_critic.yaml')
+                cfg.alg.actor.hidden_dims = [256, 256, 256]
+                cfg.alg.critic.hs = [256, 256, 256]
+                cfg.alg.optimizer.lr_actor = float(upstream_lr.actor_lr)
+                cfg.alg.optimizer.lr_critic = float(upstream_lr.critic_lr)
             if actor_sigma_profile is not None:
                 for name, value in sigma_settings(actor_sigma_profile).items():
                     cfg.alg.actor[name] = value

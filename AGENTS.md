@@ -500,8 +500,15 @@ status/log/result/checkpoint. Old status files may contain stale pending/running
 entries, but their controllers are stopped and supervisor autostart/autorestart
 are false. The canonical Direct GMM/TRG OptiQ configuration is the selected
 baseline for future work, not the prior v3/v4 reward/teacher/sigma/DACER
-experiments. The current AntMaze adapter still forces several nondefault
-settings and must not be called a default OptiQ run or relaunched unchanged.
+experiments. New AntMaze OptiQ runs default to the explicit `basic` profile:
+T=1, DACER OFF, NovelD OFF, Direct GMM/TRG 256x2 actor/critic, mean head
+init1e-4, actor/critic LR3e-4, log sigma[-5,-1]/init-1, teacher floor exp(-5),
+gamma.99, random z, N=M64. The user explicitly keeps the native AntMaze data
+profile at256 parallel environments, batch4096,8 learner updates per256
+transitions,warmup8192,replay1M. The core MuJoCo config still has T.25,
+batch256/UTD1 and is not the selected AntMaze data/temperature profile. The
+previous 256x3/mean-init1/critic5e-4 adapter is now opt-in `legacy`, and old
+frozen sources/results are unchanged. No new training is approved by this reset.
 See antmaze_experiments/DEFAULT_RESET_AUDIT_20260925.md for the exact default,
 adapter differences, environment and evaluation audit. Do not use vast1/4090
 for AntMaze; it remains reserved for GMM40.

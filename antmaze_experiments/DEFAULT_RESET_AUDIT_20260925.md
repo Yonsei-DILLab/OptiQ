@@ -1,12 +1,14 @@
 # AntMaze 실험 중단 및 OptiQ 기본 설정 점검 (2026-09-25)
 
 이 문서는 새 실험을 등록하지 않는다. `direct-gmm-trg-antmaze`의 기존 학습 소스,
-캠페인 설정, 체크포인트와 결과는 보존한다. 이후의 AntMaze 실험에서 "기본
-OptiQ"은 `analysis_tools/experiments/20260921_gmm_trg_sweep/train.py`의
-`compose_config(['benchmark=ant', 'seed=0'])`으로 해석한다. 이는 **Direct
-GMM/TRG** 기준이다. 초기 OptiQ OT 구현이나 DDiffPG의 DACER/NovelD 설정과
-혼용하지 않는다. 이 해석은 frozen source `b111a993b1e1bf895966dac4469abdfdb2c37c05`의
-구성 함수를 실제로 호출해 확인했다.
+캠페인 설정, 체크포인트와 결과는 보존한다. 이후의 AntMaze "기본 OptiQ"은
+`analysis_tools/experiments/20260921_gmm_trg_sweep/train.py`의 Direct GMM/TRG
+`compose_config(['benchmark=ant', 'seed=0'])`에서 출발한다. 다만 사용자가
+AntMaze 기본 온도를 **T=1**, DACER를 **꺼짐**으로 정했고, 256개 병렬 환경에
+맞춰 batch4096·수집 256개당 8번 업데이트를 유지하도록 명시했다. 초기 OptiQ
+OT 구현이나 DDiffPG의 DACER/NovelD 설정과 혼용하지 않는다. 코어 설정은
+frozen source `b111a993b1e1bf895966dac4469abdfdb2c37c05`의 구성 함수를
+실제로 호출해 확인했다.
 
 ## 중단 확인
 
@@ -22,21 +24,21 @@ W&B 동기화 감시 서비스 4개(상한 실험 양 서버, annealing 199, den
 
 ## Direct GMM/TRG 기본 알고리즘
 
-| 항목 | 기본값 | 최근 v3/v4 상한 실험의 값 |
-|---|---|---|
-| actor/쌍둥이 critic | 각각 256×2 GELU, scalar TD critic | 각각 256×3 |
-| actor 목표 | direct marginal GMM NLL, anchor 없음, 밀도 보정 β=1 | 동일 |
-| latent/teacher | 매 행동 독립 정규분포 z, N=M=64, exact proposal choice | 동일 |
-| teacher 온도 | 0.25, 고정 | v3 3, v4 1 |
-| actor log σ | [−5,−1], 초기 −1 | 상한 0/1/2/3 또는 미실행 무상한 |
-| 평균 head 초기화 scale | 1e−4 | 1 |
-| teacher σ 하한 | exp(−5)≈0.006738 | v3 1, v4 0.5 |
-| DACER 행동 잡음 | 꺼짐 | 켜짐, 목표 엔트로피/차원 +0.7, 500 update 간격 |
-| γ / critic EMA τ / actor target τ | .99 / .005 / 1 | .999 / .005 / 1 |
-| actor/critic Adam 학습률 | 각각 3e−4 | 3e−4 / 5e−4 |
-| gradient clipping | 없음 | 없음 |
-| replay / warmup | 1M / 5000 transitions | 1M / 8192 transitions |
-| batch / UTD | 256 / 수집 transition당 learner update 1회 | 4096 / 256 transitions당 8회 (=1/32) |
+| 항목 | Direct GMM/TRG 코어 | 선택한 AntMaze 기본 | 최근 v3/v4 상한 실험 |
+|---|---|---|---|
+| actor/쌍둥이 critic | 각각 256×2 GELU, scalar TD critic | 동일 | 각각 256×3 |
+| actor 목표 | direct marginal GMM NLL, anchor 없음, 밀도 보정 β=1 | 동일 | 동일 |
+| latent/teacher | 매 행동 독립 정규분포 z, 64 policy samples×각 1 proposal=64 teacher actions, exact proposal choice | 동일 | 동일 |
+| teacher 온도 | 0.25 | **1, 고정** | v3 3, v4 1 |
+| actor log σ | [−5,−1], 초기 −1 | 동일 | 상한 0/1/2/3 또는 미실행 무상한 |
+| 평균 head 초기화 scale | 1e−4 | 동일 | 1 |
+| teacher σ 하한 | exp(−5)≈0.006738 | 동일 | v3 1, v4 0.5 |
+| DACER 행동 잡음 | 꺼짐 | **꺼짐** | 켜짐, 목표 엔트로피/차원 +0.7, 500 update 간격 |
+| γ / critic EMA τ / actor target τ | .99 / .005 / 1 | 동일 | .999 / .005 / 1 |
+| actor/critic Adam 학습률 | 각각 3e−4 | 동일 | 3e−4 / 5e−4 |
+| gradient clipping | 없음 | 동일 | 없음 |
+| replay / warmup | 1M / 5000 transitions | 1M / **8192 transitions** | 1M / 8192 transitions |
+| batch / update 간격 | 256 / transition당 1회 | **4096 / 256 transitions당 8회** | 동일 |
 
 기본 teacher σ 하한은 actor가 낼 수 있는 최소 σ와 같아서 실제 proposal을
 추가로 넓히지 않는다. 최근 0.5/1.0 설정은 teacher proposal 분포를
@@ -54,26 +56,31 @@ v3·v4는 원본 고정 시작/700 step이다. 상태 29차원, 행동 8차원
 `[−1,1]`; goal 좌표는 관측에 추가하지 않는다. NovelD는 DDiffPG의
 탐색 보너스이지 OptiQ의 일부가 아니므로 기본 OptiQ 비교에서는 꺼진다.
 Geodesic/progress 보상, 성공 bonus 제거, step cost, γ=.999은 최근
-실험 프로필로만 남는다.
+실험 프로필로만 남는다. 이 sparse·NovelD OFF 환경 기본값은 다음 성능
+가설을 검증하도록 선택된 보상이 아니며, 이번 중단·설정 복원에는 새 학습이
+포함되지 않는다.
 
-기존 AntMaze 어댑터 `learners.py`는 256 병렬 환경, batch4096,
-8 updates/256 transitions, warmup8192, 256×3, mean-init1, DACER on,
-critic LR5e−4를 명시적으로 적용한다. 따라서 **현재 `run.py` 기본 인자로
-새 학습을 실행하면 위 OptiQ 기본 설정이 재현되지 않는다.** 또한
-`run.py`의 기본 NovelD는 on이다. 이 실행 경로는 이전 캠페인의 frozen
-재현을 위해 남기며, 기본값으로 표시하거나 재사용하지 않는다. 새 기본
-AntMaze 학습을 등록하려면 독립적인 profile과 실제 batch256·UTD1
-계산(256-env 수집 블록당 256 update)을 구현·검증하고 commit을 동결해야
-한다. 이는 기존 8/256 프로토콜보다 update가 32배 많으며 실행시간도
-다르다. 환경별 native 3M/3M/4M/5M 예산과 vector 수 역시 AntMaze
-실험 설계로서 별도 기록할 항목이다. 이 문서는 학습을 시작하지 않는다.
+새 기본 AntMaze 실행 경로는 `run.py --method optiq`의 `basic` profile이다.
+이 경로는 T=1, DACER OFF, NovelD OFF를 선택하고, `learners.py`에서 Direct
+GMM/TRG 코어의 256×2, mean-init1e−4, actor/critic LR3e−4 등을 그대로
+사용한다. `legacy`는 이전 AntMaze 어댑터의 256×3, mean-init1,
+critic LR5e−4 선택을 명시적으로 요구할 때만 쓰며, 이미 완료되거나
+중단된 frozen source의 원자료는 수정하지 않는다. `basic`도 새로운
+환경/수집 설정까지 코어 MuJoCo와 같다고 주장하지 않는다. 수집은 기존
+AntMaze 프로토콜의 256환경, 4096 batch, 8 updates/256 transitions,
+8192 warmup, replay1M을 따른다. 흔히 transition당 업데이트 수로 정의하는
+UTD는 8/256=**1/32**이고, 새 transition당 replay 샘플 사용 횟수는
+8×4096/256=**128**이다. 두 수치는 서로 다른 측정이다. 환경별 native
+3M/3M/4M/5M 예산 역시 AntMaze 실험 설계다. 이 문서는 학습을 시작하지 않는다.
 
 ## 현재 평가 코드의 실제 동작과 다음 기본 보고 기준
 
 `run.py`의 기본 평가는 250k transitions마다 모드별 20 episodes,
 최종 모드별 100 episodes이며 평가 슬롯은 20개다. 최근 상한 실험은
-50k마다 40 episodes로 명시적으로 바꿨다. 중간 평가는 `native`와
-`policy`, 최종은 OptiQ의 `native`/`policy`/`zero_z`를 별도 저장한다.
+50k마다 40 episodes로 명시적으로 바꿨다. 기본 실행은 중간 평가용 정책
+체크포인트를 저장하지 않고 최종 full-state checkpoint만 저장한다. 중간
+평가는 `native`와 `policy`, 최종은 OptiQ의 `native`/`policy`/`zero_z`를
+별도 저장한다. W&B 프로젝트는 `OptiQ/antmaze`다.
 
 - `policy`: 각 상태에서 새 정규 z와 conditional truncated Gaussian σ를
   모두 샘플링하는 실제 확률 정책. 행동은 `[−1,1]`에 있다.
@@ -88,10 +95,12 @@ NPZ에 저장한다. `eval_starts=upstream`에서는 v1이 학습과 같은 무�
 아니다. 여러 성공 경로 주장은 동일 checkpoint·같은 시작 상태에서
 `policy` rollout의 목표별 성공 경로 수로 판단한다. 통로 진입만으로
 성공이나 멀티모달 성능을 선언하지 않는다. v1 무작위 시작의 다양성과
-한 시작 상태에서의 정책 다양성은 따로 표시한다. 최종 평가의 100회는
-단일 학습 seed를 대체하지 않는다.
+한 시작 상태에서의 정책 다양성은 따로 표시한다. **기본 v1 자연 시작
+평가만으로는 동일 시작 상태의 경로 다양성을 입증하지 못한다.** 평가
+환경 시드는 재현 가능하게 고정하고 정책 RNG를 학습 RNG에서 분리한다.
+최종 평가의 100회는 단일 학습 seed를 대체하지 않는다.
 
-후속 신규 학습은 이 감사에서 구분한 기본 알고리즘·환경·수집/평가
-프로필을 별도 manifest에 모두 적고, 실제 초기 config/optimizer/update
+후속 신규 학습은 별도 사용자 승인 이후 이 감사에서 구분한 알고리즘·환경·
+수집/평가 프로필을 manifest에 모두 적고, 실제 초기 config/optimizer/update
 횟수 및 샘플링을 preflight로 확인한 뒤 시작한다. 이전 캠페인은 자동
 재개하지 않는다.

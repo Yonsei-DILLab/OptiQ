@@ -34,6 +34,20 @@ def numeric_metrics(value, prefix):
     return result
 
 
+def select_execution_defaults(args):
+    """Fill omitted CLI settings without changing explicit experiment overrides."""
+    if args.method == 'optiq':
+        if args.temperature is None and args.optiq_config_profile == 'basic':
+            args.temperature = 1.0
+        if args.dacer is None:
+            args.dacer = 'off' if args.optiq_config_profile == 'basic' else 'on'
+        if args.noveld is None:
+            args.noveld = 'off' if args.optiq_config_profile == 'basic' else 'on'
+    elif args.noveld is None:
+        args.noveld = 'on'
+    return args
+
+
 def evaluate(learner, task, folder, step, episodes, mode, fixed=False):
     from .envs import vector, transition
     from .learners import evaluation_rng
@@ -204,6 +218,7 @@ def main():
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--preflight',action='store_true')
     p.add_argument('--temperature',type=float)
+    p.add_argument('--optiq-config-profile',choices=['basic','legacy'],default='basic')
     p.add_argument('--temperature-final',type=float)
     p.add_argument('--temperature-anneal-steps',type=int,default=1000000)
     p.add_argument('--temperature-decay',choices=['linear','log_linear'],default='linear')
@@ -226,9 +241,9 @@ def main():
     from .dynamics_profiles import PROFILES as DYNAMICS_PROFILES, get_profile
     p.add_argument('--dynamics-profile',choices=tuple(DYNAMICS_PROFILES))
     p.add_argument('--reward-profile',choices=REWARD_PROFILES,default='sparse')
-    p.add_argument('--noveld',choices=['on','off'],default='on')
+    p.add_argument('--noveld',choices=['on','off'])
     p.add_argument('--eval-starts',choices=['upstream','random','fixed'],default='upstream')
-    a = p.parse_args()
+    a = select_execution_defaults(p.parse_args())
     collection = collection_settings(a.collection_profile)
     num_envs = collection['num_envs']
     updates_per_collection = collection['updates_per_vector_step']
@@ -308,7 +323,8 @@ def main():
             dacer_enabled=a.dacer!='off',dynamics_profile=a.dynamics_profile,
             dacer_interval_updates=a.dacer_interval_updates,discount=a.discount,
             teacher_std_floor=a.teacher_std_floor,latent_profile=a.latent_profile,
-            collection_profile=a.collection_profile,actor_sigma_profile=a.actor_sigma_profile)
+            collection_profile=a.collection_profile,actor_sigma_profile=a.actor_sigma_profile,
+            optiq_config_profile=a.optiq_config_profile)
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     learner.eval_fixed_starts = a.eval_starts=='fixed' or (a.eval_starts=='upstream' and a.task!='v1')
@@ -324,6 +340,7 @@ def main():
         reward=reward_description(a.reward_profile),
         reward_specification=specification(a.task,a.reward_profile),
         reward_profile=a.reward_profile,noveld_enabled=a.noveld=='on',
+        optiq_config_profile=a.optiq_config_profile if a.method=='optiq' else None,
         eval_starts=a.eval_starts,effective_eval_starts='fixed' if learner.eval_fixed_starts else 'random',
         primary_trajectory='policy-fixed' if learner.eval_fixed_starts else 'policy-natural',
         noveld_coefficient=.01 if a.noveld=='on' else 0.,temperature=a.temperature,

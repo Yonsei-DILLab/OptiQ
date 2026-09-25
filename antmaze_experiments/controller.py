@@ -54,7 +54,7 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             cmd.extend(['--budget-steps',str(entry['steps'])])
         if 'final_eval_episodes' in entry:
             cmd.extend(['--final-eval-episodes',str(entry['final_eval_episodes'])])
-        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer','dynamics_profile','eval_interval','dacer_interval_updates','discount','teacher_std_floor','latent_profile','collection_profile','actor_sigma_profile'):
+        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer','dynamics_profile','eval_interval','dacer_interval_updates','discount','teacher_std_floor','latent_profile','collection_profile','actor_sigma_profile','optiq_config_profile'):
             if key in entry:cmd.extend(['--'+key.replace('_','-'),str(entry[key])])
         if entry.get('save_intermediate_policy',False):
             cmd.append('--save-intermediate-policy')
@@ -99,6 +99,7 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
         if 'optiq_profile' in entry:
             profile=json.loads((target/'optiq-profile-verification.json').read_text())
             assert profile['verified']
+            assert profile['config_profile']==config['optiq_config_profile']==entry.get('optiq_config_profile','basic')
             assert profile['actor_hidden_dims']==entry['optiq_profile']['actor_hidden_dims']
             assert profile['critic_hidden_dims']==entry['optiq_profile']['critic_hidden_dims']
             assert profile['optimizers']['actor']['expected_lr']==entry['optiq_profile']['actor_lr']
