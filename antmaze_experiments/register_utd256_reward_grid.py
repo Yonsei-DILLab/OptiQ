@@ -12,7 +12,7 @@ from .progress_reward import (
     EUCLIDEAN_SCALE10_COST01_PROFILE,
     specification,
 )
-from .register_utd256 import HOSTS, campaign_manifest as control_manifest
+from .register_utd256 import campaign_manifest as control_manifest
 
 
 CAMPAIGN = 'antmaze-optiq-utd1-reward-grid-v1234-s0-20260925'
@@ -23,14 +23,23 @@ REWARDS = (
     ('progress10_cost01', EUCLIDEAN_SCALE10_COST01_PROFILE),
     ('negative_distance', 'dense'),
 )
+HOSTS = {0: 'vast-heechan-180', 1: 'vast-heechan-199', 2: 'vast1'}
 
 
 def campaign_manifest(source, sha, shard):
-    base = control_manifest(source, sha, shard, 'basic_euclidean')
-    original_jobs = base.pop('jobs')
+    if shard not in HOSTS:
+        raise ValueError(shard)
+    base = control_manifest(source, sha, 0 if shard == 2 else shard, 'basic_euclidean')
+    originals = {job['task']: job for control_shard in (0, 1)
+                 for job in control_manifest(source, sha, control_shard, 'basic_euclidean')['jobs']}
+    base.pop('jobs')
     jobs = []
     for label, reward in REWARDS:
-        for original in original_jobs:
+        if (shard == 2) != (reward == 'dense'):
+            continue
+        tasks = ('v1', 'v2', 'v3', 'v4') if shard == 2 else (('v1', 'v3') if shard == 0 else ('v2', 'v4'))
+        for task in tasks:
+            original = originals[task]
             entry = copy.deepcopy(original)
             entry['id'] = f"{entry['task']}-optiq-utd1-{label}-s0"
             entry['reward_profile'] = reward
@@ -38,14 +47,17 @@ def campaign_manifest(source, sha, shard):
             if reward != 'dense':
                 entry['reward_specification'] = specification(entry['task'], reward)
             jobs.append(entry)
-    base.update(campaign=CAMPAIGN, jobs=jobs, condition='reward_grid',
+    base.update(campaign=CAMPAIGN, jobs=jobs, shard=shard, host=HOSTS[shard],
+                condition='reward_grid',
                 comparison='Reward-only variants of the running basic_euclidean UTD=1 control',
                 protocol='antmaze_experiments/UTD256_REWARD_GRID_PROTOCOL.md',
                 reward_profiles={label: reward for label, reward in REWARDS},
-                priority_campaign=f'/home/heechan/optiq-experiments/{PREDECESSOR}',
+                priority_campaign=(f'/home/heechan/optiq-experiments/{PREDECESSOR}' if shard != 2 else None),
                 launch_policy='Protect running control GPUs; fill each eligible idle GPU immediately, then backfill independently')
     base.pop('reward_profile', None)
-    assert len(jobs) == 8 and len({j['id'] for j in jobs}) == 8
+    base.pop('excluded_hosts', None)
+    base['vast1_exception'] = 'User explicitly approved eligible idle 4090 GPUs for this reward queue; GMM40 workers and locks stay intact'
+    assert len(jobs) == (4 if shard == 2 else 6) and len({j['id'] for j in jobs}) == len(jobs)
     return base
 
 

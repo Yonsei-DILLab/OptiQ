@@ -45,24 +45,25 @@ class Utd256RewardGridTests(unittest.TestCase):
 
     def test_manifest_changes_only_reward_from_live_control(self):
         seen = set()
-        for shard in (0, 1):
-            control = control_manifest('/unused', 'sha', shard, 'basic_euclidean')
+        originals = {job['task']: job for shard in (0, 1)
+                     for job in control_manifest('/unused', 'sha', shard, 'basic_euclidean')['jobs']}
+        for shard in (0, 1, 2):
             manifest = campaign_manifest('/unused', 'sha', shard)
-            self.assertEqual(len(manifest['jobs']), 8)
+            self.assertEqual(len(manifest['jobs']), 4 if shard == 2 else 6)
             self.assertEqual(manifest['wandb_project'], 'antmaze')
             self.assertEqual(manifest['updates_per_transition'], 1.)
-            self.assertIn('priority_campaign', manifest)
-            for (label, reward), pair in zip(REWARDS,
-                                             (manifest['jobs'][i:i+2] for i in range(0, 8, 2))):
-                for job, original in zip(pair, control['jobs']):
-                    seen.add((job['task'], reward))
-                    expected = copy.deepcopy(original)
-                    expected['id'] = f"{original['task']}-optiq-utd1-{label}-s0"
-                    expected['reward_profile'] = reward
-                    expected.pop('reward_specification', None)
-                    if reward != 'dense':
-                        expected['reward_specification'] = specification(job['task'], reward)
-                    self.assertEqual(job, expected)
+            self.assertEqual(bool(manifest['priority_campaign']), shard != 2)
+            for job in manifest['jobs']:
+                label, reward = next((label, reward) for label, reward in REWARDS
+                                     if job['id'] == f"{job['task']}-optiq-utd1-{label}-s0")
+                seen.add((job['task'], reward))
+                expected = copy.deepcopy(originals[job['task']])
+                expected['id'] = job['id']
+                expected['reward_profile'] = reward
+                expected.pop('reward_specification', None)
+                if reward != 'dense':
+                    expected['reward_specification'] = specification(job['task'], reward)
+                self.assertEqual(job, expected)
         self.assertEqual(len(seen), 16)
 
 

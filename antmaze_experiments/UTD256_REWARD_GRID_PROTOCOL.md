@@ -34,11 +34,15 @@ per mode and save full replay/optimizer/RNG/simulator state. W&B is
 256-update preflight. The controller checks reward formulas and replay,
 architecture, LRs, counters and saved state before accepting it.
 
-The two RTX5090 hosts independently queue eight jobs each. The existing
-control is the priority predecessor: its running GPUs are reserved while
-the other eligible unlocked GPUs are filled immediately. On each completion,
-backfill the next job within the controller's two-second cycle. There is no
-all-maze or all-variant completion gate. A failure holds that host's pending
-queue, preserves live workers and logs, and requires diagnosis before any
-restart. The reserved RTX4090 `vast1` is never used for AntMaze. Commit, push,
-share, and pin the exact frozen source before launching jobs.
+The two RTX5090 hosts each queue six jobs: v1/v3 on 180, v2/v4 on 199, for
+the three progress-reward variants. The RTX4090 `vast1` queues the four
+`negative_distance` jobs as an explicit user-approved exception to its prior
+GMM40 reservation. The completed GMM40 campaigns and other resident workloads
+remain intact, and only unlocked eligible GPUs are used. On the 5090 hosts,
+the existing control is the priority predecessor: its running GPUs are
+reserved while other eligible unlocked GPUs are filled immediately. On every
+host, backfill the next job within the controller's two-second cycle. There
+is no all-maze or all-variant completion gate. A failure holds that host's
+pending queue, preserves live workers and logs, and requires diagnosis before
+any restart. Commit, push, share, and pin the exact frozen source before
+launching jobs.
