@@ -37,6 +37,25 @@ and save the policy/critic together with the independent policy/Q grid probe.
 Run each method in a separate process. Results from this profile must not be
 mixed with the author's distinct walled ICML environment.
 
+The main OptiQ and JAX-SVGD SQL comparison uses teacher/soft-Q temperature
+T=1. SAC uses its native learned entropy coefficient. MEOW uses the pinned
+CleanRL flow and fixed alpha=.2; MFPO retains its pinned native MaxEnt settings.
+DIPO uses the unchanged official diffusion actor, distributional twin critic,
+five reverse steps and 20 action-gradient steps. Its categorical support must
+cover this wall-free task's negative returns: [−1500,10] for 4-Way and [0,120]
+for the adapted positive-reward PointMaze. The C51 projection/BCE numerical
+guards live outside vendored upstream source. DIPO's own extra mixed action
+noise applies during collection; direct-policy evaluation retains initial
+diffusion noise while omitting only that extra exploration noise. TD3 uses
+the native deterministic actor, training-only Gaussian action noise σ=.1,
+delayed actor update every second critic update, and target smoothing.
+Thus a shared *critic* UTD of one does not imply the same actor-update count
+or compute budget across methods. Report each method's source revision,
+architecture, reward support, action-sampling rule and actual update counts.
+For MEOW and MFPO the pinned Git submodule revisions must be copied into each
+immutable training snapshot before either method launches; a `git archive` of
+this repository alone contains empty submodule directories.
+
 After the T=3, 100k OptiQ run reached all goals but only 8/100 west-goal
 episodes, run the user-selected temperature grid T=1,3,5,10 with the same
 seed and 100k budget. T=3 is already complete; add only T=1,5,10. Preserve

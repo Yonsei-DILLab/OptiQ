@@ -12,11 +12,12 @@ import time
 import numpy as np
 
 from .envs import TaskBatch
-from .agents import OptiQ, SAC, SQL, MFPO
+from .agents import OptiQ, SAC, SQL, MEOW, MFPO, DIPO, TD3
 from .visualize_4way import probe_policy
 
 
-AGENTS = {"optiq": OptiQ, "sac": SAC, "sql": SQL, "mfpo": MFPO}
+AGENTS = {"optiq": OptiQ, "sac": SAC, "sql": SQL, "meow": MEOW,
+          "mfpo": MFPO, "dipo": DIPO, "td3": TD3}
 
 
 def atomic_json(path: Path, value):
@@ -111,7 +112,7 @@ def main():
             if step <= args.warmup:
                 actions = rng.uniform(-1., 1., (args.num_envs, 2)).astype(np.float32)
             else:
-                actions = agent.act(observations, mode="policy")
+                actions = agent.act(observations, mode="train")
             next_obs, rewards, terminated, truncated, goals = environment.step(actions)
             if not np.isfinite(rewards).all() or not np.isfinite(next_obs).all():
                 raise FloatingPointError(f"nonfinite environment transition at {step}")
