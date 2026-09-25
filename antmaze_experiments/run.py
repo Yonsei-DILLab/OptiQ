@@ -146,6 +146,9 @@ def checkpoint(learner, env, obs, folder, step, rng, config):
         env_states=env.call('state'),observations=obs,behavior_rng=rng.bit_generator.state,
         python_rng=random.getstate(),numpy_rng=np.random.get_state(),
         torch_rng=torch.get_rng_state(),cuda_rng=torch.cuda.get_rng_state_all())
+    if hasattr(learner, 'xy_entropy'):
+        state['xy_entropy_counts'] = learner.xy_entropy.counts
+        state['xy_entropy_rewards'] = np.asarray(learner.xy_entropy_rewards)
     path = folder/'checkpoint-final.pt'
     torch.save(state,path)
     # Read back serialized model/replay/simulator data before marking complete.
@@ -167,6 +170,9 @@ def checkpoint(learner, env, obs, folder, step, rng, config):
     positions=loaded['replay']['buf_next_obs'][:,:2].numpy()
     distances=np.linalg.norm(positions[:,None,:]-target_goals[None,:,:],axis=-1)
     actual=loaded['replay']['buf_reward'].numpy().ravel()
+    if config.get('xy_entropy_coefficient', 0):
+        assert len(loaded['xy_entropy_rewards']) == len(actual) == step
+        actual = actual - loaded['xy_entropy_rewards']
     if config['reward_profile']=='dense':
         expected=-distances.min(axis=1)
         assert np.allclose(actual,expected,rtol=2e-6,atol=2e-5)
@@ -240,6 +246,8 @@ def main():
     p.add_argument('--save-intermediate-policy',action='store_true')
     p.add_argument('--eval-interval',type=int,default=250000)
     p.add_argument('--video-interval',type=int,default=0)
+    p.add_argument('--xy-entropy-coefficient',type=float,default=0.)
+    p.add_argument('--center-traces-only',action='store_true')
     from .dynamics_profiles import PROFILES as DYNAMICS_PROFILES, get_profile
     p.add_argument('--dynamics-profile',choices=tuple(DYNAMICS_PROFILES))
     p.add_argument('--reward-profile',choices=REWARD_PROFILES,default='sparse')
@@ -254,6 +262,9 @@ def main():
     num_envs = collection['num_envs']
     updates_per_collection = collection['updates_per_vector_step']
     single_env = a.collection_profile == 'single-update1'
+    assert a.xy_entropy_coefficient >= 0
+    if a.xy_entropy_coefficient or a.center_traces_only:
+        assert single_env and a.task == 'v1' and a.method == 'optiq'
     eval_step = (lambda i, interval: i * interval) if single_env else aligned_eval_step
     if a.collection_profile is not None:
         assert a.method == 'optiq' and a.dynamics_profile is None
@@ -457,7 +468,16 @@ def main():
     if a.actor_sigma_profile is not None:temp_name+='-'+a.actor_sigma_profile
     if a.dacer is not None:temp_name+='-dacer'+a.dacer
     if a.dynamics_profile is not None:temp_name+='-dyn-'+a.dynamics_profile
-    run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-noveld{a.noveld}-s0-{budget}steps'
+    config.update(xy_entropy_coefficient=a.xy_entropy_coefficient,
+        xy_entropy_grid_width=.5, xy_entropy_estimator='Laplace-smoothed cumulative XY histogram; pre-observation surprisal',
+        center_traces_only=a.center_traces_only)
+    write(folder/'config.json',config)
+    if a.xy_entropy_coefficient:
+        from .xy_entropy import XYEntropy
+        from .progress_reward import maze_geometry
+        learner.xy_entropy=XYEntropy(maze_geometry(a.task)[2],coefficient=a.xy_entropy_coefficient)
+        learner.xy_entropy_rewards=[]
+    run_name=f'{a.task}-{a.method}{temp_name}-{a.reward_profile}-xyH{a.xy_entropy_coefficient:g}-noveld{a.noveld}-s0-{budget}steps'
     run = wandb.init(entity=WANDB_ENTITY,project=logging_project,group=os.environ.get('OPTIQ_CAMPAIGN',CAMPAIGN),
         name=run_name,dir=str(folder),config=config,
         mode='disabled' if a.preflight else os.environ.get('WANDB_MODE','online'))
@@ -502,6 +522,9 @@ def main():
                           critic_tau=dynamics['tau'],policy_delay=dynamics['policy_delay'])
         write(folder/'progress.json',record);print(json.dumps(record),flush=True)
         run.log(dict(record,**info),step=step)
+        if a.xy_entropy_coefficient:
+            run.log({'train/xy_entropy_bonus':learner.xy_entropy_rewards[-1],
+                     'train/xy_visited_bins':int(np.sum(learner.xy_entropy.counts>1))},step=step)
     try:
         while step<budget:
             t=time.monotonic()
@@ -509,6 +532,10 @@ def main():
             assert action.shape==(num_envs,8) and np.isfinite(action).all()
             nxt,reward,done,infos=env.step(np.clip(action,-1,1))
             final,terminal=transition(nxt,done,infos)
+            if a.xy_entropy_coefficient:
+                bonus=learner.xy_entropy.observe(final[0,:2])
+                learner.xy_entropy_rewards.append(bonus)
+                reward=reward+bonus
             if isinstance(learner,Native): learner.record_collection(obs,reward,done)
             learner.store(obs,action,reward,final,terminal)
             xy[step:step+num_envs]=final[:,:2]
@@ -546,12 +573,15 @@ def main():
                     save_evaluation_checkpoint(learner,folder,step,config)
                     timing['checkpoint']+=time.monotonic()-t
                 t=time.monotonic()
-                for mode in ('native','policy'):
+                for mode in (('native',) if a.center_traces_only else ('native','policy')):
                     s=evaluate(learner,a.task,folder,step,a.interim_eval_episodes,mode)
                     run.log({f'eval/{mode}/success_rate':s['success_rate'],
                              f'eval/{mode}/return':s['mean_return']},step=step)
                     if 'critic_diagnostics' in s:
                         run.log(numeric_metrics(s['critic_diagnostics'],'diagnostic/policy'),step=step)
+                if a.center_traces_only:
+                    from .xy_entropy import plot_trace
+                    run.log({'eval/center_100_trajectories':wandb.Image(str(plot_trace(folder,step)))},step=step)
                 timing['evaluation']+=time.monotonic()-t
                 eval_index+=1
                 next_eval=(eval_step(eval_index,a.eval_interval) if a.collection_profile is not None
@@ -570,13 +600,16 @@ def main():
         t=time.monotonic();proof=checkpoint(learner,env,obs,folder,step,rng,config)
         timing['checkpoint']+=time.monotonic()-t
         summaries={}
-        for mode in (['native','policy','zero_z'] if a.method=='optiq' else ['native','policy']):
+        for mode in (['native'] if a.center_traces_only else ['native','policy','zero_z'] if a.method=='optiq' else ['native','policy']):
             for fixed in ((True,) if learner.eval_fixed_starts else (False,) if a.eval_starts=='upstream' else (False,True)):
                 t=time.monotonic()
                 from .latent_profile import evaluation_mode_label
                 label=evaluation_mode_label(learner,mode)+('-fixed' if fixed else '-natural')
                 summaries[label]=evaluate(learner,a.task,folder,step,2 if a.preflight else a.final_eval_episodes,mode,fixed)
                 timing['evaluation']+=time.monotonic()-t
+        if a.center_traces_only:
+            from .xy_entropy import plot_trace
+            run.log({'eval/center_100_trajectories':wandb.Image(str(plot_trace(folder,step)))},step=step)
         result=dict(completed=True,source_commit=source,method=a.method,task=a.task,
             steps=step,global_steps=step-warmup,updates=learner.updates,rnd_updates=learner.intrinsic.update_step,
             summaries=summaries,checkpoint=proof,timing=timing,seconds=time.monotonic()-started,
