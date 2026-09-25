@@ -463,3 +463,15 @@ sampler/serialization/model-RNG checks, exact initial critic and actor hash
 after scratch sigma-bias restoration are required. Commit/push/share/freeze
 before launch. No4090/cancelled resumes/extra seeds/automatic extension/retry.
 See antmaze_experiments/ACTOR_SIGMA_SCREEN_PROTOCOL.md.
+
+Active-goal frozen teacher diagnostic (2026-09-25): before another training
+setting, measure candidate-count Monte Carlo uncertainty on the completed v3
+teacherfloor1/T3 and v4 teacherfloor.5/T1 controls at258304. Eight actual replay
+states/eight latent clouds; keep64 components while comparing64/256/1024/4096
+teacher candidates against an independent4096 reference. This is inference
+only, not an N/M training change or authorization to count candidate actions as
+trajectory modes. Prove exact existing64-probe agreement and full checkpoint/
+model/optimizer/RNG preservation. Preserve live sigma screens; one nice19 CPU
+job per5090 host, no4090/automatic retry. All nine pinned computational files
+unchanged. Commit/push/share/freeze first. See
+antmaze_experiments/TEACHER_MC_DIAGNOSTIC_PROTOCOL.md.
