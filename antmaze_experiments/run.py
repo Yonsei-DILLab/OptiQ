@@ -239,6 +239,7 @@ def main():
     p.add_argument('--interim-eval-episodes',type=int,default=EVAL_NUM_ENVS)
     p.add_argument('--save-intermediate-policy',action='store_true')
     p.add_argument('--eval-interval',type=int,default=250000)
+    p.add_argument('--video-interval',type=int,default=0)
     from .dynamics_profiles import PROFILES as DYNAMICS_PROFILES, get_profile
     p.add_argument('--dynamics-profile',choices=tuple(DYNAMICS_PROFILES))
     p.add_argument('--reward-profile',choices=REWARD_PROFILES,default='sparse')
@@ -246,9 +247,14 @@ def main():
     p.add_argument('--eval-starts',choices=['upstream','random','fixed'],default='upstream')
     p.add_argument('--train-starts',choices=['upstream','random'],default='upstream')
     a = select_execution_defaults(p.parse_args())
+    assert a.video_interval >= 0
+    if a.video_interval:
+        assert a.method == 'optiq' and a.task == 'v1'
     collection = collection_settings(a.collection_profile)
     num_envs = collection['num_envs']
     updates_per_collection = collection['updates_per_vector_step']
+    single_env = a.collection_profile == 'single-update1'
+    eval_step = (lambda i, interval: i * interval) if single_env else aligned_eval_step
     if a.collection_profile is not None:
         assert a.method == 'optiq' and a.dynamics_profile is None
         assert a.eval_interval >= NUM_ENVS
@@ -311,7 +317,12 @@ def main():
     # Fork workers before importing torch/JAX or initializing a GPU context.
     from .envs import vector, transition
     train_random_init = a.train_starts == 'random' or a.task == 'v1'
-    env = vector(a.task,num_envs,seed=0,reward_profile=a.reward_profile,
+    if single_env:
+        from .single_env import SingleEnv
+        env = SingleEnv(a.task, seed=0, reward_profile=a.reward_profile,
+                        random_init=train_random_init)
+    else:
+        env = vector(a.task,num_envs,seed=0,reward_profile=a.reward_profile,
                  random_init=train_random_init)
     obs = env.reset()
     if a.train_starts == 'random':
@@ -348,13 +359,13 @@ def main():
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     learner.eval_fixed_starts = a.eval_starts=='fixed' or (a.eval_starts=='upstream' and a.task!='v1')
-    budget = PREFLIGHT_STEPS if a.preflight else planned_budget
-    warmup = WARMUP
+    warmup = 10000 if single_env else WARMUP
+    budget = (warmup + 8 if single_env else PREFLIGHT_STEPS) if a.preflight else planned_budget
     config = dict(source_commit=source,upstream_commit='7edd06c4799abbab0f8fa534c21deb56253b018e',
         method=a.method,task=a.task,seed=0,preflight=a.preflight,steps=budget,
         source_dependencies=dependencies,
         wandb_entity=WANDB_ENTITY,wandb_project=WANDB_PROJECT,
-        num_envs=num_envs,batch_size=4096,updates_per_vector_step=updates_per_collection,
+        num_envs=num_envs,batch_size=256 if single_env else 4096,updates_per_vector_step=updates_per_collection,
         updates_per_transition=updates_per_collection/num_envs,
         expected_updates=collection_updates(budget,a.collection_profile),warmup_transitions=warmup,
         upstream_max_step=BUDGETS[a.task],native_global_steps=budget-warmup,
@@ -402,8 +413,11 @@ def main():
         config['actor_sigma_upper_bound']=None if np.isposinf(upper) else float(upper)
     if a.collection_profile is not None:
         config.update(collection_profile=a.collection_profile,
-                      eval_transition_quantum=NUM_ENVS,
+                      eval_transition_quantum=1 if single_env else NUM_ENVS,
+                      vectorized_collection=not single_env,
                       collection_comparison=(
+                          'One native simulator, one update per transition after warmup10000; batch256'
+                          if single_env else
                           'Same global transitions and batch4096; 256 updates per 256 transitions'
                           if a.collection_profile == 'env256-update256' else
                           'Same global transitions, batch4096 and 1/32 updates per transition; fewer environments and smaller update blocks'))
@@ -414,7 +428,7 @@ def main():
             warmup_transitions=warmup,parameters=initial,
             actor_updates=int(learner.model.policy.actor_state.step),
             critic_updates=int(learner.model.policy.qf_state.step),
-            eval_transition_quantum=NUM_ENVS))
+            eval_transition_quantum=1 if single_env else NUM_ENVS))
     if a.latent_profile is not None:
         config.update(latent_profile=a.latent_profile,latent_prior='finite',latent_components=64,
                       latent_codebook_seed=20260911,
@@ -453,8 +467,9 @@ def main():
             mode='offline' if offline else 'online',sync_pending=offline))
     rng=np.random.default_rng(0);step=0;started=time.monotonic();next_eval=a.eval_interval
     eval_index=1
-    if a.collection_profile is not None:next_eval=aligned_eval_step(eval_index,a.eval_interval)
+    if a.collection_profile is not None:next_eval=eval_step(eval_index,a.eval_interval)
     next_diagnostic=25000
+    next_video=a.video_interval
     timing=dict(collection=0.,learner=0.,evaluation=0.,checkpoint=0.)
     xy=np.empty((budget,2),np.float32);successes=[];episodes=0;info={}
     def progress():
@@ -505,6 +520,13 @@ def main():
                 assert all(np.isfinite(float(v)) for v in info.values()), info
                 assert learner.updates==collection_updates(step,a.collection_profile)
                 assert learner.intrinsic.update_step==(learner.updates if learner.noveld_enabled else 0)
+            if a.video_interval and (step >= next_video or (a.preflight and step == budget)):
+                from .single_video import record as record_video
+                t=time.monotonic()
+                video=record_video(learner,a.task,folder,step)
+                timing['evaluation']+=time.monotonic()-t
+                print(json.dumps(dict(video=str(video),step=step)),flush=True)
+                next_video+=a.video_interval
             if a.dynamics_profile is not None and (step>=next_diagnostic or (a.preflight and step==budget)):
                 from .critic_diagnostics import replay_diagnostics
                 t=time.monotonic()
@@ -528,7 +550,7 @@ def main():
                         run.log(numeric_metrics(s['critic_diagnostics'],'diagnostic/policy'),step=step)
                 timing['evaluation']+=time.monotonic()-t
                 eval_index+=1
-                next_eval=(aligned_eval_step(eval_index,a.eval_interval) if a.collection_profile is not None
+                next_eval=(eval_step(eval_index,a.eval_interval) if a.collection_profile is not None
                            else next_eval+a.eval_interval)
             if step%4096==0 or step==budget: progress()
         final_audit=audit(learner)
@@ -563,9 +585,9 @@ def main():
                 actual_updates=learner.updates,simulator_count=proof['simulator_count'],
                 actual_transitions=step,updates_per_transition=updates_per_collection/num_envs,
                 global_steps=step-warmup,env_steps_each=step//num_envs,
-                expected_eval_steps=[aligned_eval_step(i,a.eval_interval)
+                expected_eval_steps=[eval_step(i,a.eval_interval)
                     for i in range(1,(step-1)//a.eval_interval+1)
-                    if aligned_eval_step(i,a.eval_interval)<step])
+                    if eval_step(i,a.eval_interval)<step])
             write(folder/'collection-profile-final-verification.json',result['collection_profile_verification'])
         if a.discount is not None:
             assert float(learner.model.gamma)==a.discount

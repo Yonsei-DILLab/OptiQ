@@ -155,6 +155,8 @@ class JaxLearner:
             assert method == 'optiq' and latent_profile is None
         from .collection_profile import get_profile
         self.updates_per_collection = get_profile(collection_profile)['updates_per_vector_step']
+        self.batch_size = 256 if collection_profile == 'single-update1' else BATCH
+        self.warmup = 10000 if collection_profile == 'single-update1' else WARMUP
         if collection_profile is not None:
             assert method == 'optiq'
         assert latent_profile in (None, 'fixed64')
@@ -244,9 +246,9 @@ class JaxLearner:
             cfg.task = 'antmaze'
             cfg.wandb.entity = WANDB_ENTITY
             cfg.wandb.project = WANDB_PROJECT
-            cfg.alg.batch_size = BATCH
-            cfg.alg.learning_starts = WARMUP
-            cfg.alg.actor.learning_starts = WARMUP
+            cfg.alg.batch_size = self.batch_size
+            cfg.alg.learning_starts = self.warmup
+            cfg.alg.actor.learning_starts = self.warmup
             # Constructor does not collect data. Common scheduler controls updates.
             self.model = module.runner.OptiQDIME('MlpPolicy',
                 env=SpaceOnlyEnv.create(spaces), cfg=cfg,
@@ -322,7 +324,7 @@ class JaxLearner:
                 m.num_timesteps = step
                 m._current_progress_remaining = 1-step/self.budget
                 self.view.diagnostic = m.regulator_enabled and m._n_updates >= m.regulator_next_update
-                m.train(batch_size=BATCH, gradient_steps=1)
+                m.train(batch_size=self.batch_size, gradient_steps=1)
                 info = {k:float(v) for k,v in m.logger.name_to_value.items()
                         if isinstance(v,(int,float,np.number))}
             else:
