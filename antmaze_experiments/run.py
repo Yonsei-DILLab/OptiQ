@@ -346,6 +346,9 @@ def main():
         config['teacher_std_floor_override']=a.teacher_std_floor
     if a.actor_sigma_profile is not None:
         config['actor_sigma_profile']=a.actor_sigma_profile
+        upper=learner.config['alg']['actor']['log_std_max']
+        config['actor_sigma_upper_bound_removed']=bool(np.isposinf(upper))
+        config['actor_sigma_upper_bound']=None if np.isposinf(upper) else float(upper)
     if a.collection_profile is not None:
         config.update(collection_profile=a.collection_profile,
                       eval_transition_quantum=NUM_ENVS,
@@ -514,7 +517,9 @@ def main():
             result['discount']=float(learner.model.gamma)
         if a.teacher_std_floor is not None:
             from .teacher_proposal import verify_update_summary
-            check=verify_update_summary(learner.model.cfg.alg.actor.proposal_std, info, a.teacher_std_floor)
+            actor_cfg=learner.model.cfg.alg.actor
+            check=verify_update_summary(actor_cfg.proposal_std, info, a.teacher_std_floor,
+                                       (actor_cfg.log_std_min,actor_cfg.log_std_max))
             result['teacher_std_floor']=check['runtime_cfg_teacher_floor']
             result['teacher_update_verification']=check
         if a.latent_profile is not None:

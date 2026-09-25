@@ -122,6 +122,15 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             control=manifest['initial_parameter_control']
             assert initial['parameters']['critic']==control['critic']
             assert initial['control_actor_after_restoring_only_initial_sigma_bias']==control['actor']
+            if initial['settings']['initial_log_std']==-1.:
+                assert initial['parameters']['actor']==control['actor']
+            if entry['actor_sigma_profile'].endswith('-initm1'):
+                unbounded=entry['actor_sigma_profile']=='uncapped-initm1'
+                assert initial['upper_bound_removed']==verification['upper_bound_removed']==unbounded
+                assert config['actor_sigma_upper_bound_removed']==unbounded
+                assert len(initial['scratch_bound_checks'])==len(verification['scratch_bound_checks'])==4
+                assert all(c['finite_marginal_nll_and_gradients'] for p in (initial,verification)
+                           for c in p['scratch_bound_checks'])
         if 'discount' in entry:
             assert config['discount']==config['native']['alg']['gamma']==proof['discount']==entry['discount']
         if 'teacher_std_floor' in entry:

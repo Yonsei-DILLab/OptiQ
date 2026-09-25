@@ -475,3 +475,18 @@ model/optimizer/RNG preservation. Preserve live sigma screens; one nice19 CPU
 job per5090 host, no4090/automatic retry. All nine pinned computational files
 unchanged. Commit/push/share/freeze first. See
 antmaze_experiments/TEACHER_MC_DIAGNOSTIC_PROTOCOL.md.
+
+Explicit higher-sigma grid (2026-09-25), latest user approval:
+test v3/v4 x actor log_std_max {0,1,2,3,+infinity}, ten fresh seed0,250k runs
+on both5090hosts (v3 five on180,v4 five on199), immediate independent backfill.
+Reuse archived cap-1 controls. Hold initial log sigma-1 and lower-5, all O/P settings,
+random latent,N=M64,training/evaluation semantics and nine pinned algorithm files
+unchanged. This is an AntMaze-only exception, not a shared default change.
+Unbounded really removes the upper clip, with no hidden finite substitute.
+Preserve all live/frozen/results and no4090.
+Require exact initial actor/critic equality, real8update/batch4096 preflights,
+sampler/NLL/gradient/normalization stress checks, serialization/full replay checks.
+Existing nonfinite guards remain; preserve numerical failures, no sampler rewrite.
+Validation reads actual explicit bounds; no training algorithm changes.
+Commit/push/share/freeze before launch.
+No automatic extension/retry. See antmaze_experiments/ACTOR_SIGMA_HIGHER_PROTOCOL.md.

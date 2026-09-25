@@ -3,7 +3,10 @@ import hashlib
 import json
 from pathlib import Path
 
-PROFILES = {'capm2': (-5., -2., -2.), 'capm3': (-5., -3., -3.)}
+PROFILES = {'capm2': (-5., -2., -2.), 'capm3': (-5., -3., -3.),
+            'cap0-initm1': (-5., 0., -1.), 'cap1-initm1': (-5., 1., -1.),
+            'cap2-initm1': (-5., 2., -1.), 'cap3-initm1': (-5., 3., -1.),
+            'uncapped-initm1': (-5., float('inf'), -1.)}
 
 
 def settings(name=None):
@@ -39,7 +42,9 @@ def verify(learner, folder, stage):
     import jax
     import jax.numpy as jnp
     import numpy as np
-    from optiq_dime.box_gaussian import sample_box
+    from optiq_dime.box_gaussian import sample_box, log_normalizer, mixture_log_prob
+    from optiq_dime.distillation import direct_gmm_nll
+    from scipy.special import ndtr
     from optiq_dime.latent import sample_latents
     from .learners import audit
     assert stage in ('initial', 'final')
@@ -75,6 +80,48 @@ def verify(learner, folder, stage):
     assert np.max(np.abs(direct)) <= 1. and np.isfinite(direct).all()
     restored = fs.from_bytes(state, fs.to_bytes(state))
     np.testing.assert_array_equal(policy.sample_action(restored, observations, key, False, True), direct)
+    bound_checks=[]
+    if learner.actor_sigma_profile.endswith('-initm1'):
+        # Existing jnp.clip accepts +infinity: test that it really leaves large
+        # raw log scales unchanged, without a disguised finite upper bound.
+        # Change only independent scratch parameters, never the training state.
+        for bias in (-6., -1., 4., 8.):
+            params=flax.core.unfreeze(state.params)
+            params['log_std']['kernel']=jnp.zeros_like(params['log_std']['kernel'])
+            params['log_std']['bias']=jnp.full_like(params['log_std']['bias'],bias)
+            probe=state.replace(params=params)
+            probe_mu,probe_logs=probe.apply_fn({'params':probe.params},observations,z)
+            expected=np.clip(bias,wanted['log_std_min'],wanted['log_std_max'])
+            np.testing.assert_array_equal(probe_logs,np.full((64,8),expected,dtype=np.float32))
+            draws=policy.sample_action(probe,observations,key,False,True)
+            assert np.isfinite(draws).all() and np.max(np.abs(draws))<=1.
+            # Execute the unchanged marginal NLL and its output gradients at
+            # stress scales. Independent arrays and keys leave the learner intact.
+            components=probe_mu.reshape(1,64,8)
+            component_logs=probe_logs.reshape(1,64,8)
+            actions=draws.reshape(1,64,8)
+            weights=jnp.full((1,64),1/64,jnp.float32)
+            loss,gradients=jax.value_and_grad(
+                lambda means,logs:direct_gmm_nll(means,logs,actions,weights)[0],
+                argnums=(0,1))(components,component_logs)
+            assert np.isfinite(loss) and all(np.isfinite(g).all() for g in gradients)
+            density_logs=mixture_log_prob(actions,components,component_logs)
+            assert np.isfinite(density_logs).all()
+            # Compare normalization against float64 SciPy, including near edges.
+            means=jnp.asarray([[[-.99],[0.],[.99]]],jnp.float32)
+            scales=jnp.full_like(means,expected)
+            mu64=np.asarray(means,dtype=np.float64)
+            log_z64=np.log(ndtr((1-mu64)*np.exp(-expected))-ndtr((-1-mu64)*np.exp(-expected)))
+            normalizer_error=float(np.max(np.abs(np.asarray(log_normalizer(means,scales))-log_z64)))
+            assert normalizer_error<.002
+            grid=jnp.linspace(-1.,1.,16385).reshape(1,-1,1)
+            density=np.exp(np.asarray(mixture_log_prob(grid,means,scales))[0])
+            integral=float(np.sum((density[:-1]+density[1:])/2)*(2/16384))
+            assert np.isfinite(integral) and abs(integral-1.)<.002
+            bound_checks.append(dict(raw_bias=bias,observed_log_std=float(expected),
+                finite_bounded_draws=True,finite_marginal_nll_and_gradients=True,
+                marginal_nll=float(loss),log_normalizer_max_error_vs_float64=normalizer_error,
+                normalized_density_integral=integral))
     control_digest = None
     if stage == 'initial':
         assert int(state.step) == int(policy.qf_state.step) == 0
@@ -97,6 +144,9 @@ def verify(learner, folder, stage):
         direct_sampler_verified=True, native_sampler_verified=True,
         serialization_verified=True, model_optimizer_rng_unchanged=True,
         scratch_rng_seed=71291, teacher_std_floor=float(cfg.proposal_std),
+        upper_bound_removed=bool(np.isposinf(wanted['log_std_max'])),
+        upper_bound_value=None if np.isposinf(wanted['log_std_max']) else wanted['log_std_max'],
+        scratch_bound_checks=bound_checks,
         scope='Actor cap and initial sigma only; random latent and teacher proposal floor preserved')
     (Path(folder) / f'actor-sigma-{stage}-verification.json').write_text(json.dumps(record, indent=2)+'\n')
     return record
