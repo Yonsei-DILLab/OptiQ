@@ -38,7 +38,8 @@ The method-specific policy architectures and optimizers follow the repository's
 existing baseline adapters. OptiQ Direct GMM/TRG uses T=3, DACER off,
 N=M64, random latent, 256x2, mean init 1e-4 and log sigma [-5,-1].
 SQL retains its baseline T=1; the other methods retain their own native
-entropy settings. The T=3 PointMaze queue replaces an unstarted T=1 queue;
+entropy settings. The T=3 PointMaze queue (`paper-pointmaze-seven-t3-20260926`)
+replaces an unstarted T=1 queue. `PAPER_POINTMAZE_T3_PLAN.json` fixes host shards;
 the original registration and its zero-run cancellation remain archived.
 
 The server-local queue has no method/maze completion gate. Any worker whose

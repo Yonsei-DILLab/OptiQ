@@ -1,0 +1,38 @@
+{
+  "campaign": "paper-pointmaze-seven-t3-20260926",
+  "predecessor": "paper-pointmaze-seven-20260926",
+  "predecessor_started_jobs": 0,
+  "method_temperatures": {
+    "optiq": 3.0,
+    "sql": 1.0,
+    "other_methods": "native settings"
+  },
+  "gpu_slots_per_host": 4,
+  "job_shards": {
+    "vast-heechan-180": [
+      "simple:optiq",
+      "simple:sql",
+      "simple:mfpo",
+      "simple:td3",
+      "medium:sac",
+      "medium:meow",
+      "medium:dipo",
+      "hard:optiq",
+      "hard:sql",
+      "hard:mfpo",
+      "hard:td3"
+    ],
+    "vast-heechan-199": [
+      "simple:sac",
+      "simple:meow",
+      "simple:dipo",
+      "medium:optiq",
+      "medium:sql",
+      "medium:mfpo",
+      "medium:td3",
+      "hard:sac",
+      "hard:meow",
+      "hard:dipo"
+    ]
+  }
+}
