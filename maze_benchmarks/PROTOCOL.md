@@ -1,7 +1,7 @@
 # Online four-goal navigation comparison
 
-The comparison uses seed 0 for each of SAC, JAX SVGD SQL, DIPO, MFPO and
-Direct GMM OptiQ (iBOLT) in **both** environments. A single policy is learned
+The comparison uses seed 0 for each of SAC, JAX SVGD SQL, MEOW, MFPO, DIPO,
+TD3 and Direct GMM OptiQ (iBOLT) in **both** environments. A single policy is learned
 per method and task. Goals reached by different training seeds must never be
 pooled to imply a single multimodal policy.
 
@@ -22,8 +22,10 @@ pooled to imply a single multimodal policy.
 
 The wall-free 4way policies see `(x,y)` and choose a displacement in `[−1,1]²`;
 PointMaze policies see `(x,y,vx,vy)` and choose a continuous force in `[−1,1]²`.
-The five algorithms use the same task reward, reset distribution, evaluation
-states, environment-transition budget, replay sampling and UTD within a task.
+All seven algorithms use the same task reward, reset distribution, evaluation
+states, environment-transition budget, batch size and UTD within a task.
+Native policy architectures, entropy/noise mechanisms and optimizers retain
+their method-specific definitions; the report identifies these differences.
 Policy rollouts use the directly sampled action (including conditional noise
 for OptiQ); OptiQ μ-only random-latent rollouts are supplementary.
 

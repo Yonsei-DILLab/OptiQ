@@ -1,0 +1,22 @@
+{
+  "campaign": "4way-wallfree-100k-20260926",
+  "method": "sac",
+  "implementation": "Stable-Baselines3 SAC",
+  "host": "vast-heechan-180",
+  "gpu": 0,
+  "source_commit": "f82c71a4251e1cc7e5b55646c9343241cdaa2cdb",
+  "source_directory": "/home/heechan/OptiQ-ops/sources/f82c71a4251e1cc7e5b55646c9343241cdaa2cdb",
+  "output_directory": "/home/heechan/optiq-experiments/4way-wallfree-100k-20260926/runs/sac-s0",
+  "supervisor_service": "4way-wallfree-100k-sac-s0-20260926",
+  "launcher": "maze_benchmarks/launch_4way_100k.sh sac",
+  "seed": 0,
+  "steps": 100000,
+  "num_envs": 16,
+  "updates_per_collect": 16,
+  "batch_size": 256,
+  "warmup": 1024,
+  "eval_every": 20000,
+  "eval_episodes": 100,
+  "temperature_parameter_applies": false,
+  "preflight": "/home/heechan/optiq-experiments/4way-wallfree-100k-20260926/preflight/sac-s0-512"
+}
