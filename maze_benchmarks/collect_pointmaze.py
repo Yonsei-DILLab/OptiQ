@@ -15,7 +15,7 @@ from .report_pointmaze import (MAZES, METHODS, render_curves, render_medium_hard
                                render_optiq_modes, render_trajectories)
 
 
-HOSTS = ("vast-heechan-180", "vast-heechan-199")
+HOSTS = ("vast-heechan-180", "vast-heechan-199", "vast1")
 REMOTE_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926"
 
 
@@ -90,10 +90,16 @@ def main():
         state = json.loads((meta / "queue.json").read_text())
         if state["source_commit"] != args.source_commit:
             raise ValueError(f"unexpected frozen source on {host}")
+        if host != "vast1":
+            subprocess.run(["rsync", "-a", "--checksum", "--ignore-missing-args",
+                            f"{host}:{REMOTE_ROOT}/transfer-to-vast1.json",
+                            str(meta / "transfer-to-vast1.json")], check=True)
         for entry in state["jobs"]:
             if entry["state"] != "complete":
                 continue
             name = entry["name"]
+            if name in results:
+                raise ValueError(f"duplicate completed PointMaze job: {name}")
             sync(f"{host}:{REMOTE_ROOT}/jobs/{name}.json", meta / f"{name}.json")
             destination = root / "runs" / name
             if not destination.exists():

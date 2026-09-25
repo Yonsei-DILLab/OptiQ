@@ -41,6 +41,14 @@ SQL retains its baseline T=1; the other methods retain their own native
 entropy settings. The T=3 PointMaze queue (`paper-pointmaze-seven-t3-20260926`)
 replaces an unstarted T=1 queue. `PAPER_POINTMAZE_T3_PLAN.json` fixes host shards;
 the original registration and its zero-run cancellation remain archived.
+The supplemental `PAPER_POINTMAZE_4090_TRANSFER.json` records a later
+schedule-only migration of pending jobs to four idle RTX 4090 GPUs after a
+real 256-env/4096-batch preflight. The frozen learning source and method
+settings remain unchanged. A transfer is allowed only while each named job is
+pending under the server queue lock; the source queue marks it `transferred`
+and preserves a sidecar containing the previous queue state. No running or
+completed job is migrated. The collector verifies distinct completed names
+across all three hosts.
 
 The server-local queue has no method/maze completion gate. Any worker whose
 GPU lock becomes available claims the next pending job under a file lock.

@@ -1,0 +1,62 @@
+{
+  "campaign": "paper-pointmaze-seven-t3-20260926",
+  "training_source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "new_host": "vast1",
+  "reason": "Use four confirmed-idle RTX 4090 GPUs without interrupting AntMaze or N-way learners on the 5090 hosts.",
+  "smoke": {
+    "task": "pm_medium",
+    "method": "optiq",
+    "num_envs": 256,
+    "batch_size": 4096,
+    "updates_per_collect": 16,
+    "warmup": 4096,
+    "steps": 4352,
+    "training_source_unchanged": true
+  },
+  "transfer_from_180": [
+    "pm_medium-dipo-s0",
+    "pm_hard-optiq-s0",
+    "pm_hard-sql-s0",
+    "pm_hard-mfpo-s0",
+    "pm_hard-td3-s0"
+  ],
+  "transfer_from_199": [
+    "pm_simple-sac-s0",
+    "pm_simple-meow-s0",
+    "pm_simple-dipo-s0",
+    "pm_medium-optiq-s0",
+    "pm_medium-sql-s0",
+    "pm_medium-mfpo-s0",
+    "pm_medium-td3-s0",
+    "pm_hard-sac-s0",
+    "pm_hard-meow-s0",
+    "pm_hard-dipo-s0"
+  ],
+  "new_queue_order": [
+    "pm_medium-optiq-s0",
+    "pm_hard-optiq-s0",
+    "pm_simple-dipo-s0",
+    "pm_hard-dipo-s0",
+    "pm_simple-sac-s0",
+    "pm_simple-meow-s0",
+    "pm_medium-sql-s0",
+    "pm_medium-mfpo-s0",
+    "pm_medium-td3-s0",
+    "pm_hard-sac-s0",
+    "pm_hard-meow-s0",
+    "pm_medium-dipo-s0",
+    "pm_hard-sql-s0",
+    "pm_hard-mfpo-s0",
+    "pm_hard-td3-s0"
+  ],
+  "unchanged_180_jobs": [
+    "pm_simple-optiq-s0",
+    "pm_simple-sql-s0",
+    "pm_simple-mfpo-s0",
+    "pm_simple-td3-s0",
+    "pm_medium-sac-s0",
+    "pm_medium-meow-s0"
+  ],
+  "no_parameter_changes": true,
+  "predecessor_runs_preserved": true
+}
