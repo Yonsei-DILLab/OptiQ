@@ -1,0 +1,24 @@
+{
+  "job": "4way-wallfree-dipo-compat-100k-20260926-s0",
+  "training_source_commit": "ef6da7286ca64ea5fb92ad7633f34476b25a008c",
+  "host": "vast-heechan-180",
+  "gpu": 3,
+  "method": "dipo",
+  "root": "/home/heechan/optiq-experiments/4way-wallfree-dipo-compat-100k-20260926",
+  "runtime_environment": {
+    "LD_LIBRARY_PATH": "/home/heechan/.mujoco/mujoco210/bin",
+    "MUJOCO_PY_MUJOCO_PATH": "/home/heechan/.mujoco/mujoco210"
+  },
+  "source_fix": "Alias removed jax.random.KeyArray annotation to jax.Array before importing pinned DDiffPG Diffusers",
+  "preserved_failed_attempts": [
+    "/home/heechan/optiq-experiments/4way-wallfree-baselines-100k-20260926/preflights/dipo-s0",
+    "/home/heechan/optiq-experiments/4way-wallfree-dipo-runtimefix-100k-20260926/preflights/dipo-s0"
+  ],
+  "prior_update_count": 0,
+  "task_or_learner_equations_changed": false,
+  "preflight_transitions": 1040,
+  "main_transitions": 100000,
+  "collectors": 16,
+  "batch_size": 256,
+  "updates_per_16_transitions": 16
+}
