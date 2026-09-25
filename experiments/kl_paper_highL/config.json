@@ -1,0 +1,71 @@
+{
+  "parent_source_commit": "41a020577dbf8a87d8f96d714ab3888a4bb82260",
+  "checkpoint_step": 100000,
+  "seeds": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "L_powers": [
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+  ],
+  "repeats": 16,
+  "independent_reference_repeats": 4,
+  "reference_L": 16777216,
+  "actor_chunk": 4096,
+  "kernel_chunk": 4096,
+  "fixed_policy_probes": 128,
+  "policy_quantiles": [
+    0.1,
+    0.5,
+    0.9
+  ],
+  "random_seed": 92626000,
+  "training_L": 1048576,
+  "cases": [
+    "t00_reference",
+    "n00_spike_ramp"
+  ],
+  "target_probes": {
+    "t00_reference": [
+      -4.75,
+      -4.25,
+      -3.75,
+      -0.5,
+      0,
+      0.5,
+      3.75,
+      4.25,
+      4.75
+    ],
+    "n00_spike_ramp": [
+      -4.45,
+      -4.25,
+      -4.05,
+      0.5,
+      2,
+      4,
+      6,
+      7.5,
+      8
+    ]
+  }
+}
