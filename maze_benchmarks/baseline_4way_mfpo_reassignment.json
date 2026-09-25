@@ -1,0 +1,18 @@
+{
+  "method": "mfpo",
+  "source_commit": "67469caf8641222f9458b9a871b6e46e78e94a5d",
+  "original_assignment": {
+    "host": "vast-heechan-199",
+    "gpu": 0,
+    "service": "4way-wallfree-baselines-100k-20260926-mfpo-s0",
+    "status": "stopped while waiting for the GPU lock; no preflight or training started"
+  },
+  "new_assignment": {
+    "host": "vast-heechan-180",
+    "gpu": 0,
+    "service": "4way-wallfree-baselines-100k-20260926-mfpo-s0-180",
+    "root": "/home/heechan/optiq-experiments/4way-wallfree-baselines-100k-20260926"
+  },
+  "training_settings_change": false,
+  "reason": "199 GPU0 is occupied by a 5M-step AntMaze run; 180 GPU0 backfills after the existing MEOW and TD3 jobs"
+}
