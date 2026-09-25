@@ -40,6 +40,13 @@ def verify_run(run: Path, job: dict, training_commit: str):
         raise ValueError(f"source mismatch: {run.name}")
     if config["temperature"] != (3.0 if config["method"] == "optiq" else 1.0):
         raise ValueError(f"temperature profile mismatch: {run.name}")
+    selected = job["selected"]
+    if ((config["num_envs"], config["batch_size"], config["updates_per_collect"]) !=
+            (selected["num_envs"], selected["batch_size"], selected["updates_per_collect"])):
+        raise ValueError(f"selected collection profile mismatch: {run.name}")
+    if ((progress["steps"], progress["updates"]) !=
+            (job["result"]["steps"], job["result"]["updates"])):
+        raise ValueError(f"transition or optimizer count mismatch: {run.name}")
     last = progress["latest_evaluation"]
     if last["step"] != progress["steps"]:
         raise ValueError(f"evaluation step mismatch: {run.name}")
@@ -47,7 +54,9 @@ def verify_run(run: Path, job: dict, training_commit: str):
         path = run / "evaluations" / f"{last['step']:09d}_{mode}.npz"
         with np.load(path) as data:
             actual = data["goal_ids"]
-            if len(actual) != 500 or not np.isfinite(data["returns"]).all():
+            tracks = data["xy"]
+            if (len(actual) != 500 or tracks.shape[0] != 500 or
+                    tracks.shape[-1] != 2 or not np.isfinite(data["returns"]).all()):
                 raise ValueError(f"invalid rollout: {path}")
             counts = np.bincount(actual[actual >= 0], minlength=len(last[mode]["goals"]))
             if counts.tolist() != last[mode]["goals"]:
@@ -93,8 +102,11 @@ def main():
             results[name] = dict(host=host, sha256=verify_run(destination, job,
                                                               args.source_commit),
                                  selected=job["selected"], result=job["result"])
+    reporting_source = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], text=True,
+        cwd=Path(__file__).resolve().parents[1]).strip()
     manifest = dict(training_source_commit=args.source_commit,
-                    reporting_source="see current Git HEAD",
+                    reporting_source_commit=reporting_source,
                     completed=len(results), expected=len(MAZES) * len(METHODS),
                     runs=results)
     (root / "archive-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
