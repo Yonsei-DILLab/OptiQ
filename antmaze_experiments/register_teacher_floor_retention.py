@@ -30,7 +30,7 @@ def campaign_manifest(source, sha):
         parent_source=SHORT_SOURCE, comparison_source=SHORT_SOURCE,
         comparison_campaign=SHORT_CAMPAIGN,
         comparison_scope='Same-seed fresh longer-budget confirmation; only budget and job identity differ from the completed teacher-floor1 screen.',
-        priority_campaign=None, teacher_floor_grid=[1.],
+        priority_campaign=None, teacher_floor_grid=[1.], control_teacher_floor=1.,
         discount_temperature_conditions={'teacher_floor1_retention': (.999, 3.)},
         post_warmup_budget=1000000, actual_post_warmup_transitions=TOTAL_STEPS-WARMUP,
         total_transitions_per_job=TOTAL_STEPS,
@@ -49,6 +49,8 @@ def campaign_manifest(source, sha):
                             'Same seed is not independent replication.',
                             'The absence of collected goal terminals does not establish the cause of imbalance.']},
         screen='Inspect50k checkpoints; from500k stop if left entries are at most1/40 and left successes0 for three consecutive direct-policy evaluations. Stop on numerical/runtime failure without retry. Max1M post-warmup; no automatic extension. Preserve all failures and mu-only results.')
+    manifest['diagnostics'] = dict(manifest['diagnostics'],
+        policy_checkpoints=f'50k intervals; evaluation only, final full state at {TOTAL_STEPS} total transitions')
     return manifest
 
 
