@@ -5,9 +5,15 @@ at 508,416 transitions. Load the SHA-verified final checkpoint with its frozen
 source. Keep the trained actor, action sampling, reward and maze unchanged.
 
 Compare original identical full-state evaluation (`fixed-full`) with the
-upstream training reset distribution (`native-pose`): xy remains exactly(0,0)
-but initial pose/velocity vary. Optionally use `random-xy` only as a separate
-out-of-distribution sensitivity check; v3/v4 did not train with random xy.
+upstream training reset distribution (`native-reset`). A two-episode read-only
+preflight established that v3 native reset also gives identical xy, pose and
+velocity: upstream reset_model uses init_qpos/init_qvel and random_init=false.
+Thus pose variation cannot explain the historical result. Optionally use
+`random-xy` only as a separate distribution-shift check; v3/v4 did not train
+with random xy. For fixed-full policy evaluation, compare the original first
+100 starts, first-step positions and route labels. CPU versus original GPU
+rollouts can diverge over a long trajectory, so require exact starting states
+but report later trajectory agreement rather than assuming bitwise identity.
 
 Evaluate the direct policy (fresh normal latent and conditional Gaussian noise)
 with at least200 episodes per task. Preserve raw trajectories, full initial

@@ -32,7 +32,7 @@ def main():
     parser.add_argument('--run', type=Path, required=True)
     parser.add_argument('--training-source', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--start-profile', choices=('fixed-full', 'native-pose', 'random-xy'), required=True)
+    parser.add_argument('--start-profile', choices=('fixed-full', 'native-reset', 'random-xy'), required=True)
     parser.add_argument('--episodes', type=int, default=200)
     parser.add_argument('--mode', choices=('policy', 'native'), default='policy')
     args = parser.parse_args()
@@ -136,13 +136,21 @@ def main():
         assert np.isfinite(starts).all()
         unique_xy = len(np.unique(starts[:, :2], axis=0))
         unique_full = len(np.unique(starts, axis=0))
-        if args.start_profile == 'fixed-full':
+        if args.start_profile in ('fixed-full', 'native-reset'):
             assert unique_xy == unique_full == 1
-        elif args.start_profile == 'native-pose':
-            np.testing.assert_array_equal(starts[:, :2], np.zeros((args.episodes, 2)))
-            assert unique_xy == 1 and unique_full > 1
         else:
             assert unique_xy > 1 and unique_full > 1
+        reference_comparison = None
+        if args.start_profile == 'fixed-full' and args.mode == 'policy' and args.episodes >= 100:
+            reference = args.run / 'evaluations' / f"{int(payload['step']):010d}" / 'policy-fixed' / 'rollouts.npz'
+            with np.load(reference) as original:
+                np.testing.assert_array_equal(starts[:100], original['initial_full_state'])
+                reference_labels = [route_label(config['task'], xy[:int(length) + 1])[0]
+                                    for xy, length in zip(original['xy'], original['lengths'])]
+                reference_comparison = dict(
+                    first_step_xy_max_abs_diff=float(np.max(np.abs(rollout['xy'][:100, 1] - original['xy'][:, 1]))),
+                    route_label_agreement=int(sum(a == b for a, b in zip(labels[:100], reference_labels))),
+                    original_routes=dict(Counter(reference_labels)))
     after = hashlib.sha256(serialization.to_bytes(dict(
         actor=policy.actor_state, critic=policy.qf_state,
         target_actor=policy.target_actor_state))).hexdigest()
@@ -153,6 +161,7 @@ def main():
                   routes=routes, unique_xy_starts=unique_xy,
                   unique_full_starts=unique_full, summary=result,
                   rollout_sha256=digest(rollout_path),
+                  reference_first_100=reference_comparison,
                   restored_parameters_unchanged=True)
     write(args.output / 'evaluation-audit.json', report)
     print(json.dumps(report, allow_nan=False), flush=True)
