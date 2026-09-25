@@ -1,4 +1,4 @@
-"""Separate the original six-row density/score figure without changing panels."""
+"""Separate density/score figures with shared headers and row-panel labels."""
 import argparse
 import json
 from pathlib import Path
@@ -22,16 +22,27 @@ def render_split(density, scores, out, rows, kind):
                 ax.remove()
                 continue
             case, _ = CASES[row]
+            panel = f'({row + 1}-{chr(97 + col)})'
             if kind == 'density':
                 method = ['forward', 'reverse'][col]
                 density_axis(ax, density[case, method], method,
-                             f'({chr(97 + col)}) {method.capitalize()} KL', col == 0)
+                             panel, col == 0)
+                header = f'{method.capitalize()} KL'
             else:
                 j = col - 2
                 data = scores[case, 0]
-                score_axis(ax, data, j,
-                           f'({chr(99 + j)}) {[10, 50, 90][j]}% policy quantile',
+                score_axis(ax, data, j, panel,
                            limits(data, [128 + j]), j == 0)
+                ax.set_title(panel + '  ' + rf'$a={data["actions"][128 + j]:.3f}$',
+                             fontsize=17, pad=12)
+                header = f'{[10, 50, 90][j]}% policy quantile'
+            if row == 0:
+                ax.annotate(header, xy=(.5, 1), xycoords='axes fraction',
+                            xytext=(0, 52), textcoords='offset points',
+                            ha='center', va='bottom', fontsize=19,
+                            annotation_clip=False)
+            if row != rows - 1:
+                ax.set_xlabel('')
     save(fig, out, f'{kind}_{rows}x{len(columns)}')
 
 
@@ -56,7 +67,7 @@ def main():
         'six_row_cases': [case for case, _ in CASES],
         'paired_density_seeds': SEEDS,
         'score_seed': 0,
-        'change': 'Layout only; original panel data, styling, axis limits and labels retained.',
+        'change': 'Presentation only: shared column headers, bottom-row x labels, numbered row-panel labels; original data and axis limits retained.',
         'five_row_selection': 'First five original rows; six-row versions preserve all original environments.',
     }
     (out / 'PROVENANCE.json').write_text(json.dumps(provenance, indent=2) + '\n')
@@ -67,9 +78,11 @@ of the original 6 × 5 figure, in unchanged order. The sixth environment is not
 included in these five-row layouts; the additional 6 × 2 and 6 × 3 exports
 preserve all six environments. PNG, vector PDF and SVG versions are provided.
 
-Only layout changes. Data, seeds, histogram bins, score estimates, physical
-panel sizes, fonts, colors, shading, axis limits and panel labels are unchanged.
-Density panels retain labels (a, b); score panels retain (c, d, e).
+Only presentation changes. Data, seeds, histogram bins, score estimates, physical
+panel sizes, fonts, colors, shading and axis limits are unchanged. Column headings
+appear only above the first row, and x-axis labels only below the last row.
+Panel labels are (1-a), (1-b), (2-a), (2-b), etc. for density and (1-c),
+(1-d), (1-e), (2-c), etc. for score. Each score panel retains its fixed action.
 
 See the parent report and PROVENANCE.json for the full experimental details.
 ''')
