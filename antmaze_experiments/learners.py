@@ -155,8 +155,8 @@ class JaxLearner:
             assert method == 'optiq' and latent_profile is None
         from .collection_profile import get_profile
         self.updates_per_collection = get_profile(collection_profile)['updates_per_vector_step']
-        self.batch_size = 256 if collection_profile == 'single-update1' else BATCH
-        self.warmup = 10000 if collection_profile == 'single-update1' else WARMUP
+        self.batch_size = 256 if collection_profile in ('single-update1','env25-update25') else BATCH
+        self.warmup = 10000 if collection_profile in ('single-update1','env25-update25') else WARMUP
         if collection_profile is not None:
             assert method == 'optiq'
         assert latent_profile in (None, 'fixed64')

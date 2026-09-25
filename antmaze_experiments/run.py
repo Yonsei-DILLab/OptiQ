@@ -262,10 +262,12 @@ def main():
     num_envs = collection['num_envs']
     updates_per_collection = collection['updates_per_vector_step']
     single_env = a.collection_profile == 'single-update1'
+    env25 = a.collection_profile == 'env25-update25'
     assert a.xy_entropy_coefficient >= 0
     if a.xy_entropy_coefficient or a.center_traces_only:
         assert single_env and a.task == 'v1' and a.method == 'optiq'
-    eval_step = (lambda i, interval: i * interval) if single_env else aligned_eval_step
+    eval_step = ((lambda i, interval: ((i*interval+num_envs-1)//num_envs)*num_envs)
+                 if single_env or env25 else aligned_eval_step)
     if a.collection_profile is not None:
         assert a.method == 'optiq' and a.dynamics_profile is None
         assert a.eval_interval >= NUM_ENVS
@@ -370,13 +372,13 @@ def main():
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     learner.eval_fixed_starts = a.eval_starts=='fixed' or (a.eval_starts=='upstream' and a.task!='v1')
-    warmup = 10000 if single_env else WARMUP
-    budget = (warmup + 8 if single_env else PREFLIGHT_STEPS) if a.preflight else planned_budget
+    warmup = 10000 if single_env or env25 else WARMUP
+    budget = (warmup + 2*num_envs if env25 else warmup + 8 if single_env else PREFLIGHT_STEPS) if a.preflight else planned_budget
     config = dict(source_commit=source,upstream_commit='7edd06c4799abbab0f8fa534c21deb56253b018e',
         method=a.method,task=a.task,seed=0,preflight=a.preflight,steps=budget,
         source_dependencies=dependencies,
         wandb_entity=WANDB_ENTITY,wandb_project=WANDB_PROJECT,
-        num_envs=num_envs,batch_size=256 if single_env else 4096,updates_per_vector_step=updates_per_collection,
+        num_envs=num_envs,batch_size=256 if single_env or env25 else 4096,updates_per_vector_step=updates_per_collection,
         updates_per_transition=updates_per_collection/num_envs,
         expected_updates=collection_updates(budget,a.collection_profile),warmup_transitions=warmup,
         upstream_max_step=BUDGETS[a.task],native_global_steps=budget-warmup,
@@ -424,9 +426,11 @@ def main():
         config['actor_sigma_upper_bound']=None if np.isposinf(upper) else float(upper)
     if a.collection_profile is not None:
         config.update(collection_profile=a.collection_profile,
-                      eval_transition_quantum=1 if single_env else NUM_ENVS,
+                      eval_transition_quantum=num_envs if single_env or env25 else NUM_ENVS,
                       vectorized_collection=not single_env,
                       collection_comparison=(
+                          '25 native simulators, 25 sequential updates per 25 transitions; warmup10000; batch256'
+                          if env25 else
                           'One native simulator, one update per transition after warmup10000; batch256'
                           if single_env else
                           'Same global transitions and batch4096; 256 updates per 256 transitions'
@@ -439,7 +443,7 @@ def main():
             warmup_transitions=warmup,parameters=initial,
             actor_updates=int(learner.model.policy.actor_state.step),
             critic_updates=int(learner.model.policy.qf_state.step),
-            eval_transition_quantum=1 if single_env else NUM_ENVS))
+            eval_transition_quantum=num_envs if single_env or env25 else NUM_ENVS))
     if a.latent_profile is not None:
         config.update(latent_profile=a.latent_profile,latent_prior='finite',latent_components=64,
                       latent_codebook_seed=20260911,
@@ -547,6 +551,9 @@ def main():
                 t=time.monotonic();info=learner.update(step);timing['learner']+=time.monotonic()-t
                 assert all(np.isfinite(float(v)) for v in info.values()), info
                 assert learner.updates==collection_updates(step,a.collection_profile)
+                if env25:
+                    assert learner.model._n_updates == learner.updates
+                    assert int(learner.model.policy.qf_state.step) == learner.updates
                 assert learner.intrinsic.update_step==(learner.updates if learner.noveld_enabled else 0)
             if a.video_interval and (step >= next_video or (a.preflight and step == budget)):
                 from .single_video import record as record_video
@@ -586,7 +593,7 @@ def main():
                 eval_index+=1
                 next_eval=(eval_step(eval_index,a.eval_interval) if a.collection_profile is not None
                            else next_eval+a.eval_interval)
-            if step%4096==0 or step==budget: progress()
+            if step%(5000 if env25 else 4096)==0 or step==budget: progress()
         final_audit=audit(learner)
         for key in (('actor','critic','rnd_predictor') if learner.noveld_enabled else ('actor','critic')):
             assert initial[key]['sha256']!=final_audit[key]['sha256'],key
