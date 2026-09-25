@@ -28,11 +28,14 @@ def audit(checkpoint: Path, config_path: Path, episodes: int, seed: int) -> dict
     config = json.loads(config_path.read_text())
     if config["task"] != "4way" or config["method"] != "optiq":
         raise ValueError("expected a wall-free OptiQ 4-Way run")
+    # The first T=3 run predates the explicit CLI temperature flag, but its
+    # resolved and saved actor config contains the actual training value.
+    temperature = float(config.get("temperature", config["agent"]["alg"]["actor"]["temperature"]))
     with TemporaryDirectory(prefix="fourway-q-audit-") as temporary:
         agent = OptiQ(seed=config["seed"], folder=Path(temporary),
                       budget=config["steps"], observation_dim=2,
                       batch_size=config["batch_size"],
-                      temperature=config["temperature"])
+                      temperature=temperature)
         policy = agent.model.policy
         template = dict(actor=policy.actor_state, critic=policy.qf_state,
                         target_actor=policy.target_actor_state,
@@ -83,7 +86,7 @@ def audit(checkpoint: Path, config_path: Path, episodes: int, seed: int) -> dict
         return {
             "checkpoint": str(checkpoint),
             "source_commit": config["source_commit"],
-            "temperature": config["temperature"],
+            "temperature": temperature,
             "gamma": .99,
             "forced_first_actions": DIRECTIONS.tolist(),
             "episodes_per_first_action": episodes,
