@@ -29,7 +29,7 @@ def action(model, obs, mode, key=None):
         sample_conditional_noise=(mode == 'full')))[0], -1., 1.)
 
 
-def evaluate(model, env, folder, step, episodes, seed):
+def evaluate(model, env, folder, step, episodes, seed, obstacles=False):
     import jax
     import matplotlib
     matplotlib.use('Agg')
@@ -56,7 +56,11 @@ def evaluate(model, env, folder, step, episodes, seed):
             mean_return=float(np.mean(returns)), reached_goals=int((counts>0).sum()),
             goal_counts=counts.tolist(), episodes=episodes,
             goal_entropy=float(-(p*np.log(p)).sum()) if len(p) else None)
-        env.plot(ax)
+        if obstacles:
+            assert episodes % 5 == 0
+            results[mode]['success_within_5_trials'] = float(
+                (np.asarray(goals).reshape(-1, 5) > 0).any(axis=1).mean())
+        env.plot(ax, eval_obstacles_mode=int(obstacles))
         colors = ['gray', 'tab:blue', 'tab:orange', 'tab:green', 'tab:red',
                   'tab:purple','tab:brown','tab:pink','tab:cyan']
         arr = np.full((episodes, env.max_steps + 1, 2), np.nan, dtype=np.float32)
@@ -96,6 +100,8 @@ def main():
     parser.add_argument('--eval-every', type=int, default=5000)
     parser.add_argument('--eval-episodes', type=int, default=100)
     parser.add_argument('--preflight', action='store_true')
+    parser.add_argument('--robustness', action='store_true')
+    parser.add_argument('--checkpoint', help='Evaluation only; never resume learning')
     args = parser.parse_args()
     out=Path(args.output); out.mkdir(parents=True,exist_ok=False)
     sys.path.insert(0,str(Path(args.source).resolve()))
@@ -135,12 +141,47 @@ def main():
         primary_eval='random z, mu-only; full conditional-noise policy separately',
         gpu=str(jax.devices()),expert_data=False,discriminator=False)
     write(out/'config.json',config)
+    if args.checkpoint:
+        import flax.serialization as fs
+        p = model.policy
+        template = dict(actor=p.actor_state, critic=p.qf_state, target_actor=p.target_actor_state)
+        restored = fs.from_bytes(template, Path(args.checkpoint).read_bytes())
+        p.actor_state = restored['actor']; p.qf_state = restored['critic']
+        p.target_actor_state = restored['target_actor']
     run=None
     if not args.preflight:
         import wandb
         run=wandb.init(entity='OptiQ',project='jaehun-drac-pointmaze',
-            name=f'ibolt-{args.maze}-T{args.temperature:g}-s{args.seed}',config=config,dir=str(out))
+            name=f'ibolt-{args.maze}-T{args.temperature:g}-s{args.seed}' + ('-robustness' if args.checkpoint else ''),config=config,dir=str(out))
         write(out/'wandb.json',dict(id=run.id,url=run.url))
+    def robustness():
+        obstacle_env = MultiGoalPointMaze(maze_map=args.maze,reward_type='sparse',maze_eval_mode=True)
+        # Confirm test-only obstacles really exist, with otherwise identical geometry/goals.
+        def obstacle_count(e):
+            return sum('obstacle' in (e.model.geom(i).name or '') for i in range(e.model.ngeom))
+        assert obstacle_count(env) == 0 and obstacle_count(obstacle_env) > 0
+        assert np.array_equal(env.maze.unique_goal_locations, obstacle_env.maze.unique_goal_locations)
+        import hashlib
+        import flax.serialization as fs
+        before = hashlib.sha256(fs.to_bytes(model.policy.actor_state)).hexdigest()
+        stats, image = evaluate(model, obstacle_env, out/'robustness', args.steps,
+                                5 if args.preflight else 500, args.seed, obstacles=True)
+        assert before == hashlib.sha256(fs.to_bytes(model.policy.actor_state)).hexdigest()
+        write(out/'robustness.json',dict(results=stats,actor_unchanged=True,
+              obstacles=obstacle_count(obstacle_env),trials_per_group=5,
+              groups=1 if args.preflight else 100,learning=False))
+        if run:
+            run.log({**{f'robustness/{mode}/{k}':v for mode,metrics in stats.items()
+                        for k,v in metrics.items() if isinstance(v,(int,float))},
+                     'robustness/rollouts':wandb.Image(str(image))},step=args.steps)
+        obstacle_env.close()
+    if args.checkpoint:
+        assert args.robustness
+        robustness()
+        write(out/'completed.json',dict(evaluation_only=True,checkpoint=args.checkpoint))
+        if run: run.finish()
+        env.close();test_env.close()
+        return
     obs,_=env.reset(seed=args.seed);rng=np.random.default_rng(args.seed)
     begin=time.monotonic(); visits=np.zeros(env.num_goals,dtype=int);episodes=0
     initial_actor=np.asarray(jax.tree_util.tree_leaves(model.policy.actor_state.params)[0]).copy()
@@ -180,6 +221,7 @@ def main():
     changed=not np.array_equal(initial_actor,np.asarray(jax.tree_util.tree_leaves(model.policy.actor_state.params)[0]))
     assert changed,'Actor did not update'
     write(out/'completed.json',dict(steps=args.steps,updates=int(model._n_updates),actor_changed=changed))
+    if args.robustness: robustness()
     if run:run.finish()
     env.close();test_env.close()
 

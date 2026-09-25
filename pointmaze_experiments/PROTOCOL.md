@@ -20,3 +20,19 @@ Only Simple seed0 temperature1 is launched initially. No reward learning/experts
 
 Historical services disabled individually (autostart/autorestart false);
 logs/checkpoints remain. MaxEntDP learners and infrastructure/log sync retained.
+
+## Approved three-maze extension
+User requests all three mazes and test-only light-gray obstacles. Preserve
+completed Simple100K. Add Medium200K/Hard300K total steps, seed0 T1, unchanged
+10K warmup and every learning setting. Native episode limits300/600 and4/8 goals.
+Separate frozen suite checkout; Simple source/checkpoint/results are untouched.
+Use vast2 RTX5090 GPU1/2 for Medium/Hard and GPU0 for Simple checkpoint evaluation.
+Every5K retains100episodes per mode in the unmodified training maze.
+Final robustness adds official maze_eval_mode=True obstacles, without learning,
+500episodes per mode grouped into100 blocks of5 for success-within-five trials;
+also retain single-episode success, goal counts and PNG/NPZ paths.
+This matches the official trial-group metric but uses serial rather than16-vector
+evaluation and native named-map episode limits. It is not an exact replication
+of upstream's list-map constructor (which defaults to500steps).
+No goal-removal experiment, extra seeds, temperatures or baseline launches.
+Run real 16-update preflights with geometry checks and obstacle evaluation first.
