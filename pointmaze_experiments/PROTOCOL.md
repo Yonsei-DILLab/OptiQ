@@ -17,3 +17,6 @@ actor/critic checkpoints (not full replay resumable state). Evaluation preserves
 training random streams. Test symmetric upper/lower scripted paths and collision;
 perform4 real updates, serialization, rollout before main launch.
 W&B OptiQ/jaehun-pointmaze; idle vast3 GPUs2/3. Existing runs untouched.
+
+User extension: T3 and T5, seed0, same250K protocol, on idle vast4 GPUs0/1.
+No changes to the original two runs or learning/environment code.
