@@ -18,7 +18,7 @@ def main():
             verified.append((min(r['diagnostic_hessian_eigenvalues'][0] for r in bad),case))
     if not verified:raise RuntimeError('No all-seed strict bad minimum; inspect diagnostics, do not label a saddle as a local minimum.')
     case=max(verified)[1];sub=[r for r in rows if r['case']==case];c=np.array(sub[0]['centers']);sigma=cfg['sigma']
-    edges=np.linspace(c.min()-5*sigma,c.max()+5*sigma,cfg['histogram_bins']+1);xx=np.linspace(edges[0],edges[-1],6001)
+    edges=np.linspace(c.min()-10*sigma,c.max()+10*sigma,cfg['histogram_bins']+1);xx=np.linspace(edges[0],edges[-1],10001)
     target,cdf=mixture_np(xx,c,sigma);targetmass=np.diff(mixture_np(edges,c,sigma)[1]);density={};evalrows=[]
     for kind in ['bad_structure','good_structure']:
         hist=[]
@@ -39,7 +39,7 @@ def main():
         means=np.array([r['raw_means'] for r in sub if r['kind']==kind]).mean(0)
         kl=np.mean([r['raw_kl'] for r in sub if r['kind']==kind])
         ax.set_title(title+'\n'+r'$\mathrm{KL}(p^*\Vert q)$'+f' = {kl:.4f}')
-        ax.set_xlabel('x');ax.grid(alpha=.18);ax.legend(frameon=False);ax.set_xlim(edges[0],edges[-1])
+        ax.set_xlabel('x');ax.grid(alpha=.18);ax.legend(frameon=False);ax.set_xlim(c.min()-5*sigma,c.max()+5*sigma)
     axes[0].set_ylabel('Density')
     fig.suptitle('K = 3 | Equal fixed weights and variance | Mean-only gradient descent',fontsize=13)
     fig.tight_layout();fig.savefig(a.out/'mean_only_local_minimum.png');fig.savefig(a.out/'mean_only_local_minimum.pdf');plt.close(fig)
