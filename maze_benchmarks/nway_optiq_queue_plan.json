@@ -1,0 +1,32 @@
+{
+  "campaign": "nway-wallfree-optiq-1m-s0-20260926",
+  "branch": "direct-gmm-trg-antmaze",
+  "protocol": "maze_benchmarks/NWAY_PROTOCOL.md",
+  "methods": ["optiq"],
+  "tasks": ["8way", "12way", "16way", "32way"],
+  "seed": 0,
+  "total_environment_transitions_per_job": 1000000,
+  "num_envs": 16,
+  "batch_size": 256,
+  "updates_per_16_transitions": 16,
+  "warmup_included": 1024,
+  "temperature": 1.0,
+  "intermediate_evaluation": {"every_steps": 100000, "episodes": 256},
+  "final_evaluation_episodes": 1024,
+  "automatic_visualizations": true,
+  "independent_gpu_shards": [
+    {
+      "host": "vast-heechan-199",
+      "gpu": 3,
+      "shard": "199-gpu3",
+      "jobs_in_order": ["8way:optiq", "16way:optiq"]
+    },
+    {
+      "host": "vast-heechan-180",
+      "gpu": 0,
+      "shard": "180-gpu0",
+      "jobs_in_order": ["12way:optiq", "32way:optiq"]
+    }
+  ],
+  "source_commit": "Recorded with full SHA in each frozen source and remote manifest after this plan is committed"
+}

@@ -433,7 +433,8 @@ class DIPO:
     method = "dipo"
     critic_label = "minimum of two DIPO distributional Q expectations"
 
-    def __init__(self, seed, folder, budget, observation_dim, batch_size=256, temperature=None):
+    def __init__(self, seed, folder, budget, observation_dim, batch_size=256, temperature=None,
+                 task=None, horizon=None):
         from types import SimpleNamespace
         import torch
         from hydra import compose, initialize_config_dir
@@ -457,13 +458,13 @@ class DIPO:
         # 16 calls per 16 collected transitions give every method UTD=1.
         cfg.algo.update_times = 1
         cfg.intrinsic.pos_enc = False
-        cfg.env.name = "fourway" if observation_dim == 2 else "pointmaze"
+        cfg.env.name = task or ("fourway" if observation_dim == 2 else "pointmaze")
         cfg.algo.v_min, cfg.algo.v_max = ((-1500., 10.) if observation_dim == 2
                                          else (0., 120.))
         torch.manual_seed(seed)
         descriptor = SimpleNamespace(observation_space=SpaceOnlyEnv(observation_dim).observation_space,
                                      action_space=SpaceOnlyEnv(observation_dim).action_space,
-                                     max_episode_length=20 if observation_dim == 2 else 300)
+                                     max_episode_length=horizon or (20 if observation_dim == 2 else 300))
         self.agent = stable_dipo_class()(descriptor, cfg)
         self.agent.intrinsic = DisabledIntrinsic()
         self.native_replay = ReplayBuffer(1_000_000, (observation_dim,), 2, device="cuda")

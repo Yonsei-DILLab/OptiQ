@@ -67,11 +67,12 @@ def export(source: Path, output: Path, commit: str):
             with tarfile.open(tar_path) as archive:
                 archive.extractall(staging / relative, filter="data")
 
+        # Verify the complete committed training tree as well as pinned
+        # submodule contents; the manifest itself is added afterwards.
         checksums = {}
-        for relative in DEPENDENCIES:
-            for path in sorted((staging / relative).rglob("*")):
-                if path.is_file():
-                    checksums[str(path.relative_to(staging))] = hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(staging.rglob("*")):
+            if path.is_file():
+                checksums[str(path.relative_to(staging))] = hashlib.sha256(path.read_bytes()).hexdigest()
         sidecar = dict(source_commit=commit, dependencies=revisions, sha256=checksums)
         (staging / "maze_source_manifest.json").write_text(json.dumps(sidecar, indent=2) + "\n")
         shutil.move(str(staging), str(output))
