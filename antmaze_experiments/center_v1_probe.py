@@ -19,6 +19,7 @@ def main():
     ap.add_argument('--source',type=Path,required=True)
     ap.add_argument('--output',type=Path,required=True)
     ap.add_argument('--turning-reference',type=Path)
+    ap.add_argument('--spatial-q',action='store_true')
     a=ap.parse_args()
     report_source=Path(__file__).resolve().parents[1]
     report_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=report_source,text=True).strip()
@@ -57,6 +58,16 @@ def main():
     learner=JaxLearner.__new__(JaxLearner)
     learner.method='optiq';learner.model=model;learner.reward_profile=cfg['reward_profile']
     learner.eval_random_starts=False;learner.eval_fixed_starts=True
+    if a.spatial_q:
+        from .spatial_q_probe import diagnose
+        result=diagnose(learner,a.output)
+        assert fs.to_bytes(dict(actor=p.actor_state,critic=p.qf_state,target_actor=p.target_actor_state))==before
+        assert sha(checkpoint)==digest
+        result.update(checkpoint_and_model_unchanged=True,training_source=cfg['source_commit'],
+                      report_source=report_commit,checkpoint_sha256=digest)
+        (a.output/'result.json').write_text(json.dumps(result,indent=2))
+        print(json.dumps(result),flush=True)
+        return
     if a.turning_reference is not None:
         from .turning_v1_probe import diagnose
         result=diagnose(learner,a.turning_reference,a.output)
