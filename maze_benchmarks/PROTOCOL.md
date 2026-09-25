@@ -35,6 +35,15 @@ and save the policy/critic together with the independent policy/Q grid probe.
 Run each method in a separate process. Results from this profile must not be
 mixed with the author's distinct walled ICML environment.
 
+After the T=3, 100k OptiQ run reached all goals but only 8/100 west-goal
+episodes, run the user-selected temperature grid T=1,3,5,10 with the same
+seed and 100k budget. T=3 is already complete; add only T=1,5,10. Preserve
+the T=3 checkpoint and both policy/μ-only measurements.
+Select a temperature by the weakest goal count among 100 direct-policy
+rollouts, subject to a high success rate, rather than hiding a rare goal in
+aggregate success. No environment, reward, UTD, network, or sigma setting
+changes in this comparison.
+
 ## Visualization
 
 At each checkpoint, retain 100 independent center-start sampled-policy

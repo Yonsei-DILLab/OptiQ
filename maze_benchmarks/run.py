@@ -76,13 +76,14 @@ def main():
     parser.add_argument("--warmup", type=int, default=1_024)
     parser.add_argument("--eval-every", type=int, default=20_000)
     parser.add_argument("--eval-episodes", type=int, default=100)
+    parser.add_argument("--temperature", type=float, default=3.)
     parser.add_argument("--source-commit", required=True)
     args = parser.parse_args()
     if args.steps % args.num_envs or args.warmup % args.num_envs:
         raise ValueError("steps and warmup must be multiples of num-envs")
     if args.warmup < args.batch_size:
         raise ValueError("warmup must fill one update batch")
-    if args.updates_per_collect <= 0 or args.eval_every <= 0:
+    if args.updates_per_collect <= 0 or args.eval_every <= 0 or not np.isfinite(args.temperature) or args.temperature <= 0:
         raise ValueError("invalid updates or evaluation cadence")
     args.output.mkdir(parents=True, exist_ok=False)
     (args.output / "evaluations").mkdir()
@@ -91,8 +92,9 @@ def main():
     random.seed(args.seed)
     rng = np.random.default_rng(args.seed)
     observation_dim = 2 if args.task == "4way" else 4
+    kwargs = dict(temperature=args.temperature) if args.method in ("optiq", "sql") else {}
     agent = AGENTS[args.method](args.seed, args.output, args.steps,
-                                observation_dim, args.batch_size)
+                                observation_dim, args.batch_size, **kwargs)
     environment = TaskBatch(args.task, count=args.num_envs, seed=args.seed)
     config = vars(args).copy()
     config["output"] = str(args.output)
