@@ -432,6 +432,8 @@ def main():
     initial = audit(learner)
     learner.eval_random_starts = a.eval_starts=='random'
     learner.eval_fixed_starts = a.eval_starts=='fixed' or (a.eval_starts=='upstream' and a.task!='v1')
+    effective_nm = (int(learner.model.cfg.alg.actor.num_policy_samples)
+                    if a.method == 'optiq' else None)
     budget = PREFLIGHT_STEPS if a.preflight else planned_budget
     warmup = WARMUP
     config = dict(source_commit=source,upstream_commit='7edd06c4799abbab0f8fa534c21deb56253b018e',
@@ -447,7 +449,7 @@ def main():
                               else dense_reward_specification(a.task) if a.reward_profile == 'dense' else None),
         reward_profile=a.reward_profile,noveld_enabled=a.noveld=='on',
         optiq_config_profile=a.optiq_config_profile if a.method=='optiq' else None,
-        nm=a.nm if a.method=='optiq' else None,
+        nm=effective_nm,
         actor_microbatch_size=256 if a.nm==256 else None,
         eval_starts=a.eval_starts,effective_eval_starts='fixed' if learner.eval_fixed_starts else 'random',
         primary_trajectory='policy-fixed' if learner.eval_fixed_starts else 'policy-natural',

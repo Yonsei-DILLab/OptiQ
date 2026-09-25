@@ -136,6 +136,13 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             expected_rnd_lrs = [1e-4] if config['noveld_enabled'] else []
             assert profile['rnd_lrs']==expected_rnd_lrs and profile['tau']==entry['optiq_profile'].get('tau',.005)
             assert config['wandb_project']==manifest['wandb_project']=='antmaze'
+        if 'default_nm' in entry:
+            assert config['nm']==entry['default_nm']
+            actor=config['native']['alg']['actor']
+            assert actor['num_policy_samples']==entry['default_nm']
+            assert actor['proposals_per_policy_sample']==1
+            assert config['native']['experiment']['components']==entry['default_nm']
+            assert config['native']['experiment']['candidates']==entry['default_nm']
         if 'temperature' in entry:
             actor=config['native']['alg']['actor']
             assert actor['temperature']==entry['temperature']

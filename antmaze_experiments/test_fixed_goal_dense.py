@@ -52,7 +52,7 @@ class FixedGoalDenseTests(unittest.TestCase):
             self.assertEqual(manifest['jobs'][0]['reward_profile'], 'dense')
             self.assertEqual(manifest['jobs'][0]['fixed_goal_coordinates'],
                              dense_reward_specification(task)['goals'])
-            self.assertEqual(manifest['jobs'][0]['nm'], 64)
+            self.assertEqual(manifest['jobs'][0]['default_nm'], 64)
 
 
 if __name__ == '__main__':

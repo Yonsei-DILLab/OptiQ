@@ -10,7 +10,7 @@ from .run import dense_reward_specification
 from .settings import WANDB_ENTITY, WANDB_PROJECT, WARMUP
 
 
-CAMPAIGN = 'antmaze-optiq-fixed-start-nearest-dense-v34-1m-s0-20260925'
+CAMPAIGN = 'antmaze-optiq-fixed-start-nearest-dense-v34-1m-s0-20260925-r2'
 HOSTS = {0: 'vast-heechan-180', 1: 'vast-heechan-199'}
 TASKS = {0: 'v3', 1: 'v4'}
 PROFILE = 'env256-update256'
@@ -32,9 +32,9 @@ def campaign_manifest(source, sha, shard):
         protocol='antmaze_experiments/FIXED_START_NEAREST_DENSE_PROTOCOL.md',
         condition='fixed_origin_fixed_two_goal_set_nearest_euclidean_dense',
         jobs=[dict(
-            id=f'{task}-optiq-fixed-start-nearest-dense-T1-nm64-s0',
+            id=f'{task}-optiq-fixed-start-nearest-dense-T1-nm64-s0-r2',
             task=task, method='optiq', seed=0, steps=TOTAL_STEPS,
-            collection_profile=PROFILE, optiq_config_profile='basic', nm=64,
+            collection_profile=PROFILE, optiq_config_profile='basic', default_nm=64,
             optiq_profile=dict(actor_hidden_dims=[256, 256],
                                critic_hidden_dims=[256, 256],
                                actor_lr=3e-4, critic_lr=3e-4, tau=.005),
@@ -44,7 +44,7 @@ def campaign_manifest(source, sha, shard):
             eval_interval=EVAL_INTERVAL, interim_eval_episodes=40,
             final_eval_episodes=100, save_intermediate_policy=True,
             start_xy=[0., 0.], fixed_goal_coordinates=goals,
-            reward='-min_g ||p_t - g||_2 over the two fixed maze goals; no step penalty, bonus, or NovelD'),
+            reward='-min_g ||p_{t+1} - g||_2 over the two fixed maze goals; no step penalty, bonus, or NovelD'),
         ],
         collection_profile=PROFILE, num_envs=profile['num_envs'],
         batch_size=4096, updates_per_vector_step=profile['updates_per_vector_step'],
