@@ -1,0 +1,19 @@
+{
+  "name": "gmm40-sql-particles-100k-4seed-20260925",
+  "reference_commit": "87d5d8ff210569ace7e59bd8a53ad02141b67f0a",
+  "reference_target_values_sha256": "a22a67f6f37d782fd75961e75f5df13c424fda9624245c99efe93862c929e87c",
+  "particles": [32, 64, 128, 256],
+  "seeds_by_shard": {"0": [0, 1], "1": [2, 3]},
+  "gpus": [0, 1, 2, 3],
+  "steps": 100000,
+  "batch": 256,
+  "width": 256,
+  "depth": 2,
+  "temperature": 1.0,
+  "eval_samples": 10000,
+  "kernel_update_ratio": 0.5,
+  "value_particles": 16,
+  "target_update_interval": 1000,
+  "python": "/home/heechan/.venv-optiq-gmm40/bin/python",
+  "backfill_seconds": 2
+}
