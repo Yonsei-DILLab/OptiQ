@@ -41,7 +41,9 @@ At each checkpoint, retain 100 independent center-start sampled-policy
 rollouts, four goal hit counts, returns and raw `(x,y)` tracks. The 4-Way
 paper-style panel has two rows for each method:
 
-1. The same normalized nearest-goal proximity contour for every method,
+1. The same four-Gaussian display contour from the official DACER
+   `relax_env/multigoal.py::_plot_position_cost` (commit `9f22f29`; σ=1.7,
+   amplitude `40/(2πσ²)`, Gaussian contributions summed) for every method,
    overlaid with independent red policy-action samples at the same valid
    states. Arrow length is proportional to action magnitude. This background
    is a task-geometry reference, **not** policy density or the full reward
@@ -55,6 +57,11 @@ The top panels also report four goal hits and failures. For OptiQ, retain a
 separate μ-only panel so conditional Gaussian noise cannot be mistaken for
 random-latent behavior. A trajectory-only figure is retained alongside the
 two-row representation figure for unambiguous goal/path inspection.
+
+The official DACER code uses a Gaussian reset with initial position σ=0.1
+and registers its task with a 100-step limit. Those settings differ from the
+user-selected earlier wall-free 4-Way diagnostic (fixed origin, 20-step limit)
+and are **not** silently applied to the already running 100k experiment.
 
 ## Provenance and launch gate
 

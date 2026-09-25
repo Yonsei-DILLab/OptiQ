@@ -67,12 +67,21 @@ def _rollouts(path: Path):
 
 
 def _goal_proximity():
-    """A shared normalized reference contour, not a learned distribution."""
-    axis = np.linspace(-7., 7., 281)
+    """DACER's four-Gaussian display field, not a learned policy distribution.
+
+    Source: happy-yan/DACER-Diffusion-with-Online-RL, commit 9f22f29,
+    relax_env/multigoal.py::_plot_position_cost. The figure uses sigma=1.7,
+    amplitude 40/(2*pi*sigma**2), and sums the four goal-centered Gaussians.
+    """
+    axis = np.linspace(-7.7, 7.7, 309)
     xx, yy = np.meshgrid(axis, axis)
-    squared_distance = np.minimum.reduce(
-        [(xx - gx) ** 2 + (yy - gy) ** 2 for gx, gy in GOAL_XY])
-    return xx, yy, np.exp(-squared_distance / 8.)
+    sigma = 1.7
+    amplitude = 40. / (2. * np.pi * sigma ** 2)
+    field = np.sum([
+        amplitude * np.exp(-((xx - gx) ** 2 + (yy - gy) ** 2) / (2. * sigma ** 2))
+        for gx, gy in GOAL_XY
+    ], axis=0)
+    return xx, yy, field
 
 
 def _visited_cells(paths, x, y):
@@ -114,7 +123,7 @@ def render(panels: list[tuple[str, Path, Path]], output: Path):
     for col, (name, x, y, valid, actions, q, visited, counts, failures, label) in enumerate(loaded):
         top = figure.add_subplot(layout[0, col])
         xx, yy = np.meshgrid(x, y)
-        levels = np.arange(.1, 1., .05)
+        levels = np.linspace(float(np.min(proximity)), float(np.max(proximity)), 20)
         contours = top.contour(contour_x, contour_y, proximity, levels=levels,
                                cmap="viridis", linewidths=.72)
         top.clabel(contours, contours.levels[::2], inline=True, fontsize=5.7, fmt="%.1f")
@@ -123,20 +132,20 @@ def render(panels: list[tuple[str, Path, Path]], output: Path):
         rows, cols = np.nonzero(visited)
         sample_ids = (rows * 131 + cols * 17) % actions.shape[-2]
         selected_actions = actions[rows, cols, sample_ids]
-        top.quiver(x[cols], y[rows], selected_actions[:, 0], selected_actions[:, 1],
+        top.quiver(x[cols], y[rows], selected_actions[:, 0] * 3., selected_actions[:, 1] * 3.,
                    color="red", alpha=.9, angles="xy", scale_units="xy",
-                   scale=1.25, width=.005, headwidth=3.7, headlength=5.)
+                   scale=2., width=.005, headwidth=3.7, headlength=5.)
         # At the shared fixed start, display independent policy draws around
         # a small circle to expose any locally multimodal choices.
         center_row, center_col = len(y) // 2, len(x) // 2
         origins = np.array([[.19, .19], [-.19, .19], [-.19, -.19], [.19, -.19]])
         origin_actions = actions[center_row, center_col, :4]
-        top.quiver(origins[:, 0], origins[:, 1], origin_actions[:, 0], origin_actions[:, 1],
+        top.quiver(origins[:, 0], origins[:, 1], origin_actions[:, 0] * 3., origin_actions[:, 1] * 3.,
                    color="red", alpha=.9, angles="xy", scale_units="xy",
-                   scale=1.25, width=.005, headwidth=3.7, headlength=5.)
+                   scale=2., width=.005, headwidth=3.7, headlength=5.)
         for gx, gy in GOAL_XY:
             top.scatter(gx, gy, s=24, color="red", zorder=5)
-        top.set(xlim=(-7.1, 7.1), ylim=(-7.1, 7.1), aspect="equal")
+        top.set(xlim=(-7.7, 7.7), ylim=(-7.7, 7.7), aspect="equal")
         top.tick_params(labelsize=7, length=2)
 
         bottom = figure.add_subplot(layout[1, col], projection="3d")
@@ -156,8 +165,8 @@ def render(panels: list[tuple[str, Path, Path]], output: Path):
                     ha="center", fontsize=8)
         figure.text(center, .083, label, ha="center", fontsize=6.8)
     figure.text(.055, .035,
-                "Top: shared goal-proximity contours; red arrows are sampled policy actions.\n"
-                "Contours are not policy density. Bottom: learned EπQ state surfaces.",
+                "DACER four-Gaussian contours; red arrows: sampled policy actions.\n"
+                "Contours are not policy density. Bottom: learned EπQ(s,a).",
                 fontsize=7.5)
     output.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(output, dpi=175)
