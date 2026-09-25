@@ -34,7 +34,9 @@ def main() -> None:
     repair_state = json.loads((repair / "queue.json").read_text())
     if (repair_state["source_commit"] != commit or
             [item["name"] for item in repair_state["jobs"]] != plan["new_queue_order"] or
-            any(item["state"] != "pending" for item in repair_state["jobs"])):
+            repair_state["state"] not in ("running", "complete") or
+            any(item["state"] not in ("pending", "running", "complete")
+                for item in repair_state["jobs"])):
         raise ValueError("repair queue is absent or unexpected")
     root = args.root.resolve()
     with (root / "queue.lock").open("a+") as lock:
