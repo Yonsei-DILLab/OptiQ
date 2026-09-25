@@ -1,0 +1,9 @@
+{
+  "study": "20260925_gmm3_init_range",
+  "centers": [-1.5, 1.5, 6.0],
+  "initialization_range": [0.0, 6.0],
+  "fixed_initializations": [[0.0, 1.5, 6.0], [0.0, 3.0, 6.0], [0.0, 5.8, 6.0], [0.2, 0.8, 5.8]],
+  "uniform_seeds": [0, 1, 2, 3],
+  "steps": 100000,
+  "learning_rate": 0.01
+}
