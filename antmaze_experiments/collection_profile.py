@@ -1,7 +1,7 @@
 """Opt-in collection cadence and optimizer-update experiments."""
 from .settings import NUM_ENVS, UPDATES, WARMUP
 
-PROFILES = ('env32-update1', 'env256-update256', 'single-update1', 'env25-update25')
+PROFILES = ('env32-update1', 'env256-update256', 'single-update1', 'env25-update25', 'env5-update5')
 
 
 def get_profile(name=None):
@@ -11,6 +11,8 @@ def get_profile(name=None):
         raise ValueError(name)
     if name == 'single-update1':
         return dict(num_envs=1, updates_per_vector_step=1)
+    if name == 'env5-update5':
+        return dict(num_envs=5, updates_per_vector_step=5)
     if name == 'env25-update25':
         return dict(num_envs=25, updates_per_vector_step=25)
     if name == 'env32-update1':
@@ -20,10 +22,10 @@ def get_profile(name=None):
 
 def expected_updates(total_steps, name=None):
     profile = get_profile(name)
-    count = total_steps - (10000 if name in ('single-update1','env25-update25') else WARMUP)
+    count = total_steps - (10000 if name in ('single-update1','env25-update25', 'env5-update5') else WARMUP)
     if count < 0 or count % profile['num_envs']:
         raise ValueError('Post-warmup transition count must match the collection batch')
-    expected_ratio = 1 if name in ('env256-update256', 'single-update1', 'env25-update25') else 1/32
+    expected_ratio = 1 if name in ('env256-update256', 'single-update1', 'env25-update25', 'env5-update5') else 1/32
     assert profile['updates_per_vector_step'] / profile['num_envs'] == expected_ratio
     return count // profile['num_envs'] * profile['updates_per_vector_step']
 

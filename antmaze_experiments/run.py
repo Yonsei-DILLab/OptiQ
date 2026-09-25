@@ -262,7 +262,7 @@ def main():
     num_envs = collection['num_envs']
     updates_per_collection = collection['updates_per_vector_step']
     single_env = a.collection_profile == 'single-update1'
-    env25 = a.collection_profile == 'env25-update25'
+    env25 = a.collection_profile in ('env25-update25', 'env5-update5')
     assert a.xy_entropy_coefficient >= 0
     if a.xy_entropy_coefficient or a.center_traces_only:
         assert single_env and a.task == 'v1' and a.method == 'optiq'
@@ -429,7 +429,7 @@ def main():
                       eval_transition_quantum=num_envs if single_env or env25 else NUM_ENVS,
                       vectorized_collection=not single_env,
                       collection_comparison=(
-                          '25 native simulators, 25 sequential updates per 25 transitions; warmup10000; batch256'
+                          f'{num_envs} native simulators, {num_envs} sequential updates per {num_envs} transitions; warmup10000; batch256'
                           if env25 else
                           'One native simulator, one update per transition after warmup10000; batch256'
                           if single_env else
@@ -586,9 +586,9 @@ def main():
                              f'eval/{mode}/return':s['mean_return']},step=step)
                     if 'critic_diagnostics' in s:
                         run.log(numeric_metrics(s['critic_diagnostics'],'diagnostic/policy'),step=step)
-                if a.center_traces_only:
+                if a.center_traces_only or a.collection_profile == 'env5-update5':
                     from .xy_entropy import plot_trace
-                    run.log({'eval/center_100_trajectories':wandb.Image(str(plot_trace(folder,step)))},step=step)
+                    run.log({'eval/center_100_trajectories':wandb.Image(str(plot_trace(folder,step,a.task)))},step=step)
                 timing['evaluation']+=time.monotonic()-t
                 eval_index+=1
                 next_eval=(eval_step(eval_index,a.eval_interval) if a.collection_profile is not None
@@ -614,9 +614,9 @@ def main():
                 label=evaluation_mode_label(learner,mode)+('-fixed' if fixed else '-natural')
                 summaries[label]=evaluate(learner,a.task,folder,step,2 if a.preflight else a.final_eval_episodes,mode,fixed)
                 timing['evaluation']+=time.monotonic()-t
-        if a.center_traces_only:
+        if a.center_traces_only or a.collection_profile == 'env5-update5':
             from .xy_entropy import plot_trace
-            run.log({'eval/center_100_trajectories':wandb.Image(str(plot_trace(folder,step)))},step=step)
+            run.log({'eval/center_100_trajectories':wandb.Image(str(plot_trace(folder,step,a.task)))},step=step)
         result=dict(completed=True,source_commit=source,method=a.method,task=a.task,
             steps=step,global_steps=step-warmup,updates=learner.updates,rnd_updates=learner.intrinsic.update_step,
             summaries=summaries,checkpoint=proof,timing=timing,seconds=time.monotonic()-started,

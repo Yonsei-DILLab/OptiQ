@@ -20,7 +20,7 @@ class XYEntropy:
         return float(bonus)
 
 
-def plot_trace(folder, step):
+def plot_trace(folder, step, task='v1'):
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
@@ -33,7 +33,7 @@ def plot_trace(folder, step):
     data = np.load(path)
     np.testing.assert_array_equal(data['initial_full_state'][:, :2], 0)
     fig, ax = plt.subplots(figsize=(7, 7))
-    walls, goals, bounds = maze_geometry('v1')
+    walls, goals, bounds = maze_geometry(task)
     for x0, y0, x1, y1 in walls:
         ax.add_patch(Rectangle((x0,y0),x1-x0,y1-y0,color='.75'))
     for track in data['xy']:
