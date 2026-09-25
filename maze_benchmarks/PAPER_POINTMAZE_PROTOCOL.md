@@ -73,3 +73,9 @@ vector/batch profile and preflight/final checkpoint proofs remain inspectable.
 
 Reference: [Wang, Liu & Pan, *Learning Intractable Multimodal Policies with
 Reparameterization and Diversity Regularization*, §5.1 and Appendix A.2](https://arxiv.org/abs/2511.01374).
+
+The separate post-launch collector (`python -m maze_benchmarks.collect_pointmaze
+--output artifacts/paper_pointmaze_seven_20260926`) downloads completed runs,
+checks raw goal counts, checkpoint SHA256 and replay archive integrity, then
+renders the combined seven-method figures. Its source revision is recorded
+separately from the frozen learning revision.
