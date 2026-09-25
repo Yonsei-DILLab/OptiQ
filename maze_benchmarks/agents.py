@@ -133,10 +133,7 @@ class OptiQ:
         policy = self.model.policy
         state = dict(actor=policy.actor_state, critic=policy.qf_state,
                      target_actor=policy.target_actor_state,
-                     entropy=self.model.ent_coef_state,
-                     key=np.asarray(self.model.key),
-                     policy_key=np.asarray(policy.key),
-                     noise_key=np.asarray(policy.noise_key), updates=step)
+                     target_critic_params=policy.qf_state.target_params)
         path = folder / f"policy_{step:09d}.msgpack"
         path.write_bytes(flax.serialization.to_bytes(state))
         if full:
