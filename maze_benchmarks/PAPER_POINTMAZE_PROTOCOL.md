@@ -49,6 +49,13 @@ pending under the server queue lock; the source queue marks it `transferred`
 and preserves a sidecar containing the previous queue state. No running or
 completed job is migrated. The collector verifies distinct completed names
 across all three hosts.
+On `vast1`, two DIPO preflights failed before learning because `mujoco_py`
+could not locate MuJoCo 2.1 via the supervisor environment. The failed job
+records and logs remain intact. `PAPER_POINTMAZE_4090_DIPO_ENVFIX.json`
+documents the environment-only correction, its successful independent real
+update smoke test, and the separate queue for the three DIPO policies. The
+original main queue continues the non-DIPO work. Reporting combines both
+queues while retaining the failed-attempt audits and the frozen training SHA.
 
 The server-local queue has no method/maze completion gate. Any worker whose
 GPU lock becomes available claims the next pending job under a file lock.

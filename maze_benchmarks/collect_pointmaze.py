@@ -1,4 +1,4 @@
-"""Collect and verify finished PointMaze policies from both GPU hosts."""
+"""Collect and verify finished PointMaze policies from all campaign queues."""
 
 from __future__ import annotations
 
@@ -15,8 +15,12 @@ from .report_pointmaze import (MAZES, METHODS, render_curves, render_medium_hard
                                render_optiq_modes, render_trajectories)
 
 
-HOSTS = ("vast-heechan-180", "vast-heechan-199", "vast1")
 REMOTE_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926"
+REPAIR_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-dipo-envfix-20260926"
+SOURCES = (("vast-heechan-180", REMOTE_ROOT, "vast-heechan-180"),
+           ("vast-heechan-199", REMOTE_ROOT, "vast-heechan-199"),
+           ("vast1", REMOTE_ROOT, "vast1"),
+           ("vast1", REPAIR_ROOT, "vast1-dipo-envfix"))
 
 
 def sync(source: str, destination: Path):
@@ -82,30 +86,39 @@ def main():
     root = args.output.resolve()
     root.mkdir(parents=True, exist_ok=True)
     results = {}
-    for host in HOSTS:
-        meta = root / "hosts" / host
+    for host, remote_root, label in SOURCES:
+        meta = root / "hosts" / label
         meta.mkdir(parents=True, exist_ok=True)
-        sync(f"{host}:{REMOTE_ROOT}/queue.json", meta / "queue.json")
-        sync(f"{host}:{REMOTE_ROOT}/scheduler-manifest.json", meta / "scheduler-manifest.json")
+        sync(f"{host}:{remote_root}/queue.json", meta / "queue.json")
+        sync(f"{host}:{remote_root}/scheduler-manifest.json", meta / "scheduler-manifest.json")
         state = json.loads((meta / "queue.json").read_text())
         if state["source_commit"] != args.source_commit:
-            raise ValueError(f"unexpected frozen source on {host}")
+            raise ValueError(f"unexpected frozen source on {label}")
         if any(entry["state"] == "transferred" for entry in state["jobs"]):
-            sync(f"{host}:{REMOTE_ROOT}/transfer-to-vast1.json",
-                 meta / "transfer-to-vast1.json")
+            audit = "envfix-recovery.json" if label == "vast1" else "transfer-to-vast1.json"
+            sync(f"{host}:{remote_root}/{audit}", meta / audit)
         for entry in state["jobs"]:
+            if entry["state"] == "failed":
+                sync(f"{host}:{remote_root}/jobs/{entry['name']}.json",
+                     meta / "failed" / f"{entry['name']}.json")
+                failed = json.loads((meta / "failed" / f"{entry['name']}.json").read_text())
+                for attempt in failed.get("candidates", []):
+                    logfile = Path(attempt["log"]).name
+                    sync(f"{host}:{remote_root}/logs/{logfile}",
+                         meta / "failed" / logfile)
             if entry["state"] != "complete":
                 continue
             name = entry["name"]
             if name in results:
                 raise ValueError(f"duplicate completed PointMaze job: {name}")
-            sync(f"{host}:{REMOTE_ROOT}/jobs/{name}.json", meta / f"{name}.json")
+            sync(f"{host}:{remote_root}/jobs/{name}.json", meta / f"{name}.json")
             destination = root / "runs" / name
             if not destination.exists():
                 destination.mkdir(parents=True)
-            sync(f"{host}:{REMOTE_ROOT}/runs/{name}/", destination)
+            sync(f"{host}:{remote_root}/runs/{name}/", destination)
             job = json.loads((meta / f"{name}.json").read_text())
-            results[name] = dict(host=host, sha256=verify_run(destination, job,
+            results[name] = dict(host=host, campaign_root=remote_root,
+                                 sha256=verify_run(destination, job,
                                                               args.source_commit),
                                  selected=job["selected"], result=job["result"])
     reporting_source = subprocess.check_output(

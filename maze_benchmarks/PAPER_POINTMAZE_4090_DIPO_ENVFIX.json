@@ -1,0 +1,28 @@
+{
+  "campaign": "paper-pointmaze-seven-t3-20260926",
+  "training_source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "host": "vast1",
+  "failure": "DIPO preflight could not import mujoco_py because the 4090 supervisor environment lacked the MuJoCo 2.1 library path. Two failed job records and their logs remain unchanged.",
+  "environment_only_fix": {
+    "MUJOCO_PY_MUJOCO_PATH": "/home/heechan/.mujoco/mujoco210",
+    "LD_LIBRARY_PATH": "/home/heechan/.mujoco/mujoco210/bin",
+    "DIPO_smoke_task": "pm_simple",
+    "DIPO_smoke_steps": 4352,
+    "DIPO_smoke_updates": 16,
+    "DIPO_smoke_num_envs": 256,
+    "DIPO_smoke_batch_size": 4096
+  },
+  "new_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-dipo-envfix-20260926",
+  "new_queue_order": [
+    "pm_hard-dipo-s0",
+    "pm_simple-dipo-s0",
+    "pm_medium-dipo-s0"
+  ],
+  "previous_failed": [
+    "pm_simple-dipo-s0",
+    "pm_hard-dipo-s0"
+  ],
+  "transfer_pending": "pm_medium-dipo-s0",
+  "no_learning_code_or_hyperparameter_change": true,
+  "preserve_original_failure": true
+}
