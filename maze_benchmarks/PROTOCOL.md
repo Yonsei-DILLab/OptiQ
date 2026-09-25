@@ -59,6 +59,11 @@ this repository alone contains empty submodule directories.
 verifies the gitlinks, exports only the required upstream source files, and
 writes per-file SHA256 hashes in `maze_source_manifest.json`. The snapshot
 must then be shared unchanged across servers and preflighted before launch.
+Each remaining baseline has a distinct supervisor service. The service holds
+the existing GPU flock, validates a 1,040-transition/16-update preflight with
+raw trajectories and Q-grid outputs, then starts an independent 100k run.
+It never resumes or retries a partial run automatically. Services may wait
+for an unrelated GPU owner to release its lock; no baseline stops that owner.
 
 After the T=3, 100k OptiQ run reached all goals but only 8/100 west-goal
 episodes, run the user-selected temperature grid T=1,3,5,10 with the same
