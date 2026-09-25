@@ -1,6 +1,6 @@
 # Forward KL vs. Reverse KL: 두 target의 최종 결과와 score 수렴
 
-작성일: 2026-09-26. 두 환경 모두 100K updates가 끝난 checkpoint를 사용했다. **Reverse 학습의 density bank는 $L=2^{20}$이며, 최종 density 평가도 별도로 seed당 $2^{20}$개 action을 사용한다.** 이 두 숫자는 역할이 다르다. Forward에는 auxiliary bank $L$이 없다.
+작성일: 2026-09-26. 두 환경 모두 100K updates가 끝난 checkpoint를 사용했다. **Reverse 학습에서 score 추정에 사용하는 독립 latent MC sample 수는 $L=2^{20}$이며, 최종 density 평가도 별도로 seed당 $2^{20}$개 action을 사용한다.** 이 두 숫자는 역할이 다르다. Forward에는 이 추가 MC sample 수 $L$이 적용되지 않는다.
 
 ## 1. 최종 비교 그림
 
@@ -112,8 +112,8 @@ $\phi,\Phi$는 표준정규분포의 density와 CDF다. Conditional distribution
 | Optimizer | Adam, learning rate $3\times10^{-4}$, 기본 momentum/epsilon |
 | Updates | 100,000 |
 | Seeds | 0, 1, 2, 3 |
-| Reverse density-bank $L$ | $2^{20}=1,048,576$, group별 독립 bank |
-| Density-bank 처리 | chunk 4096; 매 update 새 latent bank |
+| Score 추정용 MC sample 수 $L$ | $2^{20}=1,048,576$, group별 독립 latent samples |
+| MC sample 처리 | chunk 4096; 매 update 독립 latent resampling |
 | Forward proposal sigma floor | $e^{-5}$, actor sigma 하한과 동일 |
 | 최종 평가 | seed당 $2^{20}$ action, 512 histogram bins |
 
@@ -152,7 +152,7 @@ $$
 
 $\operatorname{sg}$는 stop-gradient다. Candidate, proposal, importance weight는 고정하고 student의 $\mu,\sigma$에 gradient를 보낸다. Proposal과 student는 해당 group에서 같은 latent 집합을 사용한다. 그룹 loss 32개를 평균한 뒤 한 번 update한다. 이는 SNIS와 finite-$N$ mixture를 이용한 근사이며 exact infinite-mixture Forward KL을 직접 적분하는 것이 아니다. OT/Sinkhorn은 사용하지 않는다.
 
-### 4.2 Reverse KL: 독립 density bank로 action score 추정
+### 4.2 Reverse KL: 독립 latent MC samples로 action score 추정
 
 $$
 \mathcal J_R(\theta)=\mathrm{KL}(q_\theta\Vert p^\star)
@@ -164,7 +164,7 @@ Policy action은 group의 $N$개 conditional Gaussian에서 $M$개를 reparamete
 $$
 \hat q_L(a)=\frac1L\sum_{\ell=1}^{L}k_\theta(a\mid\tilde z_\ell),
 \qquad
-\hat s_L(a)=\partial_a\log\hat q_L(a).
+\hat s_L(a)=\nabla_a\log\hat q_L(a).
 $$
 
 구현에서 backpropagation하는 surrogate는
@@ -173,7 +173,7 @@ $$
 \widehat{\mathcal L}^{\mathrm{sur}}_R
 =\frac1M\sum_{j=1}^{M}
 a_{\theta,j}\operatorname{sg}\!\left[
-\hat s_L(a_{\theta,j})-\frac1\alpha\partial_a Q(a_{\theta,j})
+\hat s_L(a_{\theta,j})-\frac1\alpha\nabla_a Q(a_{\theta,j})
 \right].
 $$
 
@@ -181,20 +181,20 @@ $$
 
 $$
 \widehat{\nabla_\theta\mathcal J_R}
-=\frac1M\sum_j\left(\hat s_L(a_j)-\partial_a\log p^\star(a_j)\right)
+=\frac1M\sum_j\left(\hat s_L(a_j)-\nabla_a\log p^\star(a_j)\right)
 \nabla_\theta a_{\theta,j}.
 $$
 
-Density-bank parameter, score 계산에 들어간 action, bracket 전체는 detach한다. 미분은 reparameterized $a_{\theta,j}$를 통해서만 흐른다. Exact marginal density에서는 직접 parameter score 항의 expectation이 0인 score identity를 이용한 형태이며, 유한 $L$에서는 marginal score를 MC로 근사한 gradient이다. Group마다 독립적인 bank를 사용하므로 $L$을 키우면 추가 계산량이 증가한다. **같은 $N,M$이 같은 총 계산량을 뜻하지는 않는다.**
+Score 추정에 사용한 conditional Gaussian parameter, score 계산에 들어간 action, bracket 전체는 detach한다. 미분은 reparameterized $a_{\theta,j}$를 통해서만 흐른다. Exact marginal density에서는 직접 parameter score 항의 expectation이 0인 score identity를 이용한 형태이며, 유한 $L$에서는 marginal score를 MC로 근사한 gradient이다. Group마다 독립적인 latent MC samples를 사용하므로 $L$을 키우면 추가 계산량이 증가한다. **같은 $N,M$이 같은 총 계산량을 뜻하지는 않는다.**
 
 ## 5. 왜 score 수렴을 따로 측정하는가?
 
-$N,M$을 128로 고정해도 reverse gradient에 필요한 $\partial_a\log q_\theta(a)$를 정확히 알 수는 없다. $L$은 학습 가능한 component 개수를 추가하는 값이 아니라, **같은 frozen neural actor가 만드는 marginal density의 score를 계산하기 위한 독립 MC bank 크기**다.
+$N,M$을 128로 고정해도 reverse gradient에 필요한 $\nabla_a\log q_\theta(a)$를 정확히 알 수는 없다. $L$은 학습 가능한 component 개수를 추가하는 값이 아니라, **같은 frozen neural actor가 만드는 marginal density의 score를 계산하기 위한 독립 latent MC sample 수**다.
 
 Truncated Gaussian의 정규화 상수는 $\mu,\sigma$에는 의존하지만 구간 내부 action $a$에는 의존하지 않는다. 따라서
 
 $$
-\partial_a\log k_\theta(a\mid z_\ell)
+\nabla_a\log k_\theta(a\mid z_\ell)
 =\frac{\mu_\ell-a}{\sigma_\ell^2},
 $$
 
@@ -212,26 +212,28 @@ $$
 | 측정 항목 | 설정 |
 |---|---|
 | $L$ | $2^7,2^8,\ldots,2^{24}$ |
-| 반복 | 독립 bank stream 16회 |
-| $L$ 사이 관계 | 각 stream 안에서는 같은 bank의 prefix를 사용; stream끼리는 독립 |
-| 기준 score | 추가 독립 bank 4개, 각각 $L=2^{24}$; 네 score 추정값의 평균 |
+| 반복 | 독립 MC 반복 16회 |
+| $L$ 사이 관계 | 각 반복 안에서는 같은 latent sequence의 prefix를 사용; 반복끼리는 독립 |
+| 기준 score | 추가 독립 MC 추정 4회, 각각 latent sample $2^{24}$개; 네 score 추정값의 평균 |
 | 주 그림 action | seed 0 policy sample의 10%, 50%, 90% 분위수, $L$과 무관하게 고정 |
 | 정량 평가 action | 각 seed의 저장된 policy sample에서 등간격 index로 고른 128개 action |
 | 추가 probe | Target 영역의 고정 action 9개, policy-action 통계와 분리 |
-| Actor / latent | 학습과 같은 float32; bank network matmul은 highest precision |
+| Actor / latent | 학습과 같은 float32; MC latent의 network matmul은 highest precision |
 | Ratio 누산 | log-weight 최대값을 빼서 안정화하고 float64로 누산 |
 
-기준선은 exact score가 아니다. 네 개의 독립적인 큰 MC bank가 주는 **경험적 기준값**이다. Conditional Gaussian의 score 식은 정확하지만, latent expectation을 유한 bank로 대체하는 오차는 남는다.
+기준선은 exact score가 아니다. 각각 $2^{24}$개 latent samples를 사용하는 독립 MC 추정 네 회가 주는 **경험적 기준값**이다. Conditional Gaussian의 score 식은 정확하지만, latent expectation을 유한한 MC samples로 대체하는 오차는 남는다.
 
 ### 5.1 Score 수렴 그림: action별 확대
+
+Figure의 x축은 **Number of MC samples $L$**로 표기한다. 이는 score 추정용 latent sample 수이며, objective gradient용 action 수 $M$이나 독립 반복 횟수 16과는 다른 값이다.
 
 ![Score 수렴 확대](score_convergence_zoom.png)
 
 위 행은 Three Gaussian modes, 아래 행은 spike+ramp다. 모두 최종 Reverse actor의 seed 0을 사용한다. Forward score는 그리지 않는다.
 
-파란 실선은 16회 MC 평균, **파란 음영은 반복값의 10–90% 구간**이다. Mean의 confidence interval은 아니다. 검정 점선은 독립 큰-bank 기준 score, 세로 회색 파선은 실제 학습의 $L=2^{20}$이다. **회색 reference band는 그리지 않았다.** 각 패널의 y축은 해당 score 변화가 보이도록 독립적으로 확대했다.
+파란 실선은 16회 MC 평균, **파란 음영은 반복값의 10–90% 구간**이다. Mean의 confidence interval은 아니다. 검정 점선은 독립 $2^{24}$-sample 기준 score, 세로 회색 파선은 실제 학습의 $L=2^{20}$이다. **회색 reference band는 그리지 않았다.** 각 패널의 y축은 해당 score 변화가 보이도록 독립적으로 확대했다.
 
-| Target | Policy quantile | 고정 action | $L=2^{20}$ 평균 score | 큰-bank 기준 score | $L=2^{20}$ MC SD |
+| Target | Policy quantile | 고정 action | $L=2^{20}$ 평균 score | $2^{24}$-sample 기준 score | $L=2^{20}$ MC SD |
 |---|---:|---:|---:|---:|---:|
 {{QUANTILE_TABLE}}
 
@@ -280,13 +282,13 @@ $$
 
 131,073개 grid point로 적분하고, 65,537개 grid 결과와 비교한 차이를 각 `metrics_100000.json`에 기록했다. Mode missing은 target valley로 나눈 basin 및 사전에 정한 core 양쪽에서 actor 질량이 target 질량의 25% 미만인 경우다. Gaussian core는 각 중심의 ±0.5, spike+ramp core는 $[-4.5,-4]$와 $[3,7.7]$이다.
 
-Score 구현은 같은 finite bank의 autodiff gradient와 일치함을 확인했고, near-boundary Gaussian을 포함해 truncation normalization도 검사했다. Float32/float64 ratio 계산의 차이도 같은 bank에서 확인했다. 다음 표에서 target probe 오차는 policy-action 오차와 **분리해서** 읽어야 한다.
+Score 구현은 같은 유한 latent MC samples를 사용한 autodiff gradient와 일치함을 확인했고, near-boundary Gaussian을 포함해 truncation normalization도 검사했다. Float32/float64 ratio 계산의 차이도 같은 latent MC samples에서 확인했다. 다음 표에서 target probe 오차는 policy-action 오차와 **분리해서** 읽어야 한다.
 
 | Target | Seed | 9개 target probe의 최대 절대 평균-score 편차, $L=2^{20}$ | 128 policy action의 최대 float32–float64 score 차이 |
 |---|---:|---:|---:|
 {{PROBE_TABLE}}
 
-Gaussian target probe는 $(-4.75,-4.25,-3.75,-0.5,0,0.5,3.75,4.25,4.75)$, spike+ramp probe는 $(-4.45,-4.25,-4.05,0.5,2,4,6,7.5,8)$이다. Target probe의 기준 역시 exact 값이 아닌 큰-bank 추정값이다.
+Gaussian target probe는 $(-4.75,-4.25,-3.75,-0.5,0,0.5,3.75,4.25,4.75)$, spike+ramp probe는 $(-4.45,-4.25,-4.05,0.5,2,4,6,7.5,8)$이다. Target probe의 기준 역시 exact 값이 아닌 $2^{24}$-sample MC 추정값이다.
 
 ## 7. 파일과 재현 정보
 
@@ -298,7 +300,7 @@ Gaussian target probe는 $(-4.75,-4.25,-3.75,-0.5,0,0.5,3.75,4.25,4.75)$, spike+
 - Gaussian만, 1×3: [확대 PDF](score_convergence_gaussian_zoom.pdf) · [공통 y축 PDF](score_convergence_gaussian_common_y.pdf)
 - Spike+ramp만, 1×3: [확대 PDF](score_convergence_spike_ramp_zoom.pdf) · [공통 y축 PDF](score_convergence_spike_ramp_common_y.pdf)
 - 모든 seed: [Gaussian](score_all_seeds_gaussian.png) · [Spike+ramp](score_all_seeds_spike_ramp.png)
-- [영문 figure captions](captions.md)
+- [논문용 Experiment details appendix](appendix.md) · [영문 figure captions](captions.md)
 - [Density 원수치](density_metrics.csv) · [모든 L의 score 수치](score_metrics.csv) · [분위수 score 수치](score_quantiles.csv) · [전체 provenance](PROVENANCE.json)
 
 ### 코드와 저장 위치

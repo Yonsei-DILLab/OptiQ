@@ -154,7 +154,7 @@ def score_axis(ax, data, j, title, ylim, ylabel=False):
     ax.set_xscale('log', base=2)
     powers = [7, 10, 14, 17, 20, 24]
     ax.set_xticks([2**p for p in powers], [rf'$2^{{{p}}}$' for p in powers])
-    ax.set(xlim=(2**7, 2**24), ylim=ylim, xlabel=r'Density-bank size $L$')
+    ax.set(xlim=(2**7, 2**24), ylim=ylim, xlabel=r'Number of MC samples $L$')
     ax.ticklabel_format(axis='y', style='plain', useOffset=False)
     ax.tick_params(direction='out', length=4, width=.8)
     ax.set_title(title + '\n' + rf'$a={data["actions"][k]:.3f}$', fontsize=17, pad=10)
@@ -240,6 +240,8 @@ def main():
         training_L=2**20, training_updates=100000, N=128, M=128, batch=32,
         sample_count=2**20, bins=512, seeds=[0,1,2,3], score_main_seed=0,
         score_shading='10th–90th percentiles of 16 MC repetitions; not a confidence interval',
+        score_x_label='Number of MC samples L',
+        score_L_definition='Independent latent MC samples used to estimate the marginal action score; distinct from M policy actions and 16 MC repetitions',
         density_runs=[], score_runs=[], metrics={})
     density_figure(root, out, provenance)
     scores = load_scores(root, provenance)
