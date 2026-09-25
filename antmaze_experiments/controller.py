@@ -56,7 +56,7 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             cmd.extend(['--budget-steps',str(entry['steps'])])
         if 'final_eval_episodes' in entry:
             cmd.extend(['--final-eval-episodes',str(entry['final_eval_episodes'])])
-        for key in ('reward_profile','noveld','eval_starts','interim_eval_episodes','dacer','dynamics_profile','eval_interval','dacer_interval_updates','discount','teacher_std_floor','latent_profile','collection_profile','actor_sigma_profile','optiq_config_profile'):
+        for key in ('reward_profile','noveld','eval_starts','train_starts','interim_eval_episodes','dacer','dynamics_profile','eval_interval','dacer_interval_updates','discount','teacher_std_floor','latent_profile','collection_profile','actor_sigma_profile','optiq_config_profile'):
             if key in entry:cmd.extend(['--'+key.replace('_','-'),str(entry[key])])
         if entry.get('save_intermediate_policy',False):
             cmd.append('--save-intermediate-policy')
@@ -96,6 +96,19 @@ def job(root, identifier, gpu, phases=('preflight','runs')):
             assert proof['checkpoint']['progress_replay_verified']
         assert config['noveld_enabled']==(entry.get('noveld','on')=='on')
         assert config['eval_starts']==entry.get('eval_starts','upstream')
+        assert config['train_starts']==entry.get('train_starts','upstream')
+        if entry.get('train_starts')=='random':
+            assert config['random_init'] and config['effective_eval_starts']=='random'
+            actor=config['native']['alg']['actor']
+            assert actor['num_policy_samples']==64 and actor['proposals_per_policy_sample']==1
+            assert config['native']['experiment']['components']==64
+            assert config['native']['experiment']['candidates']==64
+            starts=json.loads((target/'train-starts-verification.json').read_text())
+            assert starts['verified'] and starts['upstream_random_init']
+            assert starts['observed_envs']==collection['num_envs']
+            assert min(starts['initial_xy_peak_to_peak'])>1.
+            natural=proof['summaries']['native-natural']
+            assert natural['episodes']>=2 and not natural['identical_initial_full_state']
         assert proof['rnd_updates']==(proof['updates'] if config['noveld_enabled'] else 0)
         assert config['interim_eval_episodes']==entry.get('interim_eval_episodes',20)
         if 'optiq_profile' in entry:

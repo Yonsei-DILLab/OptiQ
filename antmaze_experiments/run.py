@@ -244,6 +244,7 @@ def main():
     p.add_argument('--reward-profile',choices=REWARD_PROFILES,default='sparse')
     p.add_argument('--noveld',choices=['on','off'])
     p.add_argument('--eval-starts',choices=['upstream','random','fixed'],default='upstream')
+    p.add_argument('--train-starts',choices=['upstream','random'],default='upstream')
     a = select_execution_defaults(p.parse_args())
     collection = collection_settings(a.collection_profile)
     num_envs = collection['num_envs']
@@ -295,6 +296,8 @@ def main():
         assert a.budget_steps % num_envs == 0
     assert 1 <= a.final_eval_episodes <= 1000
     assert 1 <= a.interim_eval_episodes <= 1000
+    if a.train_starts == 'random':
+        assert a.eval_starts == 'random', 'Random training starts require matching random primary evaluation'
     if a.save_intermediate_policy:
         assert a.method == 'optiq', 'Intermediate policy saving is currently OptiQ-only'
     root = Path(__file__).resolve().parents[1]
@@ -307,8 +310,22 @@ def main():
     os.sched_setaffinity(0,cpus[gpu::4] or cpus)
     # Fork workers before importing torch/JAX or initializing a GPU context.
     from .envs import vector, transition
-    env = vector(a.task,num_envs,seed=0,reward_profile=a.reward_profile)
+    train_random_init = a.train_starts == 'random' or a.task == 'v1'
+    env = vector(a.task,num_envs,seed=0,reward_profile=a.reward_profile,
+                 random_init=train_random_init)
     obs = env.reset()
+    if a.train_starts == 'random':
+        xy_initial = np.asarray(obs[:, :2], np.float64)
+        assert xy_initial.shape == (num_envs, 2)
+        assert np.isfinite(xy_initial).all()
+        assert np.max(np.abs(xy_initial)) <= 2.01
+        assert np.ptp(xy_initial, axis=0).min() > 1., 'Random starts did not spread across the v1 XY range'
+        write(folder/'train-starts-verification.json',dict(
+            verified=True, profile='random', upstream_random_init=True,
+            observed_envs=num_envs, initial_xy_min=xy_initial.min(axis=0).tolist(),
+            initial_xy_max=xy_initial.max(axis=0).tolist(),
+            initial_xy_peak_to_peak=np.ptp(xy_initial,axis=0).tolist(),
+            expected_xy_range=[-2.,2.]))
     import torch
     torch.set_num_threads(1);torch.manual_seed(0)
     random.seed(0);np.random.seed(0)
@@ -355,7 +372,8 @@ def main():
         dacer_target_entropy_per_dim=a.dacer_target_entropy_per_dim,
         dacer_interval_updates=int(learner.model.regulator_cfg.interval_updates) if a.method=='optiq' else None,
         dacer_enabled=bool(learner.model.regulator_enabled) if a.method=='optiq' else None,
-        native=learner.config,random_init=a.task=='v1',eval_interval=a.eval_interval,
+        native=learner.config,train_starts=a.train_starts,
+        random_init=train_random_init,eval_interval=a.eval_interval,
         eval_num_envs=EVAL_NUM_ENVS,interim_eval_episodes=a.interim_eval_episodes,
         final_eval_episodes=a.final_eval_episodes,
         save_intermediate_policy=a.save_intermediate_policy,
