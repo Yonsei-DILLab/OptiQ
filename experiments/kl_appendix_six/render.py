@@ -181,6 +181,10 @@ def report(out,root,rows,score_rows,provenance):
 
 왼쪽에서 오른쪽, 위에서 아래로 Forward–Reverse 두 패널씩 위 표의 환경 1–6이다. 검정 점선은 정답 target, 파랑은 Forward, 주황은 Reverse다. 실제 action **$2^{20}$개/seed**, **512-bin histogram**, smoothing 없이 seed 평균을 그렸다. 옅은 가는 선은 개별 seed, 채움은 density 아래 면적이다. 각 패널 y축은 독립적이다. 마지막 두 패널만 3-seed 평균이다.
 
+Histogram TV는 $\frac12\sum_b|\hat p_b-p_b^\star|$이다. 예를 들어 0.1이면 bin별 확률질량을 맞추기 위해 총 질량의 10%를 이동해야 한다. Continuous density의 정확한 TV가 아니라 binning한 분포의 TV다. 1D Wasserstein-1은 $W_1=\int_{-10}^{10}|\hat F(a)-F^\star(a)|\,da$로 계산하며 action 좌표와 같은 단위다.
+
+Missing mode는 target의 골짜기로 나눈 basin과 사전에 지정한 core 모두에서 actor mass가 해당 target mass의 25% 미만인 경우다. Gaussian core는 각 peak의 ±0.5이다. Spike+ramp core는 $[-4.5,-4]$, $[3,7.7]$이고, spike+plateau+ramp core는 $[-5.25,-4.75]$, $[-0.75,0.75]$, $[4,6.8]$이다.
+
 | Target | Method | Paired seeds | TV mean ± seed SD | W1 mean ± seed SD | Missing modes by seed |
 |---|---|---:|---:|---:|---|
 {{TABLE}}
