@@ -1,0 +1,20 @@
+{
+  "job": "4way-wallfree-dipo-runtimefix-100k-20260926-s0",
+  "training_source_commit": "67469caf8641222f9458b9a871b6e46e78e94a5d",
+  "host": "vast-heechan-180",
+  "gpu": 3,
+  "method": "dipo",
+  "root": "/home/heechan/optiq-experiments/4way-wallfree-dipo-runtimefix-100k-20260926",
+  "runtime_fix": {
+    "LD_LIBRARY_PATH": "/home/heechan/.mujoco/mujoco210/bin",
+    "MUJOCO_PY_MUJOCO_PATH": "/home/heechan/.mujoco/mujoco210"
+  },
+  "prior_attempt": "/home/heechan/optiq-experiments/4way-wallfree-baselines-100k-20260926/preflights/dipo-s0",
+  "prior_failure": "MuJoCo library path missing during upstream DDiffPG import; no training transitions or updates occurred",
+  "training_settings_change": false,
+  "preflight_transitions": 1040,
+  "main_transitions": 100000,
+  "collectors": 16,
+  "batch_size": 256,
+  "updates_per_16_transitions": 16
+}
