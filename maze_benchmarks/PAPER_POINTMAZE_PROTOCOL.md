@@ -56,6 +56,11 @@ documents the environment-only correction, its successful independent real
 update smoke test, and the separate queue for the three DIPO policies. The
 original main queue continues the non-DIPO work. Reporting combines both
 queues while retaining the failed-attempt audits and the frozen training SHA.
+The exact environment-corrected `vast1` supervisor launch configurations are
+in `maze_benchmarks/supervisor/`; these were committed after the initial
+4090 launch, and are used only for new workers after the two already-running
+OptiQ jobs exit. Their earlier launch configuration remains in supervisor
+logs and the original scheduler manifest.
 
 The server-local queue has no method/maze completion gate. Any worker whose
 GPU lock becomes available claims the next pending job under a file lock.
