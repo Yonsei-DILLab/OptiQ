@@ -1,0 +1,189 @@
+{
+  "study": "20260925_gmm3_landscapes",
+  "sigma": 0.5,
+  "weights": [
+    0.3333333333333333,
+    0.3333333333333333,
+    0.3333333333333333
+  ],
+  "learning_rate": 0.01,
+  "max_steps": 100000,
+  "gradient_tolerance": 1e-07,
+  "block": 1000,
+  "quadrature_points": 4097,
+  "validation_quadrature_points": 8193,
+  "evaluation_batch": 128,
+  "surface_n": 81,
+  "third_mean_slices": 13,
+  "plane_n_u": 201,
+  "plane_n_v": 121,
+  "zoom_n": 161,
+  "basin_n": 17,
+  "loggap_n_mean": 11,
+  "loggap_n_gap": 17,
+  "cases": [
+    {
+      "id": "R1_D4",
+      "centers": [
+        -1.0,
+        1.0,
+        4.0
+      ],
+      "anchor": [
+        0.0,
+        3.8,
+        4.2
+      ],
+      "anchor_is_bad_minimum": false,
+      "reference_eigenvalues": null
+    },
+    {
+      "id": "R1_D5",
+      "centers": [
+        -1.0,
+        1.0,
+        5.0
+      ],
+      "anchor": [
+        -0.0029846593159051143,
+        4.889230904878316,
+        5.099074401182223
+      ],
+      "anchor_is_bad_minimum": true,
+      "reference_eigenvalues": [
+        0.05549128403108459,
+        0.627640575916357,
+        2.64128401386123
+      ]
+    },
+    {
+      "id": "R1_D6",
+      "centers": [
+        -1.0,
+        1.0,
+        6.0
+      ],
+      "anchor": [
+        -7.485211594179637e-05,
+        5.979495423603081,
+        6.0202124419723395
+      ],
+      "anchor_is_bad_minimum": true,
+      "reference_eigenvalues": [
+        0.002214990334962137,
+        0.6651742114797234,
+        2.6658371034184896
+      ]
+    },
+    {
+      "id": "R1_D8",
+      "centers": [
+        -1.0,
+        1.0,
+        8.0
+      ],
+      "anchor": [
+        -3.2896132978275404e-09,
+        7.99984000319598,
+        8.0001599837548
+      ],
+      "anchor_is_bad_minimum": true,
+      "reference_eigenvalues": [
+        1.3651681173758738e-07,
+        0.6666665723060443,
+        2.666666613404509
+      ]
+    },
+    {
+      "id": "R1.5_D4",
+      "centers": [
+        -1.5,
+        1.5,
+        4.0
+      ],
+      "anchor": [
+        0.0,
+        3.8,
+        4.2
+      ],
+      "anchor_is_bad_minimum": false,
+      "reference_eigenvalues": null
+    },
+    {
+      "id": "R1.5_D5",
+      "centers": [
+        -1.5,
+        1.5,
+        5.0
+      ],
+      "anchor": [
+        0.0,
+        4.8,
+        5.2
+      ],
+      "anchor_is_bad_minimum": false,
+      "reference_eigenvalues": null
+    },
+    {
+      "id": "R1.5_D6",
+      "centers": [
+        -1.5,
+        1.5,
+        6.0
+      ],
+      "anchor": [
+        -0.003495548409310117,
+        5.876888629287674,
+        6.109358601367615
+      ],
+      "anchor_is_bad_minimum": true,
+      "reference_eigenvalues": [
+        0.06958625873769493,
+        0.6197858733143802,
+        2.6368496478329155
+      ]
+    },
+    {
+      "id": "R1.5_D8",
+      "centers": [
+        -1.5,
+        1.5,
+        8.0
+      ],
+      "anchor": [
+        -8.552759708065747e-07,
+        7.997440667993054,
+        8.002555976630076
+      ],
+      "anchor_is_bad_minimum": true,
+      "reference_eigenvalues": [
+        3.48944857524651e-05,
+        0.666643610820439,
+        2.666654942463297
+      ]
+    },
+    {
+      "id": "old_symmetric_control",
+      "centers": [
+        -4.25,
+        0.0,
+        4.25
+      ],
+      "anchor": [
+        -2.125,
+        4.05,
+        4.45
+      ],
+      "anchor_is_bad_minimum": false,
+      "reference_eigenvalues": null
+    }
+  ],
+  "basin_cases": [
+    "old_symmetric_control",
+    "R1.5_D4",
+    "R1_D5",
+    "R1.5_D6"
+  ],
+  "loggap_case": "R1.5_D6",
+  "reference_study_commit": "d9b67bdeb5cb05e9763838fae3a0f817512cbf42"
+}
