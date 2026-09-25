@@ -405,3 +405,13 @@ physics or other setting changes. Use recovered199 unlocked GPUs, never resume
 cancelled/unknown jobs. Commit/push/share/freeze before real preflight; require
 initial-parameter and teacher sampling/density verification. No automatic
 extension. See antmaze_experiments/V4_TEACHER_FLOOR_PROTOCOL.md. No4090 work.
+
+Active-goal teacher-floor retention follow-up (2026-09-25): after validating the
+completed v3 teacher-floor1 screen (44right/0left direct successes,11left entries,
+zero training goal visits), register one fresh same-seed1M-budget confirmation.
+Only budget/id/hypothesis differ; no learning, physics, reset or reward code
+changes. Preserve teacherfloor1,T3,gamma.999 and all short-run settings. Inspect
+50k evaluations; from500k screen if left entries<=1/40 with no left success for
+three consecutive checkpoints. Use one free180GPU, source-only199 sharing,
+commit/push/freeze before preflight/main. Do not extend v4 screens or restart
+cancelled runs. See antmaze_experiments/TEACHER_FLOOR_RETENTION_PROTOCOL.md.
