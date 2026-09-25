@@ -159,14 +159,14 @@ def main():
             wall_sets = []
             for one in env.envs:
                 assert one.env._max_episode_steps == 700
-                model = one.physics_env.model
-                names = [model.geom_id2name(i) for i in range(int(model.ngeom))]
+                physics_model = one.physics_env.model
+                names = [physics_model.geom_id2name(i) for i in range(int(physics_model.ngeom))]
                 walls = {i for i, name in enumerate(names) if name and name.startswith('block_')}
-                assert walls and all(model.geom_bodyid[i] == 0 for i in walls)
+                assert walls and all(physics_model.geom_bodyid[i] == 0 for i in walls)
                 wall_sets.append(walls)
                 description = dict(names=names, wall_ids=sorted(walls),
-                    geom_pos=np.asarray(model.geom_pos).tolist(), geom_size=np.asarray(model.geom_size).tolist(),
-                    timestep=float(model.opt.timestep), frame_skip=int(one.physics_env.frame_skip))
+                    geom_pos=np.asarray(physics_model.geom_pos).tolist(), geom_size=np.asarray(physics_model.geom_size).tolist(),
+                    timestep=float(physics_model.opt.timestep), frame_skip=int(one.physics_env.frame_skip))
                 if geometry is None:
                     geometry = description
                 else:
