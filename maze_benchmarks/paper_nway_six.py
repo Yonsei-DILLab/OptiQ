@@ -206,7 +206,7 @@ def render(root, out, records, temperature=1, paper_only=False):
         if paper_only:
             ax.set_xlabel('')
             ax.set_ylabel('')
-            ax.set_zlabel('Learned Q', fontsize=26, fontweight='semibold', labelpad=10)
+            ax.set_zlabel('Learned Q', fontsize=26, fontweight='normal', labelpad=10)
             ax.tick_params(labelsize=20, pad=4)
         records[name].update(rollout_sha256=sha(raw), episodes=len(ids),
                              shown_trajectories=len(tracks),
