@@ -1,0 +1,13 @@
+{
+  "campaign": "maze-official-dipo-2048-1m-20260926",
+  "reason": "User requested a fresh 2048-vector-environment DIPO run on all eligible idle GPUs, with batch 4096 and the original learner-update-to-transition ratio.",
+  "jobs": [
+    {"name": "pm_simple-dipo-s0", "task": "pm_simple", "method": "dipo", "temperature": 1.0, "host": "vast-heechan-6", "num_envs": 2048, "batch_size": 4096, "updates_per_collect": 128, "warmup": 8192, "steps": 1001472},
+    {"name": "pm_medium-dipo-s0", "task": "pm_medium", "method": "dipo", "temperature": 1.0, "host": "vast-heechan-6", "num_envs": 2048, "batch_size": 4096, "updates_per_collect": 128, "warmup": 8192, "steps": 1001472},
+    {"name": "pm_hard-dipo-s0", "task": "pm_hard", "method": "dipo", "temperature": 1.0, "host": "vast-heechan-6", "num_envs": 2048, "batch_size": 4096, "updates_per_collect": 128, "warmup": 8192, "steps": 1001472},
+    {"name": "4way-dipo-s0", "task": "4way", "method": "dipo", "temperature": 1.0, "host": "vast-heechan-6", "num_envs": 2048, "batch_size": 4096, "updates_per_collect": 128, "warmup": 8192, "steps": 1001472},
+    {"name": "8way-dipo-s0", "task": "8way", "method": "dipo", "temperature": 1.0, "host": "vast-heechan-46", "num_envs": 2048, "batch_size": 4096, "updates_per_collect": 128, "warmup": 8192, "steps": 1001472},
+    {"name": "12way-dipo-s0", "task": "12way", "method": "dipo", "temperature": 1.0, "host": "vast-heechan-46", "num_envs": 2048, "batch_size": 4096, "updates_per_collect": 128, "warmup": 8192, "steps": 1001472},
+    {"name": "16way-dipo-s0", "task": "16way", "method": "dipo", "temperature": 1.0, "host": "vast-heechan-199", "num_envs": 2048, "batch_size": 4096, "updates_per_collect": 128, "warmup": 8192, "steps": 1001472}
+  ]
+}

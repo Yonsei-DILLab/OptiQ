@@ -44,14 +44,18 @@ def claim(root, worker):
 
 def command(job, output, commit, preflight):
     is_maze = job["task"].startswith("pm_")
-    steps = 8448 if preflight else 1_000_192
+    num_envs = job.get("num_envs", 256)
+    warmup = job.get("warmup", 8192)
+    steps = warmup + num_envs if preflight else job.get("steps", 1_000_192)
+    updates_per_collect = job.get("updates_per_collect", 16)
     final = 5 if preflight else 500 if is_maze else 1024
     cmd = [sys.executable, "-m", "maze_benchmarks.run", "--task", job["task"],
             "--method", job["method"], "--temperature", str(job["temperature"]),
             "--seed", "0", "--output", str(output), "--source-commit", commit,
-            "--steps", str(steps), "--num-envs", "256", "--batch-size", "4096",
-            "--updates-per-collect", "16", "--warmup", "8192",
-            "--eval-every", str(steps if preflight else 200_000),
+            "--steps", str(steps), "--num-envs", str(num_envs),
+            "--batch-size", str(job.get("batch_size", 4096)),
+            "--updates-per-collect", str(updates_per_collect), "--warmup", str(warmup),
+            "--eval-every", str(steps if preflight else job.get("eval_every", 200_000)),
             "--eval-episodes", str(5 if preflight else 200),
             "--final-eval-episodes", str(final), "--render-each-eval"]
     for key in ("meow_alpha", "mfpo_target_entropy_per_dim"):
@@ -65,12 +69,17 @@ def command(job, output, commit, preflight):
 def verify(output, job, commit, preflight):
     config = json.loads((output / "config.json").read_text())
     progress = json.loads((output / "progress.json").read_text())
-    steps, updates = (8448, 16) if preflight else (1_000_192, 62_000)
+    num_envs = job.get("num_envs", 256)
+    warmup = job.get("warmup", 8192)
+    updates_per_collect = job.get("updates_per_collect", 16)
+    steps = warmup + num_envs if preflight else job.get("steps", 1_000_192)
+    updates = (steps - warmup) // num_envs * updates_per_collect
     if (progress["status"], progress["steps"], progress["updates"]) != ("complete", steps, updates):
         raise ValueError("incomplete step/update audit")
     wanted = dict(task=job["task"], method=job["method"], temperature=job["temperature"],
-                  source_commit=commit, seed=0, num_envs=256, batch_size=4096,
-                  updates_per_collect=16, warmup=8192, steps=steps)
+                  source_commit=commit, seed=0, num_envs=num_envs,
+                  batch_size=job.get("batch_size", 4096),
+                  updates_per_collect=updates_per_collect, warmup=warmup, steps=steps)
     for key in ("meow_alpha", "mfpo_target_entropy_per_dim", "entropy_diagnostics"):
         if key in job:
             wanted[key] = job[key]
