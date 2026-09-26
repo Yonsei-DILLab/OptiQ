@@ -13,7 +13,8 @@ from matplotlib.patches import Rectangle
 import numpy as np
 from .plot_style import TRAJECTORY_ALPHA, TRAJECTORY_COLOR, TRAJECTORY_LINEWIDTH
 from .plot_style import (SUCCESS_TRAJECTORY_COLOR, FAILURE_TRAJECTORY_COLOR,
-                         VISITED_GOAL_COLOR, UNVISITED_GOAL_COLOR, UNKNOWN_GOAL_COLOR)
+                         VISITED_GOAL_COLOR, UNVISITED_GOAL_COLOR, UNKNOWN_GOAL_COLOR,
+                         GOAL_BORDER_COLOR, GOAL_BORDER_LINEWIDTH)
 
 MAP_NAMES = ("simple", "medium", "hard")
 
@@ -55,8 +56,11 @@ def plot_map(ax, maze: str, obstacle: bool = False, *, goal_counts=None,
                 goal_index += 1
             else:
                 continue
-            ax.add_patch(Rectangle((x, y), 1, 1, color=color, linewidth=0,
-                                   zorder=3 if value == "g" and outcome_colors else 0))
+            outlined_goal = value == "g" and outcome_colors
+            ax.add_patch(Rectangle((x, y), 1, 1, facecolor=color,
+                                   edgecolor=GOAL_BORDER_COLOR if outlined_goal else color,
+                                   linewidth=GOAL_BORDER_LINEWIDTH if outlined_goal else 0,
+                                   joinstyle="miter", zorder=3 if outlined_goal else 0))
             if value == "g":
                 marker_color = ("white" if np.dot(to_rgb(color), [.299,.587,.114]) < .6
                                 else "black") if outcome_colors and goal_counts is not None else "black"

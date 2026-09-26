@@ -18,7 +18,8 @@ import numpy as np
 
 from .visualize_pointmaze import get_map, plot_map, plot_rollouts
 from .plot_style import (SUCCESS_TRAJECTORY_COLOR, FAILURE_TRAJECTORY_COLOR,
-                         VISITED_GOAL_COLOR, UNVISITED_GOAL_COLOR, TRAJECTORY_PALETTES)
+                         VISITED_GOAL_COLOR, UNVISITED_GOAL_COLOR, TRAJECTORY_PALETTES,
+                         GOAL_BORDER_COLOR, GOAL_BORDER_LINEWIDTH)
 
 
 def sha(path):
@@ -159,6 +160,8 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.5,
         goal_colors_match_trajectories=(reached_goal_color==success_color and
                                        unreached_goal_color==failure_color) if outcome_colors else None,
         failure_trajectory_color_override=failure_trajectory_color,
+        goal_border=dict(color=GOAL_BORDER_COLOR,linewidth=GOAL_BORDER_LINEWIDTH,
+                         above_trajectory_lines=True) if outcome_colors else None,
         color_semantics=dict(success=success_color,failure=failure_color,
                              reached_goal=reached_goal_color,unreached_goal=unreached_goal_color,
                              goal_rule='at least one terminal success in the 500 displayed episodes',
