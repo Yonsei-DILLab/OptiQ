@@ -63,3 +63,16 @@ workers claim appended jobs normally, retaining original a55 frozen training.
 No optimizer/batch/update/temperature/evaluation change or learner restart.
 After owned jobs complete, finalize the drained source queue while preserving
 its transfer provenance. Global completion still requires all33 unique results.
+
+## Investigated MEOW dependency recovery on46
+
+Medium MEOW failed before model construction in its preflight because the new
+runtime omitted upstream CleanRL's tyro import. Main training never began.
+Install tyro0.8.14, docstring-parser0.16, shtab1.7.2, typeguard4.4.4 matching199
+with no dependency upgrades. Verify CPU flow construction, finite actions/Q,
+and zero optimizer updates. Preserve the failed preflight, command, log, job
+and queue snapshot under preserved-attempts before explicit one-time recovery.
+The guarded repair tool refuses live workers, a changed failure, prior training
+or a second repair. Run the original GPU preflight before main training again;
+start only exited free GPU workers. Other active learners remain untouched.
+Record this repair commit separately; all learning still uses frozen a55aaf13.
