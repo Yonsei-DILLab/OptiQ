@@ -187,9 +187,9 @@ def render(root, out, records, temperature=1, paper_only=False):
             ax.set_title(f'{n}-Way · trajectories', fontsize=13, pad=12)
         ax.tick_params(labelsize=8)
         if paper_only:
-            ax.xaxis.label.set_size(26)
-            ax.yaxis.label.set_size(26)
-            ax.tick_params(labelsize=18, pad=4)
+            ax.xaxis.label.set_size(10)
+            ax.yaxis.label.set_size(10)
+            ax.tick_params(labelsize=20, pad=4)
         if not paper_only:
             ax.text(.5, -.18, f'Goals reached: {np.count_nonzero(counts)}/{n}',
                     transform=ax.transAxes, ha='center', fontsize=11)
@@ -204,10 +204,10 @@ def render(root, out, records, temperature=1, paper_only=False):
         ax.view_init(elev=29, azim=-55); ax.set_box_aspect((1, 1, .75))
         ax.tick_params(labelsize=8, pad=0)
         if paper_only:
-            ax.set_xlabel('x', fontsize=26, labelpad=8)
-            ax.set_ylabel('y', fontsize=26, labelpad=8)
-            ax.set_zlabel('Q', fontsize=26, labelpad=8)
-            ax.tick_params(labelsize=18, pad=4)
+            ax.set_xlabel('x', fontsize=10, labelpad=8)
+            ax.set_ylabel('y', fontsize=10, labelpad=8)
+            ax.set_zlabel('Learned Q', fontsize=26, fontweight='semibold', labelpad=10)
+            ax.tick_params(labelsize=20, pad=4)
         records[name].update(rollout_sha256=sha(raw), episodes=len(ids),
                              shown_trajectories=len(tracks),
                              trajectory_style=dict(color='#dd1e27',linewidth=.8,alpha=.18,
@@ -246,8 +246,9 @@ def main():
     manifest = dict(runs=records, reporting_source=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
         scope='Read-only final-checkpoint inference; no retraining, no checkpoint mutation',
         temperature=a.temperature, paper_only=a.paper_only,
-        axis_label_fontsize=26 if a.paper_only else None,
-        axis_tick_fontsize=18 if a.paper_only else None,
+        coordinate_axis_label_fontsize=10 if a.paper_only else None,
+        q_axis_label_fontsize=26 if a.paper_only else None,
+        axis_tick_fontsize=20 if a.paper_only else None,
         caveat=('All selected runs have 62000 updates and 1000192 transitions.' if a.temperature != 1 else
                 '4-Way has 62000 updates; 8/16-Way have 998976. These are existing T1 results, not a matched-training-budget comparison.'),
         reference_contours='exp(-nearest_goal_distance_squared/(2*1.35^2)); illustrative goal-proximity, not reward or learned density',
