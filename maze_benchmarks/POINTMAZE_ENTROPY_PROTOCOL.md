@@ -37,3 +37,23 @@ and hash the frozen source. Use only idle46 GPUs0,2,4,5,6,7 through shared GPU
 locks; leave running Hard T5/T10 and199 DIPO untouched. Per-job8448-transition /
 16-update preflight must pass before main. Independent workers; no automatic
 retry. Preserve existing controls and all running/frozen sources.
+
+## Conditional follow-ups authorized later in the same conversation
+
+After Simple demonstrates adequate diversity, apply the selected setting to
+Medium and Hard. Each method is considered independently after its three grid
+runs finish. Both800000 and1000192 evaluations must have success>=90% and each
+of the four goals>=5% of ALL episodes. These are operational screening thresholds,
+not a claim of significance across seeds. Among passing settings rank the worst
+late-checkpoint minimum goal fraction, then goal entropy, then success. Preserve
+all candidates, including failures. If none passes, do not launch that method.
+
+Up to four new1M jobs: MFPO Medium/Hard with one of targetcoeff{0,.25,.5};
+MEOW Medium/Hard with one of alpha{1,3,10}. The chosen Simple configuration is
+copied exactly except task/name; environment-specific original map/horizon and
+all shared1M data/evaluation settings remain. Selection validates actual raw
+counts, checkpoint/source/config audit and SHA proof first. The fixed training
+source is caf133d3ed4bdc8e4f48c029e75ed8f6450144ac; the separate committed
+controller is recorded in selection/registration metadata. No learning code is
+changed after selection. Eligible jobs use guarded46GPU0/2(MFPO) and4/5(MEOW),
+waiting for existing jobs rather than interrupting them. No automatic retries.
