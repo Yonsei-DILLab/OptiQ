@@ -167,7 +167,7 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.2,
                  Patch(facecolor=unreached_goal_color,label='Goal not reached')]
         if hide_failed_trajectories:handles.pop(1)
         fig.legend(handles=handles,loc='center',bbox_to_anchor=(.514,.025),ncol=len(handles),
-                   frameon=False,fontsize=10,handlelength=2,columnspacing=1.6,
+                   frameon=False,fontsize=15,handlelength=2,columnspacing=1.6,
                    handler_map={Patch:GoalLegendHandler()})
     if not no_figure_caption:
         fig.text(.514,-.045 if outcome_colors else .05,'Figure 4: PointMaze.',
@@ -201,6 +201,7 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.2,
                          above_trajectory_lines=True) if outcome_colors else None,
         goal_legend_symbol='colored square with inset white border and white x' if outcome_colors else None,
         goal_legend_size_scale=GoalLegendHandler.size_scale if outcome_colors else None,
+        legend_font_size_pt=15 if outcome_colors else None,
         trajectory_border=dict(color='white',width_per_side=trajectory_border_width,
                                total_stroke_width=1.8+2*trajectory_border_width,
                                draw_order='all white outlines below all colored trajectories')

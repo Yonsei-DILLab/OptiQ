@@ -551,7 +551,7 @@ visited/unvisited goals. Keep all500 episodes, width1.8, primary alpha.2
 (alternate.1), Medium/Hard two rows, sans-serif labels and only iBOLT bold.
 White goal borders must lie entirely INSIDE the original colored square and
 never overlap gray walls; the final thickness is0.5pt. Legend goal keys use
-the same colored square with a white x. Remove trajectory white outlines/halos and inactive
+the same colored square with a white x; legend text is 15pt. Remove trajectory white outlines/halos and inactive
 obstacle placeholders; preserve actual walls. No bottom Figure4 caption.
 Gray failures and success-only were alternatives, not the selected default.
 iBOLT rollout is random-z mu-only with conditional sigma OFF; baselines native.
