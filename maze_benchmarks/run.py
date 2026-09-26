@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
 from pathlib import Path
 import random
@@ -16,6 +15,7 @@ from .envs import TaskBatch
 from .agents import OptiQ, SAC, SQL, MEOW, MFPO, DIPO, TD3
 from .visualize_4way import probe_policy, render as render_4way
 from .visualize_nway import render as render_nway
+from .evaluation_metrics import removal_sr5_exact as removal_sr5
 from .nway import GOAL_RADIUS, HORIZON as NWAY_HORIZON, STATE_LIMIT, SUCCESS_RADIUS, SUPPORTED_GOALS
 from pointmaze.drac_paper import HORIZONS as PAPER_HORIZONS, GOAL_COUNTS as PAPER_GOALS, MAP_NAMES as PAPER_MAP_NAMES
 
@@ -30,19 +30,6 @@ def atomic_json(path: Path, value):
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(value, indent=2, default=str) + "\n")
     temporary.replace(path)
-
-
-def removal_sr5(goals: np.ndarray, goal_count: int) -> float:
-    """Original DrAC half-goal-removal expectation over five-trial groups."""
-    if len(goals) % 5:
-        raise ValueError("five-trial robustness requires a multiple of five episodes")
-    removed = goal_count // 2
-    scores = []
-    for group in goals.reshape(-1, 5):
-        reached = len(set(int(goal) for goal in group if goal >= 0))
-        scores.append(1.0 if reached >= goal_count - removed else
-                      1.0 - math.comb(goal_count - reached, removed) / math.comb(goal_count, removed))
-    return float(np.mean(scores))
 
 
 def obstacle_sr5(goals: np.ndarray) -> float:

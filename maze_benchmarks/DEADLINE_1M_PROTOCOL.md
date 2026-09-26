@@ -86,3 +86,6 @@ Recompute only report curves from preserved raw goal IDs by counting uniformly
 removed subsets. Save original/corrected values and reporting commit separately
 in reporting-corrections.json. Do not change learning, frozen scorers, original
 summary/proof/SHA files, success/coverage/trajectory results or optimizer state.
+The canonical runner uses the corrected scorer for any future separately
+approved launch. This campaign continues exclusively from the original a55
+snapshot, so its raw summaries retain the disclosed original scoring bug.
