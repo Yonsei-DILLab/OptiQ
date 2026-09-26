@@ -61,10 +61,18 @@ def plot_map(ax, maze: str, obstacle: bool = False, *, goal_counts=None,
             else:
                 continue
             outlined_goal = value == "g" and outcome_colors
-            ax.add_patch(Rectangle((x, y), 1, 1, facecolor=color,
-                                   edgecolor=GOAL_BORDER_COLOR if outlined_goal else color,
-                                   linewidth=GOAL_BORDER_LINEWIDTH if outlined_goal else 0,
-                                   joinstyle="miter", zorder=3 if outlined_goal else 0))
+            box = Rectangle((x, y), 1, 1, facecolor=color, edgecolor="none",
+                            linewidth=0, zorder=3 if outlined_goal else 0)
+            ax.add_patch(box)
+            if outlined_goal:
+                # Clip a double-width centered stroke to the actual goal box:
+                # the visible half is entirely inside and never widens the goal.
+                border = Rectangle((x, y), 1, 1, fill=False,
+                                   edgecolor=GOAL_BORDER_COLOR,
+                                   linewidth=2 * GOAL_BORDER_LINEWIDTH,
+                                   joinstyle="miter", zorder=3.5)
+                border.set_clip_path(box)
+                ax.add_patch(border)
             if value == "g":
                 marker_color = ("white" if np.dot(to_rgb(color), [.299,.587,.114]) < .6
                                 else "black") if outcome_colors and goal_counts is not None else "black"
