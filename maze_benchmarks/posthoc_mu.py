@@ -28,7 +28,10 @@ def run(folder, output, reporting_source):
     checkpoint = folder / "checkpoints" / f"policy_{step:09d}.msgpack"
     checkpoint_sha = sha(checkpoint)
     saved_mu = folder / "evaluations" / f"{step:09d}_mu_only.npz"
-    saved_summary = json.loads((folder / "evaluations" / f"{step:09d}_summary.json").read_text())
+    progress = json.loads((folder / "progress.json").read_text())
+    if progress["status"] != "complete" or progress["steps"] != step:
+        raise ValueError("checkpoint is not the completed original budget")
+    saved_summary = progress["latest_evaluation"]
     with np.load(saved_mu) as data:
         ids = data["goal_ids"]
         expected = saved_summary["mu_only"]

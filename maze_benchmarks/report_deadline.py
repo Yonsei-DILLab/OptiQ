@@ -49,6 +49,14 @@ def render_way_metrics(root, manifest, figures, mode):
             records = [json.loads(p.read_text()) for p in
                        sorted((root / "runs" / name / "evaluations").glob("*_summary.json"))]
             records = [r for r in records if mode in r]
+            if not records and item["reused"]:
+                # Historical runs saved NPZ at each checkpoint, without per-step JSON.
+                for raw_path in sorted((root / "runs" / name / "evaluations").glob(f"*_{mode}.npz")):
+                    with np.load(raw_path) as raw:
+                        ids = raw["goal_ids"]
+                        counts = np.bincount(ids[ids >= 0], minlength=count)
+                    records.append(dict(step=int(raw_path.name.split("_")[0]),
+                        **{mode: dict(success=float(np.mean(ids >= 0)), goals=counts.tolist())}))
             steps = [r["step"] / 1000 for r in records]
             for metric, values in enumerate((
                     [r[mode]["success"] for r in records],
