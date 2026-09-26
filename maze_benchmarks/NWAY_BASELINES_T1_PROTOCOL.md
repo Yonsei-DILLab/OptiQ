@@ -22,9 +22,11 @@ from the fixed central start. Intermediate evaluations use 256 episodes
 every 100k transitions. Store raw trajectories, Q/action probe, policy and
 critic checkpoints, and final replay.
 
-Three independent guarded GPU shards run six methods each. Use only idle GPU
-0/3 on vast-heechan-180 and GPU 3 on vast-heechan-199. Preserve GPU locks and
-all unrelated compute. No retry, restart, extra seed, or hyperparameter
+Three independent guarded GPU shards run six methods each. GPU 0/3 on
+vast-heechan-180 and GPU 3 on vast-heechan-199 are currently occupied by
+the earlier long PointMaze campaign, so each new supervisor waits for both
+the lock and truly idle hardware before claiming a N-Way job. Preserve all
+unrelated compute. No retry, restart, extra seed, or hyperparameter
 adjustment is implicit. A failed job stops its shard and preserves pending
 jobs. No all-shard completion barrier; each shard runs its next job
 immediately. The exact job order and hosts are in
