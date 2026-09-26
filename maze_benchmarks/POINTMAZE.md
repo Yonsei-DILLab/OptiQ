@@ -62,3 +62,9 @@ zero learner updates and unchanged actor/critic/checkpoint bytes. Outputs go in
 a separate directory with both source SHAs; existing raw files are never edited.
 The plotted mu-only Q surface is E_z Q(s,mu(s,z)); because the critic was trained
 with the training sampler, it is not automatically V of the mu-only rollout.
+
+After post-hoc evaluation finishes, collect its separate proof and arrays with
+`python -m maze_benchmarks.collect_posthoc_mu --root ARTIFACTS`. The collector
+checks the restored checkpoint/config and preserved mu-only rollout hashes
+against the verified training archive, and checks that no learner update ran.
+Re-render the main report to include mu-only Q surfaces and final obstacle SR5.

@@ -136,6 +136,16 @@ def render(root: Path):
             item = manifest["runs"][name]; e = root / "runs" / name / "evaluations"
             entries.append((f"OptiQ T={temp} · ~1M", e / f"{item['steps']:09d}_policy.npz", e / f"{item['steps']:09d}_probe.npz"))
     if entries: render_four(entries, supplement / "4way_policy_and_learned_q.png")
+    mu_entries = []
+    for temp in (1, 3, 5, 10):
+        name = f"4way-optiq-t{temp}-s0"
+        item = manifest["runs"].get(name)
+        if item is None: continue
+        probe = root / "posthoc_mu" / name / f"{item['steps']:09d}_probe_mu_only.npz"
+        if probe.exists():
+            mu_entries.append((f"OptiQ T={temp} · random-z mu-only",
+                root / "runs" / name / "evaluations" / f"{item['steps']:09d}_mu_only.npz", probe))
+    if mu_entries: render_four(mu_entries, figures / "4way_mu_only_and_learned_q.png")
     render_curves(root, figures / "pointmaze_learning_curves.png")
     render_medium_hard(root, figures / "pointmaze_medium_hard.png")
     render_optiq_overview(root, figures / "pointmaze_optiq_overview.png")

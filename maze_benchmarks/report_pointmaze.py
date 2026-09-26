@@ -42,6 +42,11 @@ def records(root: Path, maze: str, method: str):
             item["primary"] = item[mode].copy()
             item["primary"]["sr5_removal"] = removal_from_raw(path.parent, item, mode)
             item["primary_obstacle"] = item.get(f"obstacle_{mode}", {})
+            proof = root / "posthoc_mu" / f"pm_{maze}-{method}-s0" / "proof.json"
+            if method == "optiq" and not item["primary_obstacle"] and proof.exists():
+                supplemental = json.loads(proof.read_text())
+                if supplemental["step"] == item["step"]:
+                    item["primary_obstacle"] = supplemental["obstacle_mu_only"]
             rows.append(item)
     return rows
 
@@ -80,7 +85,7 @@ def render_curves(root: Path, destination: Path):
         fig.legend(handles, labels, loc="upper center", ncol=7,
                    bbox_to_anchor=(.5, 1.03), frameon=False)
     destination.parent.mkdir(parents=True, exist_ok=True)
-    fig.text(.01, -.01, "OptiQ: random-z mu-only. Baselines: native sampling. Missing OptiQ obstacle-mu evaluations are omitted.", fontsize=9)
+    fig.text(.01, -.01, "OptiQ: random-z mu-only. Baselines: native sampling. OptiQ obstacle-mu: final checkpoint post-hoc evaluation; missing earlier points omitted.", fontsize=9)
     fig.savefig(destination, dpi=160, bbox_inches="tight")
     plt.close(fig)
 
