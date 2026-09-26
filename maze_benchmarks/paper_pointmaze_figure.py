@@ -89,7 +89,8 @@ def build(root, temps, out, columns, dipo_root=None):
                 pending.append(dict(method=method,maze=maze))
                 # No synthetic or earlier-budget trajectories in a final-result slot.
                 ax.text(.5,.5,'1M result\npending',ha='center',va='center',transform=ax.transAxes,
-                    fontsize=13,color='#505050',bbox=dict(facecolor='white',alpha=.94,edgecolor='none',pad=8))
+                    fontsize=13,color='#505050',zorder=20,
+                    bbox=dict(facecolor='white',alpha=.97,edgecolor='none',pad=8))
             else:
                 before=len(ax.lines);plot_rollouts(ax,Path(entry['raw']),max_trajectories=500)
                 trajectories=ax.lines[before:]
