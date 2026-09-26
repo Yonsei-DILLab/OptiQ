@@ -115,6 +115,8 @@ def main():
     parser.add_argument("--meow-alpha", type=float, default=.2)
     parser.add_argument("--meow-device", choices=("auto", "cuda", "cpu"), default="auto")
     parser.add_argument("--mfpo-target-entropy-per-dim", type=float, default=-.5)
+    parser.add_argument("--entropy-diagnostics", action="store_true",
+                        help="Log native MFPO/MEOW diagnostics without changing training")
     parser.add_argument("--source-commit", required=True)
     args = parser.parse_args()
     if args.steps % args.num_envs or args.warmup % args.num_envs:
@@ -125,6 +127,8 @@ def main():
         raise ValueError("invalid updates or evaluation cadence")
     if args.sql_particles < 4 or args.sql_particles % 2 or not np.isfinite(args.meow_alpha) or args.meow_alpha <= 0 or not np.isfinite(args.mfpo_target_entropy_per_dim):
         raise ValueError("invalid baseline sensitivity parameter")
+    if args.entropy_diagnostics and args.method not in ("mfpo", "meow"):
+        raise ValueError("entropy diagnostics require MFPO or MEOW")
     if ((args.method != "sql" and args.sql_particles != 16) or
             (args.method != "meow" and (args.meow_alpha != .2 or args.meow_device != "auto")) or
             (args.method != "mfpo" and args.mfpo_target_entropy_per_dim != -.5)):
@@ -199,7 +203,10 @@ def main():
                 environment.reset(np.flatnonzero(done))
             if step > args.warmup:
                 for _ in range(args.updates_per_collect):
-                    agent.update(step)
+                    info = agent.update(step)
+                    if args.entropy_diagnostics and (agent.updates % 1000 == 0 or agent.updates == 16):
+                        with (args.output / "training-metrics.jsonl").open("a") as stream:
+                            stream.write(json.dumps(dict(step=step, updates=agent.updates, **info)) + "\n")
             if step % args.eval_every < args.num_envs or step == args.steps:
                 record = dict(step=step, updates=agent.updates, task=args.task,
                               method=args.method, source_commit=args.source_commit)
@@ -208,6 +215,12 @@ def main():
                 primary_mode = "mu_only" if args.method == "optiq" else "policy"
                 modes = ("mu_only",) if args.method == "optiq" else ("policy",)
                 record["primary_evaluation_mode"] = primary_mode
+                if args.entropy_diagnostics:
+                    from .entropy_diagnostics import measure
+                    diagnostic = measure(agent, args.task, args.seed + 37000)
+                    diagnostic.update(step=step, updates=agent.updates)
+                    atomic_json(args.output / "evaluations" / f"{step:09d}_entropy.json", diagnostic)
+                    record["entropy_diagnostics"] = diagnostic
                 for mode in modes:
                     destination = args.output / "evaluations" / f"{step:09d}_{mode}.npz"
                     record[mode] = evaluate(agent, args.task,

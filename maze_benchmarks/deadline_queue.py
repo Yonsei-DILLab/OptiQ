@@ -46,7 +46,7 @@ def command(job, output, commit, preflight):
     is_maze = job["task"].startswith("pm_")
     steps = 8448 if preflight else 1_000_192
     final = 5 if preflight else 500 if is_maze else 1024
-    return [sys.executable, "-m", "maze_benchmarks.run", "--task", job["task"],
+    cmd = [sys.executable, "-m", "maze_benchmarks.run", "--task", job["task"],
             "--method", job["method"], "--temperature", str(job["temperature"]),
             "--seed", "0", "--output", str(output), "--source-commit", commit,
             "--steps", str(steps), "--num-envs", "256", "--batch-size", "4096",
@@ -54,6 +54,12 @@ def command(job, output, commit, preflight):
             "--eval-every", str(steps if preflight else 200_000),
             "--eval-episodes", str(5 if preflight else 200),
             "--final-eval-episodes", str(final), "--render-each-eval"]
+    for key in ("meow_alpha", "mfpo_target_entropy_per_dim"):
+        if key in job:
+            cmd += ["--" + key.replace("_", "-"), str(job[key])]
+    if job.get("entropy_diagnostics"):
+        cmd.append("--entropy-diagnostics")
+    return cmd
 
 
 def verify(output, job, commit, preflight):
@@ -65,11 +71,25 @@ def verify(output, job, commit, preflight):
     wanted = dict(task=job["task"], method=job["method"], temperature=job["temperature"],
                   source_commit=commit, seed=0, num_envs=256, batch_size=4096,
                   updates_per_collect=16, warmup=8192, steps=steps)
+    for key in ("meow_alpha", "mfpo_target_entropy_per_dim", "entropy_diagnostics"):
+        if key in job:
+            wanted[key] = job[key]
     if any(config.get(k) != v for k, v in wanted.items()):
         raise ValueError("configuration differs from approved plan")
+    for key, agent_key in (("meow_alpha", "alpha"),
+                           ("mfpo_target_entropy_per_dim", "target_entropy_coeff")):
+        if key in job and config["agent"].get(agent_key) != job[key]:
+            raise ValueError("agent sensitivity parameter differs from plan")
     record = progress["latest_evaluation"]
     if record["step"] != steps:
         raise ValueError("final evaluation step mismatch")
+    if job.get("entropy_diagnostics"):
+        diagnostic = json.loads((output / "evaluations" / f"{steps:09d}_entropy.json").read_text())
+        if (diagnostic["step"] != steps or diagnostic["sample_count"] != 512 or
+                not np.isfinite(diagnostic["entropy_estimate"]) or diagnostic["alpha"] <= 0):
+            raise ValueError("invalid entropy diagnostic")
+        if not (output / "training-metrics.jsonl").is_file():
+            raise ValueError("missing entropy optimization history")
     mu_primary = job["method"] == "optiq" and config.get("optiq_eval_mode") == "mu_only"
     modes = ["mu_only"] if mu_primary else ["policy"]
     if job["method"] == "optiq" and not mu_primary: modes.append("mu_only")

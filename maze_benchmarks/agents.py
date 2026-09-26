@@ -415,7 +415,8 @@ class MEOW:
             for online, target in zip(self.policy.parameters(), self.target.parameters()):
                 target.lerp_(online, .005)
         self.count += 1
-        return {"q_loss": float(loss)}
+        return {"q_loss": float(loss), "q_mean": float(duplicated_q.detach().mean()),
+                "td_target_mean": float(target_q.mean()), "alpha": float(self.policy.alpha)}
 
     @contextmanager
     def evaluation_rng(self, seed):
