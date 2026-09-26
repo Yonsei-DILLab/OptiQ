@@ -76,6 +76,10 @@ def verify(output, job, commit, preflight):
             wanted[key] = job[key]
     if any(config.get(k) != v for k, v in wanted.items()):
         raise ValueError("configuration differs from approved plan")
+    if job["method"] == "dipo" and (config["agent"].get("upstream") != "BellmanTimeHut/DIPO" or
+                                   config["agent"].get("actual_actor_class") != "Diffusion" or
+                                   config["agent"].get("n_timesteps") != 100):
+        raise ValueError("official MuJoCo DIPO implementation was not constructed")
     for key, agent_key in (("meow_alpha", "alpha"),
                            ("mfpo_target_entropy_per_dim", "target_entropy_coeff")):
         if key in job and config["agent"].get(agent_key) != job[key]:

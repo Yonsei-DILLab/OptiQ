@@ -440,8 +440,8 @@ class MEOW:
         return path
 
 
-class DIPO:
-    """Pinned DDiffPG DIPO actor and distributional critic on the shared task."""
+class DDiffPGDIPO:
+    """Historical DDiffPG DIPO adapter; retained for frozen-run provenance."""
 
     method = "dipo"
     critic_label = "minimum of two DIPO distributional Q expectations"
@@ -539,6 +539,136 @@ class DIPO:
         path = folder / f"policy_{step:09d}.pt"
         state = {name: getattr(self.agent, name).state_dict()
                  for name in ("actor", "critic", "critic_target", "actor_optimizer", "critic_optimizer")}
+        state.update(updates=self.count, config=self.config)
+        torch.save(state, path)
+        if full:
+            np.savez_compressed(folder / f"replay_{step:09d}.npz",
+                                **{key: value[:self.replay.size] for key, value in self.replay.data.items()},
+                                position=self.replay.position, size=self.replay.size)
+        return path
+
+
+class DIPO:
+    """Official BellmanTimeHut/DIPO MuJoCo learner on the shared maze dynamics."""
+
+    method = "dipo"
+    critic_label = "minimum of two original DIPO scalar Q networks"
+
+    def __init__(self, seed, folder, budget, observation_dim, batch_size=256,
+                 temperature=None, task=None, horizon=None, num_envs=16):
+        from types import SimpleNamespace
+        import torch
+
+        del folder, budget, temperature, task, horizon, num_envs
+        source = ROOT / "gmm40-baseline/DIPO/agent/DiPo.py"
+        if not source.is_file():
+            raise FileNotFoundError("pinned BellmanTimeHut/DIPO source is absent")
+        sys.path.insert(0, str(source.parents[1]))
+        from agent.DiPo import DiPo
+        from agent.replay_memory import ReplayMemory, DiffusionMemory
+
+        class VectorReplayMemory(ReplayMemory):
+            def append(self, state, action, reward, next_state, mask):
+                n = len(state)
+                indices = (np.arange(n) + self.idx) % self.capacity
+                self.states[indices] = state
+                self.actions[indices] = action
+                self.rewards[indices, 0] = np.asarray(reward).reshape(-1)
+                self.next_states[indices] = next_state
+                self.masks[indices, 0] = np.asarray(mask).reshape(-1)
+                self.full |= self.idx + n >= self.capacity
+                self.idx = (self.idx + n) % self.capacity
+
+        class VectorDiffusionMemory(DiffusionMemory):
+            def append(self, state, action):
+                n = len(state)
+                indices = (np.arange(n) + self.idx) % self.capacity
+                self.states[indices] = state
+                self.best_actions[indices] = action
+                self.full |= self.idx + n >= self.capacity
+                self.idx = (self.idx + n) % self.capacity
+
+            def replace(self, indices, actions):
+                # Upstream np.copyto(best_actions[advanced_index], ...) writes to
+                # a temporary array. Persist the improved actions as intended.
+                self.best_actions[indices] = actions
+
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+        self.device = torch.device("cuda")
+        self.batch_size = batch_size
+        args = SimpleNamespace(policy_type="Diffusion", noise_ratio=1.,
+                               beta_schedule="cosine", n_timesteps=100,
+                               diffusion_lr=3e-4, critic_lr=3e-4,
+                               action_gradient_steps=20, ratio=.1,
+                               ac_grad_norm=2., tau=.005,
+                               update_actor_target_every=1, action_lr=.03)
+        self.memory = VectorReplayMemory(observation_dim, 2, 1_000_000, self.device)
+        self.diffusion_memory = VectorDiffusionMemory(observation_dim, 2, 1_000_000, self.device)
+        action_space = gym.spaces.Box(-1., 1., (2,), np.float32)
+        self.agent = DiPo(args, observation_dim, action_space,
+                          self.memory, self.diffusion_memory, self.device)
+        self.replay = Replay(seed=seed, observation_dim=observation_dim)
+        original_add = self.replay.add
+
+        def mirrored_add(obs, action, reward, next_obs, done):
+            original_add(obs, action, reward, next_obs, done)
+            self.agent.append_memory(obs, action, reward, next_obs,
+                                     .99 * (1. - np.asarray(done)))
+
+        self.replay.add = mirrored_add
+        self.count = 0
+        self.config = dict(upstream="BellmanTimeHut/DIPO",
+                           revision="c6d8d1b39d6cea22e7d779e08111dbf974dbb4fc",
+                           actor="Diffusion", actual_actor_class=type(self.agent.actor).__name__,
+                           critic="twin scalar Q",
+                           n_timesteps=100, beta_schedule="cosine",
+                           diffusion_lr=3e-4, critic_lr=3e-4, action_lr=.03,
+                           action_gradient_steps=20, action_grad_norm=.2,
+                           ac_grad_norm=2., tau=.005, gamma=.99,
+                           replay_capacity=1_000_000, batch_size=batch_size,
+                           diffusion_memory_replace="advanced-index assignment",
+                           evaluation_policy="fresh Gaussian initial noise; reverse noise disabled")
+
+    @property
+    def updates(self):
+        return self.count
+
+    def act(self, obs, mode="policy"):
+        import torch
+        with torch.no_grad():
+            state = torch.as_tensor(np.asarray(obs, np.float32), device=self.device)
+            actions = self.agent.actor(state, eval=mode != "train")
+        return np.clip(actions.cpu().numpy(), -1., 1.).astype(np.float32)
+
+    def q(self, obs, actions):
+        import torch
+        with torch.no_grad():
+            state = torch.as_tensor(np.asarray(obs, np.float32), device=self.device)
+            action = torch.as_tensor(np.asarray(actions, np.float32), device=self.device)
+            values = self.agent.critic.q_min(state, action)
+        return values.cpu().numpy().reshape(-1)
+
+    def update(self, steps):
+        del steps
+        self.agent.train(1, batch_size=self.batch_size)
+        self.count += 1
+        return {}
+
+    @contextmanager
+    def evaluation_rng(self, seed):
+        import torch
+        with torch.random.fork_rng(devices=[torch.cuda.current_device()]):
+            torch.manual_seed(seed)
+            torch.cuda.manual_seed_all(seed)
+            yield
+
+    def save(self, folder, step, full=False):
+        import torch
+        path = folder / f"policy_{step:09d}.pt"
+        state = {name: getattr(self.agent, name).state_dict() for name in
+                 ("actor", "actor_target", "critic", "critic_target",
+                  "actor_optimizer", "critic_optimizer")}
         state.update(updates=self.count, config=self.config)
         torch.save(state, path)
         if full:

@@ -18,6 +18,7 @@ import tempfile
 
 
 DEPENDENCIES = {
+    "gmm40-baseline/DIPO": ("c6d8d1b39d6cea22e7d779e08111dbf974dbb4fc", ["agent"]),
     "gmm40-baseline/MFPO": ("d8b3977d29d4ef2d315e871337e5826f2eb79eb2", ["configs", "jaxrl5"]),
     "gmm40-baseline/meow": ("b786d27aa9b03e4242ee8904ff884b21fe65e2f7", ["cleanrl/cleanrl"]),
 }
