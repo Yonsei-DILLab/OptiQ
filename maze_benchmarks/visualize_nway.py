@@ -15,6 +15,7 @@ import numpy as np
 
 from .nway import STATE_LIMIT, goal_positions
 from .visualize_4way import _visited_cells
+from .plot_style import TRAJECTORY_ALPHA, TRAJECTORY_LINEWIDTH
 
 
 def render(task: str, rollout_path: Path, probe_path: Path, output: Path,
@@ -30,6 +31,7 @@ def render(task: str, rollout_path: Path, probe_path: Path, output: Path,
         x, y, valid = data["x"], data["y"], data["valid"]
         actions, values = data["actions"], data["q"]
         critic_label = str(data["critic_label"])
+        evaluation_mode = str(data["evaluation_mode"]) if "evaluation_mode" in data else "historical policy"
     if paths.ndim != 3 or paths.shape[-1] != 2 or goal_ids.shape != (len(paths),):
         raise ValueError("invalid rollout array")
     if np.any((goal_ids >= len(goals_xy)) | (goal_ids < -1)):
@@ -75,8 +77,10 @@ def render(task: str, rollout_path: Path, probe_path: Path, output: Path,
         route = paths[index]
         route = route[np.isfinite(route).all(axis=-1)]
         color = colors[goal_ids[index]] if goal_ids[index] >= 0 else "#7b7b7b"
-        trajectory_ax.plot(route[:, 0], route[:, 1], color=color, alpha=.25, lw=.7)
-    trajectory_ax.set_title(f"Direct-policy trajectories · {len(shown)}/{len(paths)} shown")
+        trajectory_ax.plot(route[:, 0], route[:, 1], color=color,
+                           alpha=TRAJECTORY_ALPHA, lw=TRAJECTORY_LINEWIDTH,
+                           solid_capstyle="round")
+    trajectory_ax.set_title(f"{evaluation_mode} trajectories · {len(shown)}/{len(paths)} shown")
 
     for ax in (policy_ax, trajectory_ax):
         ax.scatter(goals_xy[:, 0], goals_xy[:, 1], color=colors, s=24, edgecolors="black",

@@ -10,6 +10,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import numpy as np
+from .plot_style import TRAJECTORY_ALPHA, TRAJECTORY_COLOR, TRAJECTORY_LINEWIDTH
 
 MAP_NAMES = ("simple", "medium", "hard")
 
@@ -67,8 +68,9 @@ def plot_rollouts(ax, data: Path, max_trajectories: int = 100):
         valid = np.isfinite(tracks[index]).all(axis=-1)
         track = tracks[index, valid]
         if len(track):
-            ax.plot(track[:, 0], track[:, 1], color="#da22d3", linewidth=.6,
-                    alpha=.28, zorder=2)
+            ax.plot(track[:, 0], track[:, 1], color=TRAJECTORY_COLOR,
+                    linewidth=TRAJECTORY_LINEWIDTH, alpha=TRAJECTORY_ALPHA,
+                    solid_capstyle="round", zorder=2)
     return dict(episodes=len(goals), success=float(np.mean(goals >= 0)),
                 goals=np.bincount(goals[goals >= 0], minlength=int(goals.max() + 1)).tolist()
                 if np.any(goals >= 0) else [], mean_return=float(np.mean(returns)))

@@ -7,8 +7,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from .visualize_4way import render as render_four
-from .report_pointmaze import render_curves, render_medium_hard, render_optiq_modes, render_trajectories
+from .report_pointmaze import render_curves, render_medium_hard, render_optiq_modes, render_optiq_overview, render_trajectories
 from .evaluation_metrics import removal_from_raw
+from .plot_style import TRAJECTORY_ALPHA, TRAJECTORY_COLOR, TRAJECTORY_LINEWIDTH, LEARNING_LINEWIDTH
 
 
 def record_reporting_corrections(root, manifest):
@@ -18,10 +19,11 @@ def record_reporting_corrections(root, manifest):
         folder = root / "runs" / name / "evaluations"
         for path in sorted(folder.glob("*_summary.json")):
             record = json.loads(path.read_text())
-            corrected = removal_from_raw(folder, record)
-            original = record["policy"]["sr5_removal"]
+            mode = "mu_only" if record["method"] == "optiq" else "policy"
+            corrected = removal_from_raw(folder, record, mode)
+            original = record[mode]["sr5_removal"]
             corrections.append(dict(run=name, step=record["step"],
-                                    original=original, corrected=corrected))
+                                    mode=mode, original=original, corrected=corrected))
     source = subprocess.check_output(["git", "rev-parse", "HEAD"],
                                      cwd=Path(__file__).resolve().parents[1], text=True).strip()
     (root / "reporting-corrections.json").write_text(json.dumps(dict(
@@ -52,7 +54,8 @@ def render_way_metrics(root, manifest, figures, mode):
                     [r[mode]["success"] for r in records],
                     [sum(v > 0 for v in r[mode]["goals"]) for r in records])):
                 axes[metric, column].plot(steps, values, label=labels[-1], color=colors[temperature],
-                                          linestyle="--" if item["reused"] else "-", marker="o", ms=3)
+                                          linestyle="--" if item["reused"] else "-", marker="o", ms=4,
+                                          linewidth=LEARNING_LINEWIDTH)
         axes[0, column].set(title=task, ylim=(-.02, 1.02), ylabel="Success rate")
         axes[1, column].set(ylim=(-.2, count + .2), ylabel="Goals reached", xlabel="Environment transitions (k)")
         for ax in axes[:, column]:
@@ -85,7 +88,10 @@ def render(root: Path):
     record_reporting_corrections(root, manifest)
     figures = root / "figures"
     figures.mkdir(exist_ok=True)
-    for mode in ("policy", "mu_only"):
+    supplement = figures / "supplementary_sigma"
+    supplement.mkdir(exist_ok=True)
+    for mode in ("mu_only", "policy"):
+        mode_figures = figures if mode == "mu_only" else supplement
         fig, axes = plt.subplots(3, 4, figsize=(16, 12), constrained_layout=True)
         for i, task in enumerate(("4way", "8way", "16way")):
             for j, temp in enumerate((1, 3, 5, 10)):
@@ -102,33 +108,39 @@ def render(root: Path):
                 path = folder / "evaluations" / f"{item['steps']:09d}_{mode}.npz"
                 with np.load(path) as raw:
                     trajectories = raw["xy"]
-                    for xy in trajectories[:100]: ax.plot(xy[:, 0], xy[:, 1], color="#d329da", alpha=.3, lw=.65)
+                    for xy in trajectories[:100]:
+                        ax.plot(xy[:, 0], xy[:, 1], color=TRAJECTORY_COLOR,
+                                alpha=TRAJECTORY_ALPHA, lw=TRAJECTORY_LINEWIDTH,
+                                solid_capstyle="round")
                 ax.scatter(goals[:, 0], goals[:, 1], c="#2caf37", marker="*", s=70, zorder=3)
                 ax.scatter([0], [0], c="red", s=20, zorder=4)
                 suffix = " · reused UTD1" if item["reused"] else ""
                 ax.set_title(f"{task} T={temp}{suffix}\n{summary['success']:.1%} success · {summary['reachable_goals']}/{len(goals)} goals")
         label = "sampled policy including conditional sigma" if mode == "policy" else "random-z mu-only, no conditional sigma"
         fig.suptitle(f"OptiQ ~1M transitions, seed0 · {label}\nFirst100 trajectories; metrics use every evaluation episode. Reused T1 runs have different update budgets.")
-        fig.savefig(figures / f"way_trajectories_{mode}.png", dpi=150)
+        fig.savefig(mode_figures / f"way_trajectories_{mode}.png", dpi=150)
         plt.close(fig)
-        render_way_metrics(root, manifest, figures, mode)
+        render_way_metrics(root, manifest, mode_figures, mode)
     entries = []
     for temp in (1, 3, 5, 10):
         name = f"4way-optiq-t{temp}-s0"
         if name in manifest["runs"]:
             item = manifest["runs"][name]; e = root / "runs" / name / "evaluations"
             entries.append((f"OptiQ T={temp} · ~1M", e / f"{item['steps']:09d}_policy.npz", e / f"{item['steps']:09d}_probe.npz"))
-    if entries: render_four(entries, figures / "4way_policy_and_learned_q.png")
+    if entries: render_four(entries, supplement / "4way_policy_and_learned_q.png")
     render_curves(root, figures / "pointmaze_learning_curves.png")
     render_medium_hard(root, figures / "pointmaze_medium_hard.png")
+    render_optiq_overview(root, figures / "pointmaze_optiq_overview.png")
     for maze in ("simple", "medium", "hard"):
         render_trajectories(root, maze, figures / f"pointmaze_{maze}.png")
-        render_optiq_modes(root, maze, figures / f"pointmaze_{maze}_optiq_policy_vs_mu.png")
+        render_optiq_modes(root, maze, supplement / f"pointmaze_{maze}_optiq_policy_vs_mu.png")
     lines = ["# 1M experiment results", "", f"Verified complete: {manifest['complete']}/33.", "",
              "All runs use seed0. Success is not mode coverage. Way T1 reused8/16 results use UTD1; new results use UTD0.0625 and cannot isolate temperature effects.", "",
              "Removal SR5 curves are recomputed from raw five-episode groups to correct a frozen scorer boundary error. See reporting-corrections.json; training, success/goal counts, trajectories and raw archives are unchanged.", "",
+             "OptiQ primary evaluation: fresh random-z mu-only, without conditional sigma. Baselines: native samples. Historical sigma-included figures are supplementary; old Q probes are not mu-only. Missing obstacle-mu results are omitted.", "",
              "|Run|Success|Goals visited|Goal counts|", "|---|---:|---:|---|"]
     for name, result in sorted(manifest["runs"].items()):
-        r = result["record"]["policy"]
+        mode = "mu_only" if "optiq" in name else "policy"
+        r = result["record"][mode]
         lines.append(f"|{name}{' (reused)' if result['reused'] else ''}|{r['success']:.1%}|{r['reachable_goals']}/{len(r['goals'])}|{r['goals']}|")
     (root / "REPORT.md").write_text("\n".join(lines)+"\n")

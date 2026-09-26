@@ -39,6 +39,8 @@ def obstacle_sr5(goals: np.ndarray) -> float:
 
 
 def evaluate(agent, task, seed, episodes, mode, destination, obstacle=False):
+    if getattr(agent, "method", None) == "optiq" and mode != "mu_only":
+        raise ValueError("OptiQ rollouts require mu_only with fresh random z")
     if episodes <= 0:
         raise ValueError(episodes)
     horizon = (PAPER_HORIZONS[task[3:]] if task in PAPER_TASKS else
@@ -107,6 +109,8 @@ def main():
     parser.add_argument("--final-eval-episodes", type=int, default=None)
     parser.add_argument("--render-each-eval", action="store_true")
     parser.add_argument("--temperature", type=float, default=3.)
+    parser.add_argument("--optiq-eval-mode", choices=("mu_only",), default="mu_only",
+                        help="OptiQ default: fresh random z, mean output without conditional noise")
     parser.add_argument("--sql-particles", type=int, default=16)
     parser.add_argument("--meow-alpha", type=float, default=.2)
     parser.add_argument("--meow-device", choices=("auto", "cuda", "cpu"), default="auto")
@@ -201,36 +205,40 @@ def main():
                               method=args.method, source_commit=args.source_commit)
                 episodes = (args.final_eval_episodes if step == args.steps and
                             args.final_eval_episodes is not None else args.eval_episodes)
-                for mode in (("policy", "mu_only") if args.method == "optiq" else ("policy",)):
+                primary_mode = "mu_only" if args.method == "optiq" else "policy"
+                modes = ("mu_only",) if args.method == "optiq" else ("policy",)
+                record["primary_evaluation_mode"] = primary_mode
+                for mode in modes:
                     destination = args.output / "evaluations" / f"{step:09d}_{mode}.npz"
                     record[mode] = evaluate(agent, args.task,
                                             args.seed + 17_000 + step,
                                             episodes, mode, destination)
                 if args.task in PAPER_TASKS:
-                    obstacle_path = args.output / "evaluations" / f"{step:09d}_obstacle_policy.npz"
-                    record["obstacle_policy"] = evaluate(agent, args.task,
-                        args.seed + 27_000 + step, episodes, "policy", obstacle_path,
+                    obstacle_key = f"obstacle_{primary_mode}"
+                    obstacle_path = args.output / "evaluations" / f"{step:09d}_{obstacle_key}.npz"
+                    record[obstacle_key] = evaluate(agent, args.task,
+                        args.seed + 27_000 + step, episodes, primary_mode, obstacle_path,
                         obstacle=True)
                 if args.task == "4way" or args.task in NWAY_TASKS:
                     probe = args.output / "evaluations" / f"{step:09d}_probe.npz"
-                    probe_policy(agent, probe)
+                    probe_policy(agent, probe, mode=primary_mode)
                 agent.save(args.output / "checkpoints", step, full=step == args.steps)
                 if args.render_each_eval:
                     figure = args.output / "figures" / f"{step:09d}_trajectories.png"
                     if args.task == "4way":
                         render_4way([(f"{args.method.upper()} · T={args.temperature:g}",
-                                      args.output / "evaluations" / f"{step:09d}_policy.npz",
+                                      args.output / "evaluations" / f"{step:09d}_{primary_mode}.npz",
                                       probe)], figure)
                     elif args.task in NWAY_TASKS:
                         render_nway(args.task,
-                                    args.output / "evaluations" / f"{step:09d}_policy.npz",
+                                    args.output / "evaluations" / f"{step:09d}_{primary_mode}.npz",
                                     probe, figure,
                                     title=f"{args.task.upper()} · {args.method.upper()} · {step:,} steps · seed {args.seed}")
                     else:
                         from .visualize_pointmaze import render_trajectories
                         render_trajectories(args.task,
-                            args.output / "evaluations" / f"{step:09d}_policy.npz",
-                            figure, title=f"{args.task} · {args.method.upper()} · {step:,} steps · seed {args.seed}",
+                            args.output / "evaluations" / f"{step:09d}_{primary_mode}.npz",
+                            figure, title=f"{args.task} · {args.method.upper()} · {primary_mode} · {step:,} steps · seed {args.seed}",
                             obstacle_npz=obstacle_path)
                     record["figure"] = str(figure)
                 atomic_json(args.output / "evaluations" / f"{step:09d}_summary.json", record)

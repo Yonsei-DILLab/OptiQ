@@ -91,7 +91,7 @@ class OptiQ:
     def updates(self):
         return self.model._n_updates
 
-    def act(self, obs, mode="policy"):
+    def act(self, obs, mode="mu_only"):
         policy = self.model.policy
         policy.reset_noise()
         action = policy.sample_action(policy.actor_state, jnp.asarray(obs), policy.noise_key,

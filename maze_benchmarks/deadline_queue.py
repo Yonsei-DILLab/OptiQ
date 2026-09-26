@@ -70,9 +70,13 @@ def verify(output, job, commit, preflight):
     record = progress["latest_evaluation"]
     if record["step"] != steps:
         raise ValueError("final evaluation step mismatch")
-    modes = ["policy"]
-    if job["method"] == "optiq": modes.append("mu_only")
-    if job["task"].startswith("pm_"): modes.append("obstacle_policy")
+    mu_primary = job["method"] == "optiq" and config.get("optiq_eval_mode") == "mu_only"
+    modes = ["mu_only"] if mu_primary else ["policy"]
+    if job["method"] == "optiq" and not mu_primary: modes.append("mu_only")
+    if job["task"].startswith("pm_"):
+        modes.append("obstacle_mu_only" if mu_primary else "obstacle_policy")
+    if mu_primary and ("policy" in record or record.get("primary_evaluation_mode") != "mu_only"):
+        raise ValueError("OptiQ evaluation contains unexpected conditional sigma mode")
     episodes = 5 if preflight else 500 if job["task"].startswith("pm_") else 1024
     for mode in modes:
         summary = record[mode]
@@ -134,10 +138,13 @@ def work(root, commit, worker, source):
             raise
 
 
-def prepare(root, commit, host, source):
-    plan = json.loads(PLAN.read_text())
+def prepare(root, commit, host, source, *, plan_path=PLAN, campaign=CAMPAIGN, gpus=None):
+    plan = json.loads(plan_path.read_text())
     jobs = [dict(j, state="pending") for j in plan["jobs"] if j["host"] == host]
     gpu_count = {"vast-heechan-199": 4, "vast-heechan-46": 8, "vast-heechan-6": 4}[host]
+    gpu_indices = list(range(gpu_count)) if gpus is None else list(gpus)
+    if not jobs or not gpu_indices or len(set(gpu_indices)) != len(gpu_indices) or any(i < 0 or i >= gpu_count for i in gpu_indices):
+        raise ValueError("invalid host jobs or GPU selection")
     controller = Path(__file__).resolve().parents[1]
     root.mkdir(parents=True, exist_ok=False)
     for part in ("logs", "jobs", "proofs", "preflights", "runs"): (root / part).mkdir()
@@ -150,8 +157,8 @@ def prepare(root, commit, host, source):
     if not config.exists():
         config.write_text(f"[unix_http_server]\nfile={sup}/supervisor.sock\nchmod=0700\n[supervisord]\nlogfile={sup}/supervisord.log\npidfile={sup}/supervisord.pid\nchildlogdir={sup}/logs\n[rpcinterface:supervisor]\nsupervisor.rpcinterface_factory=supervisor.rpcinterface:make_main_rpcinterface\n[supervisorctl]\nserverurl=unix://{sup}/supervisor.sock\n[include]\nfiles={sup}/jobs/*.conf\n")
     services = []
-    for gpu in range(gpu_count):
-        service = f"{CAMPAIGN}-{host}-gpu{gpu}"
+    for gpu in gpu_indices:
+        service = f"{campaign}-{host}-gpu{gpu}"
         services.append(service)
         filename = sup / "jobs" / f"{service}.conf"
         if filename.exists(): raise FileExistsError(filename)
@@ -179,10 +186,15 @@ def main():
     parser.add_argument("--training-source", type=Path)
     parser.add_argument("--phase", choices=("prepare", "start", "work"), required=True)
     parser.add_argument("--worker")
+    parser.add_argument("--plan", type=Path, default=PLAN)
+    parser.add_argument("--campaign", default=CAMPAIGN)
+    parser.add_argument("--gpus", type=int, nargs="+")
     args = parser.parse_args()
     source = args.training_source.resolve() if args.training_source else Path(__file__).resolve().parents[1]
     verify_source(source, args.source_commit)
-    if args.phase == "prepare": return prepare(args.root, args.source_commit, args.host, source)
+    if args.phase == "prepare":
+        return prepare(args.root, args.source_commit, args.host, source,
+                       plan_path=args.plan, campaign=args.campaign, gpus=args.gpus)
     if args.phase == "work":
         if not args.worker: raise ValueError("worker name required")
         return work(args.root, args.source_commit, args.worker, source)

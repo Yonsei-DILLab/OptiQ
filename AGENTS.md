@@ -1,4 +1,19 @@
+User evaluation correction (2026-09-26, newest): OptiQ sampling rollouts
+always use fresh normal z at each action and mu(s,z) only, no conditional sigma.
+Apply to primary trajectories, metrics, action/Q probes and obstacle evaluations.
+Keep training policy unchanged. Preserve old full-policy data as supplementary;
+never relabel it mu-only. PointMaze T5/T10 x Simple/Medium/Hard seed0 1M is
+approved in POINTMAZE_T5_T10_PROTOCOL.md; reuse completed T3, no duplicate.
+
 # OptiQ experiment versioning
+
+User visualization preference (2026-09-26, latest): make trajectory lines
+clearly visible even for rarely used paths. New maze/N-Way reports use shared
+plot_style defaults (linewidth1.8pt, alpha.7; learning curves2.4pt). Preserve
+the same rollout selection and counts; do not duplicate rare trajectories to
+make them look frequent. Rerender separate reports from frozen raw results.
+PointMaze Simple/Medium/Hard OptiQ in maze-deadline-1m-20260926 already uses
+T3 and has completed its1M results; do not duplicate those jobs merely to addT3.
 
 The user requested on 2026-09-17 that this work use branch `heejoon` and that
 experiments be committed before they are launched.

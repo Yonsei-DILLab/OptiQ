@@ -25,11 +25,11 @@ def removal_sr5_exact(goals, goal_count):
     return float(np.mean(scores))
 
 
-def removal_from_raw(folder: Path, record):
-    with np.load(folder / f"{record['step']:09d}_policy.npz") as raw:
+def removal_from_raw(folder: Path, record, mode="policy"):
+    with np.load(folder / f"{record['step']:09d}_{mode}.npz") as raw:
         ids = raw["goal_ids"]
-        goals = record["policy"]["goals"]
-        if (ids.shape != (record["policy"]["episodes"],) or
+        goals = record[mode]["goals"]
+        if (ids.shape != (record[mode]["episodes"],) or
                 np.bincount(ids[ids >= 0], minlength=len(goals)).tolist() != goals):
             raise ValueError("raw goal counts differ from saved summary")
         return removal_sr5_exact(ids, len(goals))

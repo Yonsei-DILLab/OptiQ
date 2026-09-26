@@ -19,9 +19,13 @@ GOAL_LABELS = ("E", "W", "N", "S")
 GOAL_XY = np.array([[5., 0.], [-5., 0.], [0., 5.], [0., -5.]])
 
 
-def probe_policy(agent, destination: Path, seed=104729, samples=8, chunk=128):
+def probe_policy(agent, destination: Path, seed=104729, samples=8, chunk=128, mode=None):
     """Save policy/Q evaluations over the wall-free 2D state plane."""
     coordinates = np.linspace(-7., 7., 29)
+    if mode is None:
+        mode = "mu_only" if getattr(agent, "method", None) == "optiq" else "policy"
+    if getattr(agent, "method", None) == "optiq" and mode != "mu_only":
+        raise ValueError("OptiQ probes require mu_only")
     xx, yy = np.meshgrid(coordinates, coordinates, indexing="xy")
     xy = np.column_stack((xx.ravel(), yy.ravel()))
     valid = np.ones(len(xy), bool)
@@ -32,7 +36,7 @@ def probe_policy(agent, destination: Path, seed=104729, samples=8, chunk=128):
     with agent.evaluation_rng(seed):
         for left in range(0, len(repeated), chunk):
             right = min(left + chunk, len(repeated))
-            actions[left:right] = agent.act(repeated[left:right], mode="policy")
+            actions[left:right] = agent.act(repeated[left:right], mode=mode)
             values[left:right] = agent.q(repeated[left:right], actions[left:right])
     if not np.isfinite(actions).all() or not np.isfinite(values).all():
         raise FloatingPointError("nonfinite policy/Q grid probe")
@@ -43,7 +47,7 @@ def probe_policy(agent, destination: Path, seed=104729, samples=8, chunk=128):
     destination.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(destination, x=coordinates, y=coordinates, valid=valid.reshape(xx.shape),
                         actions=action_grid, q=q_grid,
-                        samples=samples, critic_label=agent.critic_label)
+                        samples=samples, critic_label=agent.critic_label, evaluation_mode=mode)
     return destination
 
 
