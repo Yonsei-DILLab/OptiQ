@@ -179,7 +179,7 @@ def work(root, commit, worker, source):
 def prepare(root, commit, host, source, *, plan_path=PLAN, campaign=CAMPAIGN, gpus=None):
     plan = json.loads(plan_path.read_text())
     jobs = [dict(j, state="pending") for j in plan["jobs"] if j["host"] == host]
-    gpu_count = {"vast-heechan-180": 4, "vast-heechan-199": 4, "vast-heechan-46": 8, "vast-heechan-6": 4}[host]
+    gpu_count = {"vast-heechan-199": 4, "vast-heechan-46": 8, "vast-heechan-6": 4}[host]
     gpu_indices = list(range(gpu_count)) if gpus is None else list(gpus)
     if not jobs or not gpu_indices or len(set(gpu_indices)) != len(gpu_indices) or any(i < 0 or i >= gpu_count for i in gpu_indices):
         raise ValueError("invalid host jobs or GPU selection")
@@ -220,7 +220,7 @@ def main():
     parser = argparse.ArgumentParser(allow_abbrev=False)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--source-commit", required=True)
-    parser.add_argument("--host", choices=("vast-heechan-180", "vast-heechan-199", "vast-heechan-46", "vast-heechan-6"), required=True)
+    parser.add_argument("--host", choices=("vast-heechan-199", "vast-heechan-46", "vast-heechan-6"), required=True)
     parser.add_argument("--training-source", type=Path)
     parser.add_argument("--phase", choices=("prepare", "start", "work"), required=True)
     parser.add_argument("--worker")
