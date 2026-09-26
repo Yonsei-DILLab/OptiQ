@@ -166,7 +166,7 @@ def render(root, out, records, temperature=1):
         # Keep every recorded trajectory, including rare modes and failures.
         for path in tracks:
             path = path[np.isfinite(path).all(axis=-1)]
-            ax.plot(path[:, 0], path[:, 1], color='#dd1e27', lw=.45, alpha=.055)
+            ax.plot(path[:, 0], path[:, 1], color='#dd1e27', lw=.8, alpha=.18)
         # Thin arrowheads only. Add the first recorded rollout for each observed
         # outcome so rare routes have directional arrows too; no path is invented.
         indices = np.unique(np.r_[np.linspace(0, len(tracks)-1, 32, dtype=int),
@@ -178,7 +178,7 @@ def render(root, out, records, temperature=1):
                 delta = path[positions+1] - path[positions]
                 ax.quiver(path[positions, 0], path[positions, 1], delta[:, 0], delta[:, 1],
                           color='#dd1e27', angles='xy', scale_units='xy', scale=1,
-                          width=.004, headwidth=3.5, headlength=4.5, alpha=.72, zorder=5)
+                          width=.0048, headwidth=3.5, headlength=4.5, alpha=.95, zorder=5)
         ax.scatter(xy[:, 0], xy[:, 1], s=17, color='#dd1e27', edgecolors='white', linewidths=.5, zorder=6)
         ax.scatter([0], [0], s=14, color='#202020', zorder=7)
         ax.set(xlim=(-7.7, 7.7), ylim=(-7.7, 7.7), aspect='equal',
@@ -198,6 +198,9 @@ def render(root, out, records, temperature=1):
         ax.tick_params(labelsize=8, pad=0)
         records[name].update(rollout_sha256=sha(raw), episodes=len(ids),
                              shown_trajectories=len(tracks),
+                             trajectory_style=dict(color='#dd1e27',linewidth=.8,alpha=.18,
+                                                   arrow_width=.0048,arrow_alpha=.95,
+                                                   same_style_for_every_trajectory=True),
                              arrowhead_rollout_indices=indices.tolist(),
                              goal_counts=counts.tolist(), failures=int(sum(ids < 0)))
     fig.suptitle(f'iBOLT · T = {temperature:g} · random-z, μ-only', fontsize=16, fontweight='bold', y=.99)
