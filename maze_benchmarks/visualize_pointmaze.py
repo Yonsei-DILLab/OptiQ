@@ -90,7 +90,7 @@ def plot_rollouts(ax, data: Path, max_trajectories: int = 500,
                   alpha: float = TRAJECTORY_ALPHA, *, outcome_colors: bool = False,
                   success_color: str = SUCCESS_TRAJECTORY_COLOR,
                   failure_color: str = FAILURE_TRAJECTORY_COLOR,
-                  trajectory_border_width: float = 0.):
+                  trajectory_border_width: float = 0., hide_failed_trajectories: bool = False):
     if not np.isfinite(alpha) or not 0 < alpha <= 1:
         raise ValueError("trajectory alpha must lie in (0,1]")
     if not np.isfinite(trajectory_border_width) or trajectory_border_width < 0:
@@ -99,15 +99,16 @@ def plot_rollouts(ax, data: Path, max_trajectories: int = 500,
         tracks = values["xy"]
         goals = values["goal_ids"]
         returns = values["returns"]
-    selected_tracks = [track[np.isfinite(track).all(axis=-1)]
-                       for track in tracks[:max_trajectories]]
+    selected_indices = [i for i in range(min(max_trajectories,len(tracks)))
+                        if not hide_failed_trajectories or goals[i]>=0]
+    selected_tracks = [tracks[i,np.isfinite(tracks[i]).all(axis=-1)] for i in selected_indices]
     if trajectory_border_width:
         # All outlines are below all colored paths: a later white stroke must
         # never erase an earlier trajectory or alter its apparent frequency.
         ax.add_collection(LineCollection([track for track in selected_tracks if len(track)],
                           colors="white", linewidths=TRAJECTORY_LINEWIDTH+2*trajectory_border_width,
                           alpha=1., capstyle="round", joinstyle="round", zorder=1.9))
-    for index, track in enumerate(selected_tracks):
+    for index, track in zip(selected_indices,selected_tracks):
         if len(track):
             color = (success_color if goals[index] >= 0 else
                      failure_color) if outcome_colors else TRAJECTORY_COLOR

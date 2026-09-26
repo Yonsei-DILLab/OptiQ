@@ -77,7 +77,8 @@ def load(root, maze, method, temperature_root, dipo_root=None):
 
 def build(root, temps, out, columns, dipo_root=None, alpha=.5,
           outcome_colors=False, formats=('pdf','png','svg'), trajectory_palette='mint-pink',
-          match_goal_colors=False, failure_trajectory_color=None, trajectory_border_width=0.):
+          match_goal_colors=False, failure_trajectory_color=None, trajectory_border_width=0.,
+          hide_failed_trajectories=False, no_figure_caption=False):
     success_color,failure_color=TRAJECTORY_PALETTES[trajectory_palette]
     reached_goal_color=success_color if match_goal_colors else VISITED_GOAL_COLOR
     unreached_goal_color=failure_color if match_goal_colors else UNVISITED_GOAL_COLOR
@@ -121,16 +122,18 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.5,
                 before=len(ax.lines)
                 plot_rollouts(ax,Path(entry['raw']),max_trajectories=500,alpha=alpha,
                               outcome_colors=outcome_colors,success_color=success_color,
-                              failure_color=failure_color,trajectory_border_width=trajectory_border_width)
+                              failure_color=failure_color,trajectory_border_width=trajectory_border_width,
+                              hide_failed_trajectories=hide_failed_trajectories)
                 trajectories=ax.lines[before:]
-                if len(trajectories)!=500 or any(x.get_alpha()!=alpha for x in trajectories):
+                expected_count=500-entry['failure'] if hide_failed_trajectories else 500
+                if len(trajectories)!=expected_count or any(x.get_alpha()!=alpha for x in trajectories):
                     raise ValueError('rendered rollout count/alpha differs')
-                if trajectory_border_width and len(ax.collections[-1].get_segments())!=500:
+                if trajectory_border_width and len(ax.collections[-1].get_segments())!=expected_count:
                     raise ValueError('outline geometry count differs from actual trajectories')
                 if outcome_colors:
                     with np.load(entry['raw']) as raw:
                         expected_colors=[success_color if g>=0 else failure_color
-                                         for g in raw['goal_ids']]
+                                         for g in raw['goal_ids'] if not hide_failed_trajectories or g>=0]
                     if [line.get_color() for line in trajectories]!=expected_colors:
                         raise ValueError('trajectory outcome colors do not match saved goal IDs')
                 data.append(entry)
@@ -143,10 +146,12 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.5,
                  Line2D([0],[0],color=failure_color,lw=2,label='Failed trajectory'),
                  Patch(facecolor=reached_goal_color,label='Goal reached (at least once)'),
                  Patch(facecolor=unreached_goal_color,label='Goal not reached')]
-        fig.legend(handles=handles,loc='center',bbox_to_anchor=(.514,.025),ncol=4,
+        if hide_failed_trajectories:handles.pop(1)
+        fig.legend(handles=handles,loc='center',bbox_to_anchor=(.514,.025),ncol=len(handles),
                    frameon=False,fontsize=10,handlelength=2,columnspacing=1.6)
-    fig.text(.514,-.045 if outcome_colors else .05,'Figure 4: PointMaze.',
-             fontproperties=caption_font,ha='center',va='center')
+    if not no_figure_caption:
+        fig.text(.514,-.045 if outcome_colors else .05,'Figure 4: PointMaze.',
+                 fontproperties=caption_font,ha='center',va='center')
     suffix='' if alpha==.5 else '_alpha'+f'{alpha:g}'.replace('.','')
     name=f'figure4_pointmaze_{columns}methods'+suffix+('_outcomes' if outcome_colors else '')+('_draft' if pending else '')
     out.mkdir(parents=True,exist_ok=True)
@@ -154,11 +159,16 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.5,
         fig.savefig(out/f'{name}.{extension}',dpi=350,facecolor='white',bbox_inches='tight',pad_inches=.035)
     plt.close(fig)
     manifest=dict(figure=name,methods=methods,rows=['medium','hard'],pending=pending,
-        figure_is_complete=not pending,inputs=data,rollouts_per_panel=500,alpha=alpha,linewidth=1.8,
+        figure_is_complete=not pending,inputs=data,evaluation_episodes_per_panel=500,
+        rollouts_per_panel=None if hide_failed_trajectories else 500,
+        displayed_rollouts={entry['run']:500-entry['failure'] if hide_failed_trajectories else 500
+                            for entry in data},
+        failed_trajectories_hidden=hide_failed_trajectories,alpha=alpha,linewidth=1.8,
         algorithm_font='Arial sans-serif; only iBOLT uses Arial Bold',
         map_rendering=dict(actual_walls_preserved=True,additional_obstacles_active=False,
                            inactive_obstacle_placeholders_shown=False),
-        title='Figure4: PointMaze',training_seed=0,ibolt_temperature=5.,
+        title=None if no_figure_caption else 'Figure4: PointMaze',training_seed=0,ibolt_temperature=5.,
+        figure_caption_shown=not no_figure_caption,
         ibolt_sampling='fresh normal z each action; mu-only; conditional sigma off',
         baseline_sampling='native policy sampling; original entropy settings, not the new sensitivity grid',
         outcome_colors=outcome_colors,
@@ -193,6 +203,8 @@ def main():
     p.add_argument('--match-goal-colors',action='store_true')
     p.add_argument('--failure-trajectory-color')
     p.add_argument('--trajectory-border-width',type=float,default=0.)
+    p.add_argument('--hide-failed-trajectories',action='store_true')
+    p.add_argument('--no-figure-caption',action='store_true')
     p.add_argument('--formats',choices=('png','pdf','svg'),nargs='+',default=['pdf','png','svg'])
     a=p.parse_args()
     if any(not np.isfinite(v) or not 0<v<=1 for v in a.alphas):raise ValueError('invalid alpha')
@@ -202,9 +214,15 @@ def main():
                     outcome_colors=a.outcome_colors,formats=a.formats,
                     trajectory_palette=a.trajectory_palette,match_goal_colors=a.match_goal_colors,
                     failure_trajectory_color=a.failure_trajectory_color,
-                    trajectory_border_width=a.trajectory_border_width)
+                    trajectory_border_width=a.trajectory_border_width,
+                    hide_failed_trajectories=a.hide_failed_trajectories,
+                    no_figure_caption=a.no_figure_caption)
             print(json.dumps(dict(figure=m['figure'],complete=m['figure_is_complete'],pending=m['pending'])))
     (a.output/'CAPTION.txt').write_text('Figure4: PointMaze. Top: Medium; bottom: Hard. Each completed panel shows all500 evaluation trajectories from one seed0 policy after1M environment interactions. iBOLT uses T=5 and fresh Gaussian latent z at each action with mu-only output (no conditional sigma). Baselines use their native sampling rules and original entropy settings. The seven-column draft reserves DIPO until the official implementation completes1M; no older variant is substituted.\n')
+    if a.hide_failed_trajectories:
+        caption=(a.output/'CAPTION.txt').read_text().replace('shows all500 evaluation trajectories',
+                'shows only successful trajectories from500 evaluation episodes')
+        (a.output/'CAPTION.txt').write_text(caption)
     if a.outcome_colors:
         success_name,failure_name=a.trajectory_palette.split('-')
         reached_name=success_name if a.match_goal_colors else 'dark blue'
