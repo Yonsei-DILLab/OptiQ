@@ -20,30 +20,6 @@ The reported PointMaze and wall-free results use $\tau=5$ and $\tau=10$,
 respectively. The DACER exploration controller is disabled. These experiments
 provide qualitative evidence of behavioral diversity.
 
-## iBOLT implementation details
-
-This package contains the iBOLT PointMaze implementation only. The baseline
-implementations and the separate wall-free task are not included here;
-temperature 10 is not a PointMaze default. The detailed settings below apply
-to iBOLT on Simple and Hard, not uniformly to every baseline.
-
-| Setting | Value |
-| --- | --- |
-| Fixed temperature / density correction | 5 / beta=1 |
-| Actor / scalar twin critics | 256 x 2, GELU |
-| Actor / critic optimizer | Adam, learning rate 3e-4, betas (0.9, 0.999) |
-| Discount / target update coefficient | 0.99 / 0.005 |
-| Replay capacity / batch size | 1,000,000 / 4096 |
-| Uniform-action warmup | 8192 transitions, included in the budget |
-| Total interactions | 1,000,192 |
-| Latents / components / candidates | fresh N(0,I_2), N=M=64 |
-| Conditional distribution | diagonal box-truncated Gaussian on [-1,1]^2 |
-| log sigma bounds / initial | [-5,-1] / -1 |
-| Mean-head initialization variance scale | 1e-4 |
-| Proposal sigma floor | exp(-5) |
-| Actor objective | direct value-weighted marginal mixture NLL |
-| Gradient clipping / DACER / NovelD / entropy backup | all disabled |
-
 ## Environment
 
 The unchanged DrAC multi-goal PointMaze implementation is included under
