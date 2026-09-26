@@ -74,7 +74,8 @@ def draw(case, data, out, pdf):
                 ax.set_xlabel(r'$a$')
             if row == 0:
                 label = 'Initialization' if step == 0 else (f'{step // 1000}K' if step >= 1000 else str(step))
-                ax.set_title(label, pad=9)
+                label = label if step == 0 else f'{label} step'
+                ax.set_title(f'({chr(97 + col)}) {label}', pad=9)
             if col == 0:
                 ax.set_ylabel('Density')
     for row, name in enumerate(['Forward KL', 'Reverse KL']):
@@ -84,8 +85,6 @@ def draw(case, data, out, pdf):
     boundary = (axes[0, 2].get_position().x1 + axes[0, 3].get_position().x0) / 2
     fig.add_artist(plt.Line2D([boundary, boundary], [.14, .90], transform=fig.transFigure,
                              color='.62', lw=.8, ls=':'))
-    fig.text(.53, .025, '0–100: replayed early snapshots  |  1K–100K: original saved snapshots',
-             ha='center', va='bottom', fontsize=10, color='.3')
     for ext in ['png', 'pdf', 'svg']:
         fig.savefig(out / f'{case}_2x6.{ext}', dpi=250, bbox_inches='tight', pad_inches=.06)
     pdf.savefig(fig, bbox_inches='tight', pad_inches=.06)
