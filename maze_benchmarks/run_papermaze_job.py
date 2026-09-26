@@ -49,31 +49,36 @@ def run_process(command: list[str], log_path: Path, source: Path):
 
 
 def command(source: Path, commit: str, maze: str, method: str,
-            output: Path, env_count: int, batch_size: int, preflight: bool):
+            output: Path, env_count: int, batch_size: int, preflight: bool,
+            target_steps: int | None = None, eval_every: int | None = None,
+            final_eval_episodes: int = 500):
     warmup = PREFLIGHT_WARMUP if preflight else MAIN_WARMUP
-    steps = warmup + env_count if preflight else math.ceil(BUDGETS[maze] / env_count) * env_count
-    eval_every = steps if preflight else BUDGETS[maze] // 5
+    budget = BUDGETS[maze] if target_steps is None else target_steps
+    steps = warmup + env_count if preflight else math.ceil(budget / env_count) * env_count
+    cadence = steps if preflight else (budget // 5 if eval_every is None else eval_every)
     episodes = 5 if preflight else 200
-    final_episodes = 5 if preflight else 500
+    final_episodes = 5 if preflight else final_eval_episodes
     return [sys.executable, "-m", "maze_benchmarks.run",
             "--task", f"pm_{maze}", "--method", method,
             "--output", str(output), "--seed", "0", "--steps", str(steps),
             "--num-envs", str(env_count),
             "--updates-per-collect", str(parameters(env_count, batch_size)),
             "--batch-size", str(batch_size), "--warmup", str(warmup),
-            "--eval-every", str(eval_every), "--eval-episodes", str(episodes),
+            "--eval-every", str(cadence), "--eval-episodes", str(episodes),
             "--final-eval-episodes", str(final_episodes),
             "--temperature", str(temperature(method)), "--render-each-eval",
             "--source-commit", commit]
 
 
 def verify_run(output: Path, commit: str, maze: str, method: str,
-               env_count: int, batch_size: int, preflight: bool):
+               env_count: int, batch_size: int, preflight: bool,
+               target_steps: int | None = None, final_eval_episodes: int = 500):
     progress = json.loads((output / "progress.json").read_text())
     config = json.loads((output / "config.json").read_text())
     target = output / "evaluations"
     warmup = PREFLIGHT_WARMUP if preflight else MAIN_WARMUP
-    steps = warmup + env_count if preflight else math.ceil(BUDGETS[maze] / env_count) * env_count
+    budget = BUDGETS[maze] if target_steps is None else target_steps
+    steps = warmup + env_count if preflight else math.ceil(budget / env_count) * env_count
     updates = ((steps - warmup) // env_count) * parameters(env_count, batch_size)
     if progress["status"] != "complete" or (progress["steps"], progress["updates"]) != (steps, updates):
         raise ValueError("training step or update audit failed")
@@ -82,11 +87,13 @@ def verify_run(output: Path, commit: str, maze: str, method: str,
         raise ValueError("source/task/method mismatch")
     if config["temperature"] != temperature(method):
         raise ValueError("temperature profile mismatch")
+    if method == "optiq" and config["agent"]["dacer"]["enabled"] is not False:
+        raise ValueError("OptiQ DACER must be disabled")
     if (config["num_envs"], config["batch_size"], config["updates_per_collect"]) != (
             env_count, batch_size, parameters(env_count, batch_size)):
         raise ValueError("vector/update profile mismatch")
     record = progress["latest_evaluation"]
-    expected_episodes = 5 if preflight else 500
+    expected_episodes = 5 if preflight else final_eval_episodes
     if record["step"] != steps:
         raise ValueError("final evaluation step mismatch")
     for mode in ("policy", "obstacle_policy"):
@@ -119,7 +126,19 @@ def main():
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--maze", choices=MAP_NAMES, required=True)
     parser.add_argument("--method", choices=METHODS, required=True)
+    parser.add_argument("--target-steps", type=int)
+    parser.add_argument("--budget-multiplier", type=int, default=1)
+    parser.add_argument("--eval-every", type=int)
+    parser.add_argument("--final-eval-episodes", type=int, default=500)
     args = parser.parse_args()
+    if (args.budget_multiplier <= 0 or
+            (args.target_steps is not None and args.budget_multiplier != 1) or
+            (args.target_steps is not None and args.target_steps <= MAIN_WARMUP) or
+            (args.eval_every is not None and args.eval_every <= 0) or
+            args.final_eval_episodes <= 0 or args.final_eval_episodes % 5):
+        raise ValueError("invalid PointMaze budget or evaluation cadence")
+    if args.target_steps is None:
+        args.target_steps = BUDGETS[args.maze] * args.budget_multiplier
     source = Path(__file__).resolve().parents[1]
     verify_source(source, args.source_commit)
     root = args.root.resolve()
@@ -130,6 +149,9 @@ def main():
         raise FileExistsError("preserved job already exists; no automatic retry")
     job = dict(name=name, method=args.method, maze=args.maze,
                source_commit=args.source_commit, pid=os.getpid(),
+               target_steps=args.target_steps,
+               eval_every=args.eval_every or args.target_steps // 5,
+               final_eval_episodes=args.final_eval_episodes,
                started=time.time(), state="preflight", candidates=[])
     atomic_json(job_path, job)
     try:
@@ -140,7 +162,8 @@ def main():
             log = root / "logs" / f"{name}-e{env_count}-b{batch_size}-preflight.log"
             code = run_process(command(source, args.source_commit, args.maze,
                                        args.method, preflight, env_count,
-                                       batch_size, True), log, source)
+                                       batch_size, True, args.target_steps,
+                                       args.eval_every, args.final_eval_episodes), log, source)
             attempt = dict(num_envs=env_count, batch_size=batch_size,
                            updates_per_collect=parameters(env_count, batch_size),
                            exit_code=code, log=str(log))
@@ -149,7 +172,8 @@ def main():
             if code == 0:
                 attempt["proof"] = verify_run(preflight, args.source_commit,
                                               args.maze, args.method,
-                                              env_count, batch_size, True)
+                                              env_count, batch_size, True,
+                                              args.target_steps, args.final_eval_episodes)
                 selected = env_count, batch_size
                 atomic_json(job_path, job)
                 break
@@ -165,12 +189,15 @@ def main():
         atomic_json(job_path, job)
         run = root / "runs" / name
         code = run_process(command(source, args.source_commit, args.maze,
-                                   args.method, run, env_count, batch_size, False),
+                                   args.method, run, env_count, batch_size, False,
+                                   args.target_steps, args.eval_every,
+                                   args.final_eval_episodes),
                            root / "logs" / f"{name}-training.log", source)
         if code:
             raise RuntimeError(f"main training failed with exit code {code}")
         job["result"] = verify_run(run, args.source_commit, args.maze,
-                                   args.method, env_count, batch_size, False)
+                                   env_count, batch_size, False,
+                                   args.target_steps, args.final_eval_episodes)
         job["state"] = "complete"
         job["finished"] = time.time()
         atomic_json(job_path, job)

@@ -52,8 +52,11 @@ def render_curves(root: Path, destination: Path):
             ax.set(title=maze.title() if row == 0 else None,
                    xlabel="Environment transitions" if row == 3 else None,
                    ylabel=label if column == 0 else None)
-            ax.set_xlim(0, {"simple": 100_000, "medium": 200_000,
-                            "hard": 300_000}[maze])
+            final_steps = [result["step"] for method in METHODS
+                           for result in records(root, maze, method)]
+            ax.set_xlim(0, max(final_steps, default={"simple": 100_000,
+                                                   "medium": 200_000,
+                                                   "hard": 300_000}[maze]))
             ax.xaxis.set_major_locator(MaxNLocator(nbins=5))
             ax.xaxis.set_major_formatter(
                 FuncFormatter(lambda value, _position: f"{value / 1000:.0f}k"))

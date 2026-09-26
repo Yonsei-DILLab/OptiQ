@@ -63,7 +63,13 @@ def main():
     parser.add_argument("--initialize", action="store_true")
     parser.add_argument("--worker", type=str)
     parser.add_argument("--job", action="append", default=[])
+    parser.add_argument("--target-steps", type=int)
+    parser.add_argument("--budget-multiplier", type=int, default=1)
+    parser.add_argument("--eval-every", type=int)
+    parser.add_argument("--final-eval-episodes", type=int, default=500)
     args = parser.parse_args()
+    if args.budget_multiplier <= 0 or (args.target_steps is not None and args.budget_multiplier != 1):
+        raise ValueError("invalid or conflicting budget settings")
     if args.initialize == bool(args.worker):
         raise ValueError("choose initialize or worker")
     source = Path(__file__).resolve().parents[1]
@@ -81,6 +87,10 @@ def main():
         root.mkdir(parents=True, exist_ok=False)
         (root / "logs").mkdir()
         state = dict(source_commit=args.source_commit, state="running",
+                     target_steps=args.target_steps,
+                     budget_multiplier=args.budget_multiplier,
+                     eval_every=args.eval_every,
+                     final_eval_episodes=args.final_eval_episodes,
                      started=time.time(), jobs=[dict(name=name, state="pending")
                                                    for name in names])
         atomic_json(root / "queue.json", state)
@@ -88,6 +98,13 @@ def main():
         return
     if args.job:
         raise ValueError("jobs are accepted only during initialization")
+    registered = json.loads((root / "queue.json").read_text())
+    if (registered["source_commit"] != args.source_commit or
+            registered.get("target_steps") != args.target_steps or
+            registered.get("budget_multiplier", 1) != args.budget_multiplier or
+            registered.get("eval_every") != args.eval_every or
+            registered.get("final_eval_episodes", 500) != args.final_eval_episodes):
+        raise ValueError("worker arguments differ from registered experiment")
     worker = args.worker
     while True:
         name = claim(root, worker)
@@ -97,7 +114,13 @@ def main():
         maze = task.removeprefix("pm_")
         command = [sys.executable, "-m", "maze_benchmarks.run_papermaze_job",
                    "--root", str(root), "--source-commit", args.source_commit,
-                   "--maze", maze, "--method", method]
+                   "--maze", maze, "--method", method,
+                   "--budget-multiplier", str(args.budget_multiplier),
+                   "--final-eval-episodes", str(args.final_eval_episodes)]
+        if args.target_steps is not None:
+            command.extend(("--target-steps", str(args.target_steps)))
+        if args.eval_every is not None:
+            command.extend(("--eval-every", str(args.eval_every)))
         result = subprocess.run(command, cwd=source, check=False)
         if result.returncode:
             finish(root, name, False, f"job exit code {result.returncode}")

@@ -1,0 +1,26 @@
+{
+  "campaign": "paper-pointmaze-seven-long-1m2m3m-s0-20260926",
+  "source_branch": "direct-gmm-trg-antmaze",
+  "fresh_seed": 0,
+  "budget_multiplier": 10,
+  "budgets": {"simple": 1000000, "medium": 2000000, "hard": 3000000},
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_collect": 16,
+  "warmup": 8192,
+  "final_eval_episodes": 2000,
+  "interim_eval_episodes": 200,
+  "optiq_dacer_enabled": false,
+  "shards": {
+    "vast-heechan-180": [
+      "hard:dipo", "medium:optiq", "hard:sql", "medium:mfpo",
+      "hard:sac", "simple:optiq", "simple:meow", "medium:td3",
+      "hard:td3", "simple:sac", "medium:sql"
+    ],
+    "vast-heechan-199": [
+      "medium:dipo", "hard:optiq", "hard:mfpo", "hard:meow",
+      "simple:dipo", "medium:sac", "medium:meow", "simple:sql",
+      "simple:mfpo", "simple:td3"
+    ]
+  }
+}
