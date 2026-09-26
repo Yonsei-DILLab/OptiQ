@@ -71,6 +71,12 @@ Both evaluation modes are logged every 5K steps, with 10 episodes per mode:
 uses only the center. Neither adds conditional Gaussian or external noise.
 Do not combine these metrics when aggregating results.
 
+Logging keeps evaluation returns/lengths, actor and critic losses, current Q,
+conditional scale mean/min/max, exploration alpha/noise/entropy, rollout
+returns/lengths, and progress/timing. W&B uses `env_steps` as its step field.
+Duplicate evaluation aliases and detailed distribution diagnostics are omitted.
+The MuJoCo evaluator does not collect success-rate or solved-step histories.
+
 DACER-inspired behavior exploration adds `c * alpha * Normal(0,I)` to the
 collected action, followed by clipping to [-1,1]. The executed action is stored
 in replay. This extra noise is absent from teacher sampling, TD targets and

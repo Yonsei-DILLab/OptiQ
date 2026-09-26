@@ -12,7 +12,7 @@ class DualMuEvalCallback(EvalCallback):
     """Both modes use epsilon=0; each episode receives a paired reset seed.
 
     Evaluation RNG is independent of collection and restored even on failure.
-    The legacy `eval/mean_reward` and `returns` refer to zero-z explicitly.
+    MuJoCo evaluation records returns and episode lengths, not success metrics.
     """
 
     MODES = ("zero_z", "stochastic_z")
@@ -24,7 +24,7 @@ class DualMuEvalCallback(EvalCallback):
                          eval_freq=int(cfg.eval_interval),log_path=str(self.directory))
         self.training_seed = int(cfg.seed)
         self.histories = {mode: {key: [] for key in
-            ("results", "ep_lengths", "env_seeds", "policy_seeds", "successes", "solved_steps")}
+            ("results", "ep_lengths", "env_seeds", "policy_seeds")}
             for mode in self.MODES}
 
     def _on_step(self):
@@ -43,23 +43,20 @@ class DualMuEvalCallback(EvalCallback):
         try:
             policy.evaluation_mu_only = True
             for mode in self.MODES:
-                rewards, lengths, successes, solved_steps = [], [], [], []
+                rewards, lengths = [], []
                 for env_seed, policy_seed in zip(env_seeds, policy_seeds):
                     self.eval_env.seed(int(env_seed))
                     policy.key = jax.random.PRNGKey(int(policy_seed))
-                    self._is_success_buffer = []
                     reward, length = evaluate_policy(
                         self.model, self.eval_env, n_eval_episodes=1,
                         deterministic=(mode == "zero_z"), return_episode_rewards=True,
-                        warn=self.warn, callback=self._log_success_callback)
+                        warn=self.warn)
                     rewards.extend(reward)
                     lengths.extend(length)
-                    successes.extend(self._is_success_buffer)
                 if not np.isfinite(rewards).all():
                     raise FloatingPointError(f"Nonfinite {mode} evaluation return")
                 current[mode] = dict(results=rewards, ep_lengths=lengths,
-                    env_seeds=env_seeds.tolist(), policy_seeds=policy_seeds.tolist(),
-                    successes=successes, solved_steps=solved_steps)
+                    env_seeds=env_seeds.tolist(), policy_seeds=policy_seeds.tolist())
         finally:
             policy.key, policy.noise_key = old_key, old_noise_key
             policy.evaluation_mu_only = old_mu_only
@@ -73,8 +70,6 @@ class DualMuEvalCallback(EvalCallback):
             self.logger.record(f"{prefix}/mean_reward", float(np.mean(result["results"])))
             self.logger.record(f"{prefix}/std_reward", float(np.std(result["results"])))
             self.logger.record(f"{prefix}/mean_ep_length", float(np.mean(result["ep_lengths"])))
-            if result["successes"]:
-                self.logger.record(f"{prefix}/success_rate", float(np.mean(result["successes"])))
             temporary = self.directory / f"evaluations_{mode}.tmp.npz"
             np.savez(temporary, timesteps=self.evaluations_timesteps, **history)
             temporary.replace(self.directory / f"evaluations_{mode}.npz")
@@ -86,8 +81,5 @@ class DualMuEvalCallback(EvalCallback):
         self.evaluations_length = self.histories["zero_z"]["ep_lengths"]
         self.last_mean_reward = float(np.mean(current["zero_z"]["results"]))
         self.best_mean_reward = max(self.best_mean_reward, self.last_mean_reward)
-        self.logger.record("eval/mean_reward", self.last_mean_reward)
-        self.logger.record("eval/mean_ep_length", float(np.mean(current["zero_z"]["ep_lengths"])))
-        self.logger.record("time/total_timesteps", self.num_timesteps, exclude="tensorboard")
         self.logger.dump(self.num_timesteps)
         return True

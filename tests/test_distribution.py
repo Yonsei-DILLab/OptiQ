@@ -94,6 +94,21 @@ def test_environment_update(task,tmp_path,monkeypatch):
             assert not np.array_equal(before[head]['kernel'],model.policy.actor_state.params[head]['kernel'])
         assert all(np.isfinite(p).all() for p in jax.tree_util.tree_leaves(model.policy.actor_state.params))
         assert np.max(np.abs(model.replay_buffer.actions))<=1
+        model.logger.dump(model.num_timesteps)
+        import csv
+        with (tmp_path/'logs'/'progress.csv').open() as stream:
+            columns = set(csv.DictReader(stream).fieldnames)
+        allowed = {'train/n_updates','train/actor_loss','train/critic_loss',
+                   'train/current_q_values','train/actor_std_mean','train/actor_std_min',
+                   'train/actor_std_max','rollout/ep_rew_mean','rollout/ep_len_mean',
+                   'time/fps','time/time_elapsed'}
+        allowed.update(f'eval/{mode}/{metric}' for mode in ['zero_z','stochastic_z']
+                       for metric in ['mean_reward','std_reward','mean_ep_length'])
+        assert columns <= allowed
+        assert {'train/actor_loss','train/actor_std_min','train/actor_std_max'} <= columns
+        for mode in ['zero_z','stochastic_z']:
+            with np.load(cb.directory/f'evaluations_{mode}.npz') as saved:
+                assert set(saved.files)=={'timesteps','results','ep_lengths','env_seeds','policy_seeds'}
     finally:
         cb.eval_env.close();model.get_env().close();model.logger.close()
         algorithm.IBOLT.update_actor.clear_cache()

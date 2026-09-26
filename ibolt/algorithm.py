@@ -2,7 +2,7 @@
 from functools import partial
 import jax
 import jax.numpy as jnp
-import numpy as np
+import time
 from .learner import JaxLearner
 from .policy import IBOLTPolicy
 from .box_gaussian import sample_box, mixture_log_prob
@@ -28,34 +28,39 @@ class IBOLT(JaxLearner):
                 self.gamma, self.tau, self.policy.actor_state, self.policy.qf_state,
                 obs, actions, next_obs, dones, rewards, self.key,
                 int(a.num_policy_samples), int(a.proposals_per_policy_sample),
-                float(a.temperature), float(a.density_correction_beta),
-                float(a.log_std_min), float(a.log_std_max), update_actor)
+                float(a.temperature), float(a.density_correction_beta), update_actor)
         self._n_updates += gradient_steps
         if self.model_save_path and (self.num_timesteps % self.save_every_n_steps == 0
                                    or self.num_timesteps == self.learning_starts + 1):
             self._save_model()
         self.logger.record('train/n_updates', self._n_updates, exclude='tensorboard')
-        self.logger.record('train/actor_updates', int(self.policy.actor_state.step))
         interval = int(self.cfg.diagnostic_interval)
         due = interval > 0 and self.num_timesteps % interval == 0
-        core = {'actor_loss','critic_loss','current_q_values','next_q_values','actor_std_mean'}
         for name, value in metrics.items():
-            if not interval or due or name in core:
-                self.logger.record('train/'+name, float(value))
-        self.logger.record('train/temperature', float(a.temperature))
+            self.logger.record('train/'+name, float(value))
         if due:
-            self.logger.record('time/total_timesteps', self.num_timesteps, exclude='tensorboard')
             self.logger.dump(self.num_timesteps)
+
+    def _dump_logs(self):
+        """MuJoCo logging: no success-rate hook or duplicate step counters."""
+        elapsed = max((time.time_ns()-self.start_time)/1e9, 1e-12)
+        if self.ep_info_buffer:
+            for field, name in [('r','ep_rew_mean'),('l','ep_len_mean')]:
+                values = [episode[field] for episode in self.ep_info_buffer]
+                self.logger.record('rollout/'+name, sum(values)/len(values))
+        self.logger.record('time/fps', int((self.num_timesteps-self._num_timesteps_at_start)/elapsed))
+        self.logger.record('time/time_elapsed', int(elapsed), exclude='tensorboard')
+        self.logger.dump(self.num_timesteps)
 
     @classmethod
     @partial(jax.jit, static_argnames=['cls','n','repeats','do_actor'])
     def _step(cls,gamma,tau,actor,critic,obs,actions,next_obs,dones,rewards,key,
-              n,repeats,temperature,beta,min_log_std,max_log_std,do_actor):
+              n,repeats,temperature,beta,do_actor):
         critic,metrics,key = cls.update_critic(gamma,actor,critic,obs,actions,next_obs,dones,rewards,key)
         critic = cls.soft_update(tau,critic)
         if do_actor:
             actor,actor_metrics,key = cls.update_actor(actor,critic,obs,key,n,repeats,
-                                                      temperature,beta,min_log_std,max_log_std)
+                                                      temperature,beta)
             metrics.update(actor_metrics)
         return critic,actor,metrics,key
 
@@ -73,25 +78,24 @@ class IBOLT(JaxLearner):
                 obs, actions, rngs={'dropout':current_key}, mutable=['batch_stats'], train=True)
             current = current[...,0]
             loss = ((current-target[None])**2).mean(axis=1).sum()
-            return loss, (updates, current.min(axis=0).mean(), target.mean())
-        (loss,(updates,current,target)), grads = jax.value_and_grad(loss_fn,has_aux=True)(critic.params)
+            return loss, (updates, current.min(axis=0).mean())
+        (loss,(updates,current)), grads = jax.value_and_grad(loss_fn,has_aux=True)(critic.params)
         critic = critic.apply_gradients(grads=grads)
         critic = critic.replace(batch_stats=updates.get('batch_stats',critic.batch_stats))
-        return critic, dict(critic_loss=loss,current_q_values=current,next_q_values=target), key
+        return critic, dict(critic_loss=loss,current_q_values=current), key
 
     @staticmethod
     @partial(jax.jit, static_argnames=['n','repeats'])
-    def update_actor(actor, critic, observations, key, n, repeats, temperature, beta, min_log_std, max_log_std):
+    def update_actor(actor, critic, observations, key, n, repeats, temperature, beta):
         key, latent_key, proposal_key, dropout_key = jax.random.split(key,4)
         batch, obs_dim = observations.shape
         dim = actor.params['mu']['bias'].shape[0]
-        z_key, eps_key = jax.random.split(latent_key)
+        z_key, _ = jax.random.split(latent_key)
         z = jax.random.normal(z_key,(batch,n,dim),dtype=observations.dtype)
         obs = jnp.broadcast_to(observations[:,None],(batch,n,obs_dim)).reshape(batch*n,obs_dim)
         def loss_fn(params):
             mu, log_std = actor.apply_fn({'params':params},obs,z.reshape(batch*n,dim))
             mu, log_std = mu.reshape(batch,n,dim), log_std.reshape(batch,n,dim)
-            policy_samples = sample_box(eps_key,mu,log_std)
             means, scales = jax.lax.stop_gradient(mu), jax.lax.stop_gradient(log_std)
             # Preserve the reference floor (an identity at the allowed bounds).
             scales = jnp.maximum(scales, jnp.log(jnp.asarray(0.006737946999085467)))
@@ -107,27 +111,10 @@ class IBOLT(JaxLearner):
             q = jax.lax.stop_gradient(values.reshape(2,batch,m,-1)[...,0].mean(axis=0))
             density = mixture_log_prob(candidates,means,scales)
             weights = jax.lax.stop_gradient(jax.nn.softmax(q/temperature-beta*density,axis=-1))
-            loss, component = direct_gmm_nll(mu,log_std,candidates,weights)
-            responsibility = jax.nn.softmax(component,axis=1)
-            usage = (responsibility*weights[:,None,:]).sum(-1)
-            ess = 1/(weights**2).sum(-1)
+            loss, _ = direct_gmm_nll(mu,log_std,candidates,weights)
             std = jnp.exp(log_std)
-            between, within = jnp.var(mu,axis=1).sum(-1), (std**2).mean(axis=1).sum(-1)
             metrics = dict(actor_loss=loss,actor_std_mean=std.mean(),actor_std_min=std.min(),
-                actor_std_max=std.max(),actor_log_std_mean=log_std.mean(),actor_log_std_min=log_std.min(),
-                actor_log_std_max=log_std.max(),actor_mu_abs_max=jnp.abs(mu).max(),
-                actor_std_at_min_fraction=(log_std<=min_log_std+1e-6).mean(),
-                actor_std_at_max_fraction=(log_std>=max_log_std-1e-6).mean(),
-                actor_latent_mean_variance_fraction=(between/jnp.maximum(between+within,1e-20)).mean(),
-                actor_between_mean_variance=between.mean(),actor_within_variance=within.mean(),
-                source_ess_absolute=ess.mean(),source_ess_fraction=(ess/m).mean(),source_ess_min=ess.min(),
-                max_source_weight=weights.max(-1).mean(),source_q_mean=q.mean(),source_q_std=q.std(-1).mean(),
-                teacher_log_density_mean=density.mean(),teacher_log_density_std=density.std(-1).mean(),
-                teacher_log_density_max=density.max(),teacher_action_saturation_fraction=(jnp.abs(candidates)>.99).mean(),
-                student_action_saturation_fraction=(jnp.abs(policy_samples)>.99).mean(),
-                policy_spread_l2=jnp.linalg.norm(policy_samples.std(1),axis=-1).mean(),
-                gmm_component_ess_fraction=(1/(usage**2).sum(-1)/n).mean(),
-                gmm_component_usage_min=usage.min(),gmm_underused_fraction=(usage<.1/n).mean())
+                actor_std_max=std.max())
             return loss, metrics
         (_,metrics), grads = jax.value_and_grad(loss_fn,has_aux=True)(actor.params)
         return actor.apply_gradients(grads=grads), metrics, key

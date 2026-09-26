@@ -8,7 +8,6 @@ not exact entropy, and clipping produces boundary atoms. Keep this distinction.
 """
 import json
 from pathlib import Path
-import time
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -21,7 +20,6 @@ def entropy_proxy(actions, components=3, random_state=42):
     actions = np.asarray(actions, dtype=np.float64)
     assert actions.ndim == 3 and np.isfinite(actions).all()
     values = []
-    converged = []
     for samples in actions:
         gmm = GaussianMixture(n_components=components, covariance_type='full',
                               random_state=random_state).fit(samples)
@@ -30,10 +28,9 @@ def entropy_proxy(actions, components=3, random_state=42):
         component_h = 0.5 * (samples.shape[-1] * (1 + np.log(2*np.pi)) + logdet)
         w = gmm.weights_
         values.append(float(-np.dot(w, np.log(w)) + np.dot(w, component_h)))
-        converged.append(gmm.converged_)
     result = float(np.mean(values))
     assert np.isfinite(result)
-    return result, float(np.mean(converged))
+    return result
 
 def noisy_action(action, noise, noise_std):
     return np.clip(action + noise_std * noise, -1., 1.).astype(action.dtype)
@@ -51,7 +48,6 @@ class ExplorationIBOLT(IBOLT):
         self.regulator_rng = np.random.default_rng(np.random.SeedSequence([self.seed or 0, 9212026]))
         self.regulator_key = jax.random.PRNGKey(int(self.seed or 0) + 9212026)
         self.regulator_next_update = 0
-        self.regulator_count = 0
         self.regulator_entropy = float('nan')
         @jax.jit
         def draw(state, obs, key):
@@ -70,14 +66,12 @@ class ExplorationIBOLT(IBOLT):
         std = self.regulator_noise_std
         noisy = noisy_action(buffer_action, self.regulator_rng.normal(size=buffer_action.shape), std)
         self.logger.record('exploration/noise_std', std)
-        self.logger.record('exploration/clip_fraction', float(np.mean(np.abs(noisy) >= 1.)))
         # Store exactly the normalized action that is actually executed.
         return self.policy.unscale_action(noisy), noisy
 
     def train(self, batch_size, gradient_steps):
         if self.regulator_enabled and self._n_updates >= self.regulator_next_update:
             c = self.regulator_cfg
-            started = time.monotonic()
             # Independent diagnostic replay RNG, restoring global state so this
             # extra draw does not displace the training batch's RNG sequence.
             saved = np.random.get_state()
@@ -90,7 +84,7 @@ class ExplorationIBOLT(IBOLT):
             self.regulator_key, key = jax.random.split(self.regulator_key)
             actions = np.asarray(self.regulator_draw(self.policy.actor_state, jnp.asarray(obs), key))
             actions = noisy_action(actions, self.regulator_rng.normal(size=actions.shape), self.regulator_noise_std)
-            h, converged = entropy_proxy(actions, c.components, c.entropy_seed)
+            h = entropy_proxy(actions, c.components, c.entropy_seed)
             target = float(c.target_entropy_per_dim) * actions.shape[-1]
             # Official log-alpha optimizer: dL/d(log alpha) = H_hat - H_target.
             updates, self.regulator_state = self.regulator_optimizer.update(
@@ -98,12 +92,9 @@ class ExplorationIBOLT(IBOLT):
             self.regulator_log_alpha = optax.apply_updates(self.regulator_log_alpha, updates)
             assert np.isfinite(float(self.regulator_log_alpha))
             self.regulator_entropy = h
-            self.regulator_count += 1
             self.regulator_next_update += int(c.interval_updates)
-            metrics = dict(entropy_proxy=h, target_entropy=target,
-                           alpha=float(jnp.exp(self.regulator_log_alpha)), noise_std=self.regulator_noise_std,
-                           updates=self.regulator_count, gmm_converged_fraction=converged,
-                           estimation_seconds=time.monotonic()-started)
+            metrics = dict(entropy_proxy=h,
+                           alpha=float(jnp.exp(self.regulator_log_alpha)), noise_std=self.regulator_noise_std)
             for k,v in metrics.items(): self.logger.record('exploration/'+k, v)
             path = Path(self.cfg.output_root) / 'dacer_regulator.json'
             path.parent.mkdir(parents=True, exist_ok=True)
