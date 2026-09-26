@@ -59,7 +59,10 @@ def plot_map(ax, maze: str, obstacle: bool = False):
     ax.grid(False)
 
 
-def plot_rollouts(ax, data: Path, max_trajectories: int = 500):
+def plot_rollouts(ax, data: Path, max_trajectories: int = 500,
+                  alpha: float = TRAJECTORY_ALPHA):
+    if not np.isfinite(alpha) or not 0 < alpha <= 1:
+        raise ValueError("trajectory alpha must lie in (0,1]")
     with np.load(data) as values:
         tracks = values["xy"]
         goals = values["goal_ids"]
@@ -69,7 +72,7 @@ def plot_rollouts(ax, data: Path, max_trajectories: int = 500):
         track = tracks[index, valid]
         if len(track):
             ax.plot(track[:, 0], track[:, 1], color=TRAJECTORY_COLOR,
-                    linewidth=TRAJECTORY_LINEWIDTH, alpha=TRAJECTORY_ALPHA,
+                    linewidth=TRAJECTORY_LINEWIDTH, alpha=alpha,
                     solid_capstyle="round", zorder=2)
     return dict(episodes=len(goals), success=float(np.mean(goals >= 0)),
                 goals=np.bincount(goals[goals >= 0], minlength=int(goals.max() + 1)).tolist()

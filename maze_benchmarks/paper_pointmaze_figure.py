@@ -61,7 +61,7 @@ def load(root, maze, method, temperature_root, dipo_root=None):
                 success=float(np.mean(ids>=0)),steps=progress['steps'],updates=progress['updates'])
 
 
-def build(root, temps, out, columns, dipo_root=None):
+def build(root, temps, out, columns, dipo_root=None, alpha=.5):
     methods=['optiq','sac','sql','meow','mfpo']+(['dipo'] if columns==7 else [])+['td3']
     regular=FontProperties(family='Arial',size=15)
     bold=FontProperties(family='Arial',weight='bold',size=15)
@@ -92,9 +92,9 @@ def build(root, temps, out, columns, dipo_root=None):
                     fontsize=13,color='#505050',zorder=20,
                     bbox=dict(facecolor='white',alpha=.97,edgecolor='none',pad=8))
             else:
-                before=len(ax.lines);plot_rollouts(ax,Path(entry['raw']),max_trajectories=500)
+                before=len(ax.lines);plot_rollouts(ax,Path(entry['raw']),max_trajectories=500,alpha=alpha)
                 trajectories=ax.lines[before:]
-                if len(trajectories)!=500 or any(x.get_alpha()!=.5 for x in trajectories):
+                if len(trajectories)!=500 or any(x.get_alpha()!=alpha for x in trajectories):
                     raise ValueError('rendered rollout count/alpha differs')
                 data.append(entry)
             ax.set(xlabel='',ylabel='',xticks=[],yticks=[])
@@ -102,13 +102,14 @@ def build(root, temps, out, columns, dipo_root=None):
     for row,maze in enumerate(('Medium','Hard')):
         fig.text(.014,bottoms[row]+h/2,maze,rotation=90,ha='center',va='center',fontsize=14,fontweight='normal')
     fig.text(.514,.05,'Figure 4: PointMaze.',fontproperties=caption_font,ha='center',va='center')
-    name=f'figure4_pointmaze_{columns}methods'+('_draft' if pending else '')
+    suffix='' if alpha==.5 else '_alpha'+f'{alpha:g}'.replace('.','')
+    name=f'figure4_pointmaze_{columns}methods'+suffix+('_draft' if pending else '')
     out.mkdir(parents=True,exist_ok=True)
     for extension in ('pdf','png','svg'):
         fig.savefig(out/f'{name}.{extension}',dpi=350,facecolor='white',bbox_inches='tight',pad_inches=.035)
     plt.close(fig)
     manifest=dict(figure=name,methods=methods,rows=['medium','hard'],pending=pending,
-        figure_is_complete=not pending,inputs=data,rollouts_per_panel=500,alpha=.5,linewidth=1.8,
+        figure_is_complete=not pending,inputs=data,rollouts_per_panel=500,alpha=alpha,linewidth=1.8,
         algorithm_font='Arial sans-serif; only iBOLT uses Arial Bold',
         title='Figure4: PointMaze',training_seed=0,ibolt_temperature=5.,
         ibolt_sampling='fresh normal z each action; mu-only; conditional sigma off',
@@ -123,10 +124,13 @@ def build(root, temps, out, columns, dipo_root=None):
 def main():
     p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--temperatures',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True);p.add_argument('--dipo-root',type=Path)
+    p.add_argument('--alphas',type=float,nargs='+',default=[.5])
     a=p.parse_args()
-    for count in (6,7):
-        m=build(a.root,a.temperatures,a.output,count,a.dipo_root)
-        print(json.dumps(dict(figure=m['figure'],complete=m['figure_is_complete'],pending=m['pending'])))
+    if any(not np.isfinite(v) or not 0<v<=1 for v in a.alphas):raise ValueError('invalid alpha')
+    for alpha in a.alphas:
+        for count in (6,7):
+            m=build(a.root,a.temperatures,a.output,count,a.dipo_root,alpha=alpha)
+            print(json.dumps(dict(figure=m['figure'],complete=m['figure_is_complete'],pending=m['pending'])))
     (a.output/'CAPTION.txt').write_text('Figure4: PointMaze. Top: Medium; bottom: Hard. Each completed panel shows all500 evaluation trajectories from one seed0 policy after1M environment interactions. iBOLT uses T=5 and fresh Gaussian latent z at each action with mu-only output (no conditional sigma). Baselines use their native sampling rules and original entropy settings. The seven-column draft reserves DIPO until the official implementation completes1M; no older variant is substituted.\n')
 
 
