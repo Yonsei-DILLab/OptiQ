@@ -60,7 +60,9 @@ alg:
     source_q_eval: mean
     source_reference: uniform_action
     temperature: ${temperature}
-    sinkhorn_epsilon: 0.25
+    # Compatibility fields: unused by direct_gmm_nll (no OT is computed).
+    ot_student_action: mean
+    sinkhorn_epsilon: 0.1
     sinkhorn_iterations: 100
     transport_target_mode: argmax
     td_noise_std: 0.0
