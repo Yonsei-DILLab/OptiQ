@@ -71,4 +71,23 @@ used3673d59, which adds explicit Python/NumPy seed initialization, corrects task
 metadata and restores original trailing whitespace in two upstream files.
 These are bounded execution tests, not new1M performance experiments or proof
 of bitwise equality with historical training. See `pointmaze/PROTOCOL.md` for
-evaluation and checkpoint/resume limitations.
+checkpoint/resume limitations.
+
+## PointMaze evaluation parity correction
+
+The earlier release's serial evaluator has been replaced by the original
+128-episode-chunk evaluation protocol. Both normal and obstacle evaluations
+now run at every checkpoint using the original step-dependent seeds. Five-trial
+removal and obstacle robustness, reachable goals, episode lengths and original
+raw archive fields are restored. No learner objective or training setting changed.
+
+On RTX5090, the original evaluator/collector excerpt and release evaluator were
+run against the same initialized policy on Simple/Medium/Hard, with and without
+obstacles, five episodes per condition. All raw trajectory arrays, goal IDs,
+returns, lengths and summary values matched exactly; policy RNGs were unchanged.
+This validates evaluator equivalence on those inputs, not historical checkpoint
+returns or full-training equivalence. Separate tests cover the128+2 episode
+boundary, inactive/finished rows, failure inclusion, and exhaustive goal-removal
+subsets for four/eight goals. A short CLI run verified both ordinary and obstacle
+metrics at an intermediate checkpoint and the final checkpoint. The combined
+regression suite passed all27 tests on this implementation (1c6477c).
