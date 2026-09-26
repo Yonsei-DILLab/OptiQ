@@ -7,7 +7,8 @@ Flax 0.9.0, Optax 0.1.7, MuJoCo 2.3.7 and scikit-learn 1.7.2.
   SciPy agreement, bounded sampling and moments, support stress test, likelihood
   gradient/stop-gradient checks, actor sampling, and short learner updates in
   all five MuJoCo environments. The learner tests fail if OT is invoked.
-- 6 configuration tests passed: five task defaults and explicit ablation overrides.
+- 7 configuration tests: five task defaults, explicit ablation overrides, and
+  rejection of exploration multipliers other than 0.1.
 - The release is restricted to the trainable-scale direct mixture-likelihood
   experiment. Historical branches and inactive configuration keys were removed.
 - Original-versus-release regression on CPU, with matched seeds and replay
@@ -25,6 +26,9 @@ Flax 0.9.0, Optax 0.1.7, MuJoCo 2.3.7 and scikit-learn 1.7.2.
   or solved-step histories. Detailed diagnostic-only actor calculations were
   removed; candidate weighting and the marginal-likelihood objective remain.
   `env_steps` is the single shared coordinate for all logging backends.
+- The learner now uses installed SB3 directly, with no bundled legacy adapter.
+  The exploration multiplier is fixed at 0.1 across all five environments;
+  alpha adaptation remains enabled and unchanged.
 
 These are correctness/execution checks, not new benchmark results. The tests
 used an existing environment; a clean installation of the requirements on
