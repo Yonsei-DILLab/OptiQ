@@ -15,8 +15,12 @@ from .figure_three import CASES
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--workspace', required=True, type=Path)
+    parser.add_argument('--tight', action='store_true')
+    parser.add_argument('--render-commit')
     args = parser.parse_args()
     out = args.workspace / 'reports/20260925_kl_paper_row'
+    if args.tight:
+        out = out / 'tight'
     out.mkdir(parents=True, exist_ok=True)
     plt.rcParams.update({
         'font.family': 'sans-serif', 'font.sans-serif': ['DejaVu Sans'],
@@ -29,11 +33,25 @@ def main():
     })
     fig, axes = plt.subplots(1, 4, figsize=(18.8, 4.0))
     fig.subplots_adjust(left=.048, right=.995, bottom=.19, top=.84, wspace=.30)
+    if args.tight:
+        panel_width = 18.8 * (.995 - .048) / (4 + 3 * .30)
+        gap, left, right = .50, 18.8 * .048, 18.8 * .005
+        width = left + 4 * panel_width + 3 * gap + right
+        fig.set_size_inches(width, 4.0)
+        for i, ax in enumerate(axes):
+            ax.set_position([(left + i * (panel_width + gap)) / width,
+                             .19, panel_width / width, .84 - .19])
     colors = ['#1f77b4', '#e67e22']
     x = np.linspace(-10, 10, 16385)
     provenance = {'reverse_L': 1024, 'updates': 100000, 'N': 128, 'M': 128,
                   'batch': 32, 'seeds': [0,1,2,3], 'bins': 512,
                   'samples_per_seed': 262144, 'runs': [], 'metrics': {}}
+    if args.render_commit:
+        provenance['figure_source_commit'] = args.render_commit
+    provenance['tight_spacing'] = args.tight
+    if args.tight:
+        provenance['horizontal_gap_inches'] = .50
+        provenance['original_png_sha256'] = hashlib.sha256((out.parent/'forward_vs_reverse_1x4.png').read_bytes()).hexdigest()
     for pair, (ident, _, dirname, reference) in enumerate(CASES[:2]):
         root = args.workspace / 'studies' / dirname
         cfg = json.loads((root/'config.json').read_text())
@@ -73,6 +91,10 @@ def main():
             ax.set_title(f'({"abcd"[2*pair+method_index]}) {method.capitalize()} KL', pad=12)
             provenance['metrics'][f'{ident}/{method}'] = {'TV_seeds': tvs, 'mean_TV': float(np.mean(tvs))}
     fig.canvas.draw()
+    if args.tight:
+        original = json.loads((out.parent/'PROVENANCE.json').read_text())
+        assert provenance['runs'] == original['runs']
+        assert provenance['metrics'] == original['metrics']
     renderer = fig.canvas.get_renderer()
     titles = [ax.title.get_window_extent(renderer) for ax in axes]
     assert all(left.x1 < right.x0 for left, right in zip(titles, titles[1:]))
@@ -90,6 +112,12 @@ Black dashed curves are the exact target. The learned densities are 512-bin samp
 
 Mean per-seed TV: three Gaussian modes, Forward 0.0387 / Reverse 0.6666; spike + ramp, Forward 0.0432 / Reverse 0.1977. Exact values and source hashes are recorded in PROVENANCE.json. The examples were selected during screening and do not establish universal performance ordering.
 ''')
+    if args.tight:
+        with (out/'caption.md').open('a') as f:
+            f.write('\nPanel gaps reduced to 0.50 inches; original plotting-area sizes, fonts, axis limits and data are retained.\n')
+    hashes = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+              for p in sorted(out.iterdir()) if p.is_file() and p.name != 'SHA256.json'}
+    (out/'SHA256.json').write_text(json.dumps(hashes, indent=2)+'\n')
     print(out)
 
 
