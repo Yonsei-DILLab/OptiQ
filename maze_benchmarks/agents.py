@@ -588,10 +588,9 @@ class DIPO:
                 self.full |= self.idx + n >= self.capacity
                 self.idx = (self.idx + n) % self.capacity
 
-            def replace(self, indices, actions):
-                # Upstream np.copyto(best_actions[advanced_index], ...) writes to
-                # a temporary array. Persist the improved actions as intended.
-                self.best_actions[indices] = actions
+            # Inherit the pinned upstream replace() literally. Its advanced-index
+            # np.copyto does not persist improved actions in replay. The previous
+            # adapter's writeback override changed training across minibatches.
 
         torch.manual_seed(seed)
         np.random.seed(seed)
@@ -627,7 +626,9 @@ class DIPO:
                            action_gradient_steps=20, action_grad_norm=.2,
                            ac_grad_norm=2., tau=.005, gamma=.99,
                            replay_capacity=1_000_000, batch_size=batch_size,
-                           diffusion_memory_replace="advanced-index assignment",
+                           diffusion_memory_replace="upstream np.copyto (no persistent writeback)",
+                           diffusion_memory_replace_is_upstream=(
+                               type(self.diffusion_memory).replace is DiffusionMemory.replace),
                            evaluation_policy="fresh Gaussian initial noise; reverse noise disabled")
 
     @property

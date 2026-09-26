@@ -89,6 +89,11 @@ def verify(output, job, commit, preflight):
                                    config["agent"].get("actual_actor_class") != "Diffusion" or
                                    config["agent"].get("n_timesteps") != 100):
         raise ValueError("official MuJoCo DIPO implementation was not constructed")
+    if job.get("dipo_upstream_memory") and (
+            config["agent"].get("diffusion_memory_replace_is_upstream") is not True or
+            config["agent"].get("diffusion_memory_replace") !=
+            "upstream np.copyto (no persistent writeback)"):
+        raise ValueError("DIPO replay replace must inherit the pinned upstream behavior")
     for key, agent_key in (("meow_alpha", "alpha"),
                            ("mfpo_target_entropy_per_dim", "target_entropy_coeff")):
         if key in job and config["agent"].get(agent_key) != job[key]:
