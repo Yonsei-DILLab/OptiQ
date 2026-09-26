@@ -31,7 +31,8 @@ def get_map(name: str):
 
 def plot_map(ax, maze: str, obstacle: bool = False, *, goal_counts=None,
              outcome_colors: bool = False, visited_goal_color: str = VISITED_GOAL_COLOR,
-             unvisited_goal_color: str = UNVISITED_GOAL_COLOR):
+             unvisited_goal_color: str = UNVISITED_GOAL_COLOR,
+             show_inactive_obstacles: bool = False):
     if maze not in MAP_NAMES:
         raise ValueError(maze)
     cells = get_map(maze)
@@ -49,6 +50,8 @@ def plot_map(ax, maze: str, obstacle: bool = False, *, goal_counts=None,
             if value == 1:
                 color = "#777777"
             elif value == 2:
+                if not obstacle and not show_inactive_obstacles:
+                    continue
                 color = "#c9c9c9" if obstacle else "#eeeeee"
             elif value == "g":
                 color = (UNKNOWN_GOAL_COLOR if goal_counts is None else

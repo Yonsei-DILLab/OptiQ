@@ -51,6 +51,8 @@ def load(root, maze, method, temperature_root, dipo_root=None):
     raw=folder/'evaluations'/f'001000192_{mode}.npz'
     with np.load(raw) as z:
         ids=z['goal_ids'];tracks=z['xy'];returns=z['returns']
+        if bool(z['obstacle']):
+            raise ValueError('base-maze paper figure cannot hide active evaluation obstacles')
     if len(ids)!=500 or tracks.shape[0]!=500 or not np.isfinite(returns).all():
         raise ValueError('not500 valid evaluation episodes')
     n=8 if maze=='hard' else 4
@@ -154,6 +156,8 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.5,
     manifest=dict(figure=name,methods=methods,rows=['medium','hard'],pending=pending,
         figure_is_complete=not pending,inputs=data,rollouts_per_panel=500,alpha=alpha,linewidth=1.8,
         algorithm_font='Arial sans-serif; only iBOLT uses Arial Bold',
+        map_rendering=dict(actual_walls_preserved=True,additional_obstacles_active=False,
+                           inactive_obstacle_placeholders_shown=False),
         title='Figure4: PointMaze',training_seed=0,ibolt_temperature=5.,
         ibolt_sampling='fresh normal z each action; mu-only; conditional sigma off',
         baseline_sampling='native policy sampling; original entropy settings, not the new sensitivity grid',
