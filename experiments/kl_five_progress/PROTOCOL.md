@@ -59,11 +59,15 @@ source: extensions/kl_five_progress_20260926 under the established login4
 scratch root. Do not touch unrelated held jobs.
 
 Preflight clarification: restoring the saved optimizer and RNG and taking
-evaluation samples must be byte-exact. A repeated GPU update after restoring may
-have floating-point differences, which are logged per run (max absolute error;
-all leaves must agree within rtol=1e-5, atol=1e-7). Do not assert bitwise GPU
-arithmetic without observing it. Original preflight attempt 9deb5cd remains
-immutable; a fresh source snapshot is used for this diagnostic clarification.
+evaluation samples must be byte-exact. Compare the next updates from two
+identically restored states, with and without intervening evaluation; require
+array equality. Separately report uninterrupted-versus-restored differences,
+which can reflect a changed compiled executable for restored host array inputs.
+This distinction tests whether sampling changes training, without conflating it
+with host/device compilation. Earlier preflights observed differences of roughly
+1e-7 and 5e-7 after restore, with the restored state itself byte-identical.
+Both prior snapshots remain immutable. This changes diagnostics only, not the
+inherited training kernels or experimental settings.
 
 ## Figures
 
