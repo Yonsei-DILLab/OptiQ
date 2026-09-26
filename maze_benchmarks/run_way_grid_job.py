@@ -12,11 +12,17 @@ import time
 
 import numpy as np
 
-from .run_nway_job import METHODS, STEPS, WARMUP, atomic_json, verify_source
+from .run_nway_job import METHODS, atomic_json, verify_source
 
 
 TASKS = ("4way", "8way", "12way", "16way")
 TEMPERATURES = (1., 3., 5.)
+NUM_ENVS = 256
+BATCH_SIZE = 4096
+UPDATES_PER_COLLECT = 16
+WARMUP = 8192
+STEPS = 1_000_192
+PREFLIGHT_STEPS = WARMUP + NUM_ENVS
 
 
 def job_name(task: str, method: str, temperature: float) -> str:
@@ -30,12 +36,14 @@ def verify_run(output: Path, commit: str, task: str, method: str,
     record = progress["latest_evaluation"]
     if progress["status"] != "complete" or progress["steps"] != steps:
         raise ValueError("incomplete transition budget")
-    if progress["updates"] != steps - WARMUP:
-        raise ValueError("actor/critic update count differs from UTD=1")
+    expected_updates = (steps - WARMUP) // NUM_ENVS * UPDATES_PER_COLLECT
+    if progress["updates"] != expected_updates:
+        raise ValueError("actor/critic update count differs from vector profile")
     if (config["source_commit"], config["task"], config["method"]) != (commit, task, method):
         raise ValueError("source, task or method mismatch")
     if (config["num_envs"], config["batch_size"], config["updates_per_collect"],
-            config["warmup"], config["seed"]) != (16, 256, 16, WARMUP, 0):
+            config["warmup"], config["seed"]) != (
+                NUM_ENVS, BATCH_SIZE, UPDATES_PER_COLLECT, WARMUP, 0):
         raise ValueError("vector collection/update profile mismatch")
     if method == "optiq" and config["temperature"] != temperature:
         raise ValueError("OptiQ temperature mismatch")
@@ -89,16 +97,18 @@ def main():
                source_commit=args.source_commit, pid=os.getpid(), started=time.time(), status="preflight")
     atomic_json(job_path, job)
     try:
-        for phase, steps, episodes in (("preflights", 1040, 8), ("runs", STEPS, 256)):
+        for phase, steps, episodes in (("preflights", PREFLIGHT_STEPS, 8),
+                                       ("runs", STEPS, 256)):
             target = args.root / phase / name
             target.parent.mkdir(parents=True, exist_ok=True)
             final_episodes = episodes if phase == "preflights" else 1024
             command = [sys.executable, "-m", "maze_benchmarks.run",
                        "--task", args.task, "--method", args.method,
                        "--output", str(target), "--seed", "0", "--steps", str(steps),
-                       "--num-envs", "16", "--updates-per-collect", "16",
-                       "--batch-size", "256", "--warmup", str(WARMUP),
-                       "--eval-every", str(1040 if phase == "preflights" else 100_000),
+                       "--num-envs", str(NUM_ENVS),
+                       "--updates-per-collect", str(UPDATES_PER_COLLECT),
+                       "--batch-size", str(BATCH_SIZE), "--warmup", str(WARMUP),
+                       "--eval-every", str(PREFLIGHT_STEPS if phase == "preflights" else 200_000),
                        "--eval-episodes", str(episodes),
                        "--final-eval-episodes", str(final_episodes),
                        "--temperature", str(args.temperature), "--render-each-eval",
