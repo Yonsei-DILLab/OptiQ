@@ -74,3 +74,5 @@ def get_map(map_):
             return HARD
         case _:
             raise NotImplementedError(f'Unknown maze map: {map_}')
+
+

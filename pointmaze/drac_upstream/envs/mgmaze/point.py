@@ -82,3 +82,5 @@ class PointEnv(MujocoEnv):
         if m > 5:
             qvel = self.data.qvel * 5 / m
             self.set_state(self.data.qpos, qvel)
+
+

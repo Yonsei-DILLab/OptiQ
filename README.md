@@ -152,7 +152,8 @@ is retained for license compliance.
 For anonymous review, publish the selected branch through the anonymization
 service, not the identifying upstream repository URL. Exclude outputs and
 runtime logs from the mirror, and inspect its preview before sharing.
-# Multi-goal PointMaze
+
+## Multi-goal PointMaze
 
 The completed Simple/Medium/Hard T=5, seed-0 profile is available separately:
 

@@ -2,6 +2,7 @@
 import argparse
 from contextlib import contextmanager
 import json
+import random
 from pathlib import Path
 
 import flax.serialization
@@ -31,12 +32,14 @@ class SpaceOnlyEnv(gym.Env):
         raise RuntimeError('TaskBatch owns the simulator')
 
 
-def configuration(seed=0, temperature=5., batch_size=4096):
+def configuration(seed=0, temperature=5., batch_size=4096, maze='simple'):
     cfg = compose_config(['benchmark=ant', f'seed={seed}', 'dacer.enabled=false',
                           'wandb.activate=false'])
     cfg.alg.actor.temperature = temperature
     cfg.alg.learning_starts = cfg.alg.actor.learning_starts = 0
     cfg.alg.batch_size = batch_size
+    cfg.task = f'pointmaze-{maze}'
+    cfg.env_name = f'DrAC-PointMaze-{maze}'
     cfg.diagnostic_interval = 0
     return cfg
 
@@ -138,7 +141,10 @@ def main():
     if not args.allow_cpu and jax.default_backend() != 'gpu':
         raise RuntimeError('GPU required (or explicitly use --allow-cpu for tests)')
     args.output.mkdir(parents=True, exist_ok=False)
-    cfg = configuration(args.seed, args.temperature, args.batch_size)
+    np.random.seed(args.seed)
+    random.seed(args.seed)
+    cfg = configuration(args.seed, args.temperature, args.batch_size, args.maze)
+    cfg.total_steps = args.steps
     metadata = {**vars(args), 'output': str(args.output), 'expected_updates': count,
                 'utd': args.updates_per_collect / args.num_envs,
                 'learner': OmegaConf.to_container(cfg, resolve=True), 'runtime': provenance(),
