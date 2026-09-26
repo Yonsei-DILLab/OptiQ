@@ -1,0 +1,7 @@
+# PointMaze Simple MEOW alpha 0.5
+
+Run one fresh seed-0 PointMaze Simple policy at fixed MEOW alpha 0.5. The earlier alpha 0.2 control reached one goal in all 500 final episodes, while alpha 1/3/10 succeeded in 0/1/0 of 500 episodes. The wall-free 4-Way MEOW baseline at alpha 0.2 reached two goals, not all four; the prior four-goal results were MFPO and OptiQ. This follow-up tests an intermediate value without claiming a four-goal MEOW precedent.
+
+Use the same frozen learner `caf133d3ed4bdc8e4f48c029e75ed8f6450144ac` as the prior MEOW alpha grid. Preserve its native flow, log-sigma bounds, Adam 1e-3, tau 0.005, gradient clip 30, replay, sparse +100 reward, fixed Simple map, 256 environments, batch 4096, 16 updates per 256 transitions, 8192 warmup transitions, 1,000,192 total transitions and 62,000 updates. Keep 200k/200-episode intermediate and 500-episode final direct-policy evaluations, obstacle evaluations, native entropy/Q diagnostics and automatic trajectory figures. Only `meow_alpha` changes from the earlier grid; no other algorithm or environment is added.
+
+Commit and share this plan before launching. Use an unlocked `vast-heechan-46` RTX 5090, with an independent 8448-transition/16-update preflight before the full run. Preserve existing DIPO workers and all prior results. Failures pause this queue without automatic retry. Compare final success, per-goal counts, trajectories and native diagnostics to the preserved alpha 0.2/1/3/10 runs, clearly labeling the single-seed limitation.

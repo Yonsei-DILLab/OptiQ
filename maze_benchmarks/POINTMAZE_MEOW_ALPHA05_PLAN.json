@@ -1,0 +1,16 @@
+{
+  "campaign": "pointmaze-simple-meow-alpha05-1m-20260926",
+  "control_campaign": "pointmaze-simple-entropy-grid-1m-20260926",
+  "seed": 0,
+  "jobs": [
+    {
+      "name": "pm_simple-meow-alpha05-s0",
+      "task": "pm_simple",
+      "method": "meow",
+      "temperature": 3.0,
+      "meow_alpha": 0.5,
+      "entropy_diagnostics": true,
+      "host": "vast-heechan-46"
+    }
+  ]
+}
