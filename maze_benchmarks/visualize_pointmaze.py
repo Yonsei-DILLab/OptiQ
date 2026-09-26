@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import to_rgb
+from matplotlib.collections import LineCollection
 from matplotlib.patches import Rectangle
 import numpy as np
 from .plot_style import TRAJECTORY_ALPHA, TRAJECTORY_COLOR, TRAJECTORY_LINEWIDTH
@@ -85,16 +86,25 @@ def plot_map(ax, maze: str, obstacle: bool = False, *, goal_counts=None,
 def plot_rollouts(ax, data: Path, max_trajectories: int = 500,
                   alpha: float = TRAJECTORY_ALPHA, *, outcome_colors: bool = False,
                   success_color: str = SUCCESS_TRAJECTORY_COLOR,
-                  failure_color: str = FAILURE_TRAJECTORY_COLOR):
+                  failure_color: str = FAILURE_TRAJECTORY_COLOR,
+                  trajectory_border_width: float = 0.):
     if not np.isfinite(alpha) or not 0 < alpha <= 1:
         raise ValueError("trajectory alpha must lie in (0,1]")
+    if not np.isfinite(trajectory_border_width) or trajectory_border_width < 0:
+        raise ValueError("trajectory border width must be finite and nonnegative")
     with np.load(data) as values:
         tracks = values["xy"]
         goals = values["goal_ids"]
         returns = values["returns"]
-    for index in range(min(max_trajectories, len(tracks))):
-        valid = np.isfinite(tracks[index]).all(axis=-1)
-        track = tracks[index, valid]
+    selected_tracks = [track[np.isfinite(track).all(axis=-1)]
+                       for track in tracks[:max_trajectories]]
+    if trajectory_border_width:
+        # All outlines are below all colored paths: a later white stroke must
+        # never erase an earlier trajectory or alter its apparent frequency.
+        ax.add_collection(LineCollection([track for track in selected_tracks if len(track)],
+                          colors="white", linewidths=TRAJECTORY_LINEWIDTH+2*trajectory_border_width,
+                          alpha=1., capstyle="round", joinstyle="round", zorder=1.9))
+    for index, track in enumerate(selected_tracks):
         if len(track):
             color = (success_color if goals[index] >= 0 else
                      failure_color) if outcome_colors else TRAJECTORY_COLOR

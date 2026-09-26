@@ -75,7 +75,7 @@ def load(root, maze, method, temperature_root, dipo_root=None):
 
 def build(root, temps, out, columns, dipo_root=None, alpha=.5,
           outcome_colors=False, formats=('pdf','png','svg'), trajectory_palette='mint-pink',
-          match_goal_colors=False, failure_trajectory_color=None):
+          match_goal_colors=False, failure_trajectory_color=None, trajectory_border_width=0.):
     success_color,failure_color=TRAJECTORY_PALETTES[trajectory_palette]
     reached_goal_color=success_color if match_goal_colors else VISITED_GOAL_COLOR
     unreached_goal_color=failure_color if match_goal_colors else UNVISITED_GOAL_COLOR
@@ -119,10 +119,12 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.5,
                 before=len(ax.lines)
                 plot_rollouts(ax,Path(entry['raw']),max_trajectories=500,alpha=alpha,
                               outcome_colors=outcome_colors,success_color=success_color,
-                              failure_color=failure_color)
+                              failure_color=failure_color,trajectory_border_width=trajectory_border_width)
                 trajectories=ax.lines[before:]
                 if len(trajectories)!=500 or any(x.get_alpha()!=alpha for x in trajectories):
                     raise ValueError('rendered rollout count/alpha differs')
+                if trajectory_border_width and len(ax.collections[-1].get_segments())!=500:
+                    raise ValueError('outline geometry count differs from actual trajectories')
                 if outcome_colors:
                     with np.load(entry['raw']) as raw:
                         expected_colors=[success_color if g>=0 else failure_color
@@ -162,6 +164,10 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.5,
         failure_trajectory_color_override=failure_trajectory_color,
         goal_border=dict(color=GOAL_BORDER_COLOR,linewidth=GOAL_BORDER_LINEWIDTH,
                          above_trajectory_lines=True) if outcome_colors else None,
+        trajectory_border=dict(color='white',width_per_side=trajectory_border_width,
+                               total_stroke_width=1.8+2*trajectory_border_width,
+                               draw_order='all white outlines below all colored trajectories')
+                          if trajectory_border_width else None,
         color_semantics=dict(success=success_color,failure=failure_color,
                              reached_goal=reached_goal_color,unreached_goal=unreached_goal_color,
                              goal_rule='at least one terminal success in the 500 displayed episodes',
@@ -182,6 +188,7 @@ def main():
     p.add_argument('--trajectory-palette',choices=TRAJECTORY_PALETTES,default='mint-pink')
     p.add_argument('--match-goal-colors',action='store_true')
     p.add_argument('--failure-trajectory-color')
+    p.add_argument('--trajectory-border-width',type=float,default=0.)
     p.add_argument('--formats',choices=('png','pdf','svg'),nargs='+',default=['pdf','png','svg'])
     a=p.parse_args()
     if any(not np.isfinite(v) or not 0<v<=1 for v in a.alphas):raise ValueError('invalid alpha')
@@ -190,7 +197,8 @@ def main():
             m=build(a.root,a.temperatures,a.output,count,a.dipo_root,alpha=alpha,
                     outcome_colors=a.outcome_colors,formats=a.formats,
                     trajectory_palette=a.trajectory_palette,match_goal_colors=a.match_goal_colors,
-                    failure_trajectory_color=a.failure_trajectory_color)
+                    failure_trajectory_color=a.failure_trajectory_color,
+                    trajectory_border_width=a.trajectory_border_width)
             print(json.dumps(dict(figure=m['figure'],complete=m['figure_is_complete'],pending=m['pending'])))
     (a.output/'CAPTION.txt').write_text('Figure4: PointMaze. Top: Medium; bottom: Hard. Each completed panel shows all500 evaluation trajectories from one seed0 policy after1M environment interactions. iBOLT uses T=5 and fresh Gaussian latent z at each action with mu-only output (no conditional sigma). Baselines use their native sampling rules and original entropy settings. The seven-column draft reserves DIPO until the official implementation completes1M; no older variant is substituted.\n')
     if a.outcome_colors:
