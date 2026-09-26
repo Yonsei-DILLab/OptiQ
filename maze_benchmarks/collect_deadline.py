@@ -106,6 +106,11 @@ def main():
             results[name] = dict(reused=True, training_source=reuse["source_commit"],
                                  steps=1_000_000, updates=998976, num_envs=16, batch_size=256, utd=1.,
                                  path=str(source), sha256=hashes, record=record)
+    for result in results.values():
+        for mode in ("policy", "mu_only", "obstacle_policy"):
+            if mode in result["record"]:
+                row = result["record"][mode]
+                row.setdefault("reachable_goals", sum(count > 0 for count in row["goals"]))
     manifest.update(expected=33, complete=len(results), updated=time.time(),
                     fresh_training_source=TRAINING_SOURCE,
                     note="8/16-Way T1 historical UTD1; new jobs UTD0.0625. Not a matched temperature ablation.")
