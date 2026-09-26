@@ -15,14 +15,16 @@ class CloudTRG(OptiQTRG):
         key,zk,pk=jax.random.split(key,3)
         z=jax.random.normal(zk,(self.batch*self.n,2))
         obs=jnp.zeros((self.batch*self.n,1))
-        mu,ls=state.apply_fn({'params':state.params},obs,z)
-        mu,ls=mu.reshape(self.batch,self.n,2),ls.reshape(self.batch,self.n,2)
+        def outputs(params):
+            mu,ls=state.apply_fn({'params':params},obs,z)
+            return mu.reshape(self.batch,self.n,2),ls.reshape(self.batch,self.n,2)
+        (mu,ls),backward=jax.vjp(outputs,state.params)
         proposal=Proposal(jax.lax.stop_gradient(mu),jax.lax.stop_gradient(ls),self.teacher_std_floor)
         actions,_,_=proposal.sample(pk,self.m//self.n,'exact')
         actions=jax.lax.stop_gradient(actions)
 
-        def cloud_loss(params, zc, ac, mc, lc):
-            cm,cl=state.apply_fn({'params':params},jnp.zeros((self.n,1)),zc)
+        def cloud_loss(cm, cl, ac):
+            mc,lc=jax.lax.stop_gradient(cm),jax.lax.stop_gradient(cl)
             cm,cl=cm[None],cl[None]
             p=Proposal(mc[None],lc[None],self.teacher_std_floor)
             q=self.target.jax_log_prob(40*ac[None])
@@ -33,14 +35,11 @@ class CloudTRG(OptiQTRG):
                             q.mean(),(w*q).sum(-1).mean(),jnp.var(cm,axis=1).mean(),
                             (1/(usage*usage).sum(-1)).mean()])
             return value,info
-        def accumulate(carry,inputs):
-            gs,infos=carry
-            (_,info),grad=jax.value_and_grad(cloud_loss,has_aux=True)(state.params,*inputs)
-            return (jax.tree_util.tree_map(jnp.add,gs,grad),infos+info),None
-        (grads,infos),_=jax.lax.scan(accumulate,
-            (jax.tree_util.tree_map(jnp.zeros_like,state.params),jnp.zeros(7)),
-            (z.reshape(self.batch,self.n,2),actions,jax.lax.stop_gradient(mu),jax.lax.stop_gradient(ls)))
-        grads=jax.tree_util.tree_map(lambda x:x/self.batch,grads)
+        def accumulate(infos,inputs):
+            (_,info),grad=jax.value_and_grad(cloud_loss,argnums=(0,1),has_aux=True)(*inputs)
+            return infos+info,grad
+        infos,output_grads=jax.lax.scan(accumulate,jnp.zeros(7),(mu,ls,actions))
+        grads=backward(jax.tree_util.tree_map(lambda x:x/self.batch,output_grads))[0]
         names=['loss','teacher_ess','sigma_mean','teacher_Q','weighted_teacher_Q','mean_spread','component_usage_ess']
         info=dict(zip(names,infos/self.batch))
         info.update(sigma_min=jnp.exp(ls).min(),sigma_max=jnp.exp(ls).max())

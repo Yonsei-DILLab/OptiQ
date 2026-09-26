@@ -14,8 +14,9 @@ replay, interaction or UTD. Original target/evaluation/reference hash retained.
 Original evaluation schedule and 10000 full-policy plus mu-only samples remain.
 
 Small shapes use byte-identical original learner. N>=1024 uses CloudTRG:
-same full-batch random draws and candidate set, sequential per-cloud gradient
-summation, division by256, then one Adam update. This changes floating-point
+same full-batch random draws and candidate set, sequential per-cloud gradients
+with respect to mu/log-sigma, division by256, a single full-batch network VJP,
+then one Adam update. This changes floating-point
 reduction order, not the mathematical loss or batch. Validate against dense
 updates at small N and check actual-batch preflight/memory/time at each shape.
 N=1 has a single teacher candidate so normalized importance weights are1.
