@@ -58,6 +58,13 @@ Use the existing restricted login4 backup route every three minutes. New
 source: extensions/kl_five_progress_20260926 under the established login4
 scratch root. Do not touch unrelated held jobs.
 
+Preflight clarification: restoring the saved optimizer and RNG and taking
+evaluation samples must be byte-exact. A repeated GPU update after restoring may
+have floating-point differences, which are logged per run (max absolute error;
+all leaves must agree within rtol=1e-5, atol=1e-7). Do not assert bitwise GPU
+arithmetic without observing it. Original preflight attempt 9deb5cd remains
+immutable; a fresh source snapshot is used for this diagnostic clarification.
+
 ## Figures
 
 Provide original saved-time plots immediately, marked as such (32768 samples

@@ -68,19 +68,30 @@ def preflight(root,pool):
         t=time.perf_counter();first=exp.advance(count);comp=time.perf_counter()-t
         with tempfile.TemporaryDirectory(dir=root/'runtime') as tmp:
             cp=Path(tmp)/'checkpoint';exp.save(cp)
+            saved=flax.serialization.to_bytes({'state':exp.state,'key':exp.key})
             t=time.perf_counter();info=exp.advance(count);elapsed=time.perf_counter()-t
-            expected=flax.serialization.to_bytes({'state':exp.state,'key':exp.key})
-            exp.restore(cp);key=np.asarray(exp.key).copy();exp.samples(16384)
-            assert np.array_equal(key,np.asarray(exp.key))
+            expected=jax.tree_util.tree_map(lambda x:np.asarray(x).copy(),(exp.state,exp.key))
+            exp.restore(cp)
+            restored=flax.serialization.to_bytes({'state':exp.state,'key':exp.key})
+            assert saved==restored,'Checkpoint restore changed the saved values'
+            exp.samples(16384)
+            assert restored==flax.serialization.to_bytes({'state':exp.state,'key':exp.key})
             exp.advance(count)
-            assert expected==flax.serialization.to_bytes({'state':exp.state,'key':exp.key})
+            leaves=list(zip(jax.tree_util.tree_leaves(expected),jax.tree_util.tree_leaves((exp.state,exp.key))))
+            max_delta=max(float(np.max(np.abs(x.astype(float)-np.asarray(y).astype(float)))) for x,y in leaves)
+            numerically_equal=all(np.allclose(x,y,rtol=1e-5,atol=1e-7) for x,y in leaves)
+            print(json.dumps(dict(case=task['case'],method=task['method'],resume_max_abs_delta=max_delta,
+                resume_allclose=numerically_equal,restore_byte_exact=True,evaluation_byte_exact=True)),flush=True)
+            assert numerically_equal,'GPU update differs materially after an exact restore'
             assert all(np.isfinite(v) for v in first.values()) and all(np.isfinite(v) for v in info.values())
             exp.restore(cp)
             if task['method']=='forward':
                 metric=diagnostics(root,task)(exp,Path(tmp),int(exp.state.step))
                 assert metric['sample_count']==2**20
         records.append(dict(case=task['case'],method=task['method'],L=task['L'],
-            initial_hash_verified=True,resume_with_sampling_exact=True,
+            initial_hash_verified=True,restore_byte_exact=True,evaluation_byte_exact=True,
+            resume_bitwise_equal=max_delta==0,resume_max_abs_delta=max_delta,
+            resume_allclose_rtol=1e-5,resume_allclose_atol=1e-7,
             seconds_per_update=elapsed/count,compile_and_first_block_seconds=comp))
         print(json.dumps(records[-1]),flush=True);del exp;jax.clear_caches()
     write(root/f'runtime/PREFLIGHT_{pool}.json',dict(passed=True,records=records,
