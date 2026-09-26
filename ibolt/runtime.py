@@ -5,8 +5,14 @@ from pathlib import Path
 import subprocess
 import jax
 import numpy as np
-from stable_baselines3.common.logger import KVWriter
+from stable_baselines3.common.logger import KVWriter, Logger
 ROOT = Path(__file__).resolve().parents[1]
+
+class StepLogger(Logger):
+    """Keep a single step coordinate in CSV, TensorBoard and W&B."""
+    def dump(self, step=0):
+        self.record('env_steps', step)
+        super().dump(step)
 
 def provenance():
     versions = {}

@@ -82,7 +82,9 @@ def test_environment_update(task,tmp_path,monkeypatch):
         'diagnostic_interval=4','checkpoint_interval=4','dacer.enabled=false'])
     assert not hasattr(algorithm,'sinkhorn')
     model,callbacks=train.runner.create_algorithm(cfg)
-    model.set_logger(configure(str(tmp_path/'logs'),['csv']))
+    from ibolt.runtime import StepLogger
+    logger=configure(str(tmp_path/'logs'),['csv'])
+    model.set_logger(StepLogger(logger.dir,logger.output_formats))
     cb=callbacks.callbacks[0]
     cb.eval_env.envs[0].env._max_episode_steps=2
     model.get_env().envs[0].env._max_episode_steps=2
@@ -98,7 +100,7 @@ def test_environment_update(task,tmp_path,monkeypatch):
         import csv
         with (tmp_path/'logs'/'progress.csv').open() as stream:
             columns = set(csv.DictReader(stream).fieldnames)
-        allowed = {'train/n_updates','train/actor_loss','train/critic_loss',
+        allowed = {'env_steps','train/n_updates','train/actor_loss','train/critic_loss',
                    'train/current_q_values','train/actor_std_mean','train/actor_std_min',
                    'train/actor_std_max','rollout/ep_rew_mean','rollout/ep_len_mean',
                    'time/fps','time/time_elapsed'}

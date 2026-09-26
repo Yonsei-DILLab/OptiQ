@@ -6,7 +6,7 @@ from stable_baselines3.common.callbacks import CallbackList
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.logger import configure
 from ibolt.dual_evaluation import DualMuEvalCallback
-from ibolt.runtime import WandbWriter
+from ibolt.runtime import StepLogger, WandbWriter
 from exploration import ExplorationIBOLT
 
 def create_algorithm(cfg):
@@ -19,6 +19,7 @@ def create_algorithm(cfg):
             save_every_n_steps=int(cfg.checkpoint_interval) or int(cfg.total_steps),
             tensorboard_log=str(root/'tensorboard'/cfg.run_name))
         logger = configure(str(root/'logs'),['stdout','csv','tensorboard'])
+        logger = StepLogger(logger.dir, logger.output_formats)
         if wandb.run is not None:
             logger.output_formats.append(WandbWriter(wandb.run))
         model.set_logger(logger)
