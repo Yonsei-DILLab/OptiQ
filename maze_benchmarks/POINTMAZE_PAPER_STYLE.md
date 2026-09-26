@@ -21,6 +21,8 @@ the red-failure version after correcting the goal border to lie inside the box.
 - No bottom "Figure 4: PointMaze" caption. Keep the outcome legend. Goal keys
   in the legend are colored square boxes with a white x and an inset border,
   matching the actual goal markers rather than plain color swatches.
+  Enlarge only these goal legend icons to 1.3 times the handle height, centered
+  vertically; keep the legend text and actual map goal sizes unchanged.
 - iBOLT uses fresh random latent z and mu-only actions, conditional sigma OFF.
   Baselines retain their documented native sampling. Current selected iBOLT is
   T=5; a future explicitly selected run changes the input, not the visual style.

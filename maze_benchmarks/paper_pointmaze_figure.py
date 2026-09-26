@@ -29,10 +29,12 @@ def sha(path):
 
 class GoalLegendHandler(HandlerBase):
     """Goal square, inset white border and x, matching the map symbol."""
+    size_scale = 1.3
+
     def create_artists(self, legend, handle, xdescent, ydescent, width, height,
                        fontsize, trans):
-        side = height
-        x, y = -xdescent + (width-side)/2, -ydescent
+        side = self.size_scale * height
+        x, y = -xdescent + (width-side)/2, -ydescent + (height-side)/2
         box = Rectangle((x,y), side,side, facecolor=handle.get_facecolor(),
                         edgecolor='none', transform=trans)
         border = Rectangle((x,y), side,side, fill=False, edgecolor=GOAL_BORDER_COLOR,
@@ -198,6 +200,7 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.2,
                          alignment='inside; double-width stroke clipped to goal box',
                          above_trajectory_lines=True) if outcome_colors else None,
         goal_legend_symbol='colored square with inset white border and white x' if outcome_colors else None,
+        goal_legend_size_scale=GoalLegendHandler.size_scale if outcome_colors else None,
         trajectory_border=dict(color='white',width_per_side=trajectory_border_width,
                                total_stroke_width=1.8+2*trajectory_border_width,
                                draw_order='all white outlines below all colored trajectories')
