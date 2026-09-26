@@ -20,6 +20,11 @@ Flax 0.9.0, Optax 0.1.7, MuJoCo 2.3.7 and scikit-learn 1.7.2.
   returns. No new performance reproduction claim is made.
 - A short Hopper CLI run with exploration enabled completed training, both
   evaluation modes, diagnostics and checkpoint output.
+- Metric cleanup checks enforce the retained CSV key set across all five
+  environments and verify that MuJoCo evaluation archives contain no success
+  or solved-step histories. Detailed diagnostic-only actor calculations were
+  removed; candidate weighting and the marginal-likelihood objective remain.
+  `env_steps` is the single shared coordinate for all logging backends.
 
 These are correctness/execution checks, not new benchmark results. The tests
 used an existing environment; a clean installation of the requirements on
