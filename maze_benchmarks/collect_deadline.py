@@ -45,12 +45,62 @@ print(json.dumps(out))'''
                                                "python3 -c " + shlex.quote(script)], text=True))
 
 
+def audit_ownership(plan, snapshots):
+    expected = {j["name"]: j for j in plan["jobs"]}
+    owners = {}
+    for snap in snapshots:
+        if snap["queue"] is None: continue
+        for job in snap["queue"]["jobs"]:
+            name = job["name"]
+            if name not in expected: raise ValueError(f"unplanned job: {name}")
+            if job["state"] == "transferred":
+                if job.get("destination") != expected[name]["host"]:
+                    raise ValueError("transfer destination disagrees with committed plan")
+                continue
+            if name in owners: raise ValueError(f"duplicate active ownership: {name}")
+            if any(job.get(k) != v for k, v in expected[name].items()):
+                raise ValueError(f"queue configuration/placement differs: {name}")
+            if job["host"] != snap["host"]: raise ValueError("wrong queue host")
+            owners[name] = snap["host"]
+    return dict(owners=owners, missing=sorted(set(expected) - set(owners)))
+
+
+def verify_archive(root, plan, results):
+    fresh = {j["name"]: j for j in plan["jobs"]}
+    reused = {j["name"]: j for j in plan["reused"]}
+    expected = set(fresh) | set(reused)
+    if not set(results) <= expected: raise ValueError("unrequested results in archive")
+    for name, result in results.items():
+        directory = root / "runs" / name
+        for relative, wanted in result["sha256"].items():
+            if result["reused"] and any(p.startswith(".") for p in Path(relative).parts):
+                continue
+            if digest(directory / relative) != wanted:
+                raise ValueError(f"archived content changed: {name}/{relative}")
+        if name in fresh:
+            if result["reused"]: raise ValueError("fresh result mislabeled as reuse")
+            checked = verify(directory, fresh[name], TRAINING_SOURCE, False)
+            if checked["sha256"] != result["sha256"]:
+                raise ValueError("fresh archived file inventory differs")
+        else:
+            if not result["reused"]: raise ValueError("historical result duplicated")
+            wanted = reused[name]
+            verify_historical(directory, wanted["source_commit"], wanted["task"],
+                              "optiq", 1_000_000, 1024)
+            config = json.loads((directory / "config.json").read_text())
+            if config["temperature"] != 1.: raise ValueError("historical temperature mismatch")
+    return dict(verified=sorted(results), missing=sorted(expected - set(results)),
+                complete=set(results) == expected, checked_at=time.time())
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--historical-root", type=Path, required=True)
     parser.add_argument("--archive-completed", action="store_true")
     parser.add_argument("--render", action="store_true")
+    parser.add_argument("--verify-all", action="store_true",
+                        help="Recheck every archived file and raw evaluation before final completion")
     args = parser.parse_args()
     root = args.output.resolve()
     root.mkdir(parents=True, exist_ok=True)
@@ -113,7 +163,17 @@ def main():
             if mode in result["record"]:
                 row = result["record"][mode]
                 row.setdefault("reachable_goals", sum(count > 0 for count in row["goals"]))
+    ownership = audit_ownership(plan, snapshots)
+    expected_names = {j["name"] for j in plan["jobs"] + plan["reused"]}
+    if len(expected_names) != 33 or not set(results) <= expected_names:
+        raise ValueError("result scope differs from requested 33 policies")
+    if args.verify_all:
+        audit = verify_archive(root, plan, results)
+        audit["ownership"] = ownership
+        audit["complete"] = audit["complete"] and not ownership["missing"]
+        (root / "completion-audit.json").write_text(json.dumps(audit, indent=2))
     manifest.update(expected=33, complete=len(results), updated=time.time(),
+                    ownership=ownership,
                     fresh_training_source=TRAINING_SOURCE,
                     note="8/16-Way T1 historical UTD1; new jobs UTD0.0625. Not a matched temperature ablation.")
     manifest_path.write_text(json.dumps(manifest, indent=2))
