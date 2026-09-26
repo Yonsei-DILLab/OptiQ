@@ -544,3 +544,15 @@ N=M256 jobs were stopped and must not be resumed or retried. Preserve logs,
 config, source, preflight proofs and partial W&B records. Continue only the
 N=M128 v3/v4 jobs on vast1 and the independent preexisting T=3 jobs on
 the RTX5090 hosts. This supersedes the N=M256 launch portion above.
+
+User-confirmed PointMaze paper style (2026-09-26): future result updates use
+blue successful trajectories and RED failed trajectories, matching blue/red
+visited/unvisited goals. Keep all500 episodes, width1.8, primary alpha.2
+(alternate.1), Medium/Hard two rows, sans-serif labels and only iBOLT bold.
+White goal borders must lie entirely INSIDE the original colored square and
+never overlap gray walls. Remove trajectory white outlines/halos and inactive
+obstacle placeholders; preserve actual walls. No bottom Figure4 caption.
+Gray failures and success-only were alternatives, not the selected default.
+iBOLT rollout is random-z mu-only with conditional sigma OFF; baselines native.
+Use maze_benchmarks/POINTMAZE_PAPER_STYLE.md and paper_pointmaze_figure defaults.
+Preserve source/evaluation hashes; this is reporting only, not training approval.

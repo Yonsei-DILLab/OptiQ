@@ -75,10 +75,10 @@ def load(root, maze, method, temperature_root, dipo_root=None):
                 success=float(np.mean(ids>=0)),steps=progress['steps'],updates=progress['updates'])
 
 
-def build(root, temps, out, columns, dipo_root=None, alpha=.5,
-          outcome_colors=False, formats=('pdf','png','svg'), trajectory_palette='mint-pink',
-          match_goal_colors=False, failure_trajectory_color=None, trajectory_border_width=0.,
-          hide_failed_trajectories=False, no_figure_caption=False):
+def build(root, temps, out, columns, dipo_root=None, alpha=.2,
+          outcome_colors=True, formats=('pdf','png','svg'), trajectory_palette='blue-red',
+          match_goal_colors=True, failure_trajectory_color=None, trajectory_border_width=0.,
+          hide_failed_trajectories=False, no_figure_caption=True):
     success_color,failure_color=TRAJECTORY_PALETTES[trajectory_palette]
     reached_goal_color=success_color if match_goal_colors else VISITED_GOAL_COLOR
     unreached_goal_color=failure_color if match_goal_colors else UNVISITED_GOAL_COLOR
@@ -198,14 +198,15 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.5,
 def main():
     p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--temperatures',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True);p.add_argument('--dipo-root',type=Path)
-    p.add_argument('--alphas',type=float,nargs='+',default=[.5])
-    p.add_argument('--outcome-colors',action='store_true')
-    p.add_argument('--trajectory-palette',choices=TRAJECTORY_PALETTES,default='mint-pink')
-    p.add_argument('--match-goal-colors',action='store_true')
+    p.add_argument('--alphas',type=float,nargs='+',default=[.2,.1])
+    p.add_argument('--outcome-colors',action=argparse.BooleanOptionalAction,default=True)
+    p.add_argument('--trajectory-palette',choices=TRAJECTORY_PALETTES,default='blue-red')
+    p.add_argument('--match-goal-colors',action=argparse.BooleanOptionalAction,default=True)
     p.add_argument('--failure-trajectory-color')
     p.add_argument('--trajectory-border-width',type=float,default=0.)
     p.add_argument('--hide-failed-trajectories',action='store_true')
-    p.add_argument('--no-figure-caption',action='store_true')
+    p.add_argument('--no-figure-caption',action='store_true',default=True)
+    p.add_argument('--figure-caption',dest='no_figure_caption',action='store_false')
     p.add_argument('--formats',choices=('png','pdf','svg'),nargs='+',default=['pdf','png','svg'])
     a=p.parse_args()
     if any(not np.isfinite(v) or not 0<v<=1 for v in a.alphas):raise ValueError('invalid alpha')
