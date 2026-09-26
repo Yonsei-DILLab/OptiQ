@@ -34,7 +34,6 @@ to iBOLT on Simple and Hard, not uniformly to every baseline.
 | Actor / critic optimizer | Adam, learning rate 3e-4, betas (0.9, 0.999) |
 | Discount / target update coefficient | 0.99 / 0.005 |
 | Replay capacity / batch size | 1,000,000 / 4096 |
-| Parallel collectors | 256 |
 | Uniform-action warmup | 8192 transitions, included in the budget |
 | Total interactions | 1,000,192 |
 | Latents / components / candidates | fresh N(0,I_2), N=M=64 |
@@ -44,9 +43,6 @@ to iBOLT on Simple and Hard, not uniformly to every baseline.
 | Proposal sigma floor | exp(-5) |
 | Actor objective | direct value-weighted marginal mixture NLL |
 | Gradient clipping / DACER / NovelD / entropy backup | all disabled |
-
-The 256 environments are independent, synchronously stepped CPU simulators;
-this does not claim GPU-vectorized MuJoCo physics.
 
 ## Environment
 

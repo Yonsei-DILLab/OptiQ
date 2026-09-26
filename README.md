@@ -161,6 +161,6 @@ The reported Simple/Hard T=5, seed-0 profile is available separately:
 python -m pointmaze.run --maze simple --output outputs/pointmaze-simple-T5-s0
 ```
 
-See [pointmaze/PROTOCOL.md](pointmaze/PROTOCOL.md) for the exact 256-collector,
+See [pointmaze/PROTOCOL.md](pointmaze/PROTOCOL.md) for the
 batch-4096 settings, sparse reward, evaluation rules and release
 limitations. MuJoCo and GMM40 defaults are unchanged.
