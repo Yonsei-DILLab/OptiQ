@@ -1,0 +1,51 @@
+{
+  "reason": "vast-heechan-180 CUDA_ERROR_UNKNOWN with no visible GPU on new processes; preserve running workers",
+  "original_training_source": "3f54c1eb769743b430aaa79922552234603824b9",
+  "original_schedule_commit": "97cf3298e075db28af9edd2e92672f40a92142f5",
+  "root": "/home/heechan/optiq-experiments/way-grid-1m-s0-20260926-replacement199",
+  "shards": {
+    "vast-heechan-199:gpu3": [
+      "4way:optiq:1",
+      "4way:optiq:3",
+      "4way:optiq:5",
+      "4way:sac",
+      "4way:sql",
+      "4way:meow",
+      "4way:mfpo",
+      "4way:td3",
+      "4way:dipo"
+    ],
+    "vast-heechan-199:gpu0": [
+      "8way:optiq:3",
+      "8way:optiq:5",
+      "8way:sac",
+      "8way:sql",
+      "8way:meow",
+      "8way:mfpo",
+      "8way:td3",
+      "8way:dipo"
+    ],
+    "vast-heechan-199:gpu1": [
+      "12way:optiq:3",
+      "12way:optiq:5",
+      "12way:sac",
+      "12way:sql",
+      "12way:meow",
+      "12way:mfpo",
+      "12way:td3",
+      "12way:dipo"
+    ],
+    "vast-heechan-199:gpu2": [
+      "16way:optiq:3",
+      "16way:optiq:5",
+      "16way:sac",
+      "16way:sql",
+      "16way:meow",
+      "16way:mfpo",
+      "16way:td3",
+      "16way:dipo"
+    ]
+  },
+  "old_root_preserved": "/home/heechan/optiq-experiments/way-grid-1m-s0-20260926",
+  "meow_alpha_queues_on_199": "preserved and allowed to claim their existing locks first"
+}
