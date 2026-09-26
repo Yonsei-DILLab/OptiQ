@@ -1,0 +1,23 @@
+{
+  "campaign": "paper-pointmaze-seven-t3-20260926",
+  "training_source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "source_host": "vast1",
+  "source_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926",
+  "new_host": "vast-heechan-180",
+  "transfer_from_vast1": [
+    "pm_medium-td3-s0",
+    "pm_hard-sac-s0",
+    "pm_hard-meow-s0",
+    "pm_hard-sql-s0",
+    "pm_hard-mfpo-s0",
+    "pm_hard-td3-s0"
+  ],
+  "audit_name": "transfer-to-vast-heechan-180-final.json",
+  "gpu0_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-final-180-gpu0-20260926",
+  "gpu0_jobs_in_order": ["medium:td3", "hard:sac", "hard:meow"],
+  "gpu3_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-final-180-gpu3-20260926",
+  "gpu3_jobs_in_order": ["hard:sql", "hard:mfpo", "hard:td3"],
+  "reason": "The 5090 GPU0 and GPU3 became idle after their PointMaze queues completed, while the remaining six tasks stayed unclaimed on vast1 behind unrelated fixed-sigma compute processes. Transfer all six atomically under the vast1 queue lock, then split the exact names across two guarded 5090 slots.",
+  "learning_source_and_hyperparameters_unchanged": true,
+  "preserve_unrelated_processes_and_original_logs": true
+}

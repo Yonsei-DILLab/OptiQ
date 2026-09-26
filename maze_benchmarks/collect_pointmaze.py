@@ -19,12 +19,16 @@ REMOTE_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926
 REPAIR_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-dipo-envfix-20260926"
 FINAL_DIPO_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-dipo-180-20260926"
 OVERFLOW_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-overflow-180-20260926"
+FINAL_GPU0_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-final-180-gpu0-20260926"
+FINAL_GPU3_ROOT = "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-final-180-gpu3-20260926"
 SOURCES = (("vast-heechan-180", REMOTE_ROOT, "vast-heechan-180"),
            ("vast-heechan-199", REMOTE_ROOT, "vast-heechan-199"),
            ("vast1", REMOTE_ROOT, "vast1"),
            ("vast1", REPAIR_ROOT, "vast1-dipo-envfix"),
            ("vast-heechan-180", FINAL_DIPO_ROOT, "vast-heechan-180-dipo"),
-           ("vast-heechan-180", OVERFLOW_ROOT, "vast-heechan-180-overflow"))
+           ("vast-heechan-180", OVERFLOW_ROOT, "vast-heechan-180-overflow"),
+           ("vast-heechan-180", FINAL_GPU0_ROOT, "vast-heechan-180-final-gpu0"),
+           ("vast-heechan-180", FINAL_GPU3_ROOT, "vast-heechan-180-final-gpu3"))
 
 
 def sync(source: str, destination: Path):
@@ -106,6 +110,8 @@ def main():
             if label == "vast1":
                 sync(f"{host}:{remote_root}/transfer-to-vast-heechan-180.json",
                      meta / "transfer-to-vast-heechan-180.json")
+                sync(f"{host}:{remote_root}/transfer-to-vast-heechan-180-final.json",
+                     meta / "transfer-to-vast-heechan-180-final.json")
         for entry in state["jobs"]:
             if entry["state"] == "failed":
                 sync(f"{host}:{remote_root}/jobs/{entry['name']}.json",

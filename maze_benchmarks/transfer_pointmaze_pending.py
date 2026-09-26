@@ -25,6 +25,7 @@ def main() -> None:
     parser.add_argument("--source-host", choices=("180", "199", "vast1", "vast1_repair"),
                         required=True)
     parser.add_argument("--destination", required=True)
+    parser.add_argument("--audit-name", help="Unique JSON sidecar for a later transfer batch")
     args = parser.parse_args()
     plan = json.loads(args.plan.read_text())
     names = plan[f"transfer_from_{args.source_host}"]
@@ -42,7 +43,10 @@ def main() -> None:
         entries = {entry["name"]: entry for entry in state["jobs"]}
         if any(name not in entries or entries[name]["state"] != "pending" for name in names):
             raise ValueError("a requested transfer job was claimed or is absent")
-        sidecar = root / f"transfer-to-{args.destination}.json"
+        audit_name = args.audit_name or f"transfer-to-{args.destination}.json"
+        if (Path(audit_name).name != audit_name or not audit_name.endswith(".json")):
+            raise ValueError("audit name must be one JSON filename")
+        sidecar = root / audit_name
         if sidecar.exists():
             raise FileExistsError(sidecar)
         now = time.time()

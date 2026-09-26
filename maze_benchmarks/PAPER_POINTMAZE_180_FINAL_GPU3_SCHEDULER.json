@@ -1,0 +1,13 @@
+{
+  "campaign": "paper-pointmaze-seven-t3-final-180-gpu3-20260926",
+  "host": "vast-heechan-180",
+  "gpu": 3,
+  "source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "transfer_plan": "maze_benchmarks/PAPER_POINTMAZE_180_FINAL_TRANSFER.json",
+  "jobs_in_order": ["pm_hard-sql-s0", "pm_hard-mfpo-s0", "pm_hard-td3-s0"],
+  "seed": 0,
+  "first_candidate_num_envs": 256,
+  "first_candidate_batch_size": 4096,
+  "first_candidate_updates_per_256_transitions": 16,
+  "independent_backfill": true
+}
