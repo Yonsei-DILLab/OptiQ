@@ -51,7 +51,7 @@ def command(job, output, commit, preflight):
     final = 5 if preflight else 500 if is_maze else 1024
     cmd = [sys.executable, "-m", "maze_benchmarks.run", "--task", job["task"],
             "--method", job["method"], "--temperature", str(job["temperature"]),
-            "--seed", "0", "--output", str(output), "--source-commit", commit,
+            "--seed", str(job.get("seed", 0)), "--output", str(output), "--source-commit", commit,
             "--steps", str(steps), "--num-envs", str(num_envs),
             "--batch-size", str(job.get("batch_size", 4096)),
             "--updates-per-collect", str(updates_per_collect), "--warmup", str(warmup),
@@ -77,7 +77,7 @@ def verify(output, job, commit, preflight):
     if (progress["status"], progress["steps"], progress["updates"]) != ("complete", steps, updates):
         raise ValueError("incomplete step/update audit")
     wanted = dict(task=job["task"], method=job["method"], temperature=job["temperature"],
-                  source_commit=commit, seed=0, num_envs=num_envs,
+                  source_commit=commit, seed=job.get("seed", 0), num_envs=num_envs,
                   batch_size=job.get("batch_size", 4096),
                   updates_per_collect=updates_per_collect, warmup=warmup, steps=steps)
     for key in ("meow_alpha", "mfpo_target_entropy_per_dim", "entropy_diagnostics"):
