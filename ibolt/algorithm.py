@@ -23,17 +23,13 @@ class IBOLT(JaxLearner):
         a = self.cfg.alg.actor
         for i in range(gradient_steps):
             obs, actions, next_obs, dones, rewards = [x[i*batch_size:(i+1)*batch_size] for x in arrays]
-            self.policy.qf_state, metrics, self.key = self.update_critic(
-                self.gamma, self.policy.actor_state, self.policy.qf_state,
-                obs, actions, next_obs, dones, rewards, self.key)
-            self.policy.qf_state = self.soft_update(self.tau, self.policy.qf_state)
-            if self.num_timesteps > a.learning_starts and (self._n_updates+i+1) % self.policy_delay == 0:
-                self.policy.actor_state, actor_metrics, self.key = self.update_actor(
-                    self.policy.actor_state, self.policy.qf_state, obs, self.key,
-                    int(a.num_policy_samples), int(a.proposals_per_policy_sample),
-                    float(a.temperature), float(a.density_correction_beta),
-                    float(a.log_std_min), float(a.log_std_max))
-                metrics.update(actor_metrics)
+            update_actor = self.num_timesteps > a.learning_starts and (self._n_updates+i+1) % self.policy_delay == 0
+            self.policy.qf_state, self.policy.actor_state, metrics, self.key = self._step(
+                self.gamma, self.tau, self.policy.actor_state, self.policy.qf_state,
+                obs, actions, next_obs, dones, rewards, self.key,
+                int(a.num_policy_samples), int(a.proposals_per_policy_sample),
+                float(a.temperature), float(a.density_correction_beta),
+                float(a.log_std_min), float(a.log_std_max), update_actor)
         self._n_updates += gradient_steps
         if self.model_save_path and (self.num_timesteps % self.save_every_n_steps == 0
                                    or self.num_timesteps == self.learning_starts + 1):
@@ -50,6 +46,18 @@ class IBOLT(JaxLearner):
         if due:
             self.logger.record('time/total_timesteps', self.num_timesteps, exclude='tensorboard')
             self.logger.dump(self.num_timesteps)
+
+    @classmethod
+    @partial(jax.jit, static_argnames=['cls','n','repeats','do_actor'])
+    def _step(cls,gamma,tau,actor,critic,obs,actions,next_obs,dones,rewards,key,
+              n,repeats,temperature,beta,min_log_std,max_log_std,do_actor):
+        critic,metrics,key = cls.update_critic(gamma,actor,critic,obs,actions,next_obs,dones,rewards,key)
+        critic = cls.soft_update(tau,critic)
+        if do_actor:
+            actor,actor_metrics,key = cls.update_actor(actor,critic,obs,key,n,repeats,
+                                                      temperature,beta,min_log_std,max_log_std)
+            metrics.update(actor_metrics)
+        return critic,actor,metrics,key
 
     @staticmethod
     @jax.jit
