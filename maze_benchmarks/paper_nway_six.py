@@ -140,7 +140,7 @@ def goals(n):
 
 def render(root, out, records, temperature=1, paper_only=False):
     plt.rcParams.update({'font.family': 'Arial', 'svg.fonttype': 'path', 'axes.unicode_minus': False})
-    fig = plt.figure(figsize=(23.8, 3.5 if paper_only else 4.4), facecolor='white')
+    fig = plt.figure(figsize=(23.8, 4.0 if paper_only else 4.4), facecolor='white')
     for i, n in enumerate((4, 8, 16)):
         name = f'{n}way-optiq-t{temperature:g}-s0'; folder = root/'runs'/name
         cfg = json.loads((folder/'config.json').read_text())
@@ -186,6 +186,10 @@ def render(root, out, records, temperature=1, paper_only=False):
         if not paper_only:
             ax.set_title(f'{n}-Way · trajectories', fontsize=13, pad=12)
         ax.tick_params(labelsize=8)
+        if paper_only:
+            ax.xaxis.label.set_size(26)
+            ax.yaxis.label.set_size(26)
+            ax.tick_params(labelsize=18, pad=4)
         if not paper_only:
             ax.text(.5, -.18, f'Goals reached: {np.count_nonzero(counts)}/{n}',
                     transform=ax.transAxes, ha='center', fontsize=11)
@@ -199,6 +203,11 @@ def render(root, out, records, temperature=1, paper_only=False):
             ax.set_title(f'{n}-Way · Q', fontsize=13, pad=12)
         ax.view_init(elev=29, azim=-55); ax.set_box_aspect((1, 1, .75))
         ax.tick_params(labelsize=8, pad=0)
+        if paper_only:
+            ax.set_xlabel('x', fontsize=26, labelpad=8)
+            ax.set_ylabel('y', fontsize=26, labelpad=8)
+            ax.set_zlabel('Q', fontsize=26, labelpad=8)
+            ax.tick_params(labelsize=18, pad=4)
         records[name].update(rollout_sha256=sha(raw), episodes=len(ids),
                              shown_trajectories=len(tracks),
                              trajectory_style=dict(color='#dd1e27',linewidth=.8,alpha=.18,
@@ -207,7 +216,7 @@ def render(root, out, records, temperature=1, paper_only=False):
                              arrowhead_rollout_indices=indices.tolist(),
                              goal_counts=counts.tolist(), failures=int(sum(ids < 0)))
     if paper_only:
-        fig.subplots_adjust(left=.025, right=.98, bottom=.06, top=.99, wspace=.30)
+        fig.subplots_adjust(left=.025, right=.98, bottom=.12, top=.99, wspace=.45)
     else:
         fig.suptitle(f'iBOLT · T = {temperature:g} · random-z, μ-only', fontsize=16, fontweight='bold', y=.99)
         fig.subplots_adjust(left=.025, right=.98, bottom=.2, top=.85, wspace=.30)
@@ -237,6 +246,8 @@ def main():
     manifest = dict(runs=records, reporting_source=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
         scope='Read-only final-checkpoint inference; no retraining, no checkpoint mutation',
         temperature=a.temperature, paper_only=a.paper_only,
+        axis_label_fontsize=26 if a.paper_only else None,
+        axis_tick_fontsize=18 if a.paper_only else None,
         caveat=('All selected runs have 62000 updates and 1000192 transitions.' if a.temperature != 1 else
                 '4-Way has 62000 updates; 8/16-Way have 998976. These are existing T1 results, not a matched-training-budget comparison.'),
         reference_contours='exp(-nearest_goal_distance_squared/(2*1.35^2)); illustrative goal-proximity, not reward or learned density',
