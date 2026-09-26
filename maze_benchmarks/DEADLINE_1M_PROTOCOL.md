@@ -51,3 +51,15 @@ source a55aaf13f7803b5cf8da7ba56f318675c7794171 on every host. The later
 controller/report commit changes placement only, not learner code. New
 controllers run from their own immutable source and pass the original frozen
 training path to every preflight/main subprocess. Record both paths in manifests.
+
+## Pending-only redistribution after actual throughput check
+
+To use the new hosts when their first jobs finish, release all eight unclaimed
+199 jobs under queue.lock: six SAC/TD3 jobs move to6, Medium/Simple MEOW to46.
+Never move an already claimed job. Commit the placement and transfer tool first.
+Write a durable source release before destination acceptance; retain original
+manifests and source entries as transferred, with audit sidecars. Existing
+workers claim appended jobs normally, retaining original a55 frozen training.
+No optimizer/batch/update/temperature/evaluation change or learner restart.
+After owned jobs complete, finalize the drained source queue while preserving
+its transfer provenance. Global completion still requires all33 unique results.

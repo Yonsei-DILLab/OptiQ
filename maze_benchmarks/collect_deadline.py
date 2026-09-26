@@ -34,11 +34,12 @@ def snapshot(host):
     script = f'''import json
 from pathlib import Path
 r=Path({REMOTE!r})
-out={{"host":{host!r},"queue":None,"progress":{{}},"jobs":{{}}}}
+out={{"host":{host!r},"queue":None,"progress":{{}},"jobs":{{}},"transfers":{{}}}}
 if (r/"queue.json").exists():
  out["queue"]=json.loads((r/"queue.json").read_text())
  for p in r.glob("runs/*/progress.json"):out["progress"][p.parent.name]=json.loads(p.read_text())
  for p in r.glob("jobs/*.json"):out["jobs"][p.stem]=json.loads(p.read_text())
+ for p in r.glob("transfer-*.json"):out["transfers"][p.name]=json.loads(p.read_text())
 print(json.dumps(out))'''
     return json.loads(subprocess.check_output(["ssh", "-o", "ConnectTimeout=10", host,
                                                "python3 -c " + shlex.quote(script)], text=True))

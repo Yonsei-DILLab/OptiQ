@@ -35,56 +35,56 @@
       "task": "pm_medium",
       "method": "meow",
       "temperature": 1.0,
-      "host": "vast-heechan-199"
+      "host": "vast-heechan-46"
     },
     {
       "name": "pm_simple-meow-s0",
       "task": "pm_simple",
       "method": "meow",
       "temperature": 1.0,
-      "host": "vast-heechan-199"
+      "host": "vast-heechan-46"
     },
     {
       "name": "pm_hard-sac-s0",
       "task": "pm_hard",
       "method": "sac",
       "temperature": 1.0,
-      "host": "vast-heechan-199"
+      "host": "vast-heechan-6"
     },
     {
       "name": "pm_hard-td3-s0",
       "task": "pm_hard",
       "method": "td3",
       "temperature": 1.0,
-      "host": "vast-heechan-199"
+      "host": "vast-heechan-6"
     },
     {
       "name": "pm_medium-sac-s0",
       "task": "pm_medium",
       "method": "sac",
       "temperature": 1.0,
-      "host": "vast-heechan-199"
+      "host": "vast-heechan-6"
     },
     {
       "name": "pm_medium-td3-s0",
       "task": "pm_medium",
       "method": "td3",
       "temperature": 1.0,
-      "host": "vast-heechan-199"
+      "host": "vast-heechan-6"
     },
     {
       "name": "pm_simple-sac-s0",
       "task": "pm_simple",
       "method": "sac",
       "temperature": 1.0,
-      "host": "vast-heechan-199"
+      "host": "vast-heechan-6"
     },
     {
       "name": "pm_simple-td3-s0",
       "task": "pm_simple",
       "method": "td3",
       "temperature": 1.0,
-      "host": "vast-heechan-199"
+      "host": "vast-heechan-6"
     },
     {
       "name": "pm_hard-optiq-s0",
@@ -263,5 +263,6 @@
   "expected_unique_results": 33,
   "fresh_jobs": 31,
   "seed": 0,
-  "host_extension": "User added 136.63.24.6:41636, four RTX5090. Only unstarted six jobs are reassigned from46.199 jobs unchanged; frozen learning source remains a55aaf13f7803b5cf8da7ba56f318675c7794171."
+  "host_extension": "User added 136.63.24.6:41636, four RTX5090. Only unstarted six jobs are reassigned from46.199 jobs unchanged; frozen learning source remains a55aaf13f7803b5cf8da7ba56f318675c7794171.",
+  "pending_rebalance": "Eight unclaimed jobs released from199 under queue.lock: SAC/TD3 six to6, Medium/Simple MEOW to46. Existing16 learners and original a55 learning source preserved."
 }
