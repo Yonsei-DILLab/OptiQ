@@ -14,7 +14,7 @@ import numpy as np
 
 from .envs import TaskBatch
 from .agents import OptiQ, SAC, SQL, MEOW, MFPO, DIPO, TD3
-from .visualize_4way import probe_policy
+from .visualize_4way import probe_policy, render as render_4way
 from .visualize_nway import render as render_nway
 from .nway import GOAL_RADIUS, HORIZON as NWAY_HORIZON, STATE_LIMIT, SUCCESS_RADIUS, SUPPORTED_GOALS
 from pointmaze.drac_paper import HORIZONS as PAPER_HORIZONS, GOAL_COUNTS as PAPER_GOALS, MAP_NAMES as PAPER_MAP_NAMES
@@ -136,8 +136,8 @@ def main():
         raise ValueError("MEOW-specific settings require method=meow")
     if args.eval_episodes <= 0 or (args.final_eval_episodes is not None and args.final_eval_episodes <= 0):
         raise ValueError("evaluation episode counts must be positive")
-    if args.render_each_eval and args.task not in (*NWAY_TASKS, *PAPER_TASKS):
-        raise ValueError("automatic figures require an N-Way or paper PointMaze task")
+    if args.render_each_eval and args.task not in ("4way", *NWAY_TASKS, *PAPER_TASKS):
+        raise ValueError("automatic figures require a 4-Way, N-Way or paper PointMaze task")
     if args.task in PAPER_TASKS and (args.eval_episodes % 5 or
                                     (args.final_eval_episodes is not None and args.final_eval_episodes % 5)):
         raise ValueError("paper PointMaze SR5 evaluation needs multiples of five episodes")
@@ -222,7 +222,11 @@ def main():
                 agent.save(args.output / "checkpoints", step, full=step == args.steps)
                 if args.render_each_eval:
                     figure = args.output / "figures" / f"{step:09d}_trajectories.png"
-                    if args.task in NWAY_TASKS:
+                    if args.task == "4way":
+                        render_4way([(f"{args.method.upper()} · T={args.temperature:g}",
+                                      args.output / "evaluations" / f"{step:09d}_policy.npz",
+                                      probe)], figure)
+                    elif args.task in NWAY_TASKS:
                         render_nway(args.task,
                                     args.output / "evaluations" / f"{step:09d}_policy.npz",
                                     probe, figure,
