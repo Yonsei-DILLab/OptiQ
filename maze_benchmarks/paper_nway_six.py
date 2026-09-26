@@ -138,9 +138,9 @@ def goals(n):
     return 6*np.stack([np.cos(angle), np.sin(angle)], axis=-1)
 
 
-def render(root, out, records, temperature=1):
+def render(root, out, records, temperature=1, paper_only=False):
     plt.rcParams.update({'font.family': 'Arial', 'svg.fonttype': 'path', 'axes.unicode_minus': False})
-    fig = plt.figure(figsize=(23.8, 4.4), facecolor='white')
+    fig = plt.figure(figsize=(23.8, 3.5 if paper_only else 4.4), facecolor='white')
     for i, n in enumerate((4, 8, 16)):
         name = f'{n}way-optiq-t{temperature:g}-s0'; folder = root/'runs'/name
         cfg = json.loads((folder/'config.json').read_text())
@@ -183,17 +183,20 @@ def render(root, out, records, temperature=1):
         ax.scatter([0], [0], s=14, color='#202020', zorder=7)
         ax.set(xlim=(-7.7, 7.7), ylim=(-7.7, 7.7), aspect='equal',
                xticks=[-6, -3, 0, 3, 6], yticks=[-6, -3, 0, 3, 6], xlabel='x', ylabel='y')
-        ax.set_title(f'{n}-Way · trajectories', fontsize=13, pad=12)
+        if not paper_only:
+            ax.set_title(f'{n}-Way · trajectories', fontsize=13, pad=12)
         ax.tick_params(labelsize=8)
-        ax.text(.5, -.18, f'Goals reached: {np.count_nonzero(counts)}/{n}',
-                transform=ax.transAxes, ha='center', fontsize=11)
+        if not paper_only:
+            ax.text(.5, -.18, f'Goals reached: {np.count_nonzero(counts)}/{n}',
+                    transform=ax.transAxes, ha='center', fontsize=11)
         ax = fig.add_subplot(1, 6, 2*i+2, projection='3d')
         with np.load(out/f'{n}way_dense_q.npz') as q:
             x, y = np.meshgrid(q['x'], q['y']); value = q['q']
         ax.plot_surface(x, y, value, rcount=len(x), ccount=len(y), cmap='viridis',
                         linewidth=0, edgecolor='none', antialiased=True, shade=True)
         ax.set(xlabel='x', ylabel='y', zlabel='Learned Q', xticks=[-6, 0, 6], yticks=[-6, 0, 6])
-        ax.set_title(f'{n}-Way · Q', fontsize=13, pad=12)
+        if not paper_only:
+            ax.set_title(f'{n}-Way · Q', fontsize=13, pad=12)
         ax.view_init(elev=29, azim=-55); ax.set_box_aspect((1, 1, .75))
         ax.tick_params(labelsize=8, pad=0)
         records[name].update(rollout_sha256=sha(raw), episodes=len(ids),
@@ -203,12 +206,15 @@ def render(root, out, records, temperature=1):
                                                    same_style_for_every_trajectory=True),
                              arrowhead_rollout_indices=indices.tolist(),
                              goal_counts=counts.tolist(), failures=int(sum(ids < 0)))
-    fig.suptitle(f'iBOLT · T = {temperature:g} · random-z, μ-only', fontsize=16, fontweight='bold', y=.99)
-    fig.subplots_adjust(left=.025, right=.98, bottom=.2, top=.85, wspace=.30)
-    fig.text(.5, .035,
-        'All 1,024 saved rollouts; arrowheads thinned for clarity. Contours: goal-proximity reference. '
-        'Q: mean of twin critics, averaged over 128 Gaussian latents per state.',
-        ha='center', fontsize=10)
+    if paper_only:
+        fig.subplots_adjust(left=.025, right=.98, bottom=.06, top=.99, wspace=.30)
+    else:
+        fig.suptitle(f'iBOLT · T = {temperature:g} · random-z, μ-only', fontsize=16, fontweight='bold', y=.99)
+        fig.subplots_adjust(left=.025, right=.98, bottom=.2, top=.85, wspace=.30)
+        fig.text(.5, .035,
+            'All 1,024 saved rollouts; arrowheads thinned for clarity. Contours: goal-proximity reference. '
+            'Q: mean of twin critics, averaged over 128 Gaussian latents per state.',
+            ha='center', fontsize=10)
     for ext in ('png', 'svg'):
         fig.savefig(out/f'ibolt_4_8_16way_T{temperature:g}_1x6.{ext}', dpi=240, bbox_inches='tight', pad_inches=.12)
     plt.close(fig)
@@ -217,7 +223,9 @@ def render(root, out, records, temperature=1):
 def main():
     p = argparse.ArgumentParser(); p.add_argument('--root', type=Path, required=True)
     p.add_argument('--output', type=Path, required=True)
-    p.add_argument('--temperature', type=int, choices=(1, 3, 5, 10), default=1); a = p.parse_args()
+    p.add_argument('--temperature', type=int, choices=(1, 3, 5, 10), default=1)
+    p.add_argument('--paper-only', action='store_true', help='Remove titles, footnotes and coverage text; keep axis labels')
+    a = p.parse_args()
     a.output.mkdir(parents=True, exist_ok=True); records = {}
     for n in (4, 8, 16):
         name = f'{n}way-optiq-t{a.temperature}-s0'; folder = a.root/'runs'/name
@@ -225,10 +233,10 @@ def main():
         old = a.root/'posthoc_mu'/name/f"{proof['step']:09d}_probe_mu_only.npz"
         records[name] = infer(folder, old, proof, a.output/f'{n}way_dense_q.npz')
         print(f'{n}-Way dense Q verified and saved', flush=True)
-    render(a.root, a.output, records, a.temperature)
+    render(a.root, a.output, records, a.temperature, paper_only=a.paper_only)
     manifest = dict(runs=records, reporting_source=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
         scope='Read-only final-checkpoint inference; no retraining, no checkpoint mutation',
-        temperature=a.temperature,
+        temperature=a.temperature, paper_only=a.paper_only,
         caveat=('All selected runs have 62000 updates and 1000192 transitions.' if a.temperature != 1 else
                 '4-Way has 62000 updates; 8/16-Way have 998976. These are existing T1 results, not a matched-training-budget comparison.'),
         reference_contours='exp(-nearest_goal_distance_squared/(2*1.35^2)); illustrative goal-proximity, not reward or learned density',
