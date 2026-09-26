@@ -1,0 +1,266 @@
+{
+  "campaign": "maze-deadline-1m-20260926",
+  "deadline_kst": "2026-09-26T16:00:00+09:00",
+  "jobs": [
+    {
+      "name": "pm_hard-dipo-s0",
+      "task": "pm_hard",
+      "method": "dipo",
+      "temperature": 1.0,
+      "host": "vast-heechan-199"
+    },
+    {
+      "name": "pm_medium-dipo-s0",
+      "task": "pm_medium",
+      "method": "dipo",
+      "temperature": 1.0,
+      "host": "vast-heechan-199"
+    },
+    {
+      "name": "pm_simple-dipo-s0",
+      "task": "pm_simple",
+      "method": "dipo",
+      "temperature": 1.0,
+      "host": "vast-heechan-199"
+    },
+    {
+      "name": "pm_hard-meow-s0",
+      "task": "pm_hard",
+      "method": "meow",
+      "temperature": 1.0,
+      "host": "vast-heechan-199"
+    },
+    {
+      "name": "pm_medium-meow-s0",
+      "task": "pm_medium",
+      "method": "meow",
+      "temperature": 1.0,
+      "host": "vast-heechan-199"
+    },
+    {
+      "name": "pm_simple-meow-s0",
+      "task": "pm_simple",
+      "method": "meow",
+      "temperature": 1.0,
+      "host": "vast-heechan-199"
+    },
+    {
+      "name": "pm_hard-sac-s0",
+      "task": "pm_hard",
+      "method": "sac",
+      "temperature": 1.0,
+      "host": "vast-heechan-199"
+    },
+    {
+      "name": "pm_hard-td3-s0",
+      "task": "pm_hard",
+      "method": "td3",
+      "temperature": 1.0,
+      "host": "vast-heechan-199"
+    },
+    {
+      "name": "pm_medium-sac-s0",
+      "task": "pm_medium",
+      "method": "sac",
+      "temperature": 1.0,
+      "host": "vast-heechan-199"
+    },
+    {
+      "name": "pm_medium-td3-s0",
+      "task": "pm_medium",
+      "method": "td3",
+      "temperature": 1.0,
+      "host": "vast-heechan-199"
+    },
+    {
+      "name": "pm_simple-sac-s0",
+      "task": "pm_simple",
+      "method": "sac",
+      "temperature": 1.0,
+      "host": "vast-heechan-199"
+    },
+    {
+      "name": "pm_simple-td3-s0",
+      "task": "pm_simple",
+      "method": "td3",
+      "temperature": 1.0,
+      "host": "vast-heechan-199"
+    },
+    {
+      "name": "pm_hard-optiq-s0",
+      "task": "pm_hard",
+      "method": "optiq",
+      "temperature": 3.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "pm_medium-optiq-s0",
+      "task": "pm_medium",
+      "method": "optiq",
+      "temperature": 3.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "pm_simple-optiq-s0",
+      "task": "pm_simple",
+      "method": "optiq",
+      "temperature": 3.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "4way-optiq-t1-s0",
+      "task": "4way",
+      "method": "optiq",
+      "temperature": 1.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "4way-optiq-t3-s0",
+      "task": "4way",
+      "method": "optiq",
+      "temperature": 3.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "4way-optiq-t5-s0",
+      "task": "4way",
+      "method": "optiq",
+      "temperature": 5.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "4way-optiq-t10-s0",
+      "task": "4way",
+      "method": "optiq",
+      "temperature": 10.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "8way-optiq-t3-s0",
+      "task": "8way",
+      "method": "optiq",
+      "temperature": 3.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "8way-optiq-t5-s0",
+      "task": "8way",
+      "method": "optiq",
+      "temperature": 5.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "8way-optiq-t10-s0",
+      "task": "8way",
+      "method": "optiq",
+      "temperature": 10.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "16way-optiq-t3-s0",
+      "task": "16way",
+      "method": "optiq",
+      "temperature": 3.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "16way-optiq-t5-s0",
+      "task": "16way",
+      "method": "optiq",
+      "temperature": 5.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "16way-optiq-t10-s0",
+      "task": "16way",
+      "method": "optiq",
+      "temperature": 10.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "pm_hard-mfpo-s0",
+      "task": "pm_hard",
+      "method": "mfpo",
+      "temperature": 1.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "pm_hard-sql-s0",
+      "task": "pm_hard",
+      "method": "sql",
+      "temperature": 1.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "pm_medium-mfpo-s0",
+      "task": "pm_medium",
+      "method": "mfpo",
+      "temperature": 1.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "pm_medium-sql-s0",
+      "task": "pm_medium",
+      "method": "sql",
+      "temperature": 1.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "pm_simple-mfpo-s0",
+      "task": "pm_simple",
+      "method": "mfpo",
+      "temperature": 1.0,
+      "host": "vast-heechan-46"
+    },
+    {
+      "name": "pm_simple-sql-s0",
+      "task": "pm_simple",
+      "method": "sql",
+      "temperature": 1.0,
+      "host": "vast-heechan-46"
+    }
+  ],
+  "reused": [
+    {
+      "name": "8way-optiq-t1-s0",
+      "task": "8way",
+      "method": "optiq",
+      "temperature": 1.0,
+      "source_commit": "973eca4a432cf027a5c725a372aafb86b9ed6c83",
+      "remote_host": "vast-heechan-199",
+      "remote_root": "/home/heechan/optiq-experiments/nway-wallfree-optiq-1m-s0-20260926/runs/8way-optiq-s0",
+      "steps": 1000000,
+      "num_envs": 16,
+      "batch_size": 256,
+      "utd": 1.0
+    },
+    {
+      "name": "16way-optiq-t1-s0",
+      "task": "16way",
+      "method": "optiq",
+      "temperature": 1.0,
+      "source_commit": "973eca4a432cf027a5c725a372aafb86b9ed6c83",
+      "remote_host": "vast-heechan-199",
+      "remote_root": "/home/heechan/optiq-experiments/nway-wallfree-optiq-1m-s0-20260926/runs/16way-optiq-s0",
+      "steps": 1000000,
+      "num_envs": 16,
+      "batch_size": 256,
+      "utd": 1.0
+    }
+  ],
+  "new_profile": {
+    "steps": 1000192,
+    "num_envs": 256,
+    "batch_size": 4096,
+    "updates_per_collect": 16,
+    "warmup": 8192,
+    "learner_updates": 62000,
+    "eval_every": 200000,
+    "eval_episodes": 200,
+    "final_pointmaze_episodes": 500,
+    "final_way_episodes": 1024
+  },
+  "expected_unique_results": 33,
+  "fresh_jobs": 31,
+  "seed": 0
+}

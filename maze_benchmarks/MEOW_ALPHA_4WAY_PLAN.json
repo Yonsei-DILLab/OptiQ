@@ -1,0 +1,21 @@
+{
+  "campaign": "4way-meow-alpha-100k-s0-20260926",
+  "branch": "nway-baselines-20260926",
+  "learning_source_commit": "5abbefea0075a242f534c4adf0ca327bcc82b089",
+  "native_control_alpha": 0.2,
+  "task": "4way",
+  "seed": 0,
+  "steps": 100000,
+  "num_envs": 16,
+  "batch_size": 256,
+  "updates_per_collect": 16,
+  "warmup": 1024,
+  "evaluations_every": 20000,
+  "final_policy_episodes": 100,
+  "jobs": [
+    {"host": "vast-heechan-199", "gpu": 0, "alpha": 2.0},
+    {"host": "vast-heechan-199", "gpu": 1, "alpha": 10.0},
+    {"host": "vast-heechan-199", "gpu": 2, "alpha": 30.0}
+  ],
+  "no_automatic_retry_or_extension": true
+}

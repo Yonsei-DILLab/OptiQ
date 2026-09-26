@@ -1,0 +1,39 @@
+{
+  "campaign": "nway-wallfree-baselines-t1-1m-s0-20260926",
+  "learning_source_commit": "973eca4a432cf027a5c725a372aafb86b9ed6c83",
+  "branch": "nway-baselines-20260926",
+  "seed": 0,
+  "steps": 1000000,
+  "num_envs": 16,
+  "batch_size": 256,
+  "updates_per_collect": 16,
+  "warmup": 1024,
+  "evaluation_interval": 100000,
+  "final_policy_episodes": 1024,
+  "shards": [
+    {
+      "host": "vast-heechan-180",
+      "gpu": 0,
+      "id": "180-gpu0",
+      "jobs": ["8way:sac", "8way:sql", "8way:meow", "8way:mfpo", "8way:td3", "8way:dipo"]
+    },
+    {
+      "host": "vast-heechan-180",
+      "gpu": 3,
+      "id": "180-gpu3",
+      "jobs": ["12way:sac", "12way:sql", "12way:meow", "12way:mfpo", "12way:td3", "12way:dipo"]
+    },
+    {
+      "host": "vast-heechan-199",
+      "gpu": 3,
+      "id": "199-gpu3",
+      "jobs": ["16way:sac", "16way:sql", "16way:meow", "16way:mfpo", "16way:td3", "16way:dipo"]
+    }
+  ],
+  "existing_optiq_t1_results": {
+    "source_commit": "973eca4a432cf027a5c725a372aafb86b9ed6c83",
+    "root": "/home/heechan/optiq-experiments/nway-wallfree-optiq-1m-s0-20260926"
+  },
+  "existing_4way_t1_result": "artifacts/4way_wallfree_100k/runs/optiq-t1-s0",
+  "no_automatic_retry_or_extension": true
+}
