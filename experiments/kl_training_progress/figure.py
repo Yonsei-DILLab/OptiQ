@@ -63,7 +63,7 @@ def draw(data, steps, out, name):
     # Match the tight 1x4 paper figure's plot area and typography.
     panel_w, panel_h = 18.8*(.995-.048)/(4+3*.30), 2.6
     gap_x, gap_y = .50, .65
-    left, right, bottom, top = 1.25, .15, .65, .68
+    left, right, bottom, top = 1.75, .15, .65, .68
     width = left+4*panel_w+3*gap_x+right
     height = bottom+len(steps)*panel_h+(len(steps)-1)*gap_y+top
     fig = plt.figure(figsize=(width, height))
