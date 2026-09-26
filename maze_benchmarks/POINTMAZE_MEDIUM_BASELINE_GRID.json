@@ -1,0 +1,29 @@
+{
+  "campaign": "paper-pointmaze-medium-baseline-grid-2m-s0-20260926",
+  "task": "pm_medium",
+  "seed": 0,
+  "steps": 2000128,
+  "warmup": 8192,
+  "num_envs": 256,
+  "batch_size": 4096,
+  "eval_every": 400000,
+  "eval_episodes": 200,
+  "final_eval_episodes": 2000,
+  "reward": "upstream sparse +100, no intrinsic reward",
+  "shards": {
+    "vast-heechan-180": [
+      {"name": "medium-optiq-u32", "method": "optiq", "updates_per_collect": 32},
+      {"name": "medium-sql-u32", "method": "sql", "updates_per_collect": 32},
+      {"name": "medium-sql-u32-p32", "method": "sql", "updates_per_collect": 32, "sql_particles": 32},
+      {"name": "medium-mfpo-u32", "method": "mfpo", "updates_per_collect": 32},
+      {"name": "medium-mfpo-u32-ent0", "method": "mfpo", "updates_per_collect": 32, "mfpo_target_entropy_per_dim": 0.0}
+    ],
+    "vast-heechan-199": [
+      {"name": "medium-sac-u32", "method": "sac", "updates_per_collect": 32},
+      {"name": "medium-meow-u32", "method": "meow", "updates_per_collect": 32},
+      {"name": "medium-meow-u32-a1", "method": "meow", "updates_per_collect": 32, "meow_alpha": 1.0},
+      {"name": "medium-dipo-u32", "method": "dipo", "updates_per_collect": 32},
+      {"name": "medium-td3-u32", "method": "td3", "updates_per_collect": 32}
+    ]
+  }
+}

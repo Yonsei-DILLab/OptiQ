@@ -1,0 +1,12 @@
+[program:__SERVICE__]
+directory=__SOURCE__
+command=__PYTHON__ -m maze_benchmarks.gpu_guard --gpu __GPU__ --lock /home/heechan/OptiQ-ops/locks/gpu-__GPU__.lock -- __PYTHON__ -m maze_benchmarks.run_pointmaze_baseline_grid --root __ROOT__ --source-commit __SHA__ --host __HOST__ --worker gpu-__GPU__
+environment=PYTHONPATH="__SOURCE__",CUDA_VISIBLE_DEVICES="__GPU__",XLA_PYTHON_CLIENT_PREALLOCATE="false",MPLBACKEND="Agg",LD_LIBRARY_PATH="/home/heechan/.mujoco/mujoco210/bin",MUJOCO_PY_MUJOCO_PATH="/home/heechan/.mujoco/mujoco210"
+autostart=false
+autorestart=false
+startsecs=0
+stopasgroup=true
+killasgroup=true
+stdout_logfile=__ROOT__/logs/__SERVICE__.log
+stderr_logfile=__ROOT__/logs/__SERVICE__.log
+redirect_stderr=true

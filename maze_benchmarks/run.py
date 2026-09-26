@@ -120,6 +120,9 @@ def main():
     parser.add_argument("--final-eval-episodes", type=int, default=None)
     parser.add_argument("--render-each-eval", action="store_true")
     parser.add_argument("--temperature", type=float, default=3.)
+    parser.add_argument("--sql-particles", type=int, default=16)
+    parser.add_argument("--meow-alpha", type=float, default=.2)
+    parser.add_argument("--mfpo-target-entropy-per-dim", type=float, default=-.5)
     parser.add_argument("--source-commit", required=True)
     args = parser.parse_args()
     if args.steps % args.num_envs or args.warmup % args.num_envs:
@@ -128,6 +131,12 @@ def main():
         raise ValueError("warmup must fill one update batch")
     if args.updates_per_collect <= 0 or args.eval_every <= 0 or not np.isfinite(args.temperature) or args.temperature <= 0:
         raise ValueError("invalid updates or evaluation cadence")
+    if args.sql_particles < 4 or args.sql_particles % 2 or not np.isfinite(args.meow_alpha) or args.meow_alpha <= 0 or not np.isfinite(args.mfpo_target_entropy_per_dim):
+        raise ValueError("invalid baseline sensitivity parameter")
+    if ((args.method != "sql" and args.sql_particles != 16) or
+            (args.method != "meow" and args.meow_alpha != .2) or
+            (args.method != "mfpo" and args.mfpo_target_entropy_per_dim != -.5)):
+        raise ValueError("baseline sensitivity parameter does not match selected method")
     if args.eval_episodes <= 0 or (args.final_eval_episodes is not None and args.final_eval_episodes <= 0):
         raise ValueError("evaluation episode counts must be positive")
     if args.render_each_eval and args.task not in (*NWAY_TASKS, *PAPER_TASKS):
@@ -145,6 +154,12 @@ def main():
     rng = np.random.default_rng(args.seed)
     observation_dim = 4 if args.task == "pointmaze" or args.task in PAPER_TASKS else 2
     kwargs = dict(temperature=args.temperature) if args.method in ("optiq", "sql") else {}
+    if args.method == "sql":
+        kwargs["particles"] = args.sql_particles
+    elif args.method == "meow":
+        kwargs["alpha"] = args.meow_alpha
+    elif args.method == "mfpo":
+        kwargs["target_entropy_coeff"] = args.mfpo_target_entropy_per_dim
     if args.method == "dipo":
         kwargs.update(task=args.task, horizon=(20 if args.task == "4way" else
                       PAPER_HORIZONS[args.task[3:]] if args.task in PAPER_TASKS else
