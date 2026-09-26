@@ -206,7 +206,9 @@ def render(root, out, records, temperature=1, paper_only=False):
         if paper_only:
             ax.set_xlabel('')
             ax.set_ylabel('')
-            ax.set_zlabel('Learned Q', fontsize=26, fontweight='normal', labelpad=10)
+            ax.set_zlabel('')
+            ax.text2D(-.03, .5, 'Learned Q', transform=ax.transAxes,
+                      rotation=90, ha='center', va='center', fontsize=26)
             ax.tick_params(labelsize=20, pad=4)
         records[name].update(rollout_sha256=sha(raw), episodes=len(ids),
                              shown_trajectories=len(tracks),
@@ -216,7 +218,7 @@ def render(root, out, records, temperature=1, paper_only=False):
                              arrowhead_rollout_indices=indices.tolist(),
                              goal_counts=counts.tolist(), failures=int(sum(ids < 0)))
     if paper_only:
-        fig.subplots_adjust(left=.025, right=.98, bottom=.12, top=.99, wspace=.45)
+        fig.subplots_adjust(left=.025, right=.98, bottom=.12, top=.99, wspace=.24)
     else:
         fig.suptitle(f'iBOLT · T = {temperature:g} · random-z, μ-only', fontsize=16, fontweight='bold', y=.99)
         fig.subplots_adjust(left=.025, right=.98, bottom=.2, top=.85, wspace=.30)
@@ -248,6 +250,7 @@ def main():
         temperature=a.temperature, paper_only=a.paper_only,
         coordinate_axis_labels_visible=False if a.paper_only else None,
         q_axis_label_fontsize=26 if a.paper_only else None,
+        q_axis_label_placement='left of 3D panel' if a.paper_only else None,
         axis_tick_fontsize=20 if a.paper_only else None,
         caveat=('All selected runs have 62000 updates and 1000192 transitions.' if a.temperature != 1 else
                 '4-Way has 62000 updates; 8/16-Way have 998976. These are existing T1 results, not a matched-training-budget comparison.'),
