@@ -19,6 +19,7 @@ from train import compose_config
 from .batch import TaskBatch
 from .drac_paper import PaperPointMaze, HORIZONS, GOAL_COUNTS
 from .replay import Replay
+from .evaluation import evaluate as evaluate_batched
 
 
 class SpaceOnlyEnv(gym.Env):
@@ -51,6 +52,7 @@ def expected_updates(steps=1_000_192, warmup=8192, num_envs=256, updates=16):
 
 
 class Agent:
+    method = 'optiq'  # Historical evaluator's mu-only validation key.
     def __init__(self, cfg, output):
         self.cfg = cfg
         self.model = IBOLT('MlpPolicy', SpaceOnlyEnv(), cfg=cfg,
@@ -59,7 +61,9 @@ class Agent:
         self.replay = Replay(seed=cfg.seed)
         self.model.replay_buffer = self.replay
 
-    def act(self, observations, mean_only=False):
+    def act(self, observations, mean_only=False, mode=None):
+        if mode is not None:
+            mean_only = mode == 'mu_only'
         policy = self.model.policy
         policy.reset_noise()
         actions = policy.sample_action(policy.actor_state, jnp.asarray(observations),
@@ -88,32 +92,7 @@ class Agent:
 
 
 def evaluate(agent, maze, episodes, seed, output, obstacle=False):
-    """Fresh z each action, mu-only; keep failed paths as well as successes."""
-    env = PaperPointMaze(maze, obstacle)
-    paths = np.full((episodes, HORIZONS[maze] + 1, 2), np.nan, np.float32)
-    goals = np.full(episodes, -1, np.int32)
-    returns = np.zeros(episodes)
-    try:
-        with agent.evaluation_rng(seed):
-            for episode in range(episodes):
-                obs, _ = env.reset(seed=seed + episode)
-                paths[episode, 0] = obs[:2]
-                for t in range(HORIZONS[maze]):
-                    action = agent.act(np.asarray(obs, np.float32)[None], mean_only=True)[0]
-                    obs, reward, done, timeout, info = env.step(action)
-                    paths[episode, t + 1] = obs[:2]
-                    returns[episode] += reward
-                    if done or timeout:
-                        goals[episode] = info['goal_id']
-                        break
-        np.savez_compressed(output, paths=paths, goals=goals, returns=returns,
-                            goal_positions=env.goal_positions)
-        return dict(mean_return=float(returns.mean()), success_rate=float((goals >= 0).mean()),
-                    goal_counts=[int((goals == i).sum()) for i in range(GOAL_COUNTS[maze])],
-                    failures=int((goals < 0).sum()), episodes=episodes,
-                    policy='fresh-z mu-only', obstacle=obstacle)
-    finally:
-        env.close()
+    return evaluate_batched(agent, 'pm_' + maze, seed, episodes, 'mu_only', output, obstacle)
 
 
 def main():
@@ -137,6 +116,8 @@ def main():
         p.error('Positive counts and warmup >= batch size are required')
     if not np.isfinite(args.temperature) or args.temperature <= 0:
         p.error('Temperature must be positive and finite')
+    if args.eval_episodes % 5 or args.final_episodes % 5:
+        p.error('Five-trial robustness requires episode counts divisible by five')
     count = expected_updates(args.steps, args.warmup, args.num_envs, args.updates_per_collect)
     if not args.allow_cpu and jax.default_backend() != 'gpu':
         raise RuntimeError('GPU required (or explicitly use --allow-cpu for tests)')
@@ -154,7 +135,6 @@ def main():
     agent = Agent(cfg, args.output)
     environment = TaskBatch(args.maze, args.num_envs, args.seed)
     rng = np.random.default_rng(args.seed)
-    next_eval = args.eval_every
     try:
         for step in range(args.num_envs, args.steps + 1, args.num_envs):
             obs = environment.current.copy()
@@ -170,20 +150,19 @@ def main():
             if step > args.warmup:
                 for _ in range(args.updates_per_collect):
                     agent.update(step)
-            if step >= next_eval or step == args.steps:
+            if step % args.eval_every < args.num_envs or step == args.steps:
                 episodes = args.final_episodes if step == args.steps else args.eval_episodes
-                result = evaluate(agent, args.maze, episodes, args.seed + 100000,
-                                  args.output / f'mu_only_{step}.npz')
-                if step == args.steps:
-                    result['obstacle_mu_only'] = evaluate(agent, args.maze, episodes,
-                        args.seed + 100000, args.output / f'obstacle_mu_only_{step}.npz', True)
+                result = dict(primary_evaluation_mode='mu_only')
+                result['mu_only'] = evaluate(agent, args.maze, episodes,
+                    args.seed + 17000 + step, args.output / f'mu_only_{step}.npz')
+                result['obstacle_mu_only'] = evaluate(agent, args.maze, episodes,
+                    args.seed + 27000 + step, args.output / f'obstacle_mu_only_{step}.npz', True)
                 result.update(steps=step, updates=agent.model._n_updates)
                 with (args.output / 'evaluations.jsonl').open('a') as stream:
                     stream.write(json.dumps(result) + '\n')
                 agent.save(args.output / f'policy_{step}.msgpack')
                 agent.model.logger.dump(step)
                 print(json.dumps(result), flush=True)
-                next_eval = (step // args.eval_every + 1) * args.eval_every
         assert agent.model._n_updates == count
         (args.output / 'completed.json').write_text(json.dumps(dict(steps=step, updates=count)))
     finally:

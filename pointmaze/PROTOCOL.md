@@ -71,14 +71,28 @@ Training collection and TD actions retain conditional Gaussian sampling.
 Evaluation draws a fresh normal z for each action and uses the bounded mean
 only: no conditional sigma noise, external exploration noise, or zero-z action.
 Evaluate every approximately 200k transitions (rounded up to a collector batch)
-with 200 episodes and finally 500 episodes, plus final obstacle evaluation.
+with 200 episodes and finally 500 episodes. Both ordinary and obstacle
+evaluations run at EVERY evaluation checkpoint, matching the historical runner.
 Save raw paths (including failures), per-episode goals/returns and policy/critic
 states. Evaluation restores the training policy RNG afterwards.
 
-This minimal release uses serial evaluation with explicit seeds; it does not
-claim bitwise replication of the historical batched evaluation streams.
-It reports single-episode success and per-goal counts, not the paper's
-five-trial robustness metric. Raw rollout arrays permit separate analysis.
+Evaluation uses batches of at most128 episodes, retaining finished rows in
+the policy batch but never stepping their simulators again. Per-checkpoint
+seeds are training_seed+17000+step (ordinary) and training_seed+27000+step
+(obstacle); each128-episode chunk adds its episode offset. Collector resets
+and policy RNG initialization match the original evaluator. Fresh z is drawn
+per action, not held for an episode.
+
+Report single-episode success, reachable goals, per-goal counts, failures,
+mean return/length, and five-trial robustness. Group consecutive episode IDs
+in groups of five, including failures. Obstacle robustness is the fraction
+of groups containing any success. Removal robustness is the exact probability
+that at least one reached goal remains when half the goals are uniformly
+removed. It uses the corrected original subset scorer, not its historical
+half-goals boundary bug. For four goals and two distinct reached goals this
+score is5/6, not1. No environment is retrained for removal scoring.
+Raw archives use the original xy/returns/lengths/goal_ids/mode/observation_dim/
+obstacle schema. The main JSON record separates mu_only and obstacle_mu_only.
 Policy checkpoints support inspection, not exact interrupted-training resume:
 the replay, simulator and all training RNG states are not serialized here.
 The training implementation reuses the cleaned iBOLT learner; numerical parity

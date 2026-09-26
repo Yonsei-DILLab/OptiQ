@@ -16,18 +16,23 @@ class TaskBatch:
             self.seed += 1
         return self.current
 
-    def step(self, actions):
-        observations, rewards, terminated, truncated, goals = [], [], [], [], []
-        for env, action in zip(self.envs, actions):
-            obs, reward, done, timeout, info = env.step(action)
-            observations.append(obs)
-            rewards.append(reward)
-            terminated.append(done)
-            truncated.append(timeout)
-            goals.append(info['goal_id'])
-        self.current = np.asarray(observations, np.float32)
-        return (self.current.copy(), np.asarray(rewards, np.float32),
-                np.asarray(terminated), np.asarray(truncated), np.asarray(goals))
+    def step(self, actions, active=None):
+        actions = np.asarray(actions, np.float32)
+        if actions.shape != (self.count, 2):
+            raise ValueError(actions.shape)
+        active = np.ones(self.count, bool) if active is None else np.asarray(active, bool)
+        if active.shape != (self.count,):
+            raise ValueError(active.shape)
+        observations = self.current.copy()
+        rewards = np.zeros(self.count, np.float32)
+        terminated, truncated = np.zeros(self.count, bool), np.zeros(self.count, bool)
+        goals = np.full(self.count, -1, np.int8)
+        for i in np.flatnonzero(active):
+            obs, reward, done, timeout, info = self.envs[i].step(actions[i])
+            observations[i], rewards[i] = obs, reward
+            terminated[i], truncated[i], goals[i] = done, timeout, info['goal_id']
+        self.current = observations.copy()
+        return observations, rewards, terminated, truncated, goals
 
     def close(self):
         for env in self.envs:
