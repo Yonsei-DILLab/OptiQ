@@ -162,5 +162,5 @@ python -m pointmaze.run --maze simple --output outputs/pointmaze-simple-T5-s0
 ```
 
 See [pointmaze/PROTOCOL.md](pointmaze/PROTOCOL.md) for the exact 256-collector,
-batch-4096, UTD-0.0625 settings, sparse reward, evaluation rules and release
+batch-4096 settings, sparse reward, evaluation rules and release
 limitations. MuJoCo and GMM40 defaults are unchanged.

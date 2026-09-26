@@ -35,10 +35,8 @@ to iBOLT on Simple and Hard, not uniformly to every baseline.
 | Discount / target update coefficient | 0.99 / 0.005 |
 | Replay capacity / batch size | 1,000,000 / 4096 |
 | Parallel collectors | 256 |
-| Collection / optimization | 256 transitions, then 16 independent batch updates |
-| UTD | 0.0625 |
 | Uniform-action warmup | 8192 transitions, included in the budget |
-| Total interactions / learner updates | 1,000,192 / 62,000 |
+| Total interactions | 1,000,192 |
 | Latents / components / candidates | fresh N(0,I_2), N=M=64 |
 | Conditional distribution | diagonal box-truncated Gaussian on [-1,1]^2 |
 | log sigma bounds / initial | [-5,-1] / -1 |
@@ -47,8 +45,6 @@ to iBOLT on Simple and Hard, not uniformly to every baseline.
 | Actor objective | direct value-weighted marginal mixture NLL |
 | Gradient clipping / DACER / NovelD / entropy backup | all disabled |
 
-The warmup lasts 32 collector batches. The remaining 3875 batches each
-perform 16 updates: `(1,000,192 - 8192) / 256 * 16 = 62,000`.
 The 256 environments are independent, synchronously stepped CPU simulators;
 this does not claim GPU-vectorized MuJoCo physics.
 
