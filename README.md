@@ -101,6 +101,23 @@ Only the trainable-scale mixture used by this experiment family is included.
 Fixed-scale experiments, transport solvers, finite latent codebooks, soft-TD
 backups and other historical variants are not part of this release.
 
+## GMM40 fixed-Q benchmark
+
+The independent `gmm40/` entry point reproduces the iBOLT fixed-energy protocol:
+256x3 GELU, N=M=256, 100K actor updates, seeds 0..3, temperature=1, beta=1,
+actor log-sigma [-5,-3.5], initial log-sigma -4, and teacher-only sigma floor .05.
+It has no critic learning, replay buffer, environment collection, or DACER.
+These settings do not change the MuJoCo configuration above.
+
+```bash
+python -m gmm40.run --seed 0 --nm 256 --output outputs/gmm40-N256-s0
+```
+
+The numerical 40-component target is included, with no external baseline checkout
+required. Both full-policy (primary) and mean-only (supplementary) samples,
+metrics, plots and checkpoints are saved. See [the GMM40 protocol](gmm40/PROTOCOL.md)
+for N/M ablations, exact evaluation definitions, and optional W&B logging.
+
 ## Validation
 
 ```bash
@@ -123,6 +140,7 @@ and a short learner update in each of the five environments.
 - `exploration.py`: behavior-only entropy-regulated exploration.
 - `models/`: scalar critic network.
 - `tests/`: numerical and integration checks.
+- `gmm40/`: independent fixed-energy learner, target, evaluation and protocol.
 
 The learner uses the installed Stable-Baselines3 interfaces directly. Dependency
 packages retain their own licenses; no copied learner-adapter package is bundled.

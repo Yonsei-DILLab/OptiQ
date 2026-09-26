@@ -1,0 +1,118 @@
+"""Fixed-energy iBOLT training, without environment interaction or critic learning."""
+import math
+from typing import NamedTuple
+import flax.serialization
+import jax
+import jax.numpy as jnp
+import numpy as np
+import optax
+from flax.training.train_state import TrainState
+from ibolt.policy import SemiImplicitActor as Actor
+from ibolt.box_gaussian import sample_box, mixture_log_prob
+from ibolt.distillation import direct_gmm_nll
+
+class Proposal(NamedTuple):
+    means: jax.Array
+    log_std: jax.Array
+    minimum_std: float
+
+    def effective_log_std(self):
+        return jnp.maximum(self.log_std, jnp.log(self.minimum_std))
+
+    def sample(self, key, repeats, mode):
+        if mode != 'exact':
+            raise ValueError('Only independent mixture sampling is supported')
+        batch, components, dim = self.means.shape
+        component_key, noise_key = jax.random.split(key)
+        indices = jax.random.randint(component_key, (batch, components*repeats), 0, components)
+        mu = jnp.take_along_axis(self.means, indices[:,:,None], axis=1)
+        ls = jnp.take_along_axis(self.effective_log_std(), indices[:,:,None], axis=1)
+        actions = sample_box(noise_key, mu, ls)
+        return actions, actions, indices
+
+    def log_prob(self, actions):
+        return mixture_log_prob(actions, self.means, self.effective_log_std())
+
+
+class GMM40Learner:
+    def __init__(self, target, seed=0, n=256, m=256, batch=256,
+                 hidden_dims=(256,256,256), temperature=1.,
+                 log_std_max=-3.5, initial_log_std=-4., teacher_std_floor=.05,
+                 mean_output_init_scale=16.):
+        if n <= 0 or m <= 0 or m % n or batch <= 0:
+            raise ValueError('TRG requires positive batch/N/M and M divisible by N')
+        if not math.isfinite(temperature) or temperature <= 0:
+            raise ValueError('Temperature must be positive and finite')
+        if not (math.isfinite(log_std_max) and math.isfinite(initial_log_std)
+                and -5. < log_std_max and -5. <= initial_log_std <= log_std_max):
+            raise ValueError('TRG requires -5 < log_std_max and initial log std within bounds')
+        if not math.isfinite(teacher_std_floor) or teacher_std_floor <= 0:
+            raise ValueError('Teacher std floor must be positive and finite')
+        if not math.isfinite(mean_output_init_scale) or mean_output_init_scale <= 0:
+            raise ValueError('Mean initialization variance scale must be positive and finite')
+        self.teacher_std_floor = float(teacher_std_floor)
+        self.target, self.n, self.m, self.batch = target, n, m, batch
+        self.temperature = temperature
+        # GMM40-specific initialization and bounds, separate from MuJoCo.
+        self.actor = Actor(2, tuple(hidden_dims), -5., log_std_max, initial_log_std,
+                           mean_output_init_scale=mean_output_init_scale)
+        self.key, init = jax.random.split(jax.random.PRNGKey(seed))
+        params = self.actor.init(init, jnp.zeros((1,1)), jnp.zeros((1,2)))['params']
+        self.state = TrainState.create(apply_fn=self.actor.apply, params=params, tx=optax.adam(3e-4))
+        self.updates = 0
+        self.advance_fn = jax.jit(self._advance, static_argnums=2)
+        self.sample_fn = jax.jit(self._sample, static_argnums=2)
+
+    def _update(self, carry, _):
+        state, key = carry
+        key, zk, pk = jax.random.split(key, 3)
+        obs = jnp.zeros((self.batch*self.n,1))
+        z = jax.random.normal(zk, (self.batch*self.n,2))
+        def loss(params):
+            mu, ls = state.apply_fn({'params':params}, obs, z)
+            mu, ls = mu.reshape(self.batch,self.n,2), ls.reshape(self.batch,self.n,2)
+            proposal = Proposal(jax.lax.stop_gradient(mu), jax.lax.stop_gradient(ls), self.teacher_std_floor)
+            actions, _, _ = proposal.sample(pk, self.m//self.n, 'exact')
+            actions = jax.lax.stop_gradient(actions)
+            # Physical-coordinate density differs by a constant, canceled by softmax.
+            logq = proposal.log_prob(actions)
+            q = self.target.jax_log_prob(40*actions)
+            w = jax.lax.stop_gradient(jax.nn.softmax(q/self.temperature-logq, axis=-1))
+            value, ell = direct_gmm_nll(mu, ls, actions, w)
+            usage = (jax.nn.softmax(ell, axis=1)*w[:,None,:]).sum(-1)
+            return value, dict(loss=value,teacher_ess=(1/(w*w).sum(-1)).mean(),
+                sigma_mean=jnp.exp(ls).mean(),sigma_min=jnp.exp(ls).min(),sigma_max=jnp.exp(ls).max(),
+                teacher_Q=q.mean(),weighted_teacher_Q=(w*q).sum(-1).mean(),
+                mean_spread=jnp.var(mu,axis=1).mean(),
+                component_usage_ess=(1/(usage*usage).sum(-1)).mean())
+        (_,info), grads = jax.value_and_grad(loss,has_aux=True)(state.params)
+        return (state.apply_gradients(grads=grads),key),info
+
+    def _sample(self, params, key, n):
+        zk, ak = jax.random.split(key)
+        z = jax.random.normal(zk,(n,2))
+        mu, ls = self.actor.apply({'params':params},jnp.zeros((n,1)),z)
+        return 40*sample_box(ak,mu,ls),40*mu,40*jnp.tanh(z),jnp.exp(ls)
+
+    def _advance(self,state,key,count):
+        (state,key),info=jax.lax.scan(self._update,(state,key),None,length=count)
+        return state,key,jax.tree_util.tree_map(lambda x:x.mean(),info)
+
+    def advance(self,count):
+        self.state,self.key,info=self.advance_fn(self.state,self.key,count)
+        info={k:float(v) for k,v in info.items()}
+        self.updates+=count
+        info["Q_evaluations"]=self.updates*self.batch*self.m
+        return info
+
+
+    def evaluate_samples(self,n,seed):
+        x,means,base,sigma=self.sample_fn(self.state.params,jax.random.PRNGKey(seed),n)
+        return np.asarray(x),np.stack([np.asarray(base[:128]),np.asarray(x[:128])]),{"mu_only":np.asarray(means)}
+
+    def save(self,path):
+        path.write_bytes(flax.serialization.to_bytes(dict(state=self.state,key=self.key,updates=self.updates)))
+
+    def restore(self,path):
+        saved=flax.serialization.from_bytes(dict(state=self.state,key=self.key,updates=0),path.read_bytes())
+        self.state,self.key,self.updates=saved["state"],saved["key"],int(saved["updates"])
