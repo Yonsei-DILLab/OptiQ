@@ -1,0 +1,20 @@
+{
+  "training_source_commit": "d710cc668a61e69b52f0b71bbe724d6a85c499fb",
+  "source_host": "vast-heechan-180",
+  "destination_host": "vast-heechan-199",
+  "source_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-long-1m2m3m-s0-20260926",
+  "destination_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-long-1m2m3m-s0-20260926",
+  "pending_to_transfer": [
+    "pm_medium-mfpo-s0",
+    "pm_hard-sac-s0",
+    "pm_simple-optiq-s0",
+    "pm_simple-meow-s0",
+    "pm_medium-td3-s0",
+    "pm_hard-td3-s0",
+    "pm_simple-sac-s0",
+    "pm_medium-sql-s0"
+  ],
+  "failed_to_restart_fresh": ["pm_medium-optiq-s0"],
+  "already_replaced": ["pm_hard-sql-s0"],
+  "reason": "The 180 queue is paused after GPU1 and GPU3 CUDA failures; preserve the active Hard DIPO and all failed partial runs. Put the unclaimed jobs and one fresh Medium OptiQ retry behind the existing independent 199 workers, retaining the frozen training source and evaluation budget."
+}
