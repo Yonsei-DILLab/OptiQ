@@ -22,6 +22,7 @@ def main():
     verify_source(source, a.commit)
     # Existing common locks used by previous operators; no active worker eviction.
     lock_paths = [Path(f'/tmp/pointmaze-nm-gpu{a.gpu}.lock'),
+                  Path(f'/tmp/ibolt-drac-pointmaze-gpu{a.gpu}.lock'),
                   Path(f'/home/heechan/OptiQ-ops/locks/gpu-{a.gpu}.lock')]
     locks = []
     for path in lock_paths:

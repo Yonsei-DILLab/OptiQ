@@ -26,12 +26,13 @@ def main():
     atomic_json(a.root/'plan.json',dict(jobs=jobs,source_commit=a.commit,source=str(source)))
     atomic_json(a.root/'queue.json',dict(state='running',jobs=[j for j in jobs if j['host']==a.host]))
     gpus=[0,1,3] if a.host=='vast3' else [0,1,2,3]
+    mujoco = '/home/heechan/.mujoco/mujoco210' if a.host=='vast1' else '/workspace/antmaze-temperature-20260924/mujoco210'
     for gpu in gpus:
         name=f'pointmaze-nm-20260926-gpu{gpu}'
         config=f'''[program:{name}]
 directory={source}
 command={sys.executable} -u -m maze_benchmarks.nm_worker --root {a.root} --commit {a.commit} --gpu {gpu}
-environment=CUDA_VISIBLE_DEVICES="{gpu}",XLA_PYTHON_CLIENT_PREALLOCATE="false",OMP_NUM_THREADS="1",MKL_NUM_THREADS="1",OPENBLAS_NUM_THREADS="1",MUJOCO_GL="egl",MPLBACKEND="Agg",PYTHONPATH="{source}"
+environment=CUDA_VISIBLE_DEVICES="{gpu}",XLA_PYTHON_CLIENT_PREALLOCATE="false",OMP_NUM_THREADS="1",MKL_NUM_THREADS="1",OPENBLAS_NUM_THREADS="1",MUJOCO_GL="egl",MPLBACKEND="Agg",PYTHONPATH="{source}",MUJOCO_PY_MUJOCO_PATH="{mujoco}",LD_LIBRARY_PATH="{mujoco}/bin:/usr/lib/nvidia"
 autostart=false
 autorestart=false
 stopasgroup=true
