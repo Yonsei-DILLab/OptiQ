@@ -120,6 +120,8 @@ def main():
     parser.add_argument("--final-eval-episodes", type=int, default=None)
     parser.add_argument("--render-each-eval", action="store_true")
     parser.add_argument("--temperature", type=float, default=3.)
+    parser.add_argument("--meow-alpha", type=float, default=.2)
+    parser.add_argument("--meow-device", choices=("auto", "cuda", "cpu"), default="auto")
     parser.add_argument("--source-commit", required=True)
     args = parser.parse_args()
     if args.steps % args.num_envs or args.warmup % args.num_envs:
@@ -128,6 +130,10 @@ def main():
         raise ValueError("warmup must fill one update batch")
     if args.updates_per_collect <= 0 or args.eval_every <= 0 or not np.isfinite(args.temperature) or args.temperature <= 0:
         raise ValueError("invalid updates or evaluation cadence")
+    if not np.isfinite(args.meow_alpha) or args.meow_alpha <= 0:
+        raise ValueError("MEOW alpha must be positive and finite")
+    if args.method != "meow" and (args.meow_alpha != .2 or args.meow_device != "auto"):
+        raise ValueError("MEOW-specific settings require method=meow")
     if args.eval_episodes <= 0 or (args.final_eval_episodes is not None and args.final_eval_episodes <= 0):
         raise ValueError("evaluation episode counts must be positive")
     if args.render_each_eval and args.task not in (*NWAY_TASKS, *PAPER_TASKS):
@@ -145,6 +151,8 @@ def main():
     rng = np.random.default_rng(args.seed)
     observation_dim = 4 if args.task == "pointmaze" or args.task in PAPER_TASKS else 2
     kwargs = dict(temperature=args.temperature) if args.method in ("optiq", "sql") else {}
+    if args.method == "meow":
+        kwargs.update(alpha=args.meow_alpha, device=args.meow_device)
     if args.method == "dipo":
         kwargs.update(task=args.task, horizon=(20 if args.task == "4way" else
                       PAPER_HORIZONS[args.task[3:]] if args.task in PAPER_TASKS else

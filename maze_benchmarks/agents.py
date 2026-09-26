@@ -331,7 +331,8 @@ class MEOW:
     method = "meow"
     critic_label = "MEOW flow-derived Q"
 
-    def __init__(self, seed, folder, budget, observation_dim, batch_size=256, temperature=None):
+    def __init__(self, seed, folder, budget, observation_dim, batch_size=256,
+                 temperature=None, alpha=.2, device="auto"):
         import copy
         import torch
 
@@ -341,9 +342,15 @@ class MEOW:
         sys.path.insert(0, str(upstream))
         from cleanrl.meow_continuous_action import FlowPolicy
 
+        if not np.isfinite(alpha) or alpha <= 0:
+            raise ValueError("MEOW alpha must be positive and finite")
+        if device == "auto":
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        if device not in ("cuda", "cpu"):
+            raise ValueError("MEOW device must be cuda, cpu, or auto")
         torch.manual_seed(seed)
-        self.device = torch.device("cuda")
-        self.policy = FlowPolicy(alpha=.2, sigma_max=-.3, sigma_min=-5.,
+        self.device = torch.device(device)
+        self.policy = FlowPolicy(alpha=alpha, sigma_max=-.3, sigma_min=-5.,
                                  action_sizes=2, state_sizes=observation_dim,
                                  device=self.device).to(self.device)
         self.target = copy.deepcopy(self.policy)
@@ -353,7 +360,8 @@ class MEOW:
         self.count = 0
         self.config = dict(algorithm="MEOW CleanRL flow Q regression",
                            upstream_commit="b786d27aa9b03e4242ee8904ff884b21fe65e2f7",
-                           alpha=.2, sigma_min=-5., sigma_max=-.3,
+                           alpha=alpha, sigma_min=-5., sigma_max=-.3,
+                           device=device,
                            q_lr=1e-3, tau=.005, grad_clip=30,
                            evaluation_policy="direct flow sample")
 
@@ -410,9 +418,11 @@ class MEOW:
     @contextmanager
     def evaluation_rng(self, seed):
         import torch
-        with torch.random.fork_rng(devices=[torch.cuda.current_device()]):
+        cuda_devices = [torch.cuda.current_device()] if self.device.type == "cuda" else []
+        with torch.random.fork_rng(devices=cuda_devices):
             torch.manual_seed(seed)
-            torch.cuda.manual_seed_all(seed)
+            if self.device.type == "cuda":
+                torch.cuda.manual_seed_all(seed)
             yield
 
     def save(self, folder, step, full=False):
