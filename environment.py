@@ -8,10 +8,10 @@ from stable_baselines3.common.logger import configure
 from wandb.integration.sb3 import WandbCallback
 from common.buffers import DMCCompatibleDictReplayBuffer
 from models.actor_critic_evaluation_callback import EvalCallback
-from optiq_dime.evaluation import MujocoEvalCallback
-from optiq_dime.dual_evaluation import DualMuEvalCallback
-from optiq_dime.runtime import WandbWriter
-from exploration import BehaviorRegulatedOptiQ as OptiQDIME
+from ibolt.evaluation import MujocoEvalCallback
+from ibolt.dual_evaluation import DualMuEvalCallback
+from ibolt.runtime import WandbWriter
+from exploration import ExplorationIBOLT as IBOLT
 MYOSUITE_ENVS = set()
 def is_tracked_environment(cfg):
     return True
@@ -49,7 +49,7 @@ def create_algorithm(cfg: DictConfig):
         save_every_n_steps = int(cfg.checkpoint_interval) or int(cfg.total_steps)
 
     try:
-        model = OptiQDIME(
+        model = IBOLT(
             "MultiInputPolicy"
             if isinstance(training_env.observation_space, gym.spaces.Dict)
             else "MlpPolicy",

@@ -13,8 +13,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
-from optiq_dime.algorithm import OptiQDIME
-from optiq_dime.policy import OptiQPolicy
+from ibolt.algorithm import IBOLT
+from ibolt.policy import IBOLTPolicy
 
 def entropy_proxy(actions, components=3, random_state=42):
     from sklearn.mixture import GaussianMixture
@@ -38,7 +38,7 @@ def entropy_proxy(actions, components=3, random_state=42):
 def noisy_action(action, noise, noise_std):
     return np.clip(action + noise_std * noise, -1., 1.).astype(action.dtype)
 
-class BehaviorRegulatedOptiQ(OptiQDIME):
+class ExplorationIBOLT(IBOLT):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.regulator_cfg = self.cfg.dacer
@@ -56,7 +56,7 @@ class BehaviorRegulatedOptiQ(OptiQDIME):
         @jax.jit
         def draw(state, obs, key):
             keys = jax.random.split(key, c.samples)
-            return jax.vmap(lambda k: OptiQPolicy.sample_action(state, obs, k), out_axes=1)(keys)
+            return jax.vmap(lambda k: IBOLTPolicy.sample_action(state, obs, k), out_axes=1)(keys)
         self.regulator_draw = draw
 
     @property

@@ -10,7 +10,7 @@ import jax.numpy as jnp
 from omegaconf import OmegaConf
 import wandb
 import environment as runner
-from optiq_dime.runtime import provenance
+from ibolt.runtime import provenance
 
 ROOT = Path(__file__).resolve().parent
 
@@ -36,7 +36,7 @@ def validate_config(cfg):
         raise ValueError('Fixed log scale must be inside the configured bounds.')
 
 def install_fixed_scale(value):
-    import optiq_dime.policy as policy
+    import ibolt.policy as policy
     original = policy.SemiImplicitActor
     class FixedScaleActor(original):
         def __call__(self, observations, latents):

@@ -62,9 +62,8 @@ Gaussians on [-1,1]**, not tanh-squashed Gaussian densities. Candidate actions
 are sampled from the finite conditional mixture. Their value weights include
 proposal-density correction. The actor maximizes weighted **marginal mixture
 likelihood**; this version does not use OT, hard assignments or conditional-row
-NLL. The preserved internal `optiq_dime` module name reflects implementation
-ancestry, not an extra diffusion generation stage. Legacy helpers remain as
-dependencies; the public entry point selects only direct mixture likelihood.
+NLL. The `ibolt` package implements the learner directly; the public entry point
+selects only direct mixture likelihood.
 
 Both evaluation modes are logged every 5K steps, with 10 episodes per mode:
 `eval/zero_z/mean_reward` uses z=0 and the center action;
@@ -115,12 +114,12 @@ and a short learner update in each of the five environments.
 
 - `train.py`, `environment.py`: training, logging and evaluation setup.
 - `configs/`: task defaults and ablation overrides.
-- `optiq_dime/`: actor, density, weighted likelihood and critic updates.
+- `ibolt/`: actor, density, weighted likelihood, critic updates and learner adapter.
 - `exploration.py`: behavior-only entropy-regulated exploration.
-- `common/`, `models/`, `diffusion/`: inherited training infrastructure.
+- `common/`, `models/`: JAX/SB3 interfaces and network utilities.
 - `tests/`: numerical and integration checks.
 
-Inherited DIME infrastructure is retained under its MIT license; see `LICENSE`.
+Third-party notices for retained utility code are in `THIRD_PARTY_LICENSES.txt`.
 Stable-Baselines3 supplies the environment/replay interfaces. The exploration
 regulator is inspired by DACER (arXiv:2405.15177); it is a behavior-only adaptation,
 not an assertion of identical DACER training semantics. Third-party attribution

@@ -68,7 +68,7 @@ class SemiImplicitActor(nn.Module):
         return jnp.tanh(mu), jnp.clip(raw_log_std, self.log_std_min, self.log_std_max)
 
 
-class OptiQPolicy(BaseJaxPolicy):
+class IBOLTPolicy(BaseJaxPolicy):
     """SB3-compatible normalized policy with one network evaluation per action."""
 
     def __init__(

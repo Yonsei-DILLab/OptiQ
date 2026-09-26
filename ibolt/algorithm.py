@@ -1,4 +1,4 @@
-"""Scalar or categorical DIME-style critic training with OptiQ distillation."""
+"""iBOLT critic learning and value-weighted policy optimization."""
 
 from functools import partial
 from pathlib import Path
@@ -11,9 +11,9 @@ import numpy as np
 from flax.training.train_state import TrainState
 
 from common.type_aliases import ReplayBufferSamplesNp, RLTrainState
-from diffusion.dime import DIME
+from .learner import JaxLearner
 
-from .policy import OptiQPolicy
+from .policy import IBOLTPolicy
 from .temperature import parse_temperature_schedule, scheduled_temperature
 from .critic_utils import critic_expectation
 from .distillation import conditional_ot_nll, hard_projection_mass_error, direct_gmm_nll
@@ -34,19 +34,18 @@ from .transport import (
 )
 
 
-class OptiQDIME(DIME):
-    """One-step OptiQ actor with scalar or categorical CrossQ critics."""
+class IBOLT(JaxLearner):
+    """One-step iBOLT actor and twin critics."""
 
-    policy_aliases: ClassVar[dict[str, type[OptiQPolicy]]] = {
-        "MlpPolicy": OptiQPolicy,
-        "MultiInputPolicy": OptiQPolicy,
+    policy_aliases: ClassVar[dict[str, type[IBOLTPolicy]]] = {
+        "MlpPolicy": IBOLTPolicy,
+        "MultiInputPolicy": IBOLTPolicy,
     }
-    policy: OptiQPolicy
+    policy: IBOLTPolicy
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # DIME defaults to live-network CrossQ; scalar defaults select a
-        # conventional target critic explicitly without changing legacy runs.
+        # The public scalar configuration uses conventional target critics.
         self.crossq_style = bool(self.cfg.alg.critic.get("crossq_style", True))
         self.behavior_uniform_probability = float(
             self.cfg.alg.get("behavior_uniform_probability", 0.0)
@@ -342,7 +341,7 @@ class OptiQDIME(DIME):
             )
             entropy_adjustment = jax.lax.stop_gradient(-temperature * next_log_density)
         else:
-            next_actions = OptiQPolicy.sample_action(
+            next_actions = IBOLTPolicy.sample_action(
                 target_actor_state, next_observations, actor_key, deterministic=False
             )
             if not semi_implicit:

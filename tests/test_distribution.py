@@ -8,9 +8,9 @@ import pytest
 import train
 from scipy.stats import truncnorm
 from scipy.integrate import trapezoid
-from optiq_dime.box_gaussian import sample_box, mixture_log_prob, component_log_prob
-from optiq_dime.distillation import direct_gmm_nll
-from optiq_dime.policy import SemiImplicitActor, OptiQPolicy
+from ibolt.box_gaussian import sample_box, mixture_log_prob, component_log_prob
+from ibolt.distillation import direct_gmm_nll
+from ibolt.policy import SemiImplicitActor, IBOLTPolicy
 
 def test_density_normalizes_and_matches_scipy():
     x=np.linspace(-1,1,20001)
@@ -59,10 +59,10 @@ def test_actor_and_policy_sampling():
     obs=jnp.ones((32,3));z=jnp.ones((32,2))
     params=model.init(jax.random.PRNGKey(4),obs,z)['params']
     state=TrainState.create(apply_fn=model.apply,params=params,tx=optax.adam(.0003))
-    a=OptiQPolicy.sample_action(state,obs,jax.random.PRNGKey(1))
+    a=IBOLTPolicy.sample_action(state,obs,jax.random.PRNGKey(1))
     assert np.isfinite(a).all() and np.max(np.abs(a))<=1
     centers,_=model.apply({'params':params},obs,jnp.zeros_like(z))
-    np.testing.assert_allclose(OptiQPolicy.sample_action(state,obs,jax.random.PRNGKey(1),deterministic=True),centers,atol=1e-6)
+    np.testing.assert_allclose(IBOLTPolicy.sample_action(state,obs,jax.random.PRNGKey(1),deterministic=True),centers,atol=1e-6)
     # Distinguish tanh centers from hard clipping.
     import copy
     altered=copy.deepcopy(params)
@@ -75,7 +75,7 @@ def test_actor_and_policy_sampling():
 def test_environment_update(task,tmp_path,monkeypatch):
     import copy
     from stable_baselines3.common.logger import configure
-    import optiq_dime.algorithm as algorithm
+    import ibolt.algorithm as algorithm
     cfg=train.compose_config([f'benchmark={task}',f'output_root={tmp_path}',
         'alg.batch_size=4','alg.buffer_size=32','alg.learning_starts=2',
         'alg.actor.learning_starts=2','num_eval_episodes=1','eval_interval=4',
@@ -96,4 +96,4 @@ def test_environment_update(task,tmp_path,monkeypatch):
         assert np.max(np.abs(model.replay_buffer.actions))<=1
     finally:
         cb.eval_env.close();model.get_env().close();model.logger.close()
-        algorithm.OptiQDIME._train.clear_cache()
+        algorithm.IBOLT._train.clear_cache()
