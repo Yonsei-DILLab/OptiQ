@@ -1,4 +1,4 @@
-"""One-step implicit OptiQ policy with scalar or categorical twin critics."""
+"""One-step iBOLT policy with twin critics."""
 
 from collections.abc import Sequence
 from functools import partial

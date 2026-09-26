@@ -28,7 +28,7 @@ def create_algorithm(cfg: DictConfig):
     training_env = gym.make(cfg.env_name)
     eval_env = make_vec_env(cfg.env_name, n_envs=1, seed=cfg.seed)
 
-    # Preserve DIME's original replay-buffer selection for dog tasks.
+    # Retain optional dictionary-observation replay support.
     replay_buffer_class = None
     domain = cfg.env_name.split("/", 1)[-1].split("-", 1)[0]
     if domain in {"humanoid", "fish", "walker", "quadruped", "finger"}:

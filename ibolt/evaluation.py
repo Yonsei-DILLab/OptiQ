@@ -1,4 +1,4 @@
-"""Persist evaluations while retaining critic-dime's evaluation protocol."""
+"""Persist iBOLT evaluations with isolated evaluation randomness."""
 
 from pathlib import Path
 
