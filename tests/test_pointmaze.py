@@ -17,6 +17,8 @@ def test_paper_settings():
     assert cfg.total_steps == 1_000_192
     assert cfg.env_name == 'DrAC-PointMaze-simple'
     assert cfg.eval_interval == 200_000
+    assert cfg.alg.learning_starts == cfg.alg.actor.learning_starts == 8192
+    assert cfg.checkpoint_interval == cfg.eval_interval
     assert cfg.alg.actor.num_policy_samples == 64
     assert cfg.alg.actor.hidden_dims == [256, 256]
     assert cfg.alg.actor.log_std_min == -5

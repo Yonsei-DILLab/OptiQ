@@ -42,8 +42,9 @@ def configuration(seed=0, temperature=5., batch_size=4096, maze='simple'):
     cfg.alg.utd = 16 / 256
     cfg.total_steps = 1_000_192
     cfg.eval_interval = 200_000
+    cfg.checkpoint_interval = 200_000
     cfg.num_eval_episodes = 200
-    cfg.alg.learning_starts = cfg.alg.actor.learning_starts = 0
+    cfg.alg.learning_starts = cfg.alg.actor.learning_starts = 8192
     cfg.alg.batch_size = batch_size
     cfg.task = f'pointmaze-{maze}'
     cfg.env_name = f'DrAC-PointMaze-{maze}'
@@ -134,6 +135,8 @@ def main():
     cfg.total_steps = args.steps
     cfg.alg.utd = args.updates_per_collect / args.num_envs
     cfg.eval_interval = args.eval_every
+    cfg.checkpoint_interval = args.eval_every
+    cfg.alg.learning_starts = cfg.alg.actor.learning_starts = args.warmup
     cfg.num_eval_episodes = args.eval_episodes
     cfg.output_root = str(args.output)
     metadata = {**vars(args), 'output': str(args.output), 'expected_updates': count,
