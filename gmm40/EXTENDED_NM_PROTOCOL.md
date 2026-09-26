@@ -31,3 +31,9 @@ Each job passes actual-shape preflight first, then starts fresh. Failed shape
 jobs are held with logs; other sizes may continue. W&B OptiQ/gmm-trg with
 distinct group gmm40-extended-nm-20260926. Preserve source SHA/config, proof,
 checkpoints, both evaluation modes and optimizer-count audit.
+
+2026-09-26 replacement: cancel running and pending N4096 seeds0..3;
+preserve partial logs/checkpoints. Keep N1024 workers on vast2 GPU0/2.
+Start fresh N=M512 seeds0..3 on the freed vast2 GPU1/3, seed-first,
+using the original dense learner and unchanged hyperparameters. Separate
+campaign root/service names, same W&B group. No reuse of historical512 runs.

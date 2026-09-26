@@ -60,7 +60,8 @@ def equivalence(root):
 
 def register(root, host):
     plan = read(base.SOURCE/'gmm40/nm4090_plan.json')
-    plan.update(name=NAME, host=host, nm=HOST_NM[host], gpus=list(range(4)),
+    plan.update(name=NAME, host=host, nm=HOST_NM[host],
+                gpus=[1,3] if HOST_NM[host]==[512] else list(range(4)),
                 gpu_model='Vast 3090/4090/5090', python=sys.executable,
                 reference_commit='c429fbb', seed_order='0 then 1 then 2 then 3')
     root.mkdir(parents=True, exist_ok=True)
@@ -151,7 +152,11 @@ def main():
     p.add_argument('--gpu', type=int)
     p.add_argument('--nm', type=int)
     a, rest = p.parse_known_args()
-    if a.mode=='register': register(a.root, a.host)
+    if a.mode=='register':
+        if a.nm is not None:
+            assert a.host=='vast2' and a.nm==512, 'Only the approved 4096-to-512 replacement'
+            HOST_NM[a.host]=[512]
+        register(a.root, a.host)
     elif a.mode=='worker': worker(a.root, a.gpu)
     elif a.mode=='probe':
         if a.nm>=1024:
