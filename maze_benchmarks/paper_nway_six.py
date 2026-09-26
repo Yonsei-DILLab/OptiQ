@@ -1,4 +1,4 @@
-"""Read-only T1 iBOLT 4/8/16-Way trajectory and dense learned-Q plate."""
+"""Read-only iBOLT 4/8/16-Way trajectory and dense learned-Q plate."""
 from __future__ import annotations
 import argparse
 import ast
@@ -54,7 +54,7 @@ def original_networks(commit):
 
 def infer(folder, old_probe, proof, output, grid=101, samples=128):
     cfg = json.loads((folder/'config.json').read_text())
-    assert cfg['temperature'] == 1 and cfg['method'] == 'optiq'
+    assert cfg['temperature'] in (1, 3, 5) and cfg['method'] == 'optiq'
     checkpoint = folder/'checkpoints'/f"policy_{cfg['steps']:09d}.msgpack"
     assert sha(checkpoint) == proof['checkpoint_sha256']
     assert sha(folder/'config.json') == proof['config_sha256']
@@ -126,7 +126,8 @@ def infer(folder, old_probe, proof, output, grid=101, samples=128):
         normal_latent_samples=samples, latent_seed=271828, learner_updates=0,
         q_definition='E_z [(Q1(s,mu(s,z))+Q2(s,mu(s,z)))/2]',
         conditional_sigma=False, common_random_numbers=True, spatial_smoothing=False,
-        training_steps=cfg['steps'], actor_updates=int(saved['actor']['step']),
+        training_steps=cfg['steps'], temperature=cfg['temperature'],
+        actor_updates=int(saved['actor']['step']),
         batch_size=cfg['batch_size'], output_sha256=sha(output))
 
 
@@ -137,16 +138,22 @@ def goals(n):
     return 6*np.stack([np.cos(angle), np.sin(angle)], axis=-1)
 
 
-def render(root, out, records):
+def render(root, out, records, temperature=1):
     plt.rcParams.update({'font.family': 'Arial', 'svg.fonttype': 'path', 'axes.unicode_minus': False})
     fig = plt.figure(figsize=(23.8, 4.4), facecolor='white')
     for i, n in enumerate((4, 8, 16)):
-        name = f'{n}way-optiq-t1-s0'; folder = root/'runs'/name
+        name = f'{n}way-optiq-t{temperature:g}-s0'; folder = root/'runs'/name
         cfg = json.loads((folder/'config.json').read_text())
         raw = folder/'evaluations'/f"{cfg['steps']:09d}_mu_only.npz"
         with np.load(raw) as z:
             assert str(z['mode']) == 'mu_only'
             tracks, ids = z['xy'], z['goal_ids']
+        proof = json.loads((root/'posthoc_mu'/name/'proof.json').read_text())
+        assert sha(raw) == proof['preserved_mu_sha256']
+        counts = np.bincount(ids[ids >= 0], minlength=n)
+        progress = json.loads((folder/'progress.json').read_text())
+        assert progress['status'] == 'complete' and progress['steps'] == cfg['steps']
+        assert counts.tolist() == progress['latest_evaluation']['mu_only']['goals']
         xy = goals(n)
         ax = fig.add_subplot(1, 6, 2*i+1)
         c = np.linspace(-7.7, 7.7, 401); xx, yy = np.meshgrid(c, c)
@@ -156,10 +163,16 @@ def render(root, out, records):
         reference = np.exp(-d2/(2*1.35**2))
         ax.contour(xx, yy, reference, levels=np.linspace(.08, .96, 12),
                    cmap='viridis', linewidths=.65, alpha=.85)
-        indices = np.linspace(0, len(tracks)-1, 32, dtype=int)
+        # Keep every recorded trajectory, including rare modes and failures.
+        for path in tracks:
+            path = path[np.isfinite(path).all(axis=-1)]
+            ax.plot(path[:, 0], path[:, 1], color='#dd1e27', lw=.45, alpha=.055)
+        # Thin arrowheads only. Add the first recorded rollout for each observed
+        # outcome so rare routes have directional arrows too; no path is invented.
+        indices = np.unique(np.r_[np.linspace(0, len(tracks)-1, 32, dtype=int),
+                                 [np.flatnonzero(ids == goal)[0] for goal in np.unique(ids)]])
         for index in indices:
             path = tracks[index]; path = path[np.isfinite(path).all(axis=-1)]
-            ax.plot(path[:, 0], path[:, 1], color='#dd1e27', lw=.65, alpha=.3)
             positions = np.arange(0, len(path)-1, 3)
             if len(positions):
                 delta = path[positions+1] - path[positions]
@@ -168,7 +181,6 @@ def render(root, out, records):
                           width=.004, headwidth=3.5, headlength=4.5, alpha=.72, zorder=5)
         ax.scatter(xy[:, 0], xy[:, 1], s=17, color='#dd1e27', edgecolors='white', linewidths=.5, zorder=6)
         ax.scatter([0], [0], s=14, color='#202020', zorder=7)
-        counts = np.bincount(ids[ids >= 0], minlength=n)
         ax.set(xlim=(-7.7, 7.7), ylim=(-7.7, 7.7), aspect='equal',
                xticks=[-6, -3, 0, 3, 6], yticks=[-6, -3, 0, 3, 6], xlabel='x', ylabel='y')
         ax.set_title(f'{n}-Way · trajectories', fontsize=13, pad=12)
@@ -185,34 +197,39 @@ def render(root, out, records):
         ax.view_init(elev=29, azim=-55); ax.set_box_aspect((1, 1, .75))
         ax.tick_params(labelsize=8, pad=0)
         records[name].update(rollout_sha256=sha(raw), episodes=len(ids),
-                             shown_trajectories=32, goal_counts=counts.tolist(), failures=int(sum(ids < 0)))
-    fig.suptitle('iBOLT · T = 1 · random-z, μ-only', fontsize=16, fontweight='bold', y=.99)
+                             shown_trajectories=len(tracks),
+                             arrowhead_rollout_indices=indices.tolist(),
+                             goal_counts=counts.tolist(), failures=int(sum(ids < 0)))
+    fig.suptitle(f'iBOLT · T = {temperature:g} · random-z, μ-only', fontsize=16, fontweight='bold', y=.99)
     fig.subplots_adjust(left=.025, right=.98, bottom=.2, top=.85, wspace=.30)
     fig.text(.5, .035,
-        'Red arrows: saved policy rollouts. Contours: goal-proximity reference. '
+        'All 1,024 saved rollouts; arrowheads thinned for clarity. Contours: goal-proximity reference. '
         'Q: mean of twin critics, averaged over 128 Gaussian latents per state.',
         ha='center', fontsize=10)
     for ext in ('png', 'svg'):
-        fig.savefig(out/f'ibolt_4_8_16way_T1_1x6.{ext}', dpi=240, bbox_inches='tight', pad_inches=.12)
+        fig.savefig(out/f'ibolt_4_8_16way_T{temperature:g}_1x6.{ext}', dpi=240, bbox_inches='tight', pad_inches=.12)
     plt.close(fig)
 
 
 def main():
     p = argparse.ArgumentParser(); p.add_argument('--root', type=Path, required=True)
-    p.add_argument('--output', type=Path, required=True); a = p.parse_args()
+    p.add_argument('--output', type=Path, required=True)
+    p.add_argument('--temperature', type=int, choices=(1, 3, 5), default=1); a = p.parse_args()
     a.output.mkdir(parents=True, exist_ok=True); records = {}
     for n in (4, 8, 16):
-        name = f'{n}way-optiq-t1-s0'; folder = a.root/'runs'/name
+        name = f'{n}way-optiq-t{a.temperature}-s0'; folder = a.root/'runs'/name
         proof = json.loads((a.root/'posthoc_mu'/name/'proof.json').read_text())
         old = a.root/'posthoc_mu'/name/f"{proof['step']:09d}_probe_mu_only.npz"
         records[name] = infer(folder, old, proof, a.output/f'{n}way_dense_q.npz')
         print(f'{n}-Way dense Q verified and saved', flush=True)
-    render(a.root, a.output, records)
+    render(a.root, a.output, records, a.temperature)
     manifest = dict(runs=records, reporting_source=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
         scope='Read-only final-checkpoint inference; no retraining, no checkpoint mutation',
-        caveat='4-Way has 62000 updates; 8/16-Way have 998976. These are existing T1 results, not a matched-training-budget comparison.',
+        temperature=a.temperature,
+        caveat=('All selected runs have 62000 updates and 1000192 transitions.' if a.temperature != 1 else
+                '4-Way has 62000 updates; 8/16-Way have 998976. These are existing T1 results, not a matched-training-budget comparison.'),
         reference_contours='exp(-nearest_goal_distance_squared/(2*1.35^2)); illustrative goal-proximity, not reward or learned density',
-        outputs={ext:sha(a.output/f'ibolt_4_8_16way_T1_1x6.{ext}') for ext in ('png', 'svg')})
+        outputs={ext:sha(a.output/f'ibolt_4_8_16way_T{a.temperature}_1x6.{ext}') for ext in ('png', 'svg')})
     (a.output/'manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
 
 
