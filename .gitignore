@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+.env
+outputs/
+wandb/
+*.msgpack
+*.npz
+*.log
+.DS_Store
