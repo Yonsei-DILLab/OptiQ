@@ -9,6 +9,7 @@ import subprocess
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.colors import is_color_like
 from matplotlib.font_manager import FontProperties
 from matplotlib.offsetbox import AnchoredOffsetbox, HPacker, TextArea
 from matplotlib.lines import Line2D
@@ -73,10 +74,14 @@ def load(root, maze, method, temperature_root, dipo_root=None):
 
 def build(root, temps, out, columns, dipo_root=None, alpha=.5,
           outcome_colors=False, formats=('pdf','png','svg'), trajectory_palette='mint-pink',
-          match_goal_colors=False):
+          match_goal_colors=False, failure_trajectory_color=None):
     success_color,failure_color=TRAJECTORY_PALETTES[trajectory_palette]
     reached_goal_color=success_color if match_goal_colors else VISITED_GOAL_COLOR
     unreached_goal_color=failure_color if match_goal_colors else UNVISITED_GOAL_COLOR
+    # Resolve goal fills first so this override changes failed trajectories only.
+    if failure_trajectory_color is not None:
+        if not is_color_like(failure_trajectory_color):raise ValueError('invalid failure trajectory color')
+        failure_color=failure_trajectory_color
     methods=['optiq','sac','sql','meow','mfpo']+(['dipo'] if columns==7 else [])+['td3']
     regular=FontProperties(family='Arial',size=15)
     bold=FontProperties(family='Arial',weight='bold',size=15)
@@ -151,7 +156,9 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.5,
         baseline_sampling='native policy sampling; original entropy settings, not the new sensitivity grid',
         outcome_colors=outcome_colors,
         trajectory_palette=trajectory_palette if outcome_colors else None,
-        goal_colors_match_trajectories=match_goal_colors if outcome_colors else None,
+        goal_colors_match_trajectories=(reached_goal_color==success_color and
+                                       unreached_goal_color==failure_color) if outcome_colors else None,
+        failure_trajectory_color_override=failure_trajectory_color,
         color_semantics=dict(success=success_color,failure=failure_color,
                              reached_goal=reached_goal_color,unreached_goal=unreached_goal_color,
                              goal_rule='at least one terminal success in the 500 displayed episodes',
@@ -171,6 +178,7 @@ def main():
     p.add_argument('--outcome-colors',action='store_true')
     p.add_argument('--trajectory-palette',choices=TRAJECTORY_PALETTES,default='mint-pink')
     p.add_argument('--match-goal-colors',action='store_true')
+    p.add_argument('--failure-trajectory-color')
     p.add_argument('--formats',choices=('png','pdf','svg'),nargs='+',default=['pdf','png','svg'])
     a=p.parse_args()
     if any(not np.isfinite(v) or not 0<v<=1 for v in a.alphas):raise ValueError('invalid alpha')
@@ -178,13 +186,15 @@ def main():
         for count in (6,7):
             m=build(a.root,a.temperatures,a.output,count,a.dipo_root,alpha=alpha,
                     outcome_colors=a.outcome_colors,formats=a.formats,
-                    trajectory_palette=a.trajectory_palette,match_goal_colors=a.match_goal_colors)
+                    trajectory_palette=a.trajectory_palette,match_goal_colors=a.match_goal_colors,
+                    failure_trajectory_color=a.failure_trajectory_color)
             print(json.dumps(dict(figure=m['figure'],complete=m['figure_is_complete'],pending=m['pending'])))
     (a.output/'CAPTION.txt').write_text('Figure4: PointMaze. Top: Medium; bottom: Hard. Each completed panel shows all500 evaluation trajectories from one seed0 policy after1M environment interactions. iBOLT uses T=5 and fresh Gaussian latent z at each action with mu-only output (no conditional sigma). Baselines use their native sampling rules and original entropy settings. The seven-column draft reserves DIPO until the official implementation completes1M; no older variant is substituted.\n')
     if a.outcome_colors:
         success_name,failure_name=a.trajectory_palette.split('-')
         reached_name=success_name if a.match_goal_colors else 'dark blue'
         unreached_name=failure_name if a.match_goal_colors else 'dark red'
+        if a.failure_trajectory_color is not None:failure_name=a.failure_trajectory_color
         with (a.output/'CAPTION.txt').open('a') as caption:
             caption.write(f'{success_name.capitalize()} trajectories end in a recorded terminal goal success; {failure_name} trajectories do not. {reached_name.capitalize()} goals were reached at least once in the same500 episodes; {unreached_name} goals were never reached. Pending panels use neutral gray goals. The black dot marks the start. Episode draw order is unchanged.\n')
 
