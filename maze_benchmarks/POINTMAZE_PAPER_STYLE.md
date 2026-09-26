@@ -12,13 +12,15 @@ the red-failure version after correcting the goal border to lie inside the box.
   for the primary image and alpha 0.1 for the alternate.
 - Goals reached at least once are blue; goals never reached are red. Determine
   this from saved terminal goal IDs, not proximity or trajectory appearance.
-- White goal border: 0.7 points entirely INSIDE the original goal square
-  (thinned from 1.1 points at the user's request).
+- White goal border: 0.5 points entirely INSIDE the original goal square
+  (the user's final thickness, after 1.1 and 0.7 point drafts).
   Clip the double-width stroke to the square after adding it to the axes.
   Never enlarge the goal or cover neighboring gray walls.
 - No white trajectory stroke, halo, or underlay. No inactive optional-obstacle
   placeholders. Actual walls remain unchanged.
-- No bottom "Figure 4: PointMaze" caption. Keep the outcome legend.
+- No bottom "Figure 4: PointMaze" caption. Keep the outcome legend. Goal keys
+  in the legend are colored square boxes with a white x and an inset border,
+  matching the actual goal markers rather than plain color swatches.
 - iBOLT uses fresh random latent z and mu-only actions, conditional sigma OFF.
   Baselines retain their documented native sampling. Current selected iBOLT is
   T=5; a future explicitly selected run changes the input, not the visual style.

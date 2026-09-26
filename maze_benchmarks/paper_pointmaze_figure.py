@@ -13,7 +13,8 @@ from matplotlib.colors import is_color_like
 from matplotlib.font_manager import FontProperties
 from matplotlib.offsetbox import AnchoredOffsetbox, HPacker, TextArea
 from matplotlib.lines import Line2D
-from matplotlib.patches import Patch
+from matplotlib.patches import Patch, Rectangle
+from matplotlib.legend_handler import HandlerBase
 import numpy as np
 
 from .visualize_pointmaze import get_map, plot_map, plot_rollouts
@@ -24,6 +25,22 @@ from .plot_style import (SUCCESS_TRAJECTORY_COLOR, FAILURE_TRAJECTORY_COLOR,
 
 def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+class GoalLegendHandler(HandlerBase):
+    """Goal square, inset white border and x, matching the map symbol."""
+    def create_artists(self, legend, handle, xdescent, ydescent, width, height,
+                       fontsize, trans):
+        side = height
+        x, y = -xdescent + (width-side)/2, -ydescent
+        box = Rectangle((x,y), side,side, facecolor=handle.get_facecolor(),
+                        edgecolor='none', transform=trans)
+        border = Rectangle((x,y), side,side, fill=False, edgecolor=GOAL_BORDER_COLOR,
+                           linewidth=2*GOAL_BORDER_LINEWIDTH, transform=trans)
+        border.set_clip_path(box)
+        marker = Line2D([x+side/2],[y+side/2],marker='x',linestyle='none',
+                        markersize=.62*side,markeredgewidth=.8,color='white',transform=trans)
+        return [box,border,marker]
 
 
 def load(root, maze, method, temperature_root, dipo_root=None):
@@ -148,7 +165,8 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.2,
                  Patch(facecolor=unreached_goal_color,label='Goal not reached')]
         if hide_failed_trajectories:handles.pop(1)
         fig.legend(handles=handles,loc='center',bbox_to_anchor=(.514,.025),ncol=len(handles),
-                   frameon=False,fontsize=10,handlelength=2,columnspacing=1.6)
+                   frameon=False,fontsize=10,handlelength=2,columnspacing=1.6,
+                   handler_map={Patch:GoalLegendHandler()})
     if not no_figure_caption:
         fig.text(.514,-.045 if outcome_colors else .05,'Figure 4: PointMaze.',
                  fontproperties=caption_font,ha='center',va='center')
@@ -179,6 +197,7 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.2,
         goal_border=dict(color=GOAL_BORDER_COLOR,linewidth=GOAL_BORDER_LINEWIDTH,
                          alignment='inside; double-width stroke clipped to goal box',
                          above_trajectory_lines=True) if outcome_colors else None,
+        goal_legend_symbol='colored square with inset white border and white x' if outcome_colors else None,
         trajectory_border=dict(color='white',width_per_side=trajectory_border_width,
                                total_stroke_width=1.8+2*trajectory_border_width,
                                draw_order='all white outlines below all colored trajectories')

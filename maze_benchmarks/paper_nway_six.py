@@ -54,7 +54,7 @@ def original_networks(commit):
 
 def infer(folder, old_probe, proof, output, grid=101, samples=128):
     cfg = json.loads((folder/'config.json').read_text())
-    assert cfg['temperature'] in (1, 3, 5) and cfg['method'] == 'optiq'
+    assert cfg['temperature'] in (1, 3, 5, 10) and cfg['method'] == 'optiq'
     checkpoint = folder/'checkpoints'/f"policy_{cfg['steps']:09d}.msgpack"
     assert sha(checkpoint) == proof['checkpoint_sha256']
     assert sha(folder/'config.json') == proof['config_sha256']
@@ -214,7 +214,7 @@ def render(root, out, records, temperature=1):
 def main():
     p = argparse.ArgumentParser(); p.add_argument('--root', type=Path, required=True)
     p.add_argument('--output', type=Path, required=True)
-    p.add_argument('--temperature', type=int, choices=(1, 3, 5), default=1); a = p.parse_args()
+    p.add_argument('--temperature', type=int, choices=(1, 3, 5, 10), default=1); a = p.parse_args()
     a.output.mkdir(parents=True, exist_ok=True); records = {}
     for n in (4, 8, 16):
         name = f'{n}way-optiq-t{a.temperature}-s0'; folder = a.root/'runs'/name
