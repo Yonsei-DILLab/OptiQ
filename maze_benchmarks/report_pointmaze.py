@@ -9,6 +9,7 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter, MaxNLocator
 import numpy as np
 
 from .visualize_pointmaze import plot_map, plot_rollouts
@@ -51,6 +52,12 @@ def render_curves(root: Path, destination: Path):
             ax.set(title=maze.title() if row == 0 else None,
                    xlabel="Environment transitions" if row == 3 else None,
                    ylabel=label if column == 0 else None)
+            ax.set_xlim(0, {"simple": 100_000, "medium": 200_000,
+                            "hard": 300_000}[maze])
+            ax.xaxis.set_major_locator(MaxNLocator(nbins=5))
+            ax.xaxis.set_major_formatter(
+                FuncFormatter(lambda value, _position: f"{value / 1000:.0f}k"))
+            ax.tick_params(axis="x", labelbottom=row == 3)
             if limits is not None:
                 ax.set_ylim(*limits)
             if row == 1:
