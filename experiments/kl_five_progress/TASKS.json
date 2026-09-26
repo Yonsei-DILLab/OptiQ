@@ -1,0 +1,3154 @@
+[
+  {
+    "index": 0,
+    "case": "t00_reference",
+    "method": "forward",
+    "seed": 0,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t00_reference",
+      "family": "reference",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "e89d570108decc3d40d44c9a8b23a6cd8debc49c",
+    "initial_parameter_sha256": "4b730b65dff86e78206e209e4fdbebb98f77a4baceb2f4fc0a8e7ce2a154c740",
+    "original_final_checkpoint_sha256": "a9a7733efdd5dc9c7a1e605684ecd42f310f5167492f9a43b9f81703ea041dc9",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t00_reference/forward_s0/RUN.json",
+    "original_run_sha256": "c0ea28801def0982bc00c90249b8ce3eca69e779b2718ef354c3de529774377c"
+  },
+  {
+    "index": 1,
+    "case": "t00_reference",
+    "method": "forward",
+    "seed": 1,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t00_reference",
+      "family": "reference",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "e89d570108decc3d40d44c9a8b23a6cd8debc49c",
+    "initial_parameter_sha256": "841dc04b4b7ea46b991e28e3dd57cee36a252d2c5bd66da9bc3c498616425cf8",
+    "original_final_checkpoint_sha256": "0326fa20553a33cd8ed7fa6d4e341a787471506eacb92fe57a1f5f362ef1b952",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t00_reference/forward_s1/RUN.json",
+    "original_run_sha256": "c5609976c3dc7d3a0df59bd25a32d5c1bf74dd47a23c1dd2c7bb73b773ec322d"
+  },
+  {
+    "index": 2,
+    "case": "t00_reference",
+    "method": "forward",
+    "seed": 2,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t00_reference",
+      "family": "reference",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "e89d570108decc3d40d44c9a8b23a6cd8debc49c",
+    "initial_parameter_sha256": "67449493eddbe6cb6f38f2aec1cdbfa87ca57621750cee1d9df2d3d706a061e1",
+    "original_final_checkpoint_sha256": "a7831e3becab00d1b62f45c58f0997a6eab6fecc6aecc50bbce8d08a82725ecd",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t00_reference/forward_s2/RUN.json",
+    "original_run_sha256": "87b0b37faa9722fd89536754846d642b040dde08a9069ed8adb8d4cd9f3355c5"
+  },
+  {
+    "index": 3,
+    "case": "t00_reference",
+    "method": "forward",
+    "seed": 3,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t00_reference",
+      "family": "reference",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "e89d570108decc3d40d44c9a8b23a6cd8debc49c",
+    "initial_parameter_sha256": "31a03e918d4a0a1e866e1dd7460134c9bec7b2edf3bc165c62141f9f2cbea831",
+    "original_final_checkpoint_sha256": "bfefea979d89a1dbbd7a702df056bd55437e0ed450f8c4613a2b55f84bf27e65",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t00_reference/forward_s3/RUN.json",
+    "original_run_sha256": "46cae649c299923bc5a25a3571410bbde9cde98c7b809b3bb52036d51feaac39"
+  },
+  {
+    "index": 4,
+    "case": "n00_spike_ramp",
+    "method": "forward",
+    "seed": 0,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n00_spike_ramp",
+      "family": "spike_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -4.25,
+          "width": 0.1
+        },
+        {
+          "kind": "shelf",
+          "left": 0.5,
+          "right": 8,
+          "edge_left": 0.6,
+          "edge_right": 0.08,
+          "tilt": 0.2
+        }
+      ],
+      "shape_masses": [
+        0.2,
+        0.8
+      ],
+      "target_centers": [
+        -4.25,
+        7.7
+      ],
+      "expected_modes": 2,
+      "core_intervals": [
+        [
+          -4.5,
+          -4
+        ],
+        [
+          3,
+          7.7
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "55da33adca2d213b7847dd8eb6c5fa30825155ab",
+    "initial_parameter_sha256": "4b730b65dff86e78206e209e4fdbebb98f77a4baceb2f4fc0a8e7ce2a154c740",
+    "original_final_checkpoint_sha256": "e93d1da473248b67a8fd6ff6f7dcd237c0f81db77d08bcbc46e84d66ce25449a",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n00_spike_ramp/forward_s0/RUN.json",
+    "original_run_sha256": "e0b4d95603facf02c7306bf8c7811a9bed42f7a867ef044386b95c012b8db0ec"
+  },
+  {
+    "index": 5,
+    "case": "n00_spike_ramp",
+    "method": "forward",
+    "seed": 1,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n00_spike_ramp",
+      "family": "spike_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -4.25,
+          "width": 0.1
+        },
+        {
+          "kind": "shelf",
+          "left": 0.5,
+          "right": 8,
+          "edge_left": 0.6,
+          "edge_right": 0.08,
+          "tilt": 0.2
+        }
+      ],
+      "shape_masses": [
+        0.2,
+        0.8
+      ],
+      "target_centers": [
+        -4.25,
+        7.7
+      ],
+      "expected_modes": 2,
+      "core_intervals": [
+        [
+          -4.5,
+          -4
+        ],
+        [
+          3,
+          7.7
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "55da33adca2d213b7847dd8eb6c5fa30825155ab",
+    "initial_parameter_sha256": "841dc04b4b7ea46b991e28e3dd57cee36a252d2c5bd66da9bc3c498616425cf8",
+    "original_final_checkpoint_sha256": "1e98c2cc458a7413697c455e61000e14fad740be65cbe509194a46950d152c8a",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n00_spike_ramp/forward_s1/RUN.json",
+    "original_run_sha256": "74956b8feb36c857201ca414e5d8de6f84515c7783f617269116d8632fe59a5f"
+  },
+  {
+    "index": 6,
+    "case": "n00_spike_ramp",
+    "method": "forward",
+    "seed": 2,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n00_spike_ramp",
+      "family": "spike_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -4.25,
+          "width": 0.1
+        },
+        {
+          "kind": "shelf",
+          "left": 0.5,
+          "right": 8,
+          "edge_left": 0.6,
+          "edge_right": 0.08,
+          "tilt": 0.2
+        }
+      ],
+      "shape_masses": [
+        0.2,
+        0.8
+      ],
+      "target_centers": [
+        -4.25,
+        7.7
+      ],
+      "expected_modes": 2,
+      "core_intervals": [
+        [
+          -4.5,
+          -4
+        ],
+        [
+          3,
+          7.7
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "55da33adca2d213b7847dd8eb6c5fa30825155ab",
+    "initial_parameter_sha256": "67449493eddbe6cb6f38f2aec1cdbfa87ca57621750cee1d9df2d3d706a061e1",
+    "original_final_checkpoint_sha256": "ace4b253799d2e233b0fa0583300fcf4c00a09d983e7c6a31d0f9eab69f30c9b",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n00_spike_ramp/forward_s2/RUN.json",
+    "original_run_sha256": "3d3507e31958242f9b955351a1795360ece07e1408f9c55e917337dfd8b07fe6"
+  },
+  {
+    "index": 7,
+    "case": "n00_spike_ramp",
+    "method": "forward",
+    "seed": 3,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n00_spike_ramp",
+      "family": "spike_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -4.25,
+          "width": 0.1
+        },
+        {
+          "kind": "shelf",
+          "left": 0.5,
+          "right": 8,
+          "edge_left": 0.6,
+          "edge_right": 0.08,
+          "tilt": 0.2
+        }
+      ],
+      "shape_masses": [
+        0.2,
+        0.8
+      ],
+      "target_centers": [
+        -4.25,
+        7.7
+      ],
+      "expected_modes": 2,
+      "core_intervals": [
+        [
+          -4.5,
+          -4
+        ],
+        [
+          3,
+          7.7
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "55da33adca2d213b7847dd8eb6c5fa30825155ab",
+    "initial_parameter_sha256": "31a03e918d4a0a1e866e1dd7460134c9bec7b2edf3bc165c62141f9f2cbea831",
+    "original_final_checkpoint_sha256": "fbd2f3561769b8dc000ea9f1ef21d53e755d83a0ad1aa94e38307334764d327b",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n00_spike_ramp/forward_s3/RUN.json",
+    "original_run_sha256": "da3dfaaad23c186d716c2bb1d02f84eacbf0d55ddfec7627cec8e58534abdcf6"
+  },
+  {
+    "index": 8,
+    "case": "n07_spike_flat_ramp",
+    "method": "forward",
+    "seed": 0,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n07_spike_flat_ramp",
+      "family": "spike_flat_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -5,
+          "width": 0.13
+        },
+        {
+          "kind": "shelf",
+          "left": -1,
+          "right": 1,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        },
+        {
+          "kind": "shelf",
+          "left": 3,
+          "right": 7,
+          "edge_left": 0.25,
+          "edge_right": 0.05,
+          "tilt": 0.4
+        }
+      ],
+      "shape_masses": [
+        0.25,
+        0.3,
+        0.45
+      ],
+      "target_centers": [
+        -5,
+        0,
+        6.8
+      ],
+      "expected_modes": 3,
+      "core_intervals": [
+        [
+          -5.25,
+          -4.75
+        ],
+        [
+          -0.75,
+          0.75
+        ],
+        [
+          4,
+          6.8
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "55da33adca2d213b7847dd8eb6c5fa30825155ab",
+    "initial_parameter_sha256": "4b730b65dff86e78206e209e4fdbebb98f77a4baceb2f4fc0a8e7ce2a154c740",
+    "original_final_checkpoint_sha256": "b3ff63e036d064c58b09abe7a8b9c2e5689a6d7656d315225360e765fbb38688",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n07_spike_flat_ramp/forward_s0/RUN.json",
+    "original_run_sha256": "a01b7ad48c881d7a64a6180fd012877815ad9918bf7a2c2e7d1bfa80fe557298"
+  },
+  {
+    "index": 9,
+    "case": "n07_spike_flat_ramp",
+    "method": "forward",
+    "seed": 1,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n07_spike_flat_ramp",
+      "family": "spike_flat_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -5,
+          "width": 0.13
+        },
+        {
+          "kind": "shelf",
+          "left": -1,
+          "right": 1,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        },
+        {
+          "kind": "shelf",
+          "left": 3,
+          "right": 7,
+          "edge_left": 0.25,
+          "edge_right": 0.05,
+          "tilt": 0.4
+        }
+      ],
+      "shape_masses": [
+        0.25,
+        0.3,
+        0.45
+      ],
+      "target_centers": [
+        -5,
+        0,
+        6.8
+      ],
+      "expected_modes": 3,
+      "core_intervals": [
+        [
+          -5.25,
+          -4.75
+        ],
+        [
+          -0.75,
+          0.75
+        ],
+        [
+          4,
+          6.8
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "55da33adca2d213b7847dd8eb6c5fa30825155ab",
+    "initial_parameter_sha256": "841dc04b4b7ea46b991e28e3dd57cee36a252d2c5bd66da9bc3c498616425cf8",
+    "original_final_checkpoint_sha256": "9e95dbdfceb0e7ee88d864fc9d9a8cfdf0a4002293d2a53fa1d51e374b5b53d8",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n07_spike_flat_ramp/forward_s1/RUN.json",
+    "original_run_sha256": "7de86f20d08fb7bdeaa017e28301fce15121c0ee2a6f4ec798d4baea805944eb"
+  },
+  {
+    "index": 10,
+    "case": "n07_spike_flat_ramp",
+    "method": "forward",
+    "seed": 2,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n07_spike_flat_ramp",
+      "family": "spike_flat_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -5,
+          "width": 0.13
+        },
+        {
+          "kind": "shelf",
+          "left": -1,
+          "right": 1,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        },
+        {
+          "kind": "shelf",
+          "left": 3,
+          "right": 7,
+          "edge_left": 0.25,
+          "edge_right": 0.05,
+          "tilt": 0.4
+        }
+      ],
+      "shape_masses": [
+        0.25,
+        0.3,
+        0.45
+      ],
+      "target_centers": [
+        -5,
+        0,
+        6.8
+      ],
+      "expected_modes": 3,
+      "core_intervals": [
+        [
+          -5.25,
+          -4.75
+        ],
+        [
+          -0.75,
+          0.75
+        ],
+        [
+          4,
+          6.8
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "55da33adca2d213b7847dd8eb6c5fa30825155ab",
+    "initial_parameter_sha256": "67449493eddbe6cb6f38f2aec1cdbfa87ca57621750cee1d9df2d3d706a061e1",
+    "original_final_checkpoint_sha256": "d19fb7f48531dfc36a974ec3289ab3c6ee1cc36907e4801f0a5648ac3150a528",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n07_spike_flat_ramp/forward_s2/RUN.json",
+    "original_run_sha256": "3c62a547c1c0c8477d12da65769ce2090cd4ad3aef222b42581727adcab40f07"
+  },
+  {
+    "index": 11,
+    "case": "n07_spike_flat_ramp",
+    "method": "forward",
+    "seed": 3,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n07_spike_flat_ramp",
+      "family": "spike_flat_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -5,
+          "width": 0.13
+        },
+        {
+          "kind": "shelf",
+          "left": -1,
+          "right": 1,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        },
+        {
+          "kind": "shelf",
+          "left": 3,
+          "right": 7,
+          "edge_left": 0.25,
+          "edge_right": 0.05,
+          "tilt": 0.4
+        }
+      ],
+      "shape_masses": [
+        0.25,
+        0.3,
+        0.45
+      ],
+      "target_centers": [
+        -5,
+        0,
+        6.8
+      ],
+      "expected_modes": 3,
+      "core_intervals": [
+        [
+          -5.25,
+          -4.75
+        ],
+        [
+          -0.75,
+          0.75
+        ],
+        [
+          4,
+          6.8
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "55da33adca2d213b7847dd8eb6c5fa30825155ab",
+    "initial_parameter_sha256": "31a03e918d4a0a1e866e1dd7460134c9bec7b2edf3bc165c62141f9f2cbea831",
+    "original_final_checkpoint_sha256": "a17add2f785969a1258cc976f140bcc5065716082dc6f78fcb28ed3c78baa873",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n07_spike_flat_ramp/forward_s3/RUN.json",
+    "original_run_sha256": "0791d2d97b1a28e4110f9a60dca9817dce6c8e3b9ac02a5deaa5a7dbf3a63edf"
+  },
+  {
+    "index": 12,
+    "case": "t01_two_offset",
+    "method": "forward",
+    "seed": 0,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t01_two_offset",
+      "family": "two",
+      "target_centers": [
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.5,
+        0.5
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "e89d570108decc3d40d44c9a8b23a6cd8debc49c",
+    "initial_parameter_sha256": "4b730b65dff86e78206e209e4fdbebb98f77a4baceb2f4fc0a8e7ce2a154c740",
+    "original_final_checkpoint_sha256": "6f421897fe9eb377fc1ebf44355eae5fde1a9b6fb5d725863d834b292f94fe41",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t01_two_offset/forward_s0/RUN.json",
+    "original_run_sha256": "a0f1c2fff95715f9a582e48d5288730b1c10d687df254172514de30ac6b16341"
+  },
+  {
+    "index": 13,
+    "case": "t01_two_offset",
+    "method": "forward",
+    "seed": 1,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t01_two_offset",
+      "family": "two",
+      "target_centers": [
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.5,
+        0.5
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "e89d570108decc3d40d44c9a8b23a6cd8debc49c",
+    "initial_parameter_sha256": "841dc04b4b7ea46b991e28e3dd57cee36a252d2c5bd66da9bc3c498616425cf8",
+    "original_final_checkpoint_sha256": "faa4554a1d99b1c745a2b2e84b260d7361301e9fb5cf5cd3bc65fe227f59b183",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t01_two_offset/forward_s1/RUN.json",
+    "original_run_sha256": "52f9bc45128f692a933bafdb7b5c2f6d0e38773ad8de42ed09a0b8bd5c163207"
+  },
+  {
+    "index": 14,
+    "case": "t01_two_offset",
+    "method": "forward",
+    "seed": 2,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t01_two_offset",
+      "family": "two",
+      "target_centers": [
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.5,
+        0.5
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "e89d570108decc3d40d44c9a8b23a6cd8debc49c",
+    "initial_parameter_sha256": "67449493eddbe6cb6f38f2aec1cdbfa87ca57621750cee1d9df2d3d706a061e1",
+    "original_final_checkpoint_sha256": "aa5c392a9d8ac2f84bfaeeef365a4060a3ac84fb2bf28d7f8278d161101bba50",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t01_two_offset/forward_s2/RUN.json",
+    "original_run_sha256": "cb616022bd7395ff8813286cc9d45f342c6f1416a1fec05b2e8d9d2ab47f2b8c"
+  },
+  {
+    "index": 15,
+    "case": "t01_two_offset",
+    "method": "forward",
+    "seed": 3,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t01_two_offset",
+      "family": "two",
+      "target_centers": [
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.5,
+        0.5
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "e89d570108decc3d40d44c9a8b23a6cd8debc49c",
+    "initial_parameter_sha256": "31a03e918d4a0a1e866e1dd7460134c9bec7b2edf3bc165c62141f9f2cbea831",
+    "original_final_checkpoint_sha256": "02c80a4645bf2dc1782cea3130d4fa2b536972fc51332f8e749a75b1bd0a726d",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t01_two_offset/forward_s3/RUN.json",
+    "original_run_sha256": "6896061f86659c6cf9c49740e2692ec5702de5b73f888e9cc90b94ca07e77d67"
+  },
+  {
+    "index": 16,
+    "case": "t05_unequal_mass",
+    "method": "forward",
+    "seed": 0,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t05_unequal_mass",
+      "family": "mass",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.2,
+        0.5,
+        0.3
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "e89d570108decc3d40d44c9a8b23a6cd8debc49c",
+    "initial_parameter_sha256": "4b730b65dff86e78206e209e4fdbebb98f77a4baceb2f4fc0a8e7ce2a154c740",
+    "original_final_checkpoint_sha256": "29f040d9ba31d0f81b88051314638346fdbcfb1c504ef72b770f450dd0544b72",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t05_unequal_mass/forward_s0/RUN.json",
+    "original_run_sha256": "7a31472c6cabdb876b1505e2ac305e06825baf64fd2ebac1967de4257c35a05d"
+  },
+  {
+    "index": 17,
+    "case": "t05_unequal_mass",
+    "method": "forward",
+    "seed": 1,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t05_unequal_mass",
+      "family": "mass",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.2,
+        0.5,
+        0.3
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "e89d570108decc3d40d44c9a8b23a6cd8debc49c",
+    "initial_parameter_sha256": "841dc04b4b7ea46b991e28e3dd57cee36a252d2c5bd66da9bc3c498616425cf8",
+    "original_final_checkpoint_sha256": "ddff1e0d6903f9f3febf791faa6769ff1898d329739c65c23878df25b3739a0b",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t05_unequal_mass/forward_s1/RUN.json",
+    "original_run_sha256": "e78978b73543f18893e25f99ffab3eea799df1f50f5fd68164320394fe69acf9"
+  },
+  {
+    "index": 18,
+    "case": "t05_unequal_mass",
+    "method": "forward",
+    "seed": 2,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t05_unequal_mass",
+      "family": "mass",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.2,
+        0.5,
+        0.3
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "e89d570108decc3d40d44c9a8b23a6cd8debc49c",
+    "initial_parameter_sha256": "67449493eddbe6cb6f38f2aec1cdbfa87ca57621750cee1d9df2d3d706a061e1",
+    "original_final_checkpoint_sha256": "ab7f8ccf3b092fc7d3dcf864acc24d398abbbd4e8a64882d4664db6f1e93f411",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t05_unequal_mass/forward_s2/RUN.json",
+    "original_run_sha256": "114535aefa6c3404b4d05d0e582e260688c9190b179460e98acccd5c735cef49"
+  },
+  {
+    "index": 19,
+    "case": "t05_unequal_mass",
+    "method": "forward",
+    "seed": 3,
+    "L": 0,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 256,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 100,
+      "checkpoint_interval": 1000,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t05_unequal_mass",
+      "family": "mass",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.2,
+        0.5,
+        0.3
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "e89d570108decc3d40d44c9a8b23a6cd8debc49c",
+    "initial_parameter_sha256": "31a03e918d4a0a1e866e1dd7460134c9bec7b2edf3bc165c62141f9f2cbea831",
+    "original_final_checkpoint_sha256": "67e8e6214a2eb008f00c6c795bdcf9bc13c4d2b1dd2ee6dcf3517c2b7ce5de4c",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t05_unequal_mass/forward_s3/RUN.json",
+    "original_run_sha256": "8fcc17a5811d25092777554310123437fcf4b983f6096fbad4a60f555275ade5"
+  },
+  {
+    "index": 20,
+    "case": "t00_reference",
+    "method": "reverse",
+    "seed": 0,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t00_reference",
+      "family": "reference",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "41a020577dbf8a87d8f96d714ab3888a4bb82260",
+    "initial_parameter_sha256": "4b730b65dff86e78206e209e4fdbebb98f77a4baceb2f4fc0a8e7ce2a154c740",
+    "original_final_checkpoint_sha256": "7311f2ea6db4faa69db28e9de9ad2c3b185abac8e2de55cfa1cee092c1705c08",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t00_reference/reverse_s0/RUN.json",
+    "original_run_sha256": "2d35c18e130a015436e682fcfc5b18eda9a23bd193e4b655d3089c6b811cdb27"
+  },
+  {
+    "index": 21,
+    "case": "t00_reference",
+    "method": "reverse",
+    "seed": 1,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t00_reference",
+      "family": "reference",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "41a020577dbf8a87d8f96d714ab3888a4bb82260",
+    "initial_parameter_sha256": "841dc04b4b7ea46b991e28e3dd57cee36a252d2c5bd66da9bc3c498616425cf8",
+    "original_final_checkpoint_sha256": "0f2858baf5c7caed9456e69bc594fa8cc2fe341420016d3a43e7189433d228af",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t00_reference/reverse_s1/RUN.json",
+    "original_run_sha256": "87a10ca75655fae0d22ab8b9650d0ee107f6927341482eb1928fc867c4fe376f"
+  },
+  {
+    "index": 22,
+    "case": "t00_reference",
+    "method": "reverse",
+    "seed": 2,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t00_reference",
+      "family": "reference",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "41a020577dbf8a87d8f96d714ab3888a4bb82260",
+    "initial_parameter_sha256": "67449493eddbe6cb6f38f2aec1cdbfa87ca57621750cee1d9df2d3d706a061e1",
+    "original_final_checkpoint_sha256": "523d154d236a54d2bf583b6d4689129674ba9af6c41ee58cb10b814c3ab90877",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t00_reference/reverse_s2/RUN.json",
+    "original_run_sha256": "5261a528f8ef41c3e0ad8ec81430e2420cca080add2892be874561e96645c6d2"
+  },
+  {
+    "index": 23,
+    "case": "t00_reference",
+    "method": "reverse",
+    "seed": 3,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t00_reference",
+      "family": "reference",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "41a020577dbf8a87d8f96d714ab3888a4bb82260",
+    "initial_parameter_sha256": "31a03e918d4a0a1e866e1dd7460134c9bec7b2edf3bc165c62141f9f2cbea831",
+    "original_final_checkpoint_sha256": "eea0bed393c13440ba0a73a07b553d4fb9b181ef597ce1fc41be9f05d898ca24",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t00_reference/reverse_s3/RUN.json",
+    "original_run_sha256": "c99a450b6723058cee41e0278dd07c8be28b348478abeae2ea1f4e0c83caa3fa"
+  },
+  {
+    "index": 24,
+    "case": "n00_spike_ramp",
+    "method": "reverse",
+    "seed": 0,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n00_spike_ramp",
+      "family": "spike_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -4.25,
+          "width": 0.1
+        },
+        {
+          "kind": "shelf",
+          "left": 0.5,
+          "right": 8,
+          "edge_left": 0.6,
+          "edge_right": 0.08,
+          "tilt": 0.2
+        }
+      ],
+      "shape_masses": [
+        0.2,
+        0.8
+      ],
+      "target_centers": [
+        -4.25,
+        7.7
+      ],
+      "expected_modes": 2,
+      "core_intervals": [
+        [
+          -4.5,
+          -4
+        ],
+        [
+          3,
+          7.7
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "41a020577dbf8a87d8f96d714ab3888a4bb82260",
+    "initial_parameter_sha256": "4b730b65dff86e78206e209e4fdbebb98f77a4baceb2f4fc0a8e7ce2a154c740",
+    "original_final_checkpoint_sha256": "3c2ba040acc3c16fcef802016d4e52d47c2ab181f72d4732f81d14cf90fb4787",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n00_spike_ramp/reverse_s0/RUN.json",
+    "original_run_sha256": "be974651514705b5a940d2a0190a0a1857011275c2215e89b271aeee7da7213f"
+  },
+  {
+    "index": 25,
+    "case": "n00_spike_ramp",
+    "method": "reverse",
+    "seed": 1,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n00_spike_ramp",
+      "family": "spike_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -4.25,
+          "width": 0.1
+        },
+        {
+          "kind": "shelf",
+          "left": 0.5,
+          "right": 8,
+          "edge_left": 0.6,
+          "edge_right": 0.08,
+          "tilt": 0.2
+        }
+      ],
+      "shape_masses": [
+        0.2,
+        0.8
+      ],
+      "target_centers": [
+        -4.25,
+        7.7
+      ],
+      "expected_modes": 2,
+      "core_intervals": [
+        [
+          -4.5,
+          -4
+        ],
+        [
+          3,
+          7.7
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "41a020577dbf8a87d8f96d714ab3888a4bb82260",
+    "initial_parameter_sha256": "841dc04b4b7ea46b991e28e3dd57cee36a252d2c5bd66da9bc3c498616425cf8",
+    "original_final_checkpoint_sha256": "98a738d9690427d851b6a594876e68c7c87523f1808974cade76094aa424badc",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n00_spike_ramp/reverse_s1/RUN.json",
+    "original_run_sha256": "c3948e89bc5f4ce6dc0978d4fd94963d1aac101f860b1947629fb9896402884f"
+  },
+  {
+    "index": 26,
+    "case": "n00_spike_ramp",
+    "method": "reverse",
+    "seed": 2,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n00_spike_ramp",
+      "family": "spike_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -4.25,
+          "width": 0.1
+        },
+        {
+          "kind": "shelf",
+          "left": 0.5,
+          "right": 8,
+          "edge_left": 0.6,
+          "edge_right": 0.08,
+          "tilt": 0.2
+        }
+      ],
+      "shape_masses": [
+        0.2,
+        0.8
+      ],
+      "target_centers": [
+        -4.25,
+        7.7
+      ],
+      "expected_modes": 2,
+      "core_intervals": [
+        [
+          -4.5,
+          -4
+        ],
+        [
+          3,
+          7.7
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "41a020577dbf8a87d8f96d714ab3888a4bb82260",
+    "initial_parameter_sha256": "67449493eddbe6cb6f38f2aec1cdbfa87ca57621750cee1d9df2d3d706a061e1",
+    "original_final_checkpoint_sha256": "829e40c2a39b6eda5e37172799473e09a64bf3ace2824833db16f5090283cd2b",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n00_spike_ramp/reverse_s2/RUN.json",
+    "original_run_sha256": "6293f837b5b8ee43d4064d1b9b818d11fac8f2594998e3dd7a3097d1e702cfad"
+  },
+  {
+    "index": 27,
+    "case": "n00_spike_ramp",
+    "method": "reverse",
+    "seed": 3,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n00_spike_ramp",
+      "family": "spike_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -4.25,
+          "width": 0.1
+        },
+        {
+          "kind": "shelf",
+          "left": 0.5,
+          "right": 8,
+          "edge_left": 0.6,
+          "edge_right": 0.08,
+          "tilt": 0.2
+        }
+      ],
+      "shape_masses": [
+        0.2,
+        0.8
+      ],
+      "target_centers": [
+        -4.25,
+        7.7
+      ],
+      "expected_modes": 2,
+      "core_intervals": [
+        [
+          -4.5,
+          -4
+        ],
+        [
+          3,
+          7.7
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "41a020577dbf8a87d8f96d714ab3888a4bb82260",
+    "initial_parameter_sha256": "31a03e918d4a0a1e866e1dd7460134c9bec7b2edf3bc165c62141f9f2cbea831",
+    "original_final_checkpoint_sha256": "dff2bebd3ed390a2c99b5c9108ceb182c8f3cc01bf4831130c4016750ea57591",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n00_spike_ramp/reverse_s3/RUN.json",
+    "original_run_sha256": "743a4d3845358ecc119133baa6e9e4a1f92f8fd312df0e3e3fdc6691ecad6257"
+  },
+  {
+    "index": 28,
+    "case": "n07_spike_flat_ramp",
+    "method": "reverse",
+    "seed": 0,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n07_spike_flat_ramp",
+      "family": "spike_flat_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -5,
+          "width": 0.13
+        },
+        {
+          "kind": "shelf",
+          "left": -1,
+          "right": 1,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        },
+        {
+          "kind": "shelf",
+          "left": 3,
+          "right": 7,
+          "edge_left": 0.25,
+          "edge_right": 0.05,
+          "tilt": 0.4
+        }
+      ],
+      "shape_masses": [
+        0.25,
+        0.3,
+        0.45
+      ],
+      "target_centers": [
+        -5,
+        0,
+        6.8
+      ],
+      "expected_modes": 3,
+      "core_intervals": [
+        [
+          -5.25,
+          -4.75
+        ],
+        [
+          -0.75,
+          0.75
+        ],
+        [
+          4,
+          6.8
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "5c918efad2a78f797da6eb928fadc697a691de8c",
+    "initial_parameter_sha256": "4b730b65dff86e78206e209e4fdbebb98f77a4baceb2f4fc0a8e7ce2a154c740",
+    "original_final_checkpoint_sha256": "615b01e71ee27d1bbe2e5e32cb0ce01f8b5b576ea398dffd63c6ca372644ada5",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n07_spike_flat_ramp/reverse_s0/RUN.json",
+    "original_run_sha256": "68dfe3279bf4752428fe4936bfaa85b90c2fe0f456ec81f2ad929339a713d3d2"
+  },
+  {
+    "index": 29,
+    "case": "n07_spike_flat_ramp",
+    "method": "reverse",
+    "seed": 1,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n07_spike_flat_ramp",
+      "family": "spike_flat_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -5,
+          "width": 0.13
+        },
+        {
+          "kind": "shelf",
+          "left": -1,
+          "right": 1,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        },
+        {
+          "kind": "shelf",
+          "left": 3,
+          "right": 7,
+          "edge_left": 0.25,
+          "edge_right": 0.05,
+          "tilt": 0.4
+        }
+      ],
+      "shape_masses": [
+        0.25,
+        0.3,
+        0.45
+      ],
+      "target_centers": [
+        -5,
+        0,
+        6.8
+      ],
+      "expected_modes": 3,
+      "core_intervals": [
+        [
+          -5.25,
+          -4.75
+        ],
+        [
+          -0.75,
+          0.75
+        ],
+        [
+          4,
+          6.8
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "5c918efad2a78f797da6eb928fadc697a691de8c",
+    "initial_parameter_sha256": "841dc04b4b7ea46b991e28e3dd57cee36a252d2c5bd66da9bc3c498616425cf8",
+    "original_final_checkpoint_sha256": "785ef45f121fb0df606032a953014913cd01433f52275dfffa5ae3005f9cc06d",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n07_spike_flat_ramp/reverse_s1/RUN.json",
+    "original_run_sha256": "8445ece9882d5bc68fa79e8e5ae548d294729983b4f869b96de4b0476d4770fa"
+  },
+  {
+    "index": 30,
+    "case": "n07_spike_flat_ramp",
+    "method": "reverse",
+    "seed": 2,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n07_spike_flat_ramp",
+      "family": "spike_flat_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -5,
+          "width": 0.13
+        },
+        {
+          "kind": "shelf",
+          "left": -1,
+          "right": 1,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        },
+        {
+          "kind": "shelf",
+          "left": 3,
+          "right": 7,
+          "edge_left": 0.25,
+          "edge_right": 0.05,
+          "tilt": 0.4
+        }
+      ],
+      "shape_masses": [
+        0.25,
+        0.3,
+        0.45
+      ],
+      "target_centers": [
+        -5,
+        0,
+        6.8
+      ],
+      "expected_modes": 3,
+      "core_intervals": [
+        [
+          -5.25,
+          -4.75
+        ],
+        [
+          -0.75,
+          0.75
+        ],
+        [
+          4,
+          6.8
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "5c918efad2a78f797da6eb928fadc697a691de8c",
+    "initial_parameter_sha256": "67449493eddbe6cb6f38f2aec1cdbfa87ca57621750cee1d9df2d3d706a061e1",
+    "original_final_checkpoint_sha256": "594e72f0d8fb2d71e7157a5cdadcfb1791ab10456d513d5ef6129843e55abe98",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n07_spike_flat_ramp/reverse_s2/RUN.json",
+    "original_run_sha256": "702e4fbfd8f1b3e7a1446041a384407b71cffe24cf62f070c6a281a079fb7910"
+  },
+  {
+    "index": 31,
+    "case": "n07_spike_flat_ramp",
+    "method": "reverse",
+    "seed": 3,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "n07_spike_flat_ramp",
+      "family": "spike_flat_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -5,
+          "width": 0.13
+        },
+        {
+          "kind": "shelf",
+          "left": -1,
+          "right": 1,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        },
+        {
+          "kind": "shelf",
+          "left": 3,
+          "right": 7,
+          "edge_left": 0.25,
+          "edge_right": 0.05,
+          "tilt": 0.4
+        }
+      ],
+      "shape_masses": [
+        0.25,
+        0.3,
+        0.45
+      ],
+      "target_centers": [
+        -5,
+        0,
+        6.8
+      ],
+      "expected_modes": 3,
+      "core_intervals": [
+        [
+          -5.25,
+          -4.75
+        ],
+        [
+          -0.75,
+          0.75
+        ],
+        [
+          4,
+          6.8
+        ]
+      ],
+      "target_kind": "nongmm",
+      "forward_campaign": "kl_nongmm_targets_20260925"
+    },
+    "original_commit": "5c918efad2a78f797da6eb928fadc697a691de8c",
+    "initial_parameter_sha256": "31a03e918d4a0a1e866e1dd7460134c9bec7b2edf3bc165c62141f9f2cbea831",
+    "original_final_checkpoint_sha256": "35bbcfda0d01859cd8d2b3e72860cfb4dceae1b586441df63dad51db473da02f",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/n07_spike_flat_ramp/reverse_s3/RUN.json",
+    "original_run_sha256": "7b1cb84dd95f0bf1d430fb600c077c9d00512546c4ae17fb5441dec02ca356df"
+  },
+  {
+    "index": 32,
+    "case": "t01_two_offset",
+    "method": "reverse",
+    "seed": 0,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t01_two_offset",
+      "family": "two",
+      "target_centers": [
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.5,
+        0.5
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "5c918efad2a78f797da6eb928fadc697a691de8c",
+    "initial_parameter_sha256": "4b730b65dff86e78206e209e4fdbebb98f77a4baceb2f4fc0a8e7ce2a154c740",
+    "original_final_checkpoint_sha256": "33cd4708e2e49281149599d5546dce65e9b5f7b6c7bc240fbf86b89228fc2976",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t01_two_offset/reverse_s0/RUN.json",
+    "original_run_sha256": "666dab2a8a7bde34ddf904b726829bb58b524f7e5a21f38d05ef57b3bff0e3a5"
+  },
+  {
+    "index": 33,
+    "case": "t01_two_offset",
+    "method": "reverse",
+    "seed": 1,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t01_two_offset",
+      "family": "two",
+      "target_centers": [
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.5,
+        0.5
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "5c918efad2a78f797da6eb928fadc697a691de8c",
+    "initial_parameter_sha256": "841dc04b4b7ea46b991e28e3dd57cee36a252d2c5bd66da9bc3c498616425cf8",
+    "original_final_checkpoint_sha256": "5ff00ff1584592762b862257dbc0eb86547d2fe55860c5cc6ef501c5342f52ec",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t01_two_offset/reverse_s1/RUN.json",
+    "original_run_sha256": "4cc45d321b9535554ddf263fe66c33ac3feb1221e12c62167180331eeebbf959"
+  },
+  {
+    "index": 34,
+    "case": "t01_two_offset",
+    "method": "reverse",
+    "seed": 2,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t01_two_offset",
+      "family": "two",
+      "target_centers": [
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.5,
+        0.5
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "5c918efad2a78f797da6eb928fadc697a691de8c",
+    "initial_parameter_sha256": "67449493eddbe6cb6f38f2aec1cdbfa87ca57621750cee1d9df2d3d706a061e1",
+    "original_final_checkpoint_sha256": "bdc262361d56dc14323a1498c448e270cfd48ce713722bcb6c2b6f3a6491c5a3",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t01_two_offset/reverse_s2/RUN.json",
+    "original_run_sha256": "2d4e90975d9cc503b09103c91485399f8bb211bdcf4489dd08289ef2fe2b9014"
+  },
+  {
+    "index": 35,
+    "case": "t01_two_offset",
+    "method": "reverse",
+    "seed": 3,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t01_two_offset",
+      "family": "two",
+      "target_centers": [
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.5,
+        0.5
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "5c918efad2a78f797da6eb928fadc697a691de8c",
+    "initial_parameter_sha256": "31a03e918d4a0a1e866e1dd7460134c9bec7b2edf3bc165c62141f9f2cbea831",
+    "original_final_checkpoint_sha256": "f5d5ed98978fa0fca62d3016aba0678960813efc3bfd5da3fd02a533d48cba91",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t01_two_offset/reverse_s3/RUN.json",
+    "original_run_sha256": "7720451432a876b7322e3138793571b0abdc41106ea388631c32d7b2c51d813a"
+  },
+  {
+    "index": 36,
+    "case": "t05_unequal_mass",
+    "method": "reverse",
+    "seed": 0,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t05_unequal_mass",
+      "family": "mass",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.2,
+        0.5,
+        0.3
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "5c918efad2a78f797da6eb928fadc697a691de8c",
+    "initial_parameter_sha256": "4b730b65dff86e78206e209e4fdbebb98f77a4baceb2f4fc0a8e7ce2a154c740",
+    "original_final_checkpoint_sha256": "40e16c73c4bfb83c3b1e73f1ec5e03f3e3b09481bce9c6b3c9110f659568ea9f",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t05_unequal_mass/reverse_s0/RUN.json",
+    "original_run_sha256": "b2a2193c1ff5f6519d6b5cab96cf09a8b373311fc98386b397dab3565f933fd1"
+  },
+  {
+    "index": 37,
+    "case": "t05_unequal_mass",
+    "method": "reverse",
+    "seed": 1,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t05_unequal_mass",
+      "family": "mass",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.2,
+        0.5,
+        0.3
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "5c918efad2a78f797da6eb928fadc697a691de8c",
+    "initial_parameter_sha256": "841dc04b4b7ea46b991e28e3dd57cee36a252d2c5bd66da9bc3c498616425cf8",
+    "original_final_checkpoint_sha256": "d5b3dc87a49949111ffd98a9081935c392f80f67e8545a6d7e2a6dfde3f72f33",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t05_unequal_mass/reverse_s1/RUN.json",
+    "original_run_sha256": "380babba291b5af2e1c76cb06cf6d01c1188bf6c11713be43cd449dd54a7b13b"
+  },
+  {
+    "index": 38,
+    "case": "t05_unequal_mass",
+    "method": "reverse",
+    "seed": 2,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t05_unequal_mass",
+      "family": "mass",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.2,
+        0.5,
+        0.3
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "5c918efad2a78f797da6eb928fadc697a691de8c",
+    "initial_parameter_sha256": "67449493eddbe6cb6f38f2aec1cdbfa87ca57621750cee1d9df2d3d706a061e1",
+    "original_final_checkpoint_sha256": "a0c61f8c36dfcadd8acced8cc60b98e4638e38dc4c30a1078e386c363bf8e736",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t05_unequal_mass/reverse_s2/RUN.json",
+    "original_run_sha256": "8d2420709870852433943c19d4ed35bbc9152ed6da516770bb927608c94be805"
+  },
+  {
+    "index": 39,
+    "case": "t05_unequal_mass",
+    "method": "reverse",
+    "seed": 3,
+    "L": 1048576,
+    "config": {
+      "n": 128,
+      "m": 128,
+      "batch": 32,
+      "temperature": 0.25,
+      "learning_rate": 0.0003,
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "log_std_min": -5.0,
+      "log_std_max": -1.0,
+      "initial_log_std": -1.0,
+      "teacher_std_floor": 0.006737946999085467,
+      "density_chunk": 4096,
+      "action_bound": 10.0,
+      "target_width": 1.0,
+      "train_block": 5,
+      "checkpoint_interval": 100,
+      "study": "20260925_kl_six_highL",
+      "steps": 100000,
+      "mean_output_init_scale": 3.0,
+      "reverse_L": 1048576,
+      "eval_samples": 32768,
+      "final_eval_samples": 1048576,
+      "histogram_bins": 512,
+      "eval_steps": [
+        0,
+        1000,
+        10000,
+        25000,
+        50000,
+        75000,
+        100000
+      ],
+      "allow_large_L": true,
+      "final_sample_chunk": 16384,
+      "id": "t05_unequal_mass",
+      "family": "mass",
+      "target_centers": [
+        -4.25,
+        0,
+        4.25
+      ],
+      "target_widths": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "target_masses": [
+        0.2,
+        0.5,
+        0.3
+      ],
+      "target_kind": "gmm",
+      "forward_campaign": "kl_diverse_targets_20260925"
+    },
+    "original_commit": "5c918efad2a78f797da6eb928fadc697a691de8c",
+    "initial_parameter_sha256": "31a03e918d4a0a1e866e1dd7460134c9bec7b2edf3bc165c62141f9f2cbea831",
+    "original_final_checkpoint_sha256": "b2b6bb61fcb71bceec54041c1a751c5ce54a5b98ed48aa2ffed56d2e42fab74e",
+    "original_run_file": "/Users/heejoon/Documents/ChatGPT/OptiQ/studies/20260926_kl_appendix_six/parent/runtime/confirm/t05_unequal_mass/reverse_s3/RUN.json",
+    "original_run_sha256": "01649724789180ced9c0918ac4ca58a2fc86106de63787a4afdc55e2b5dd8c21"
+  }
+]
