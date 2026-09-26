@@ -6,20 +6,25 @@ five-seed results. No new full training is launched by adding this package.
 
 ## Training settings
 
-Policies are trained online for approximately 10^6 environment transitions
-using a batch size of 4096 and discount factor gamma=0.99. Unlike GMM40,
-the value function is learned from environment interaction rather than
-supplied by an oracle. The PointMaze comparison includes iBOLT, SAC, SQL,
-MEow, MFPO, and TD3, with method-specific architectures and optimization
-settings. For iBOLT, the actor and twin critics each use two hidden layers
-of 256 units, with N=M=64. The reported PointMaze and wall-free results
-use temperature5 and temperature10, respectively. The DACER exploration
-controller is disabled for iBOLT. These experiments provide qualitative
-evidence of behavioral diversity.
+Policies are trained online for approximately $10^6$
+environment transitions using a batch size of 4,096
+and discount factor $\gamma=0.99$.
+Unlike GMM40, the value function is learned from environment
+interaction rather than supplied by an oracle.
+The PointMaze comparison includes iBOLT, SAC, SQL, MEow,
+MFPO, and TD3, with method-specific architectures and
+optimization settings.
+For iBOLT, the actor and twin critics use two hidden layers
+of 256 units, with $N=M=64$.
+The reported PointMaze and wall-free results use $\tau=5$ and $\tau=10$,
+respectively. The DACER exploration controller is disabled. These experiments
+provide qualitative evidence of behavioral diversity.
+
+## iBOLT implementation details
 
 This package contains the iBOLT PointMaze implementation only. The baseline
 implementations and the separate wall-free task are not included here;
-temperature10 is not a PointMaze default. The detailed settings below apply
+Temperature 10 is not a PointMaze default. The detailed settings below apply
 to iBOLT on Simple, Medium and Hard, not uniformly to every baseline.
 
 | Setting | Value |
