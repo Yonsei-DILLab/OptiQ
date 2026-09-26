@@ -187,8 +187,8 @@ def render(root, out, records, temperature=1, paper_only=False):
             ax.set_title(f'{n}-Way · trajectories', fontsize=13, pad=12)
         ax.tick_params(labelsize=8)
         if paper_only:
-            ax.xaxis.label.set_size(10)
-            ax.yaxis.label.set_size(10)
+            ax.set_xlabel('')
+            ax.set_ylabel('')
             ax.tick_params(labelsize=20, pad=4)
         if not paper_only:
             ax.text(.5, -.18, f'Goals reached: {np.count_nonzero(counts)}/{n}',
@@ -204,8 +204,8 @@ def render(root, out, records, temperature=1, paper_only=False):
         ax.view_init(elev=29, azim=-55); ax.set_box_aspect((1, 1, .75))
         ax.tick_params(labelsize=8, pad=0)
         if paper_only:
-            ax.set_xlabel('x', fontsize=10, labelpad=8)
-            ax.set_ylabel('y', fontsize=10, labelpad=8)
+            ax.set_xlabel('')
+            ax.set_ylabel('')
             ax.set_zlabel('Learned Q', fontsize=26, fontweight='semibold', labelpad=10)
             ax.tick_params(labelsize=20, pad=4)
         records[name].update(rollout_sha256=sha(raw), episodes=len(ids),
@@ -246,7 +246,7 @@ def main():
     manifest = dict(runs=records, reporting_source=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
         scope='Read-only final-checkpoint inference; no retraining, no checkpoint mutation',
         temperature=a.temperature, paper_only=a.paper_only,
-        coordinate_axis_label_fontsize=10 if a.paper_only else None,
+        coordinate_axis_labels_visible=False if a.paper_only else None,
         q_axis_label_fontsize=26 if a.paper_only else None,
         axis_tick_fontsize=20 if a.paper_only else None,
         caveat=('All selected runs have 62000 updates and 1000192 transitions.' if a.temperature != 1 else
