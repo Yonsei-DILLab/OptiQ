@@ -14,6 +14,7 @@ UNKNOWN_GOAL_COLOR = "#cccccc"
 
 TRAJECTORY_PALETTES = {
     "mint-pink": (SUCCESS_TRAJECTORY_COLOR, FAILURE_TRAJECTORY_COLOR),
+    "blue-red": ("#2065d1", "#e74747"),
     "sky-yellow": ("#58b9e6", "#efc638"),
     "sky-orange": ("#58b9e6", "#f28c38"),
 }

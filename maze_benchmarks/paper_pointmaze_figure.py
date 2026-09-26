@@ -72,8 +72,11 @@ def load(root, maze, method, temperature_root, dipo_root=None):
 
 
 def build(root, temps, out, columns, dipo_root=None, alpha=.5,
-          outcome_colors=False, formats=('pdf','png','svg'), trajectory_palette='mint-pink'):
+          outcome_colors=False, formats=('pdf','png','svg'), trajectory_palette='mint-pink',
+          match_goal_colors=False):
     success_color,failure_color=TRAJECTORY_PALETTES[trajectory_palette]
+    reached_goal_color=success_color if match_goal_colors else VISITED_GOAL_COLOR
+    unreached_goal_color=failure_color if match_goal_colors else UNVISITED_GOAL_COLOR
     methods=['optiq','sac','sql','meow','mfpo']+(['dipo'] if columns==7 else [])+['td3']
     regular=FontProperties(family='Arial',size=15)
     bold=FontProperties(family='Arial',weight='bold',size=15)
@@ -98,7 +101,8 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.5,
             entry=load(root,maze,method,temps,dipo_root)
             ax=fig.add_axes([left+col*(w+gap),bottoms[row],w,h])
             plot_map(ax,maze,goal_counts=None if entry is None else entry['counts'],
-                     outcome_colors=outcome_colors)
+                     outcome_colors=outcome_colors,visited_goal_color=reached_goal_color,
+                     unvisited_goal_color=unreached_goal_color)
             if entry is None:
                 pending.append(dict(method=method,maze=maze))
                 # No synthetic or earlier-budget trajectories in a final-result slot.
@@ -127,8 +131,8 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.5,
     if outcome_colors:
         handles=[Line2D([0],[0],color=success_color,lw=2,label='Successful trajectory'),
                  Line2D([0],[0],color=failure_color,lw=2,label='Failed trajectory'),
-                 Patch(facecolor=VISITED_GOAL_COLOR,label='Goal reached (at least once)'),
-                 Patch(facecolor=UNVISITED_GOAL_COLOR,label='Goal not reached')]
+                 Patch(facecolor=reached_goal_color,label='Goal reached (at least once)'),
+                 Patch(facecolor=unreached_goal_color,label='Goal not reached')]
         fig.legend(handles=handles,loc='center',bbox_to_anchor=(.514,.025),ncol=4,
                    frameon=False,fontsize=10,handlelength=2,columnspacing=1.6)
     fig.text(.514,-.045 if outcome_colors else .05,'Figure 4: PointMaze.',
@@ -147,8 +151,9 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.5,
         baseline_sampling='native policy sampling; original entropy settings, not the new sensitivity grid',
         outcome_colors=outcome_colors,
         trajectory_palette=trajectory_palette if outcome_colors else None,
+        goal_colors_match_trajectories=match_goal_colors if outcome_colors else None,
         color_semantics=dict(success=success_color,failure=failure_color,
-                             reached_goal=VISITED_GOAL_COLOR,unreached_goal=UNVISITED_GOAL_COLOR,
+                             reached_goal=reached_goal_color,unreached_goal=unreached_goal_color,
                              goal_rule='at least one terminal success in the 500 displayed episodes',
                              pending_goals='unknown, neutral gray',draw_order='original episode order')
                         if outcome_colors else None,
@@ -165,6 +170,7 @@ def main():
     p.add_argument('--alphas',type=float,nargs='+',default=[.5])
     p.add_argument('--outcome-colors',action='store_true')
     p.add_argument('--trajectory-palette',choices=TRAJECTORY_PALETTES,default='mint-pink')
+    p.add_argument('--match-goal-colors',action='store_true')
     p.add_argument('--formats',choices=('png','pdf','svg'),nargs='+',default=['pdf','png','svg'])
     a=p.parse_args()
     if any(not np.isfinite(v) or not 0<v<=1 for v in a.alphas):raise ValueError('invalid alpha')
@@ -172,13 +178,15 @@ def main():
         for count in (6,7):
             m=build(a.root,a.temperatures,a.output,count,a.dipo_root,alpha=alpha,
                     outcome_colors=a.outcome_colors,formats=a.formats,
-                    trajectory_palette=a.trajectory_palette)
+                    trajectory_palette=a.trajectory_palette,match_goal_colors=a.match_goal_colors)
             print(json.dumps(dict(figure=m['figure'],complete=m['figure_is_complete'],pending=m['pending'])))
     (a.output/'CAPTION.txt').write_text('Figure4: PointMaze. Top: Medium; bottom: Hard. Each completed panel shows all500 evaluation trajectories from one seed0 policy after1M environment interactions. iBOLT uses T=5 and fresh Gaussian latent z at each action with mu-only output (no conditional sigma). Baselines use their native sampling rules and original entropy settings. The seven-column draft reserves DIPO until the official implementation completes1M; no older variant is substituted.\n')
     if a.outcome_colors:
         success_name,failure_name=a.trajectory_palette.split('-')
+        reached_name=success_name if a.match_goal_colors else 'dark blue'
+        unreached_name=failure_name if a.match_goal_colors else 'dark red'
         with (a.output/'CAPTION.txt').open('a') as caption:
-            caption.write(f'{success_name.capitalize()} trajectories end in a recorded terminal goal success; {failure_name} trajectories do not. Dark blue goals were reached at least once in the same500 episodes; dark red goals were never reached. Pending panels use neutral gray goals. The black dot marks the start. Episode draw order is unchanged.\n')
+            caption.write(f'{success_name.capitalize()} trajectories end in a recorded terminal goal success; {failure_name} trajectories do not. {reached_name.capitalize()} goals were reached at least once in the same500 episodes; {unreached_name} goals were never reached. Pending panels use neutral gray goals. The black dot marks the start. Episode draw order is unchanged.\n')
 
 
 if __name__=='__main__':main()

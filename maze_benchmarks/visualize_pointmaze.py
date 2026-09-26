@@ -8,6 +8,7 @@ import importlib.util
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.colors import to_rgb
 from matplotlib.patches import Rectangle
 import numpy as np
 from .plot_style import TRAJECTORY_ALPHA, TRAJECTORY_COLOR, TRAJECTORY_LINEWIDTH
@@ -27,7 +28,8 @@ def get_map(name: str):
 
 
 def plot_map(ax, maze: str, obstacle: bool = False, *, goal_counts=None,
-             outcome_colors: bool = False):
+             outcome_colors: bool = False, visited_goal_color: str = VISITED_GOAL_COLOR,
+             unvisited_goal_color: str = UNVISITED_GOAL_COLOR):
     if maze not in MAP_NAMES:
         raise ValueError(maze)
     cells = get_map(maze)
@@ -48,16 +50,18 @@ def plot_map(ax, maze: str, obstacle: bool = False, *, goal_counts=None,
                 color = "#c9c9c9" if obstacle else "#eeeeee"
             elif value == "g":
                 color = (UNKNOWN_GOAL_COLOR if goal_counts is None else
-                         VISITED_GOAL_COLOR if goal_counts[goal_index] > 0 else
-                         UNVISITED_GOAL_COLOR) if outcome_colors else "#39c947"
+                         visited_goal_color if goal_counts[goal_index] > 0 else
+                         unvisited_goal_color) if outcome_colors else "#39c947"
                 goal_index += 1
             else:
                 continue
             ax.add_patch(Rectangle((x, y), 1, 1, color=color, linewidth=0,
                                    zorder=3 if value == "g" and outcome_colors else 0))
             if value == "g":
+                marker_color = ("white" if np.dot(to_rgb(color), [.299,.587,.114]) < .6
+                                else "black") if outcome_colors and goal_counts is not None else "black"
                 ax.plot(x + .5, y + .5, "x", ms=4, zorder=4,
-                        color="white" if outcome_colors and goal_counts is not None else "black")
+                        color=marker_color)
             if value == 2 and not obstacle:
                 ax.add_patch(Rectangle((x, y), 1, 1, fill=False, edgecolor="#cccccc",
                                        linestyle=":", linewidth=.4, zorder=1))
