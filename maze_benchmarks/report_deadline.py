@@ -9,6 +9,56 @@ from .visualize_4way import render as render_four
 from .report_pointmaze import render_curves, render_medium_hard, render_optiq_modes, render_trajectories
 
 
+def render_way_metrics(root, manifest, figures, mode):
+    colors = {1: "#1f77b4", 3: "#ff7f0e", 5: "#2ca02c", 10: "#9467bd"}
+    fig, axes = plt.subplots(2, 3, figsize=(14, 7), constrained_layout=True)
+    counts_fig, counts_axes = plt.subplots(3, 1, figsize=(14, 8), constrained_layout=True)
+    for column, (task, count) in enumerate((("4way", 4), ("8way", 8), ("16way", 16))):
+        proportions = np.full((4, count + 1), np.nan)
+        labels = []
+        for row, temperature in enumerate((1, 3, 5, 10)):
+            name = f"{task}-optiq-t{temperature}-s0"
+            item = manifest["runs"].get(name)
+            labels.append(f"T={temperature}" + (" · historical UTD1" if item and item["reused"] else ""))
+            if item is None: continue
+            summary = item["record"][mode]
+            proportions[row] = np.array(summary["goals"] + [summary["failure"]]) / summary["episodes"]
+            records = [json.loads(p.read_text()) for p in
+                       sorted((root / "runs" / name / "evaluations").glob("*_summary.json"))]
+            records = [r for r in records if mode in r]
+            steps = [r["step"] / 1000 for r in records]
+            for metric, values in enumerate((
+                    [r[mode]["success"] for r in records],
+                    [sum(v > 0 for v in r[mode]["goals"]) for r in records])):
+                axes[metric, column].plot(steps, values, label=labels[-1], color=colors[temperature],
+                                          linestyle="--" if item["reused"] else "-", marker="o", ms=3)
+        axes[0, column].set(title=task, ylim=(-.02, 1.02), ylabel="Success rate")
+        axes[1, column].set(ylim=(-.2, count + .2), ylabel="Goals reached", xlabel="Environment transitions (k)")
+        for ax in axes[:, column]:
+            ax.set_xlim(0, 1001); ax.grid(alpha=.2)
+            handles, legend = ax.get_legend_handles_labels()
+            if handles: ax.legend(handles, legend, fontsize=7, loc="best")
+        ax = counts_axes[column]
+        cmap = plt.colormaps["Blues"].copy(); cmap.set_bad("#eeeeee")
+        heat = ax.imshow(proportions, vmin=0., vmax=1., cmap=cmap, aspect="auto")
+        ax.set(title=f"{task} · final goal proportions", yticks=range(4), yticklabels=labels,
+               xticks=range(count + 1), xticklabels=[str(i) for i in range(count)] + ["Fail"])
+        for row in range(4):
+            for goal in range(count + 1):
+                value = proportions[row, goal]
+                if np.isfinite(value):
+                    ax.text(goal, row, f"{100*value:.1f}", ha="center", va="center", fontsize=8,
+                            color="white" if value > .55 else "black")
+    label = "direct policy including conditional sigma" if mode == "policy" else "random-z mu-only"
+    fig.suptitle(f"OptiQ · {label} · seed0\nHistorical T1 uses a different update budget; only archived complete runs shown")
+    fig.savefig(figures / f"way_learning_curves_{mode}.png", dpi=160)
+    plt.close(fig)
+    counts_fig.colorbar(heat, ax=list(counts_axes), label="Fraction of all evaluation episodes", shrink=.7)
+    counts_fig.suptitle(f"OptiQ ~1M · {label} · seed0 · values in percent\nGrey rows pending; failures included; goal IDs match the saved environment")
+    counts_fig.savefig(figures / f"way_goal_proportions_{mode}.png", dpi=160)
+    plt.close(counts_fig)
+
+
 def render(root: Path):
     manifest = json.loads((root / "archive-manifest.json").read_text())
     figures = root / "figures"
@@ -39,6 +89,7 @@ def render(root: Path):
         fig.suptitle(f"OptiQ ~1M transitions, seed0 · {label}\nFirst100 trajectories; metrics use every evaluation episode. Reused T1 runs have different update budgets.")
         fig.savefig(figures / f"way_trajectories_{mode}.png", dpi=150)
         plt.close(fig)
+        render_way_metrics(root, manifest, figures, mode)
     entries = []
     for temp in (1, 3, 5, 10):
         name = f"4way-optiq-t{temp}-s0"
