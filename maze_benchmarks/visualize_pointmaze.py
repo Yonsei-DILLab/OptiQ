@@ -71,8 +71,10 @@ def plot_map(ax, maze: str, obstacle: bool = False, *, goal_counts=None,
                                    edgecolor=GOAL_BORDER_COLOR,
                                    linewidth=2 * GOAL_BORDER_LINEWIDTH,
                                    joinstyle="miter", zorder=3.5)
-                border.set_clip_path(box)
                 ax.add_patch(border)
+                # add_patch installs the axes clip when a Rectangle clip was
+                # optimized to clip_box, so apply the goal clip afterward.
+                border.set_clip_path(box)
             if value == "g":
                 marker_color = ("white" if np.dot(to_rgb(color), [.299,.587,.114]) < .6
                                 else "black") if outcome_colors and goal_counts is not None else "black"
