@@ -88,13 +88,11 @@ python train.py benchmark=ant temperature=0.5 seed=0
 python train.py benchmark=ant dacer.enabled=false seed=0
 # N=M=16 (M=N * proposals_per_policy_sample)
 python train.py benchmark=ant alg.actor.num_policy_samples=16 seed=0
-# Constant conditional scale; mu remains trainable
-python train.py benchmark=ant fixed_log_std=-3 seed=0
 ```
 
-Fixed log-scales -1, -3, -5 correspond to sigma approximately 0.368, 0.0498,
-0.00674. This is a constant output, not a frozen sigma head that can drift
-through shared-trunk updates.
+Only the trainable-scale mixture used by this experiment family is included.
+Fixed-scale experiments, transport solvers, finite latent codebooks, soft-TD
+backups and other historical variants are not part of this release.
 
 ## Validation
 

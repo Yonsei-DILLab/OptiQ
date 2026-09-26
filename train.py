@@ -6,7 +6,6 @@ import uuid
 import hydra
 from hydra import compose, initialize_config_dir
 import jax
-import jax.numpy as jnp
 from omegaconf import OmegaConf
 import wandb
 import environment as runner
@@ -20,37 +19,23 @@ def compose_config(overrides=()):
 
 def validate_config(cfg):
     a = cfg.alg.actor
-    if a.distillation_loss != 'direct_gmm_nll' or a.type != 'semi_implicit':
-        raise ValueError('This release supports direct mixture likelihood only.')
     if not a.log_std_min <= a.initial_log_std <= a.log_std_max:
         raise ValueError('Initial log scale must be inside its bounds.')
     if a.temperature <= 0 or a.num_policy_samples < 1 or a.proposals_per_policy_sample < 1:
         raise ValueError('Temperature and sample counts must be positive.')
-    if not 0 <= a.density_beta <= 1:
+    if not 0 <= a.density_correction_beta <= 1:
         raise ValueError('Density correction beta must be in [0,1].')
     if cfg.total_steps <= max(cfg.alg.learning_starts, a.learning_starts):
         raise ValueError('Training must extend past warmup.')
-    if cfg.alg.critic.backup_mode != 'td' or cfg.alg.critic.n_atoms != 1:
-        raise ValueError('This release uses scalar plain-TD critics.')
-    if cfg.fixed_log_std is not None and not a.log_std_min <= cfg.fixed_log_std <= a.log_std_max:
-        raise ValueError('Fixed log scale must be inside the configured bounds.')
-
-def install_fixed_scale(value):
-    import ibolt.policy as policy
-    original = policy.SemiImplicitActor
-    class FixedScaleActor(original):
-        def __call__(self, observations, latents):
-            mean, log_std = super().__call__(observations, latents)
-            return mean, jnp.full_like(log_std, float(value))
-    policy.SemiImplicitActor = FixedScaleActor
+    if cfg.alg.critic.n_critics != 2:
+        raise ValueError('This configuration requires two scalar critics.')
+    if a.log_std_min != -5 or a.log_std_max != -1:
+        raise ValueError('This release retains the gmm-trg scale bounds [-5,-1].')
 
 def run(cfg):
     validate_config(cfg)
     if cfg.require_gpu and jax.default_backend() != 'gpu':
         raise RuntimeError('GPU required; set require_gpu=false for CPU validation.')
-    if cfg.fixed_log_std is not None:
-        cfg.alg.actor.initial_log_std = float(cfg.fixed_log_std)
-        install_fixed_scale(cfg.fixed_log_std)
     cfg.run_name += '_' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ') + '_' + uuid.uuid4().hex[:8]
     cfg.output_root = str((Path(cfg.output_root).expanduser() / cfg.run_name).resolve())
     output = Path(cfg.output_root)

@@ -1,13 +1,14 @@
 """Paired zero-latent and stochastic-latent conditional-mean evaluations."""
 import jax
 import numpy as np
+from pathlib import Path
+from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.vec_env import sync_envs_normalization
 
-from .evaluation import MujocoEvalCallback
 
 
-class DualMuEvalCallback(MujocoEvalCallback):
+class DualMuEvalCallback(EvalCallback):
     """Both modes use epsilon=0; each episode receives a paired reset seed.
 
     Evaluation RNG is independent of collection and restored even on failure.
@@ -17,9 +18,10 @@ class DualMuEvalCallback(MujocoEvalCallback):
     MODES = ("zero_z", "stochastic_z")
 
     def __init__(self, eval_env, cfg, directory):
-        super().__init__(eval_env, cfg, directory)
-        if cfg.alg.actor.get("type") != "semi_implicit" or cfg.alg.actor.get("latent_prior", "normal") != "normal":
-            raise ValueError("Dual mu evaluation requires a continuous Gaussian latent actor")
+        self.directory = Path(directory)
+        self.directory.mkdir(parents=True,exist_ok=True)
+        super().__init__(eval_env,n_eval_episodes=int(cfg.num_eval_episodes),
+                         eval_freq=int(cfg.eval_interval),log_path=str(self.directory))
         self.training_seed = int(cfg.seed)
         self.histories = {mode: {key: [] for key in
             ("results", "ep_lengths", "env_seeds", "policy_seeds", "successes", "solved_steps")}
@@ -45,11 +47,7 @@ class DualMuEvalCallback(MujocoEvalCallback):
                 for env_seed, policy_seed in zip(env_seeds, policy_seeds):
                     self.eval_env.seed(int(env_seed))
                     policy.key = jax.random.PRNGKey(int(policy_seed))
-                    self._solved_counts.clear()
-                    self._episode_steps.clear()
-                    self._evaluation_solved_counts = []
                     self._is_success_buffer = []
-                    self._per_time_is_success_buffer = []
                     reward, length = evaluate_policy(
                         self.model, self.eval_env, n_eval_episodes=1,
                         deterministic=(mode == "zero_z"), return_episode_rewards=True,
@@ -57,7 +55,6 @@ class DualMuEvalCallback(MujocoEvalCallback):
                     rewards.extend(reward)
                     lengths.extend(length)
                     successes.extend(self._is_success_buffer)
-                    solved_steps.extend(self._evaluation_solved_counts)
                 if not np.isfinite(rewards).all():
                     raise FloatingPointError(f"Nonfinite {mode} evaluation return")
                 current[mode] = dict(results=rewards, ep_lengths=lengths,

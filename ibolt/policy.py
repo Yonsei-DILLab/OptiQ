@@ -13,32 +13,13 @@ from gymnasium import spaces
 from common.policies import BaseJaxPolicy
 from common.type_aliases import RLTrainState
 from models.critic import VectorCritic
-from models.utils import activation_fn
 
-from .transport import clip_action
 from .optimizers import adam_with_grad_clip
-from .latent import FiniteMixtureTrainState, finite_latent_codes, sample_latents
 from .box_gaussian import sample_box
 
 
 def kernel_init(scale: float = 1.0):
     return nn.initializers.variance_scaling(scale, "fan_avg", "uniform")
-
-
-class ImplicitActor(nn.Module):
-    action_dim: int
-    hidden_dims: Sequence[int]
-
-    @nn.compact
-    def __call__(self, observations: jax.Array, latents: jax.Array) -> jax.Array:
-        x = jnp.concatenate((observations, latents), axis=-1)
-        for width in self.hidden_dims:
-            x = nn.Dense(width, kernel_init=kernel_init())(x)
-            x = nn.gelu(x)
-        return nn.Dense(
-            self.action_dim,
-            kernel_init=kernel_init(1.0e-2),
-        )(x)
 
 
 class SemiImplicitActor(nn.Module):
@@ -104,16 +85,8 @@ class IBOLTPolicy(BaseJaxPolicy):
         latent = jnp.zeros_like(action)
 
         self.qf = VectorCritic(
-            dropout_rate=self.cfg.alg.critic.dropout_rate,
-            use_layer_norm=self.cfg.alg.critic.use_layer_norm,
-            use_batch_norm=self.cfg.alg.optimizer.bn,
-            bn_warmup=self.cfg.alg.optimizer.bn_warmup,
-            batch_norm_momentum=self.cfg.alg.optimizer.bn_momentum,
-            batch_norm_mode=self.cfg.alg.optimizer.bn_mode,
             net_arch=self.cfg.alg.critic.hs,
-            activation_fn=activation_fn[self.cfg.alg.critic.activation],
             n_critics=self.cfg.alg.critic.n_critics,
-            n_atoms=self.cfg.alg.critic.n_atoms,
         )
         qf_variables = self.qf.init(
             {"params": qf_key, "dropout": dropout_key, "batch_stats": bn_key},
@@ -134,31 +107,15 @@ class IBOLTPolicy(BaseJaxPolicy):
                 max_grad_norm=self.cfg.alg.optimizer.get("ac_grad_norm", None),
             ),
         )
-        self.qf.apply = jax.jit(
-            self.qf.apply,
-            static_argnames=(
-                "dropout_rate",
-                "use_layer_norm",
-                "use_batch_norm",
-                "batch_norm_momentum",
-                "bn_mode",
-            ),
-        )
+        self.qf.apply = jax.jit(self.qf.apply)
 
         actor_cfg = self.cfg.alg.actor
-        if actor_cfg.get("type", "implicit") == "semi_implicit":
-            self.actor_model = SemiImplicitActor(
-                action_dim=action_dim, hidden_dims=tuple(actor_cfg.hidden_dims),
-                log_std_min=actor_cfg.log_std_min, log_std_max=actor_cfg.log_std_max,
-                initial_log_std=actor_cfg.initial_log_std,
-                mean_output_init_scale=actor_cfg.mean_output_init_scale,
-                log_std_output_init_scale=actor_cfg.log_std_output_init_scale,
-                mean_latent_skip_scale=actor_cfg.get("mean_latent_skip_scale", 0.0),
-            )
-        else:
-            self.actor_model = ImplicitActor(
-                action_dim=action_dim, hidden_dims=tuple(actor_cfg.hidden_dims),
-            )
+        self.actor_model = SemiImplicitActor(
+            action_dim=action_dim, hidden_dims=tuple(actor_cfg.hidden_dims),
+            log_std_min=actor_cfg.log_std_min, log_std_max=actor_cfg.log_std_max,
+            initial_log_std=actor_cfg.initial_log_std,
+            mean_output_init_scale=actor_cfg.mean_output_init_scale,
+            log_std_output_init_scale=actor_cfg.log_std_output_init_scale)
         actor_params = self.actor_model.init(actor_key, obs, latent)["params"]
         actor_tx = adam_with_grad_clip(
             learning_rate=self.cfg.alg.optimizer.lr_actor,
@@ -166,22 +123,10 @@ class IBOLTPolicy(BaseJaxPolicy):
             b2=self.cfg.alg.optimizer.actor_b2,
             max_grad_norm=self.cfg.alg.optimizer.get("ac_grad_norm", None),
         )
-        state_class, state_metadata = TrainState, {}
-        if actor_cfg.get("latent_prior", "normal") == "finite":
-            state_class = FiniteMixtureTrainState
-            state_metadata = dict(latent_components=int(actor_cfg.latent_components),
-                                  latent_codebook_seed=int(actor_cfg.latent_codebook_seed))
-        self.actor_state = state_class.create(
+        self.actor_state = TrainState.create(
             apply_fn=self.actor_model.apply,
             params=actor_params,
             tx=actor_tx,
-            **state_metadata,
-        )
-        self.target_actor_state = state_class.create(
-            apply_fn=self.actor_model.apply,
-            params=actor_params,
-            tx=actor_tx,
-            **state_metadata,
         )
         return key
 
@@ -194,32 +139,14 @@ class IBOLTPolicy(BaseJaxPolicy):
         deterministic=False,
         sample_conditional_noise=True,
     ):
-        if "mu" in actor_state.params:
-            latent_key, noise_key = jax.random.split(key)
-            shape = (observations.shape[0], actor_state.params["mu"]["bias"].shape[0])
-            if deterministic and isinstance(actor_state, FiniteMixtureTrainState):
-                # A reproducible component mean; stochastic evaluation is default.
-                z = jnp.broadcast_to(finite_latent_codes(actor_state, shape[-1], observations.dtype)[0], shape)
-            else:
-                z = (jnp.zeros(shape, dtype=observations.dtype) if deterministic else
-                     sample_latents(actor_state, latent_key, shape, observations.dtype))
-            mu, log_std = actor_state.apply_fn({"params": actor_state.params}, observations, z)
-            if deterministic or not sample_conditional_noise:
-                return mu  # bounded Gaussian center; not truncated expectation
-            return sample_box(noise_key, mu, log_std)
-        output_layer = f"Dense_{len(actor_state.params) - 1}"
-        latent_shape = (observations.shape[0],) + (
-            actor_state.params[output_layer]["bias"].shape[0],
-        )
-        latents = (
-            jnp.zeros(latent_shape, dtype=observations.dtype)
-            if deterministic
-            else jax.random.normal(key, latent_shape, dtype=observations.dtype)
-        )
-        raw_actions = actor_state.apply_fn(
-            {"params": actor_state.params}, observations, latents
-        )
-        return clip_action(raw_actions)
+        latent_key, noise_key = jax.random.split(key)
+        shape = (observations.shape[0], actor_state.params['mu']['bias'].shape[0])
+        z = (jnp.zeros(shape,dtype=observations.dtype) if deterministic else
+             jax.random.normal(latent_key,shape,dtype=observations.dtype))
+        mu, log_std = actor_state.apply_fn({'params':actor_state.params},observations,z)
+        if deterministic or not sample_conditional_noise:
+            return mu
+        return sample_box(noise_key,mu,log_std)
 
     def _predict(self, observation: np.ndarray, deterministic: bool = False):
         self.reset_noise()

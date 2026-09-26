@@ -14,11 +14,6 @@ class JaxLearner(OffPolicyAlgorithmJax):
         self.model_save_path = model_save_path
         self.save_every_n_steps = save_every_n_steps
         self.policy_delay = cfg.alg.policy_delay
-        self.policy_tau = cfg.alg.policy_tau
-        self.use_bnstats_from_live_net = False
-        # Plain TD has no learned entropy coefficient. This inert slot retains
-        # the existing compiled-update signature without an extra optimizer.
-        self.ent_coef_state = None
         super().__init__(policy=policy, env=env,
             learning_rate=cfg.alg.optimizer.lr_actor,
             qf_learning_rate=cfg.alg.optimizer.lr_critic,
@@ -44,11 +39,6 @@ class JaxLearner(OffPolicyAlgorithmJax):
         return state.replace(
             target_params=optax.incremental_update(state.params, state.target_params, tau),
             target_batch_stats=optax.incremental_update(state.batch_stats, state.target_batch_stats, tau))
-
-    @staticmethod
-    @jax.jit
-    def soft_update_target_actor(tau, actor, target):
-        return target.replace(params=optax.incremental_update(actor.params, target.params, tau))
 
     def predict_critic(self, observation, action):
         return self.policy.predict_critic(observation, action)

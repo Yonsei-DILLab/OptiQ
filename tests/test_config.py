@@ -16,13 +16,13 @@ def test_defaults(task,t,c):
     assert cfg.alg.actor.num_policy_samples == 64
     assert cfg.alg.actor.proposals_per_policy_sample == 1
     assert cfg.alg.actor.log_std_min == -5 and cfg.alg.actor.log_std_max == -1
-    assert cfg.alg.actor.initial_log_std == -1 and cfg.fixed_log_std is None
-    assert cfg.dual_mu_eval and cfg.mu_only_eval
+    assert cfg.alg.actor.initial_log_std == -1
+    assert 'sinkhorn_epsilon' not in cfg.alg.actor
     assert cfg.wandb.entity is None and cfg.wandb.mode == 'offline'
 
 def test_overrides():
     cfg = train.compose_config(['benchmark=ant','temperature=0.5','dacer.enabled=false',
-                               'fixed_log_std=-3','alg.actor.num_policy_samples=16'])
+                               'alg.actor.num_policy_samples=16'])
     train.validate_config(cfg)
     assert cfg.alg.actor.temperature == .5 and not cfg.dacer.enabled
-    assert cfg.fixed_log_std == -3 and cfg.alg.actor.num_policy_samples == 16
+    assert cfg.alg.actor.num_policy_samples == 16

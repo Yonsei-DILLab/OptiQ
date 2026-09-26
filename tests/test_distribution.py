@@ -80,7 +80,7 @@ def test_environment_update(task,tmp_path,monkeypatch):
         'alg.batch_size=4','alg.buffer_size=32','alg.learning_starts=2',
         'alg.actor.learning_starts=2','num_eval_episodes=1','eval_interval=4',
         'diagnostic_interval=4','checkpoint_interval=4','dacer.enabled=false'])
-    monkeypatch.setattr(algorithm,'sinkhorn',lambda *a,**k:pytest.fail('No OT'))
+    assert not hasattr(algorithm,'sinkhorn')
     model,callbacks=train.runner.create_algorithm(cfg)
     model.set_logger(configure(str(tmp_path/'logs'),['csv']))
     cb=callbacks.callbacks[0]
@@ -96,4 +96,5 @@ def test_environment_update(task,tmp_path,monkeypatch):
         assert np.max(np.abs(model.replay_buffer.actions))<=1
     finally:
         cb.eval_env.close();model.get_env().close();model.logger.close()
-        algorithm.IBOLT._train.clear_cache()
+        algorithm.IBOLT.update_actor.clear_cache()
+        algorithm.IBOLT.update_critic.clear_cache()
