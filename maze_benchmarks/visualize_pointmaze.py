@@ -75,7 +75,9 @@ def plot_map(ax, maze: str, obstacle: bool = False, *, goal_counts=None,
 
 
 def plot_rollouts(ax, data: Path, max_trajectories: int = 500,
-                  alpha: float = TRAJECTORY_ALPHA, *, outcome_colors: bool = False):
+                  alpha: float = TRAJECTORY_ALPHA, *, outcome_colors: bool = False,
+                  success_color: str = SUCCESS_TRAJECTORY_COLOR,
+                  failure_color: str = FAILURE_TRAJECTORY_COLOR):
     if not np.isfinite(alpha) or not 0 < alpha <= 1:
         raise ValueError("trajectory alpha must lie in (0,1]")
     with np.load(data) as values:
@@ -86,8 +88,8 @@ def plot_rollouts(ax, data: Path, max_trajectories: int = 500,
         valid = np.isfinite(tracks[index]).all(axis=-1)
         track = tracks[index, valid]
         if len(track):
-            color = (SUCCESS_TRAJECTORY_COLOR if goals[index] >= 0 else
-                     FAILURE_TRAJECTORY_COLOR) if outcome_colors else TRAJECTORY_COLOR
+            color = (success_color if goals[index] >= 0 else
+                     failure_color) if outcome_colors else TRAJECTORY_COLOR
             ax.plot(track[:, 0], track[:, 1], color=color,
                     linewidth=TRAJECTORY_LINEWIDTH, alpha=alpha,
                     solid_capstyle="round", zorder=2)

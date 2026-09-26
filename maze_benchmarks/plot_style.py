@@ -11,3 +11,9 @@ FAILURE_TRAJECTORY_COLOR = "#ed80b0"
 VISITED_GOAL_COLOR = "#17429c"
 UNVISITED_GOAL_COLOR = "#a51d2d"
 UNKNOWN_GOAL_COLOR = "#cccccc"
+
+TRAJECTORY_PALETTES = {
+    "mint-pink": (SUCCESS_TRAJECTORY_COLOR, FAILURE_TRAJECTORY_COLOR),
+    "sky-yellow": ("#58b9e6", "#efc638"),
+    "sky-orange": ("#58b9e6", "#f28c38"),
+}

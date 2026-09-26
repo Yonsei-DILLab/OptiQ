@@ -17,7 +17,7 @@ import numpy as np
 
 from .visualize_pointmaze import get_map, plot_map, plot_rollouts
 from .plot_style import (SUCCESS_TRAJECTORY_COLOR, FAILURE_TRAJECTORY_COLOR,
-                         VISITED_GOAL_COLOR, UNVISITED_GOAL_COLOR)
+                         VISITED_GOAL_COLOR, UNVISITED_GOAL_COLOR, TRAJECTORY_PALETTES)
 
 
 def sha(path):
@@ -72,7 +72,8 @@ def load(root, maze, method, temperature_root, dipo_root=None):
 
 
 def build(root, temps, out, columns, dipo_root=None, alpha=.5,
-          outcome_colors=False, formats=('pdf','png','svg')):
+          outcome_colors=False, formats=('pdf','png','svg'), trajectory_palette='mint-pink'):
+    success_color,failure_color=TRAJECTORY_PALETTES[trajectory_palette]
     methods=['optiq','sac','sql','meow','mfpo']+(['dipo'] if columns==7 else [])+['td3']
     regular=FontProperties(family='Arial',size=15)
     bold=FontProperties(family='Arial',weight='bold',size=15)
@@ -107,13 +108,14 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.5,
             else:
                 before=len(ax.lines)
                 plot_rollouts(ax,Path(entry['raw']),max_trajectories=500,alpha=alpha,
-                              outcome_colors=outcome_colors)
+                              outcome_colors=outcome_colors,success_color=success_color,
+                              failure_color=failure_color)
                 trajectories=ax.lines[before:]
                 if len(trajectories)!=500 or any(x.get_alpha()!=alpha for x in trajectories):
                     raise ValueError('rendered rollout count/alpha differs')
                 if outcome_colors:
                     with np.load(entry['raw']) as raw:
-                        expected_colors=[SUCCESS_TRAJECTORY_COLOR if g>=0 else FAILURE_TRAJECTORY_COLOR
+                        expected_colors=[success_color if g>=0 else failure_color
                                          for g in raw['goal_ids']]
                     if [line.get_color() for line in trajectories]!=expected_colors:
                         raise ValueError('trajectory outcome colors do not match saved goal IDs')
@@ -123,8 +125,8 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.5,
     for row,maze in enumerate(('Medium','Hard')):
         fig.text(.014,bottoms[row]+h/2,maze,rotation=90,ha='center',va='center',fontsize=14,fontweight='normal')
     if outcome_colors:
-        handles=[Line2D([0],[0],color=SUCCESS_TRAJECTORY_COLOR,lw=2,label='Successful trajectory'),
-                 Line2D([0],[0],color=FAILURE_TRAJECTORY_COLOR,lw=2,label='Failed trajectory'),
+        handles=[Line2D([0],[0],color=success_color,lw=2,label='Successful trajectory'),
+                 Line2D([0],[0],color=failure_color,lw=2,label='Failed trajectory'),
                  Patch(facecolor=VISITED_GOAL_COLOR,label='Goal reached (at least once)'),
                  Patch(facecolor=UNVISITED_GOAL_COLOR,label='Goal not reached')]
         fig.legend(handles=handles,loc='center',bbox_to_anchor=(.514,.025),ncol=4,
@@ -144,7 +146,8 @@ def build(root, temps, out, columns, dipo_root=None, alpha=.5,
         ibolt_sampling='fresh normal z each action; mu-only; conditional sigma off',
         baseline_sampling='native policy sampling; original entropy settings, not the new sensitivity grid',
         outcome_colors=outcome_colors,
-        color_semantics=dict(success=SUCCESS_TRAJECTORY_COLOR,failure=FAILURE_TRAJECTORY_COLOR,
+        trajectory_palette=trajectory_palette if outcome_colors else None,
+        color_semantics=dict(success=success_color,failure=failure_color,
                              reached_goal=VISITED_GOAL_COLOR,unreached_goal=UNVISITED_GOAL_COLOR,
                              goal_rule='at least one terminal success in the 500 displayed episodes',
                              pending_goals='unknown, neutral gray',draw_order='original episode order')
@@ -161,18 +164,21 @@ def main():
     p.add_argument('--output',type=Path,required=True);p.add_argument('--dipo-root',type=Path)
     p.add_argument('--alphas',type=float,nargs='+',default=[.5])
     p.add_argument('--outcome-colors',action='store_true')
+    p.add_argument('--trajectory-palette',choices=TRAJECTORY_PALETTES,default='mint-pink')
     p.add_argument('--formats',choices=('png','pdf','svg'),nargs='+',default=['pdf','png','svg'])
     a=p.parse_args()
     if any(not np.isfinite(v) or not 0<v<=1 for v in a.alphas):raise ValueError('invalid alpha')
     for alpha in a.alphas:
         for count in (6,7):
             m=build(a.root,a.temperatures,a.output,count,a.dipo_root,alpha=alpha,
-                    outcome_colors=a.outcome_colors,formats=a.formats)
+                    outcome_colors=a.outcome_colors,formats=a.formats,
+                    trajectory_palette=a.trajectory_palette)
             print(json.dumps(dict(figure=m['figure'],complete=m['figure_is_complete'],pending=m['pending'])))
     (a.output/'CAPTION.txt').write_text('Figure4: PointMaze. Top: Medium; bottom: Hard. Each completed panel shows all500 evaluation trajectories from one seed0 policy after1M environment interactions. iBOLT uses T=5 and fresh Gaussian latent z at each action with mu-only output (no conditional sigma). Baselines use their native sampling rules and original entropy settings. The seven-column draft reserves DIPO until the official implementation completes1M; no older variant is substituted.\n')
     if a.outcome_colors:
+        success_name,failure_name=a.trajectory_palette.split('-')
         with (a.output/'CAPTION.txt').open('a') as caption:
-            caption.write('Mint trajectories end in a recorded terminal goal success; pink trajectories do not. Dark blue goals were reached at least once in the same500 episodes; dark red goals were never reached. Pending panels use neutral gray goals. The black dot marks the start. Episode draw order is unchanged.\n')
+            caption.write(f'{success_name.capitalize()} trajectories end in a recorded terminal goal success; {failure_name} trajectories do not. Dark blue goals were reached at least once in the same500 episodes; dark red goals were never reached. Pending panels use neutral gray goals. The black dot marks the start. Episode draw order is unchanged.\n')
 
 
 if __name__=='__main__':main()
