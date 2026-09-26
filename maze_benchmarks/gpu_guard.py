@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import fcntl
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -25,7 +26,7 @@ def nvidia_query(*arguments: str) -> list[str]:
 
 
 def gpu_uuid(index: int) -> str:
-    for line in nvidia_query("--query-gpu=index,uuid", "--format=csv,noheader"):
+    for line in nvidia_query(f"--id={index}", "--query-gpu=index,uuid", "--format=csv,noheader"):
         parts = [part.strip() for part in line.split(",")]
         if len(parts) == 2 and int(parts[0]) == index:
             return parts[1]
@@ -34,7 +35,7 @@ def gpu_uuid(index: int) -> str:
 
 def compute_pids(uuid: str) -> set[int]:
     entries = set()
-    for line in nvidia_query("--query-compute-apps=gpu_uuid,pid", "--format=csv,noheader"):
+    for line in nvidia_query(f"--id={uuid}", "--query-compute-apps=gpu_uuid,pid", "--format=csv,noheader"):
         parts = [part.strip() for part in line.split(",")]
         if len(parts) == 2 and parts[0] == uuid:
             entries.add(int(parts[1]))
@@ -72,7 +73,8 @@ def main():
                     # can hold the GPU even when no lock holder exists.
                     if not compute_pids(uuid):
                         print(f"GPU {args.gpu} idle and locked; starting {command}", flush=True)
-                        return subprocess.run(command, check=False).returncode
+                        return subprocess.run(command, check=False,
+                                              env=dict(os.environ, CUDA_VISIBLE_DEVICES=uuid)).returncode
                     fcntl.flock(lock, fcntl.LOCK_UN)
                     idle_since = None
             if now - last_report >= 60:
