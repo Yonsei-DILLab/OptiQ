@@ -1,12 +1,33 @@
 """Direct-policy and mu-only goal/trajectory comparison with reuse provenance."""
 import json
 from pathlib import Path
+import subprocess
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from .visualize_4way import render as render_four
 from .report_pointmaze import render_curves, render_medium_hard, render_optiq_modes, render_trajectories
+from .evaluation_metrics import removal_from_raw
+
+
+def record_reporting_corrections(root, manifest):
+    corrections = []
+    for name in sorted(manifest["runs"]):
+        if not name.startswith("pm_"): continue
+        folder = root / "runs" / name / "evaluations"
+        for path in sorted(folder.glob("*_summary.json")):
+            record = json.loads(path.read_text())
+            corrected = removal_from_raw(folder, record)
+            original = record["policy"]["sr5_removal"]
+            corrections.append(dict(run=name, step=record["step"],
+                                    original=original, corrected=corrected))
+    source = subprocess.check_output(["git", "rev-parse", "HEAD"],
+                                     cwd=Path(__file__).resolve().parents[1], text=True).strip()
+    (root / "reporting-corrections.json").write_text(json.dumps(dict(
+        reporting_source=source,
+        reason="At exactly half the goals reached, all may still be removed; frozen scorer overstated SR5.",
+        training_and_raw_files_changed=False, rows=corrections), indent=2) + "\n")
 
 
 def render_way_metrics(root, manifest, figures, mode):
@@ -61,6 +82,7 @@ def render_way_metrics(root, manifest, figures, mode):
 
 def render(root: Path):
     manifest = json.loads((root / "archive-manifest.json").read_text())
+    record_reporting_corrections(root, manifest)
     figures = root / "figures"
     figures.mkdir(exist_ok=True)
     for mode in ("policy", "mu_only"):
@@ -104,6 +126,7 @@ def render(root: Path):
         render_optiq_modes(root, maze, figures / f"pointmaze_{maze}_optiq_policy_vs_mu.png")
     lines = ["# 1M experiment results", "", f"Verified complete: {manifest['complete']}/33.", "",
              "All runs use seed0. Success is not mode coverage. Way T1 reused8/16 results use UTD1; new results use UTD0.0625 and cannot isolate temperature effects.", "",
+             "Removal SR5 curves are recomputed from raw five-episode groups to correct a frozen scorer boundary error. See reporting-corrections.json; training, success/goal counts, trajectories and raw archives are unchanged.", "",
              "|Run|Success|Goals visited|Goal counts|", "|---|---:|---:|---|"]
     for name, result in sorted(manifest["runs"].items()):
         r = result["record"]["policy"]

@@ -13,6 +13,7 @@ from matplotlib.ticker import FuncFormatter, MaxNLocator
 import numpy as np
 
 from .visualize_pointmaze import plot_map, plot_rollouts
+from .evaluation_metrics import removal_from_raw
 
 
 METHODS = ("optiq", "sac", "sql", "meow", "mfpo", "dipo", "td3")
@@ -33,6 +34,9 @@ def records(root: Path, maze: str, method: str):
     for path in sorted((folder / "evaluations").glob("*_summary.json")):
         item = json.loads(path.read_text())
         if item.get("task") == f"pm_{maze}" and item.get("method") == method:
+            # The frozen scorer returned 1 too early when exactly half the
+            # goals had been reached. Correct the report from raw episodes.
+            item["policy"]["sr5_removal"] = removal_from_raw(path.parent, item)
             rows.append(item)
     return rows
 

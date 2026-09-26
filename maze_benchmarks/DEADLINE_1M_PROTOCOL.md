@@ -76,3 +76,13 @@ The guarded repair tool refuses live workers, a changed failure, prior training
 or a second repair. Run the original GPU preflight before main training again;
 start only exited free GPU workers. Other active learners remain untouched.
 Record this repair commit separately; all learning still uses frozen a55aaf13.
+
+## Post-hoc removal robustness boundary correction
+
+The frozen scorer prematurely returns removal SR5=1 when a five-episode group
+reaches exactly half of all goals. For four goals with two distinct reached,
+both may be removed together: the correct success probability is5/6, not1.
+Recompute only report curves from preserved raw goal IDs by counting uniformly
+removed subsets. Save original/corrected values and reporting commit separately
+in reporting-corrections.json. Do not change learning, frozen scorers, original
+summary/proof/SHA files, success/coverage/trajectory results or optimizer state.
