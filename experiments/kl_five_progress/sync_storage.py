@@ -12,9 +12,9 @@ while True:
             str(OUT/'campaign')+'/'],capture_output=True,text=True,timeout=1500)
         state=dict(time=time.time(),exit_code=r.returncode,stderr=r.stderr[-2000:])
     except Exception as e:state=dict(time=time.time(),error=repr(e))
-    complete=list((OUT/'campaign/attempt3/runtime/replay').glob('*/*/COMPLETE.json'))
+    complete=list((OUT/'campaign/attempt4/runtime/replay').glob('*/*/COMPLETE.json'))
     state['complete']=len(complete)
     (OUT/'SYNC_STATUS.json').write_text(json.dumps(state,indent=2)+'\n')
     # Figures are rendered by a CPU-only job on login4, so this copies them too.
-    if state.get('exit_code')==0 and len(complete)==40 and (OUT/'campaign/attempt3/reports/ten_k/SHA256.json').exists():break
+    if state.get('exit_code')==0 and len(complete)==40 and (OUT/'campaign/attempt4/reports/ten_k/SHA256.json').exists():break
     time.sleep(180)

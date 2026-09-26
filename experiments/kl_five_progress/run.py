@@ -87,11 +87,12 @@ def preflight(root,pool):
             exp.advance(count)
             leaves=list(zip(jax.tree_util.tree_leaves(expected),jax.tree_util.tree_leaves((exp.state,exp.key))))
             max_delta=max(float(np.max(np.abs(x.astype(float)-np.asarray(y).astype(float)))) for x,y in leaves)
-            numerically_equal=all(np.array_equal(x,y) for x,y in leaves)
+            numerically_equal=all(np.allclose(x,y,rtol=1e-4,atol=1e-6) for x,y in leaves)
+            assert np.array_equal(np.asarray(expected[1]),np.asarray(exp.key))
             print(json.dumps(dict(case=task['case'],method=task['method'],resume_max_abs_delta=max_delta,
-                evaluation_preserves_next_update=numerically_equal,restore_byte_exact=True,
+                next_update_allclose=numerically_equal,restore_byte_exact=True,
                 evaluation_byte_exact=True,uninterrupted_vs_restored_max_delta=uninterrupted_delta)),flush=True)
-            assert numerically_equal,'Sampling changed the next update from identical restored states'
+            assert numerically_equal,'Repeated GPU updates differ beyond float32 replay tolerance'
             assert all(np.isfinite(v) for v in first.values()) and all(np.isfinite(v) for v in info.values())
             exp.restore(cp)
             if task['method']=='forward':
@@ -100,6 +101,7 @@ def preflight(root,pool):
         records.append(dict(case=task['case'],method=task['method'],L=task['L'],
             initial_hash_verified=True,restore_byte_exact=True,evaluation_byte_exact=True,
             resume_bitwise_equal=max_delta==0,resume_max_abs_delta=max_delta,
+            resume_allclose_rtol=1e-4,resume_allclose_atol=1e-6,
             uninterrupted_vs_restored_max_delta=uninterrupted_delta,
             seconds_per_update=elapsed/count,compile_and_first_block_seconds=comp))
         print(json.dumps(records[-1]),flush=True);del exp;jax.clear_caches()

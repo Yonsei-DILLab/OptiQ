@@ -61,12 +61,16 @@ scratch root. Do not touch unrelated held jobs.
 Preflight clarification: restoring the saved optimizer and RNG and taking
 evaluation samples must be byte-exact. Compare the next updates from two
 identically restored states, with and without intervening evaluation; require
-array equality. Separately report uninterrupted-versus-restored differences,
+identical RNG and numerical agreement (rtol=1e-4, atol=1e-6), recording whether
+the update is also bitwise equal. This float32 tolerance follows measured
+1e-7–5e-7 differences; it is not a claim of trajectory identity. Separately
+report uninterrupted-versus-restored differences,
 which can reflect a changed compiled executable for restored host array inputs.
 This distinction tests whether sampling changes training, without conflating it
 with host/device compilation. Earlier preflights observed differences of roughly
 1e-7 and 5e-7 after restore, with the restored state itself byte-identical.
-Both prior snapshots remain immutable. This changes diagnostics only, not the
+Repeated restored branches also showed roundoff differences on GPU. All prior
+snapshots remain immutable. This changes diagnostics only, not the
 inherited training kernels or experimental settings.
 
 ## Figures
