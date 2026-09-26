@@ -95,5 +95,5 @@ Raw archives use the original xy/returns/lengths/goal_ids/mode/observation_dim/
 obstacle schema. The main JSON record separates mu_only and obstacle_mu_only.
 Policy checkpoints support inspection, not exact interrupted-training resume:
 the replay, simulator and all training RNG states are not serialized here.
-The training implementation reuses the cleaned iBOLT learner; numerical parity
-and validation limitations from `VALIDATION.md` still apply.
+The training implementation reuses the cleaned iBOLT learner. Short execution
+checks do not establish bitwise equality with historical full-training runs.
