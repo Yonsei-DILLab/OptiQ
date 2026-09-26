@@ -44,6 +44,7 @@ def main():
     policy.target_actor_state = restored["target_actor"]
 
     class FrozenPolicy:
+        method = "optiq"
         critic_label = "mean of two live OptiQ critics"
 
         @contextmanager
@@ -56,7 +57,7 @@ def main():
             finally:
                 policy.key, policy.noise_key = key, noise_key
 
-        def act(self, obs, mode="policy"):
+        def act(self, obs, mode="mu_only"):
             policy.reset_noise()
             actions = policy.sample_action(
                 policy.actor_state, jnp.asarray(obs, jnp.float32), policy.noise_key,

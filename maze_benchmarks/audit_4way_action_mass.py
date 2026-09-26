@@ -34,7 +34,7 @@ def audit(checkpoint: Path, config_path: Path, destination: Path, episodes: int,
         policy.actor_state = restored["actor"]
         policy.qf_state = restored["critic"]
         policy.target_actor_state = restored["target_actor"]
-        for mode in ("policy", "mu_only"):
+        for mode in ("mu_only",):
             raw = destination / f"{mode}_{episodes}.npz"
             summary = evaluate(agent, "4way", seed, episodes, mode, raw)
             with np.load(raw) as data:

@@ -55,3 +55,10 @@ python -m maze_benchmarks.collect_pointmaze_temperatures --output TEMPERATURE_AR
 
 Never overwrite frozen training sources to update a report. Reporting-only
 commits are separate from the training source recorded in each experiment.
+
+For missing historical mu-only obstacle/Q evaluations, `posthoc_mu.py` restores
+a preserved checkpoint, checks its original algorithm configuration, and asserts
+zero learner updates and unchanged actor/critic/checkpoint bytes. Outputs go in
+a separate directory with both source SHAs; existing raw files are never edited.
+The plotted mu-only Q surface is E_z Q(s,mu(s,z)); because the critic was trained
+with the training sampler, it is not automatically V of the mu-only rollout.

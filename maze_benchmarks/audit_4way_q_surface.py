@@ -45,7 +45,7 @@ def audit(checkpoint: Path, config_path: Path, *, samples: int = 8,
         policy.target_actor_state = restored["target_actor"]
         starts = np.repeat(positions, samples, axis=0)
         with agent.evaluation_rng(seed):
-            actions = agent.act(starts, mode="policy")
+            actions = agent.act(starts, mode="mu_only")
             q = agent.q(starts, actions)
             initial = np.repeat(starts, continuations, axis=0)
             first_actions = np.repeat(actions, continuations, axis=0)
@@ -56,7 +56,7 @@ def audit(checkpoint: Path, config_path: Path, *, samples: int = 8,
             active = np.ones(len(initial), bool)
             try:
                 for t in range(env.horizon):
-                    action = first_actions if t == 0 else agent.act(env.current, mode="policy")
+                    action = first_actions if t == 0 else agent.act(env.current, mode="mu_only")
                     _, reward, terminated, truncated, _ = env.step(action, active=active)
                     discounted[active] += (.99 ** t) * reward[active]
                     active &= ~(terminated | truncated)
@@ -77,7 +77,7 @@ def audit(checkpoint: Path, config_path: Path, *, samples: int = 8,
                              mean_absolute_error=float(np.abs(state_error).mean())))
         return dict(training_source_commit=config["source_commit"], checkpoint=str(checkpoint),
                     state_scope="origin and 1-4 units along each cardinal corridor",
-                    action_scope="sampled full OptiQ policy",
+                    action_scope="fresh random-z mu-only; MC continuation differs from full-policy training",
                     seed=seed, samples_per_state=samples,
                     continuations_per_action=continuations, gamma=.99,
                     mean_absolute_error=float(np.abs(error).mean()),

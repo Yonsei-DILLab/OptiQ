@@ -111,6 +111,8 @@ def render(panels: list[tuple[str, Path, Path]], output: Path):
             x, y, valid = probe["x"], probe["y"], probe["valid"]
             actions, q = probe["actions"], probe["q"]
             label = str(probe["critic_label"])
+            mode = str(probe["evaluation_mode"]) if "evaluation_mode" in probe else "historical full policy"
+            label += f"; action mode: {mode}"
         if actions.shape[:2] != valid.shape or q.shape[:2] != valid.shape:
             raise ValueError(f"{name}: probe shape mismatch")
         counts = np.bincount(goals[goals >= 0].astype(int), minlength=4)
@@ -170,7 +172,7 @@ def render(panels: list[tuple[str, Path, Path]], output: Path):
         figure.text(center, .083, label, ha="center", fontsize=6.8)
     figure.text(.055, .035,
                 "DACER four-Gaussian contours; red arrows: sampled policy actions.\n"
-                "Contours are not policy density. Bottom: learned EπQ(s,a).",
+                "Contours are not policy density. Bottom: learned Q averaged over the indicated action sampler; not oracle V.",
                 fontsize=7.5)
     output.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(output, dpi=175)

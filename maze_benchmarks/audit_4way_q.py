@@ -51,7 +51,7 @@ def audit(checkpoint: Path, config_path: Path, episodes: int, seed: int) -> dict
         results = {}
         count = 4 * episodes
         first_actions = np.repeat(DIRECTIONS, episodes, axis=0)
-        for mode in ("policy", "mu_only"):
+        for mode in ("mu_only",):
             environment = TaskBatch("4way", count=count, seed=seed)
             active = np.ones(count, bool)
             discounted = np.zeros(count, np.float64)
