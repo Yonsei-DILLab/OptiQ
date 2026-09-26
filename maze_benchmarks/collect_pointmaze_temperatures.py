@@ -66,7 +66,7 @@ def render(root, controls, results):
             curve_axes[metric, row].grid(alpha=.2)
             if curve_axes[metric, row].lines: curve_axes[metric, row].legend()
     fig.suptitle("OptiQ PointMaze · fresh random z at every action · mu-only · seed0\n"
-                 "First100 trajectories; statistics use all final500 episodes")
+                 "All500 final evaluation trajectories shown; counts include failures")
     fig.savefig(figures / "trajectories_mu_only.png", dpi=170, bbox_inches="tight")
     curves.suptitle("OptiQ random-z mu-only · T3 reused; T5/T10 fresh · seed0")
     curves.savefig(figures / "learning_curves_mu_only.png", dpi=160, bbox_inches="tight")

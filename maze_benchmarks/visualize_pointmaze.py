@@ -59,7 +59,7 @@ def plot_map(ax, maze: str, obstacle: bool = False):
     ax.grid(False)
 
 
-def plot_rollouts(ax, data: Path, max_trajectories: int = 100):
+def plot_rollouts(ax, data: Path, max_trajectories: int = 500):
     with np.load(data) as values:
         tracks = values["xy"]
         goals = values["goal_ids"]

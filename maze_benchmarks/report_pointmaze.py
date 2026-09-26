@@ -142,7 +142,7 @@ def render_medium_hard(root: Path, destination: Path):
             ax.set_yticks([])
         axes[row, 0].text(-.13, .5, maze.title(), transform=axes[row, 0].transAxes,
                           rotation=90, ha="center", va="center", fontweight="bold")
-    fig.suptitle("Medium and Hard PointMaze · OptiQ random-z mu-only; baselines native samples; first 100 trajectories · seed 0\n"
+    fig.suptitle("Medium and Hard PointMaze · OptiQ random-z mu-only; baselines native samples; up to500 trajectories · seed 0\n"
                  "Success and reachable-goal counts use all episodes at the latest checkpoint")
     destination.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(destination, dpi=180, bbox_inches="tight")
@@ -172,7 +172,7 @@ def render_optiq_overview(root: Path, destination: Path):
                          f"{summary['success']:.1%} success · {sum(v > 0 for v in counts)}/{len(counts)} goals")
             ax.set_xlabel(f"Goal counts: {counts} · failures {summary['failure']}", fontsize=9)
             ax.set_ylabel("Random-z mu-only" if row == 0 else "Direct policy (+ conditional sigma)")
-    fig.suptitle("OptiQ PointMaze · seed 0 · first 100 trajectories per panel\n"
+    fig.suptitle("OptiQ PointMaze · seed 0 · all500 final trajectories per panel\n"
                  "Fresh normal z at every action; no conditional sigma. Statistics use all final episodes")
     destination.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(destination, dpi=180, bbox_inches="tight")
@@ -207,7 +207,7 @@ def render_optiq_modes(root: Path, maze: str, destination: Path):
         ax.set_title(f"{label}\nSuccess {summary['success']:.1%} · "
                      f"goals {summary['goals']}")
     fig.suptitle(f"OptiQ {maze.title()} · seed 0 · {step:,} transitions · "
-                 "first 100 trajectories per panel")
+                 "up to500 trajectories per panel")
     destination.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(destination, dpi=170, bbox_inches="tight")
     plt.close(fig)

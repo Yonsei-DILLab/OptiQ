@@ -32,7 +32,10 @@ must not be relabeled; report those as unavailable in a mu-only comparison.
 The removal SR5 boundary correction is recomputed from raw goal IDs and does
 not change learning or preserved raw records.
 
-`plot_style.py` sets trajectory width1.8pt/alpha0.7 and learning curves2.4pt.
+`plot_style.py` sets trajectory width1.8pt/alpha0.5 and learning curves2.4pt.
+PointMaze final reports show all500 rollouts, including rare goal visits that
+can be absent from a first100 subset. Intermediate reports show all available
+rollouts up to500. Goal coverage means observed at least once, not balanced modes.
 Reported goal counts always use all episodes, including failures; plotted
 subsets are deterministic and are not duplicated to make lines thicker.
 

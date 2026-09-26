@@ -86,7 +86,7 @@ def render(root, controls, plan, saved):
             cax[ri,row].set(xlabel='Transitions (k)',ylabel=ylabel,title=method.upper())
             cax[ri,row].grid(alpha=.2)
             if cax[ri,row].lines:cax[ri,row].legend()
-    fig.suptitle('PointMaze Simple · direct policy samples · seed0 · final500 episodes\nExisting native controls vs entropy sensitivity; trajectories show first100')
+    fig.suptitle('PointMaze Simple · direct policy samples · seed0 · final500 episodes\nExisting native controls vs entropy sensitivity; all500 trajectories shown')
     curves.suptitle('Same1M interaction budget; native entropy estimates differ between methods\nControl entropy history was not logged; MFPO entropy is before hard action clipping')
     out=root/'figures';out.mkdir(exist_ok=True)
     fig.savefig(out/'trajectories.png',dpi=170,bbox_inches='tight');plt.close(fig)
