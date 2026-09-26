@@ -1,0 +1,81 @@
+{
+  "campaign": "maze-dipo-upstream-u32-s0-1m-20260926",
+  "reason": "Replace remaining pre-fix DIPO tasks; Medium/Hard corrected seeds0-2 already run separately and must not duplicate.",
+  "jobs": [
+    {
+      "name": "pm_simple-dipo-upstream-u32-s0",
+      "task": "pm_simple",
+      "method": "dipo",
+      "temperature": 1.0,
+      "seed": 0,
+      "host": "vast-heechan-6",
+      "num_envs": 2048,
+      "batch_size": 4096,
+      "updates_per_collect": 32,
+      "warmup": 8192,
+      "steps": 1001472,
+      "eval_every": 200000,
+      "dipo_upstream_memory": true
+    },
+    {
+      "name": "4way-dipo-upstream-u32-s0",
+      "task": "4way",
+      "method": "dipo",
+      "temperature": 1.0,
+      "seed": 0,
+      "host": "vast-heechan-6",
+      "num_envs": 2048,
+      "batch_size": 4096,
+      "updates_per_collect": 32,
+      "warmup": 8192,
+      "steps": 1001472,
+      "eval_every": 200000,
+      "dipo_upstream_memory": true
+    },
+    {
+      "name": "8way-dipo-upstream-u32-s0",
+      "task": "8way",
+      "method": "dipo",
+      "temperature": 1.0,
+      "seed": 0,
+      "host": "vast-heechan-46",
+      "num_envs": 2048,
+      "batch_size": 4096,
+      "updates_per_collect": 32,
+      "warmup": 8192,
+      "steps": 1001472,
+      "eval_every": 200000,
+      "dipo_upstream_memory": true
+    },
+    {
+      "name": "12way-dipo-upstream-u32-s0",
+      "task": "12way",
+      "method": "dipo",
+      "temperature": 1.0,
+      "seed": 0,
+      "host": "vast-heechan-46",
+      "num_envs": 2048,
+      "batch_size": 4096,
+      "updates_per_collect": 32,
+      "warmup": 8192,
+      "steps": 1001472,
+      "eval_every": 200000,
+      "dipo_upstream_memory": true
+    },
+    {
+      "name": "16way-dipo-upstream-u32-s0",
+      "task": "16way",
+      "method": "dipo",
+      "temperature": 1.0,
+      "seed": 0,
+      "host": "vast-heechan-199",
+      "num_envs": 2048,
+      "batch_size": 4096,
+      "updates_per_collect": 32,
+      "warmup": 8192,
+      "steps": 1001472,
+      "eval_every": 200000,
+      "dipo_upstream_memory": true
+    }
+  ]
+}
