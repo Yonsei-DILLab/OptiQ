@@ -106,7 +106,7 @@ def render_trajectories(root: Path, maze: str, destination: Path):
             ax.set_title(f"{method.upper()} · pending")
     fig.suptitle(f"{maze.title()} PointMaze · OptiQ random-z mu-only; baselines native samples · seed 0")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(destination, dpi=160)
+    fig.savefig(destination, dpi=160, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -140,12 +140,12 @@ def render_medium_hard(root: Path, destination: Path):
     fig.suptitle("Medium and Hard PointMaze · OptiQ random-z mu-only; baselines native samples; first 100 trajectories · seed 0\n"
                  "Success and reachable-goal counts use all episodes at the latest checkpoint")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(destination, dpi=180)
+    fig.savefig(destination, dpi=180, bbox_inches="tight")
     plt.close(fig)
 
 
 def render_optiq_overview(root: Path, destination: Path):
-    """Three mazes, two clearly separated OptiQ evaluation modes."""
+    """Three mazes using the required random-z mu-only evaluation."""
     fig, axes = plt.subplots(1, 3, figsize=(14, 5.2), squeeze=False, constrained_layout=True)
     for column, maze in enumerate(MAZES):
         folder = root / "runs" / f"pm_{maze}-optiq-s0"
@@ -170,7 +170,7 @@ def render_optiq_overview(root: Path, destination: Path):
     fig.suptitle("OptiQ PointMaze · seed 0 · first 100 trajectories per panel\n"
                  "Fresh normal z at every action; no conditional sigma. Statistics use all final episodes")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(destination, dpi=180)
+    fig.savefig(destination, dpi=180, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -204,7 +204,7 @@ def render_optiq_modes(root: Path, maze: str, destination: Path):
     fig.suptitle(f"OptiQ {maze.title()} · seed 0 · {step:,} transitions · "
                  "first 100 trajectories per panel")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(destination, dpi=170)
+    fig.savefig(destination, dpi=170, bbox_inches="tight")
     plt.close(fig)
     return True
 

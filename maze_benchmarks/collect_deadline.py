@@ -30,10 +30,10 @@ def sync(remote, local):
     subprocess.run(["rsync", "-az", "--exclude", "learner/", remote, str(local)], check=True)
 
 
-def snapshot(host):
+def snapshot(host, remote=REMOTE):
     script = f'''import json
 from pathlib import Path
-r=Path({REMOTE!r})
+r=Path({remote!r})
 out={{"host":{host!r},"queue":None,"progress":{{}},"jobs":{{}},"transfers":{{}}}}
 if (r/"queue.json").exists():
  out["queue"]=json.loads((r/"queue.json").read_text())
