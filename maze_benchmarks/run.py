@@ -109,6 +109,9 @@ def main():
     parser.add_argument("--final-eval-episodes", type=int, default=None)
     parser.add_argument("--render-each-eval", action="store_true")
     parser.add_argument("--temperature", type=float, default=3.)
+    parser.add_argument("--components", type=int, default=64)
+    parser.add_argument("--candidates", type=int, default=64)
+    parser.add_argument("--wandb-project", default=None)
     parser.add_argument("--optiq-eval-mode", choices=("mu_only",), default="mu_only",
                         help="OptiQ default: fresh random z, mean output without conditional noise")
     parser.add_argument("--sql-particles", type=int, default=16)
@@ -119,6 +122,10 @@ def main():
                         help="Log native MFPO/MEOW diagnostics without changing training")
     parser.add_argument("--source-commit", required=True)
     args = parser.parse_args()
+    if args.components < 1 or args.candidates < 1:
+        raise ValueError("N and M must be positive")
+    if args.method != "optiq" and (args.components, args.candidates) != (64, 64):
+        raise ValueError("N/M ablation is OptiQ-only")
     if args.steps % args.num_envs or args.warmup % args.num_envs:
         raise ValueError("steps and warmup must be multiples of num-envs")
     if args.warmup < args.batch_size:
@@ -150,6 +157,8 @@ def main():
     rng = np.random.default_rng(args.seed)
     observation_dim = 4 if args.task == "pointmaze" or args.task in PAPER_TASKS else 2
     kwargs = dict(temperature=args.temperature) if args.method in ("optiq", "sql") else {}
+    if args.method == "optiq":
+        kwargs.update(components=args.components, candidates=args.candidates)
     if args.method == "sql":
         kwargs["particles"] = args.sql_particles
     elif args.method == "meow":
@@ -184,6 +193,13 @@ def main():
                                   reward="-30*||a||^2 - nearest_goal_squared_distance + 10*success")
     config["utd"] = args.updates_per_collect / args.num_envs
     atomic_json(args.output / "config.json", config)
+    wb = None
+    if args.wandb_project:
+        import wandb
+        wb = wandb.init(entity="OptiQ", project=args.wandb_project,
+                        name=f"{args.task}-N{args.components}-M{args.candidates}-T{args.temperature:g}-s{args.seed}",
+                        group=f"{args.task}-T{args.temperature:g}", config=config,
+                        dir=str(args.output))
     progress = dict(status="running", steps=0, updates=0,
                     latest_evaluation=None, started=time.time())
     atomic_json(args.output / "progress.json", progress)
@@ -204,6 +220,11 @@ def main():
             if step > args.warmup:
                 for _ in range(args.updates_per_collect):
                     info = agent.update(step)
+                    if args.method == "optiq" and (agent.updates % 1000 == 0 or agent.updates == 16):
+                        with (args.output / "training-metrics.jsonl").open("a") as stream:
+                            stream.write(json.dumps(dict(step=step, updates=agent.updates, **info)) + "\n")
+                        if wb is not None:
+                            wb.log(dict(env_steps=step, learner_updates=agent.updates, **info))
                     if args.entropy_diagnostics and (agent.updates % 1000 == 0 or agent.updates == 16):
                         with (args.output / "training-metrics.jsonl").open("a") as stream:
                             stream.write(json.dumps(dict(step=step, updates=agent.updates, **info)) + "\n")
@@ -258,6 +279,17 @@ def main():
                 progress.update(steps=step, updates=agent.updates, latest_evaluation=record,
                                 updated=time.time())
                 atomic_json(args.output / "progress.json", progress)
+                if wb is not None:
+                    import wandb
+                    values = dict(env_steps=step, learner_updates=agent.updates)
+                    for mode_key in (primary_mode, f"obstacle_{primary_mode}"):
+                        if mode_key in record:
+                            values.update({f"eval/{mode_key}/{k}": v for k, v in record[mode_key].items()
+                                           if isinstance(v, (float, int))})
+                            values.update({f"eval/{mode_key}/goal_{i}": v for i, v in enumerate(record[mode_key]["goals"])})
+                    if "figure" in record:
+                        values["eval/trajectories"] = wandb.Image(record["figure"])
+                    wb.log(values)
                 print(json.dumps(record, default=str), flush=True)
         progress["status"] = "complete"
         atomic_json(args.output / "progress.json", progress)
@@ -267,6 +299,8 @@ def main():
         raise
     finally:
         environment.close()
+        if wb is not None:
+            wb.finish(exit_code=0 if progress["status"] == "complete" else 1)
 
 
 if __name__ == "__main__":

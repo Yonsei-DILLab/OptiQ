@@ -35,7 +35,8 @@ class SpaceOnlyEnv(gym.Env):
 class OptiQ:
     method = "optiq"
 
-    def __init__(self, seed, folder, budget, observation_dim, batch_size=256, temperature=3.):
+    def __init__(self, seed, folder, budget, observation_dim, batch_size=256, temperature=3.,
+                 components=64, candidates=64):
         from omegaconf import OmegaConf
         from stable_baselines3.common.logger import configure
 
@@ -71,7 +72,12 @@ class OptiQ:
         cfg.alg.actor.density_beta = 1.
         cfg.alg.actor.adaptive_density_beta = False
         cfg.alg.actor.distillation_loss = "direct_gmm_nll"
-        cfg.alg.actor.num_policy_samples = 64
+        if components < 1 or candidates < 1:
+            raise ValueError("N and M must be positive")
+        cfg.alg.actor.num_policy_samples = components
+        OmegaConf.update(cfg, "alg.actor.num_reference_samples", candidates, force_add=True)
+        cfg.experiment.components = components
+        cfg.experiment.candidates = candidates
         cfg.alg.actor.proposals_per_policy_sample = 1
         cfg.alg.actor.proposal_sampling_mode = "exact"
         cfg.alg.optimizer.lr_actor = 3e-4

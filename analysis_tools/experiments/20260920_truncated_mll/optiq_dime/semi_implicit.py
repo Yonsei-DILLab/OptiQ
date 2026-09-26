@@ -116,9 +116,11 @@ class ConditionalGaussianProposal(NamedTuple):
     def effective_log_std(self):
         return jnp.maximum(self.log_std, jnp.log(self.minimum_std))
 
-    def sample(self, key, repeats, mode):
+    def sample(self, key, repeats, mode, count=None):
         batch,components,dim=self.means.shape
-        count=components*repeats
+        count=components*repeats if count is None else count
+        if count < 1 or (mode != 'exact' and count != components*repeats):
+            raise ValueError('Independent candidate counts require exact mixture sampling')
         component_key,noise_key=jax.random.split(key)
         if mode=='exact':
             indices=jax.random.randint(component_key,(batch,count),0,components)

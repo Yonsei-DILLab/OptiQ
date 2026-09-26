@@ -219,6 +219,7 @@ class OptiQDIME(DIME):
             self.backup_mode,
             bool(actor.get("entropy_diagnostics", True)),
             actor.get("ot_student_action", "sample"),
+            int(actor.get("num_reference_samples", 0)),
         )
         self._n_updates += gradient_steps
         if guard_enabled:
@@ -257,7 +258,8 @@ class OptiQDIME(DIME):
         diagnostic_due = diagnostic_interval > 0 and self.num_timesteps % diagnostic_interval == 0
         core_metrics = {"actor_loss", "critic_loss", "current_q_values", "next_q_values",
                         "entrQ_1", "entrQ_2", "ent_coef", "backup_entropy_lower",
-                        "backup_entropy_term", "policy_entropy_lower", "actor_std_mean"}
+                        "backup_entropy_term", "policy_entropy_lower", "actor_std_mean",
+                        "actual_component_count", "actual_candidate_count"}
         # The exact scalar supplied to the dynamic JIT argument is recorded at
         # every logger flush. The saved config keeps the initial value/schedule.
         log_metrics = dict(log_metrics, **schedule_metrics)
@@ -544,6 +546,7 @@ class OptiQDIME(DIME):
             "soft_proximal_ess_fraction",
             "entropy_diagnostics",
             "ot_student_action",
+            "num_reference_samples",
         ],
     )
     def update_actor(
@@ -575,7 +578,12 @@ class OptiQDIME(DIME):
         soft_proximal_ess_fraction: float = 0.0,
         entropy_diagnostics: bool = True,
         ot_student_action: str = "sample",
+        num_reference_samples: int = 0,
     ):
+        if num_reference_samples and not (semi_implicit and
+                teacher_distribution == "conditional_mixture" and
+                distillation_loss == "direct_gmm_nll" and proposal_sampling_mode == "exact"):
+            raise ValueError("Independent M is supported only for exact direct-mixture NLL")
         if ot_student_action not in {"sample", "mean"}:
             raise ValueError("ot_student_action must be sample or mean")
         if ot_student_action == "mean" and (
@@ -642,7 +650,8 @@ class OptiQDIME(DIME):
                 else:
                     proposal_kde = PretanhTeacherKDE(jax.lax.stop_gradient(student_u), proposal_std)
                 proposals, proposal_u, proposal_component_indices = proposal_kde.sample(
-                    proposal_key, proposals_per_policy_sample, proposal_sampling_mode
+                    proposal_key, proposals_per_policy_sample, proposal_sampling_mode,
+                    **({"count": num_reference_samples} if num_reference_samples else {})
                 )
             else:
                 proposal_kde = TruncatedGaussianKDE.from_centers(
@@ -673,7 +682,7 @@ class OptiQDIME(DIME):
             proposal_component_indices = proposal_component_indices.reshape(batch_size, -1)
             proposals = proposals.reshape(
                 batch_size,
-                num_policy_samples * proposals_per_policy_sample,
+                num_reference_samples or num_policy_samples * proposals_per_policy_sample,
                 action_dim,
             )
             num_proposals = proposals.shape[1]
@@ -766,6 +775,8 @@ class OptiQDIME(DIME):
                     gmm_component_usage_min=usage.min(),
                     gmm_underused_fraction=(usage < .1 / num_policy_samples).mean(),
                     temperature=jnp.asarray(temperature),
+                    actual_component_count=jnp.asarray(num_policy_samples, dtype=jnp.float32),
+                    actual_candidate_count=jnp.asarray(num_proposals, dtype=jnp.float32),
                 )
                 return loss, metrics
 
@@ -1154,6 +1165,7 @@ class OptiQDIME(DIME):
             "backup_mode",
             "entropy_diagnostics",
             "ot_student_action",
+            "num_reference_samples",
         ],
     )
     def _train(
@@ -1208,6 +1220,7 @@ class OptiQDIME(DIME):
         backup_mode=None,
         entropy_diagnostics=True,
         ot_student_action="sample",
+        num_reference_samples=0,
     ):
         del n_env_interacts
         backup_mode = backup_mode or ("soft_td" if semi_implicit else "td")
@@ -1336,6 +1349,7 @@ class OptiQDIME(DIME):
                     soft_proximal_ess_fraction,
                     entropy_diagnostics,
                     ot_student_action,
+                    num_reference_samples,
                 )
                 if soft_guard_enabled:
                     key, guard_key = jax.random.split(key)
