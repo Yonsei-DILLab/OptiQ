@@ -51,3 +51,24 @@ Matplotlib/PyParsing do not affect the recorded test outcomes.
   checkpoints. Smoke evaluation used 256 samples to bound validation time.
 - Checkpoint round-trip preserves the GMM40 optimizer, training key and update
   count; a subsequent update matches uninterrupted execution in the unit test.
+# PointMaze release checks
+
+The separate DrAC PointMaze package passed the following checks on an RTX 5090:
+
+- Full test suite: **25 passed** (including existing MuJoCo/GMM40 tests).
+- All three maps: native 4/4/8 goals, horizons 150/300/600, sparse reward,
+  training without robustness obstacles and separate obstacle geometry.
+- Paper-shaped Simple smoke test: batch4096, N=M64, 256 collectors,
+  8192 uniform warmup plus256 transitions, exactly16 learner updates.
+  Final actor loss2.075824 and critic loss0.007517 were finite.
+- Final code: each of Simple/Medium/Hard completed a reduced6-transition,
+  one-update CLI check, normal and obstacle evaluation, and checkpoint output.
+- Required vendored simulator, map, utility and XML files compare byte-for-byte
+  with the source snapshot. Original third-party license headers are retained.
+
+The paper-shaped check used321f525; the final suite and three-map CLI checks
+used3673d59, which adds explicit Python/NumPy seed initialization, corrects task
+metadata and restores original trailing whitespace in two upstream files.
+These are bounded execution tests, not new1M performance experiments or proof
+of bitwise equality with historical training. See `pointmaze/PROTOCOL.md` for
+evaluation and checkpoint/resume limitations.
