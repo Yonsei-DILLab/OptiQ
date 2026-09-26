@@ -74,7 +74,7 @@ def register(root, host):
     initialize_target()
     names = []
     for gpu in plan['gpus']:
-        name = f'{NAME}-gpu{gpu}'
+        name = f'{root.name}-gpu{gpu}'
         conf = Path('/etc/supervisor/conf.d')/(name+'.conf')
         assert not conf.exists(), 'Already registered: '+str(conf)
         conf.write_text('\n'.join([f'[program:{name}]',
