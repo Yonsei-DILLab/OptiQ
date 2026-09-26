@@ -3,4 +3,3 @@ env_name: HalfCheetah-v4
 task: halfcheetah
 successful_steps: null
 temperature: 0.25
-exploration_scale: 0.15

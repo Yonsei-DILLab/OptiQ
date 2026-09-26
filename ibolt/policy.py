@@ -10,8 +10,7 @@ import numpy as np
 from flax.training.train_state import TrainState
 from gymnasium import spaces
 
-from common.policies import BaseJaxPolicy
-from common.type_aliases import RLTrainState
+from stable_baselines3.common.policies import BasePolicy
 from models.critic import VectorCritic
 
 from .optimizers import adam_with_grad_clip
@@ -49,13 +48,22 @@ class SemiImplicitActor(nn.Module):
         return jnp.tanh(mu), jnp.clip(raw_log_std, self.log_std_min, self.log_std_max)
 
 
-class IBOLTPolicy(BaseJaxPolicy):
+class CriticState(TrainState):
+    """Flax optimizer state with the scalar critic's target parameters."""
+    target_params: dict
+    batch_stats: dict
+    target_batch_stats: dict
+
+
+class IBOLTPolicy(BasePolicy):
     """SB3-compatible normalized policy with one network evaluation per action."""
 
     def __init__(
         self,
         observation_space: spaces.Space,
         action_space: spaces.Box,
+        lr_schedule=None,
+        *,
         cfg,
         squash_output: bool = True,
         **kwargs,
@@ -94,7 +102,7 @@ class IBOLTPolicy(BaseJaxPolicy):
             action,
             train=False,
         )
-        self.qf_state = RLTrainState.create(
+        self.qf_state = CriticState.create(
             apply_fn=self.qf.apply,
             params=qf_variables["params"],
             batch_stats=qf_variables.get("batch_stats", {}),
@@ -161,7 +169,16 @@ class IBOLTPolicy(BaseJaxPolicy):
             sample_conditional_noise=not bool(
                 getattr(self, "evaluation_mu_only", False)
             ),
-        )[0]
+        )
+
+    def predict(self, observation, state=None, episode_start=None, deterministic=False):
+        """Bridge flat MuJoCo observations to JAX without a Torch forward pass."""
+        array = np.asarray(observation)
+        single = array.shape == self.observation_space.shape
+        batch = array.reshape(-1, *self.observation_space.shape)
+        normalized = np.asarray(self._predict(batch, deterministic))
+        actions = self.unscale_action(np.clip(normalized, -1., 1.))
+        return (actions[0] if single else actions), state
 
     def reset_noise(self, batch_size: int = 1) -> None:
         self.key, self.noise_key = jax.random.split(self.key)

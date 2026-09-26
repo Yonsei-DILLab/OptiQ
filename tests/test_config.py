@@ -5,8 +5,8 @@ import pytest
 import train
 
 @pytest.mark.parametrize('task,t,c', [
-    ('hopper',.05,.1),('walker2d',.1,.1),('halfcheetah',.25,.15),
-    ('ant',.25,.1),('humanoid',.1,.15)])
+    ('hopper',.05,.1),('walker2d',.1,.1),('halfcheetah',.25,.1),
+    ('ant',.25,.1),('humanoid',.1,.1)])
 def test_defaults(task,t,c):
     cfg = train.compose_config([f'benchmark={task}'])
     train.validate_config(cfg)
@@ -26,3 +26,8 @@ def test_overrides():
     train.validate_config(cfg)
     assert cfg.alg.actor.temperature == .5 and not cfg.dacer.enabled
     assert cfg.alg.actor.num_policy_samples == 16
+
+def test_exploration_multiplier_is_fixed():
+    cfg = train.compose_config(['dacer.noise_scale=0.15'])
+    with pytest.raises(ValueError, match='fixed at 0.1'):
+        train.validate_config(cfg)

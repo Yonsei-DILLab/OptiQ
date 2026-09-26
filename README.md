@@ -44,9 +44,9 @@ Never add credentials or generated output to this repository.
 |---|---:|---:|
 | Hopper-v4 | 0.05 | 0.10 |
 | Walker2d-v4 | 0.10 | 0.10 |
-| HalfCheetah-v4 | 0.25 | 0.15 |
+| HalfCheetah-v4 | 0.25 | 0.10 |
 | Ant-v4 | 0.25 | 0.10 |
-| Humanoid-v4 | 0.10 | 0.15 |
+| Humanoid-v4 | 0.10 | 0.10 |
 
 Shared defaults: two 256-unit hidden layers in actor and critics; GELU;
 twin scalar critics with plain TD; batch 256; UTD 1; Adam learning rates
@@ -77,10 +77,11 @@ returns/lengths, and progress/timing. W&B uses `env_steps` as its step field.
 Duplicate evaluation aliases and detailed distribution diagnostics are omitted.
 The MuJoCo evaluator does not collect success-rate or solved-step histories.
 
-DACER-inspired behavior exploration adds `c * alpha * Normal(0,I)` to the
+DACER-inspired behavior exploration adds `lambda * alpha * Normal(0,I)` to the
 collected action, followed by clipping to [-1,1]. The executed action is stored
 in replay. This extra noise is absent from teacher sampling, TD targets and
-evaluation. Alpha starts at 0.27, with log-alpha Adam learning rate 0.03,
+evaluation. Lambda is fixed at 0.1 for every task. Alpha starts at 0.27,
+with log-alpha Adam learning rate 0.03,
 target entropy -0.9 times action dimension, and updates every 10K learner
 updates. The entropy proxy fits a three-component GMM to 200 current-policy
 actions at replay states. This proxy is not exact mixture entropy.
@@ -120,10 +121,11 @@ and a short learner update in each of the five environments.
 - `configs/`: task defaults and ablation overrides.
 - `ibolt/`: actor, density, weighted likelihood, critic updates and learner adapter.
 - `exploration.py`: behavior-only entropy-regulated exploration.
-- `common/`, `models/`: JAX/SB3 interfaces and network utilities.
+- `models/`: scalar critic network.
 - `tests/`: numerical and integration checks.
 
-Third-party notices for retained utility code are in `THIRD_PARTY_LICENSES.txt`.
+The learner uses the installed Stable-Baselines3 interfaces directly. Dependency
+packages retain their own licenses; no copied learner-adapter package is bundled.
 Stable-Baselines3 supplies the environment/replay interfaces. The exploration
 regulator is inspired by DACER (arXiv:2405.15177); it is a behavior-only adaptation,
 not an assertion of identical DACER training semantics. Third-party attribution

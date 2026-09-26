@@ -18,6 +18,8 @@ def compose_config(overrides=()):
         return compose(config_name='train', overrides=list(overrides))
 
 def validate_config(cfg):
+    if float(cfg.dacer.noise_scale) != 0.1:
+        raise ValueError('Exploration multiplier lambda is fixed at 0.1.')
     a = cfg.alg.actor
     if not a.log_std_min <= a.initial_log_std <= a.log_std_max:
         raise ValueError('Initial log scale must be inside its bounds.')

@@ -3,4 +3,3 @@ env_name: Ant-v4
 task: ant
 successful_steps: null
 temperature: 0.25
-exploration_scale: 0.1

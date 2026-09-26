@@ -3,4 +3,3 @@ env_name: Humanoid-v4
 task: humanoid
 successful_steps: null
 temperature: 0.1
-exploration_scale: 0.15
