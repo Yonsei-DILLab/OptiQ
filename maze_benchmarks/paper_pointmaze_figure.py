@@ -172,7 +172,7 @@ def main():
     (a.output/'CAPTION.txt').write_text('Figure4: PointMaze. Top: Medium; bottom: Hard. Each completed panel shows all500 evaluation trajectories from one seed0 policy after1M environment interactions. iBOLT uses T=5 and fresh Gaussian latent z at each action with mu-only output (no conditional sigma). Baselines use their native sampling rules and original entropy settings. The seven-column draft reserves DIPO until the official implementation completes1M; no older variant is substituted.\n')
     if a.outcome_colors:
         with (a.output/'CAPTION.txt').open('a') as caption:
-            caption.write('Blue trajectories end in a recorded terminal goal success; red trajectories do not. Mint goals were reached at least once in the same500 episodes; purple goals were never reached. Pending panels use neutral gray goals. The black dot marks the start. Episode draw order is unchanged.\n')
+            caption.write('Mint trajectories end in a recorded terminal goal success; pink trajectories do not. Dark blue goals were reached at least once in the same500 episodes; dark red goals were never reached. Pending panels use neutral gray goals. The black dot marks the start. Episode draw order is unchanged.\n')
 
 
 if __name__=='__main__':main()

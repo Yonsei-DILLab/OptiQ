@@ -56,7 +56,8 @@ def plot_map(ax, maze: str, obstacle: bool = False, *, goal_counts=None,
             ax.add_patch(Rectangle((x, y), 1, 1, color=color, linewidth=0,
                                    zorder=3 if value == "g" and outcome_colors else 0))
             if value == "g":
-                ax.plot(x + .5, y + .5, "kx", ms=4, zorder=4)
+                ax.plot(x + .5, y + .5, "x", ms=4, zorder=4,
+                        color="white" if outcome_colors and goal_counts is not None else "black")
             if value == 2 and not obstacle:
                 ax.add_patch(Rectangle((x, y), 1, 1, fill=False, edgecolor="#cccccc",
                                        linestyle=":", linewidth=.4, zorder=1))
