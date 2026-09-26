@@ -34,3 +34,20 @@ These are correctness/execution checks, not new benchmark results. The tests
 used an existing environment; a clean installation of the requirements on
 every supported platform has not been validated. Deprecation warnings from
 Matplotlib/PyParsing do not affect the recorded test outcomes.
+
+## GMM40 addition
+
+- Combined suite: 20 tests passed (the 17 MuJoCo/configuration tests plus three
+  GMM40 target, learner/checkpoint and evaluation-protocol tests).
+- The bundled numerical target matches the paper campaign's means/std/weights
+  SHA256. Bounded and unbounded reference draws, 10,000 each, match exactly.
+- CPU comparison to the archived paper learner: three updates with N=M=64,
+  batch=2 and the full 256x3 network gave maximum parameter difference 0.0.
+  Full-policy and mean-only outputs (10,000 each) matched within atol=1e-5,
+  rtol=1e-6. This is not a full 100K learning-curve reproduction.
+- An RTX 5090 CLI smoke test used the actual paper tensor sizes (batch=256,
+  N=M=256, 256x3) for two actor updates. It completed with 131,072 training Q
+  queries, saved both evaluation views and metrics, generated a PNG, and saved
+  checkpoints. Smoke evaluation used 256 samples to bound validation time.
+- Checkpoint round-trip preserves the GMM40 optimizer, training key and update
+  count; a subsequent update matches uninterrupted execution in the unit test.
