@@ -15,7 +15,6 @@ from stable_baselines3.common.logger import configure
 
 from ibolt.algorithm import IBOLT
 from ibolt.runtime import provenance
-from train import compose_config
 from .batch import TaskBatch
 from .drac_paper import PaperPointMaze, HORIZONS, GOAL_COUNTS
 from .replay import Replay
@@ -34,9 +33,16 @@ class SpaceOnlyEnv(gym.Env):
 
 
 def configuration(seed=0, temperature=5., batch_size=4096, maze='simple'):
-    cfg = compose_config(['benchmark=ant', f'seed={seed}', 'dacer.enabled=false',
-                          'wandb.activate=false'])
-    cfg.alg.actor.temperature = temperature
+    # Shared learner defaults, without inheriting a MuJoCo task profile.
+    cfg = OmegaConf.load(Path(__file__).resolve().parents[1] / 'configs/train.yaml')
+    del cfg.defaults
+    cfg.seed = seed
+    cfg.temperature = temperature
+    cfg.dacer.enabled = cfg.wandb.activate = False
+    cfg.alg.utd = 16 / 256
+    cfg.total_steps = 1_000_192
+    cfg.eval_interval = 200_000
+    cfg.num_eval_episodes = 200
     cfg.alg.learning_starts = cfg.alg.actor.learning_starts = 0
     cfg.alg.batch_size = batch_size
     cfg.task = f'pointmaze-{maze}'
@@ -52,11 +58,11 @@ def expected_updates(steps=1_000_192, warmup=8192, num_envs=256, updates=16):
 
 
 class Agent:
-    method = 'optiq'  # Historical evaluator's mu-only validation key.
+    method = 'ibolt'
     def __init__(self, cfg, output):
         self.cfg = cfg
         self.model = IBOLT('MlpPolicy', SpaceOnlyEnv(), cfg=cfg,
-                           model_save_path=None, save_every_n_steps=0)
+                           model_save_path=None, save_every_n_steps=0, gradient_steps=1)
         self.model.set_logger(configure(str(output / 'learner'), ['csv']))
         self.replay = Replay(seed=cfg.seed)
         self.model.replay_buffer = self.replay
@@ -126,11 +132,15 @@ def main():
     random.seed(args.seed)
     cfg = configuration(args.seed, args.temperature, args.batch_size, args.maze)
     cfg.total_steps = args.steps
+    cfg.alg.utd = args.updates_per_collect / args.num_envs
+    cfg.eval_interval = args.eval_every
+    cfg.num_eval_episodes = args.eval_episodes
+    cfg.output_root = str(args.output)
     metadata = {**vars(args), 'output': str(args.output), 'expected_updates': count,
                 'utd': args.updates_per_collect / args.num_envs,
                 'learner': OmegaConf.to_container(cfg, resolve=True), 'runtime': provenance(),
                 'timeout_bootstrap': False, 'training_conditional_noise': True,
-                'evaluation_conditional_noise': False, 'noveld': False}
+                'evaluation_conditional_noise': False}
     (args.output / 'config.json').write_text(json.dumps(metadata, indent=2))
     agent = Agent(cfg, args.output)
     environment = TaskBatch(args.maze, args.num_envs, args.seed)

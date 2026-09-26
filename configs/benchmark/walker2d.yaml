@@ -1,5 +1,4 @@
 # @package _global_
 env_name: Walker2d-v4
 task: walker2d
-successful_steps: null
 temperature: 0.1

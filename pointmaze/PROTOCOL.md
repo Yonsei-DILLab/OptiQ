@@ -4,6 +4,24 @@ This is a separate benchmark configuration, not a change to MuJoCo or GMM40.
 The completed experiments used one training seed (0) per map; they are not
 five-seed results. No new full training is launched by adding this package.
 
+## Training settings
+
+Policies are trained online for approximately 10^6 environment transitions
+using a batch size of 4096 and discount factor gamma=0.99. Unlike GMM40,
+the value function is learned from environment interaction rather than
+supplied by an oracle. The PointMaze comparison includes iBOLT, SAC, SQL,
+MEow, MFPO, and TD3, with method-specific architectures and optimization
+settings. For iBOLT, the actor and twin critics each use two hidden layers
+of 256 units, with N=M=64. The reported PointMaze and wall-free results
+use temperature5 and temperature10, respectively. The DACER exploration
+controller is disabled for iBOLT. These experiments provide qualitative
+evidence of behavioral diversity.
+
+This package contains the iBOLT PointMaze implementation only. The baseline
+implementations and the separate wall-free task are not included here;
+temperature10 is not a PointMaze default. The detailed settings below apply
+to iBOLT on Simple, Medium and Hard, not uniformly to every baseline.
+
 | Setting | Value |
 | --- | --- |
 | Fixed temperature / density correction | 5 / beta=1 |
@@ -43,7 +61,7 @@ Keep native resets, collision behavior, success termination and time limits.
 | Hard | 8 | 600 |
 
 Light-gray map cells are passable during training. They become obstacles
-only in the separate final robustness evaluation. Training uses no additional
+only in the separate robustness evaluations. Training uses no additional
 reward shaping, entropy reward, expert data, or DrAC diversity objective.
 
 The original training adapter stores termination OR truncation as the TD

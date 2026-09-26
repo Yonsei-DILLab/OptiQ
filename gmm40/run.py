@@ -40,7 +40,7 @@ def plot_samples(path, full, centers, reference, target):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--nm', type=int, choices=[4,16,32,64,128,256,512], default=256)
+    parser.add_argument('--nm', type=int, choices=[64,128,256,512], default=256)
     parser.add_argument('--steps', type=int, default=100000)
     parser.add_argument('--batch', type=int, default=256)
     parser.add_argument('--eval-samples', type=int, default=10000)

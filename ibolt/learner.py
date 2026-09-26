@@ -9,17 +9,16 @@ from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 
 class JaxLearner(OffPolicyAlgorithm):
     def __init__(self, policy, env, model_save_path, save_every_n_steps, cfg,
-                 tensorboard_log=None, replay_buffer_class=None, **kwargs):
+                 tensorboard_log=None, replay_buffer_class=None, gradient_steps=None, **kwargs):
         self.cfg = cfg
         self.model_save_path = model_save_path
         self.save_every_n_steps = save_every_n_steps
-        self.policy_delay = cfg.alg.policy_delay
         super().__init__(policy=policy, env=env,
             learning_rate=cfg.alg.optimizer.lr_actor,
             policy_kwargs={'cfg': cfg}, device='cpu',
             buffer_size=cfg.alg.buffer_size, learning_starts=cfg.alg.learning_starts,
             batch_size=cfg.alg.batch_size, tau=cfg.alg.tau, gamma=cfg.alg.gamma,
-            train_freq=1, gradient_steps=cfg.alg.utd,
+            train_freq=1, gradient_steps=cfg.alg.utd if gradient_steps is None else gradient_steps,
             replay_buffer_class=replay_buffer_class, tensorboard_log=tensorboard_log,
             seed=cfg.seed, support_multi_env=True, supported_action_spaces=(spaces.Box,),
             **kwargs)

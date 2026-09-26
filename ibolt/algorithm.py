@@ -23,7 +23,7 @@ class IBOLT(JaxLearner):
         a = self.cfg.alg.actor
         for i in range(gradient_steps):
             obs, actions, next_obs, dones, rewards = [x[i*batch_size:(i+1)*batch_size] for x in arrays]
-            update_actor = self.num_timesteps > a.learning_starts and (self._n_updates+i+1) % self.policy_delay == 0
+            update_actor = self.num_timesteps > a.learning_starts
             self.policy.qf_state, self.policy.actor_state, metrics, self.key = self._step(
                 self.gamma, self.tau, self.policy.actor_state, self.policy.qf_state,
                 obs, actions, next_obs, dones, rewards, self.key,

@@ -12,6 +12,11 @@ def test_paper_settings():
     assert expected_updates() == 62000
     assert cfg.alg.batch_size == 4096
     assert cfg.alg.actor.temperature == 5
+    assert cfg.temperature == 5
+    assert cfg.alg.utd == .0625
+    assert cfg.total_steps == 1_000_192
+    assert cfg.env_name == 'DrAC-PointMaze-simple'
+    assert cfg.eval_interval == 200_000
     assert cfg.alg.actor.num_policy_samples == 64
     assert cfg.alg.actor.hidden_dims == [256, 256]
     assert cfg.alg.actor.log_std_min == -5

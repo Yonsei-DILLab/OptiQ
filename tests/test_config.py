@@ -18,6 +18,9 @@ def test_defaults(task,t,c):
     assert cfg.alg.actor.log_std_min == -5 and cfg.alg.actor.log_std_max == -1
     assert cfg.alg.actor.initial_log_std == -1
     assert 'sinkhorn_epsilon' not in cfg.alg.actor
+    assert 'successful_steps' not in cfg
+    assert 'policy_delay' not in cfg.alg
+    assert 'ac_grad_norm' not in cfg.alg.optimizer
     assert cfg.wandb.entity is None and cfg.wandb.mode == 'offline'
 
 def test_overrides():

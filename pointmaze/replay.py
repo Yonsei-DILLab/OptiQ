@@ -41,7 +41,7 @@ class Replay:
         return {key: value[indices].copy() for key, value in self.data.items()}
 
     def sample(self, batch_size, env=None):
-        """Stable Baselines3 replay interface used by SAC and OptiQ."""
+        """Stable Baselines3 replay interface used by the iBOLT learner."""
         del env
         import torch
         from stable_baselines3.common.type_aliases import ReplayBufferSamples

@@ -41,7 +41,7 @@ def test_batch_boundary_and_completed_paths(tmp_path, monkeypatch):
             pass
 
     class Agent:
-        method = 'optiq'
+        method = 'ibolt'
         @contextmanager
         def evaluation_rng(self, seed):
             seeds.append(seed)

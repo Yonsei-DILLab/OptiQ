@@ -7,13 +7,13 @@ import flax.linen as nn
 import jax
 import jax.numpy as jnp
 import numpy as np
+import optax
 from flax.training.train_state import TrainState
 from gymnasium import spaces
 
 from stable_baselines3.common.policies import BasePolicy
 from models.critic import VectorCritic
 
-from .optimizers import adam_with_grad_clip
 from .box_gaussian import sample_box
 
 
@@ -31,7 +31,6 @@ class SemiImplicitActor(nn.Module):
     initial_log_std: float
     mean_output_init_scale: float = 1.0e-4
     log_std_output_init_scale: float = 0.0
-    mean_latent_skip_scale: float = 0.0
 
     @nn.compact
     def __call__(self, observations, latents):
@@ -39,8 +38,6 @@ class SemiImplicitActor(nn.Module):
         for width in self.hidden_dims:
             x = nn.gelu(nn.Dense(width, kernel_init=kernel_init())(x))
         mu = nn.Dense(self.action_dim, kernel_init=kernel_init(self.mean_output_init_scale), name="mu")(x)
-        if self.mean_latent_skip_scale != 0.0:
-            mu = mu + self.mean_latent_skip_scale*latents
         raw_log_std = nn.Dense(
             self.action_dim, kernel_init=kernel_init(self.log_std_output_init_scale),
             bias_init=nn.initializers.constant(self.initial_log_std), name="log_std",
@@ -108,11 +105,10 @@ class IBOLTPolicy(BasePolicy):
             batch_stats=qf_variables.get("batch_stats", {}),
             target_params=qf_variables["params"],
             target_batch_stats=qf_variables.get("batch_stats", {}),
-            tx=adam_with_grad_clip(
+            tx=optax.adam(
                 learning_rate=qf_learning_rate,
                 b1=self.cfg.alg.optimizer.critic_b1,
                 b2=self.cfg.alg.optimizer.critic_b2,
-                max_grad_norm=self.cfg.alg.optimizer.get("ac_grad_norm", None),
             ),
         )
         self.qf.apply = jax.jit(self.qf.apply)
@@ -125,11 +121,10 @@ class IBOLTPolicy(BasePolicy):
             mean_output_init_scale=actor_cfg.mean_output_init_scale,
             log_std_output_init_scale=actor_cfg.log_std_output_init_scale)
         actor_params = self.actor_model.init(actor_key, obs, latent)["params"]
-        actor_tx = adam_with_grad_clip(
+        actor_tx = optax.adam(
             learning_rate=self.cfg.alg.optimizer.lr_actor,
             b1=self.cfg.alg.optimizer.actor_b1,
             b2=self.cfg.alg.optimizer.actor_b2,
-            max_grad_norm=self.cfg.alg.optimizer.get("ac_grad_norm", None),
         )
         self.actor_state = TrainState.create(
             apply_fn=self.actor_model.apply,

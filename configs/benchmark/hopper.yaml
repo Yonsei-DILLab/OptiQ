@@ -1,5 +1,4 @@
 # @package _global_
 env_name: Hopper-v4
 task: hopper
-successful_steps: null
 temperature: 0.05

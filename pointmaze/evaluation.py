@@ -14,8 +14,8 @@ def obstacle_sr5(goals: np.ndarray) -> float:
 def evaluate(agent, task, seed, episodes, mode, destination, obstacle=False):
     if task not in PAPER_TASKS:
         raise ValueError(task)
-    if getattr(agent, "method", None) == "optiq" and mode != "mu_only":
-        raise ValueError("OptiQ rollouts require mu_only with fresh random z")
+    if mode != "mu_only":
+        raise ValueError("iBOLT rollouts require mu_only with fresh random z")
     if episodes <= 0 or episodes % 5:
         raise ValueError(episodes)
     horizon = PAPER_HORIZONS[task[3:]]
