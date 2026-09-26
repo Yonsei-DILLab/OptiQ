@@ -1,7 +1,7 @@
 # Multi-goal PointMaze: completed T=5 profile
 
 This is a separate benchmark configuration, not a change to MuJoCo or GMM40.
-The completed experiments used one training seed (0) per map; they are not
+The reported experiments cover Simple and Hard, using one training seed (0) per map; they are not
 five-seed results. No new full training is launched by adding this package.
 
 ## Training settings
@@ -24,8 +24,8 @@ provide qualitative evidence of behavioral diversity.
 
 This package contains the iBOLT PointMaze implementation only. The baseline
 implementations and the separate wall-free task are not included here;
-Temperature 10 is not a PointMaze default. The detailed settings below apply
-to iBOLT on Simple, Medium and Hard, not uniformly to every baseline.
+temperature 10 is not a PointMaze default. The detailed settings below apply
+to iBOLT on Simple and Hard, not uniformly to every baseline.
 
 | Setting | Value |
 | --- | --- |
@@ -62,7 +62,6 @@ Keep native resets, collision behavior, success termination and time limits.
 | Map | Goals | Episode horizon |
 | --- | --- | --- |
 | Simple | 4 | 150 |
-| Medium | 4 | 300 |
 | Hard | 8 | 600 |
 
 Light-gray map cells are passable during training. They become obstacles
@@ -80,7 +79,6 @@ From the repository root, after installing `requirements.txt`:
 
 ```bash
 python -m pointmaze.run --maze simple --output outputs/pointmaze-simple-T5-s0
-python -m pointmaze.run --maze medium --output outputs/pointmaze-medium-T5-s0
 python -m pointmaze.run --maze hard --output outputs/pointmaze-hard-T5-s0
 ```
 

@@ -155,7 +155,7 @@ runtime logs from the mirror, and inspect its preview before sharing.
 
 ## Multi-goal PointMaze
 
-The completed Simple/Medium/Hard T=5, seed-0 profile is available separately:
+The reported Simple/Hard T=5, seed-0 profile is available separately:
 
 ```bash
 python -m pointmaze.run --maze simple --output outputs/pointmaze-simple-T5-s0
