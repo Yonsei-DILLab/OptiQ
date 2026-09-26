@@ -59,7 +59,7 @@ def main():
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else dict(runs={})
     results = manifest["runs"]
     snapshots = []
-    for host in ("vast-heechan-199", "vast-heechan-46"):
+    for host in sorted({job["host"] for job in plan["jobs"]}):
         snap = snapshot(host)
         snapshots.append(snap)
         meta = root / "hosts" / host
@@ -70,6 +70,7 @@ def main():
         if queue["source_commit"] != TRAINING_SOURCE: raise ValueError("wrong training source")
         if not args.archive_completed: continue
         for job in queue["jobs"]:
+            if job.get("host") != host: raise ValueError("queue contains a job assigned elsewhere")
             if job["state"] != "complete" or job["name"] in results: continue
             name = job["name"]
             destination = root / "runs" / name

@@ -41,3 +41,13 @@ backfill and no maze barrier. Respect existing GPU locks and compute PIDs.
 No automatic restart or silent parameter/budget reduction on failure.
 The 16:00 deadline is a target, not fabricated completion evidence: report
 any remaining work honestly. Store reused and fresh provenance separately.
+
+## Additional host approved during setup
+
+User added vast-heechan-6 (136.63.24.6:41636), four RTX5090. Total16 GPUs.
+Move only the six unstarted PointMaze OptiQ/SQL jobs from46 to6; retain13
+jobs on46 and the already-running/pending12 on199. Preserve frozen training
+source a55aaf13f7803b5cf8da7ba56f318675c7794171 on every host. The later
+controller/report commit changes placement only, not learner code. New
+controllers run from their own immutable source and pass the original frozen
+training path to every preflight/main subprocess. Record both paths in manifests.

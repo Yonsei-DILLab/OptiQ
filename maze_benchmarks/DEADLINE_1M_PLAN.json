@@ -91,21 +91,21 @@
       "task": "pm_hard",
       "method": "optiq",
       "temperature": 3.0,
-      "host": "vast-heechan-46"
+      "host": "vast-heechan-6"
     },
     {
       "name": "pm_medium-optiq-s0",
       "task": "pm_medium",
       "method": "optiq",
       "temperature": 3.0,
-      "host": "vast-heechan-46"
+      "host": "vast-heechan-6"
     },
     {
       "name": "pm_simple-optiq-s0",
       "task": "pm_simple",
       "method": "optiq",
       "temperature": 3.0,
-      "host": "vast-heechan-46"
+      "host": "vast-heechan-6"
     },
     {
       "name": "4way-optiq-t1-s0",
@@ -189,7 +189,7 @@
       "task": "pm_hard",
       "method": "sql",
       "temperature": 1.0,
-      "host": "vast-heechan-46"
+      "host": "vast-heechan-6"
     },
     {
       "name": "pm_medium-mfpo-s0",
@@ -203,7 +203,7 @@
       "task": "pm_medium",
       "method": "sql",
       "temperature": 1.0,
-      "host": "vast-heechan-46"
+      "host": "vast-heechan-6"
     },
     {
       "name": "pm_simple-mfpo-s0",
@@ -217,7 +217,7 @@
       "task": "pm_simple",
       "method": "sql",
       "temperature": 1.0,
-      "host": "vast-heechan-46"
+      "host": "vast-heechan-6"
     }
   ],
   "reused": [
@@ -262,5 +262,6 @@
   },
   "expected_unique_results": 33,
   "fresh_jobs": 31,
-  "seed": 0
+  "seed": 0,
+  "host_extension": "User added 136.63.24.6:41636, four RTX5090. Only unstarted six jobs are reassigned from46.199 jobs unchanged; frozen learning source remains a55aaf13f7803b5cf8da7ba56f318675c7794171."
 }

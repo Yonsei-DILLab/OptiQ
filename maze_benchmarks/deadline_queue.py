@@ -112,7 +112,8 @@ def work(root, commit, worker, source):
                 cmd = command(job, output, commit, preflight)
                 atomic_json(root / "logs" / f"{job['name']}-{stage}-command.json", cmd)
                 with (root / "logs" / f"{job['name']}-{stage}.log").open("w") as log:
-                    result = subprocess.run(cmd, cwd=source, stdout=log, stderr=subprocess.STDOUT)
+                    result = subprocess.run(cmd, cwd=source, env=dict(os.environ, PYTHONPATH=str(source)),
+                                            stdout=log, stderr=subprocess.STDOUT)
                 if result.returncode:
                     raise RuntimeError(f"{stage} exit {result.returncode}; inspect preserved log")
                 proof = verify(output, job, commit, preflight)
@@ -136,10 +137,12 @@ def work(root, commit, worker, source):
 def prepare(root, commit, host, source):
     plan = json.loads(PLAN.read_text())
     jobs = [dict(j, state="pending") for j in plan["jobs"] if j["host"] == host]
-    gpu_count = {"vast-heechan-199": 4, "vast-heechan-46": 8}[host]
+    gpu_count = {"vast-heechan-199": 4, "vast-heechan-46": 8, "vast-heechan-6": 4}[host]
+    controller = Path(__file__).resolve().parents[1]
     root.mkdir(parents=True, exist_ok=False)
     for part in ("logs", "jobs", "proofs", "preflights", "runs"): (root / part).mkdir()
-    atomic_json(root / "manifest.json", dict(plan=plan, source_commit=commit, source=str(source), host=host))
+    atomic_json(root / "manifest.json", dict(plan=plan, source_commit=commit, source=str(source),
+                                            controller_source=str(controller), host=host))
     atomic_json(root / "queue.json", dict(state="running", source_commit=commit, jobs=jobs, created=time.time()))
     sup = OPS / "supervisor"
     for part in (sup / "jobs", sup / "logs", OPS / "locks"): part.mkdir(parents=True, exist_ok=True)
@@ -153,9 +156,9 @@ def prepare(root, commit, host, source):
         filename = sup / "jobs" / f"{service}.conf"
         if filename.exists(): raise FileExistsError(filename)
         filename.write_text(f'''[program:{service}]
-directory={source}
-command={sys.executable} -m maze_benchmarks.gpu_guard --gpu {gpu} --lock {OPS}/locks/gpu-{gpu}.lock -- {sys.executable} -m maze_benchmarks.deadline_queue --root {root} --source-commit {commit} --host {host} --worker gpu{gpu} --phase work
-environment=PYTHONPATH="{source}",CUDA_VISIBLE_DEVICES="{gpu}",XLA_PYTHON_CLIENT_PREALLOCATE="false",MPLBACKEND="Agg",OMP_NUM_THREADS="1",MKL_NUM_THREADS="1",OPENBLAS_NUM_THREADS="1",LD_LIBRARY_PATH="/home/heechan/.mujoco/mujoco210/bin",MUJOCO_PY_MUJOCO_PATH="/home/heechan/.mujoco/mujoco210"
+directory={controller}
+command={sys.executable} -m maze_benchmarks.gpu_guard --gpu {gpu} --lock {OPS}/locks/gpu-{gpu}.lock -- {sys.executable} -m maze_benchmarks.deadline_queue --root {root} --source-commit {commit} --training-source {source} --host {host} --worker gpu{gpu} --phase work
+environment=PYTHONPATH="{controller}",CUDA_VISIBLE_DEVICES="{gpu}",XLA_PYTHON_CLIENT_PREALLOCATE="false",MPLBACKEND="Agg",OMP_NUM_THREADS="1",MKL_NUM_THREADS="1",OPENBLAS_NUM_THREADS="1",LD_LIBRARY_PATH="/home/heechan/.mujoco/mujoco210/bin",MUJOCO_PY_MUJOCO_PATH="/home/heechan/.mujoco/mujoco210"
 autostart=false
 autorestart=false
 stopasgroup=true
@@ -172,11 +175,12 @@ def main():
     parser = argparse.ArgumentParser(allow_abbrev=False)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--source-commit", required=True)
-    parser.add_argument("--host", choices=("vast-heechan-199", "vast-heechan-46"), required=True)
+    parser.add_argument("--host", choices=("vast-heechan-199", "vast-heechan-46", "vast-heechan-6"), required=True)
+    parser.add_argument("--training-source", type=Path)
     parser.add_argument("--phase", choices=("prepare", "start", "work"), required=True)
     parser.add_argument("--worker")
     args = parser.parse_args()
-    source = Path(__file__).resolve().parents[1]
+    source = args.training_source.resolve() if args.training_source else Path(__file__).resolve().parents[1]
     verify_source(source, args.source_commit)
     if args.phase == "prepare": return prepare(args.root, args.source_commit, args.host, source)
     if args.phase == "work":
