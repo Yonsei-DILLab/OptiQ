@@ -152,3 +152,14 @@ is retained for license compliance.
 For anonymous review, publish the selected branch through the anonymization
 service, not the identifying upstream repository URL. Exclude outputs and
 runtime logs from the mirror, and inspect its preview before sharing.
+# Multi-goal PointMaze
+
+The completed Simple/Medium/Hard T=5, seed-0 profile is available separately:
+
+```bash
+python -m pointmaze.run --maze simple --output outputs/pointmaze-simple-T5-s0
+```
+
+See [pointmaze/PROTOCOL.md](pointmaze/PROTOCOL.md) for the exact 256-collector,
+batch-4096, UTD-0.0625 settings, sparse reward, evaluation rules and release
+limitations. MuJoCo and GMM40 defaults are unchanged.
