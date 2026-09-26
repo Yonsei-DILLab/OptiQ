@@ -74,7 +74,7 @@ def render(root, controls, results):
     atomic_json(root / "results.json", dict(rows=rows,
         reporting_source=subprocess.check_output(["git", "rev-parse", "HEAD"],
             cwd=Path(__file__).resolve().parents[1], text=True).strip(),
-        missing_t3_obstacle_mu=True, single_seed=True))
+        missing_t3_obstacle_mu=not all((controls / "posthoc_mu" / f"pm_{maze}-optiq-s0" / "proof.json").exists() for maze in ("simple", "medium", "hard")), single_seed=True))
 
 
 def main():
