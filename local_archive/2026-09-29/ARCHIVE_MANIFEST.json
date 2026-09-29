@@ -8536,6 +8536,18 @@
       "archive_path": "private_tmp/optiq-way-grid-source-cc662f4/maze_source_manifest.json",
       "bytes": 312950,
       "blob": "f2011a520ee76f443a859b24c624a69b5c968b93"
+    },
+    {
+      "path": "/private/tmp/optiq-responsibility-analysis.json",
+      "archive_path": "private_tmp/optiq-responsibility-analysis.json",
+      "bytes": 10295,
+      "blob": "df635f697ef88aed36189f9f32f6c228f30721f7"
+    },
+    {
+      "path": "/private/tmp/optiq-vast1-guide-20260925.txt",
+      "archive_path": "private_tmp/optiq-vast1-guide-20260925.txt",
+      "bytes": 23026,
+      "blob": "bb409b912fd5e7d04c56c87eb99e19242dd7ead3"
     }
   ]
 }
