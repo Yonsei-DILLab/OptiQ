@@ -1,0 +1,298 @@
+{
+  "method": "optiq",
+  "task": "v1",
+  "seed": 0,
+  "smoke": true,
+  "source_commit": "5510a999a6ab34d94db714a5c2e8a2aa81a441a8",
+  "source_root": "/home/heechan/OptiQ-antmaze-release-20260921",
+  "steps": 272,
+  "warmup": 256,
+  "batch_size": 256,
+  "utd": 1,
+  "native": {
+    "env_name": "DDiffPG-v1-dense-port",
+    "task": "antmaze",
+    "successful_steps": null,
+    "alg": {
+      "tau": 0.005,
+      "policy_tau": 1.0,
+      "utd": 1,
+      "gamma": 0.99,
+      "policy_delay": 1,
+      "batch_size": 256,
+      "buffer_size": 1000000,
+      "learning_starts": 256,
+      "reset_models": false,
+      "ent_coef": {
+        "type": "const",
+        "init": 0.0
+      },
+      "critic": {
+        "backup_mode": "td",
+        "activation": "gelu",
+        "n_critics": 2,
+        "hs": [
+          256,
+          256
+        ],
+        "dropout_rate": null,
+        "use_layer_norm": false,
+        "n_atoms": 1,
+        "v_min": -3600,
+        "v_max": 3600,
+        "entr_coeff": 0.0,
+        "type": "scalar",
+        "crossq_style": false
+      },
+      "optimizer": {
+        "bn": false,
+        "bn_momentum": 0.99,
+        "bn_mode": "brn_actor",
+        "bn_warmup": 100000,
+        "lr_critic": 0.0003,
+        "lr_actor": 0.0003,
+        "critic_b1": 0.9,
+        "critic_b2": 0.999,
+        "actor_b1": 0.9,
+        "actor_b2": 0.999,
+        "ac_grad_norm": null
+      },
+      "actor": {
+        "hidden_dims": [
+          256,
+          256
+        ],
+        "num_policy_samples": 64,
+        "proposals_per_policy_sample": 1,
+        "proposal_sampling_mode": "exact",
+        "proposal_std": 0.006737946999085467,
+        "proposal_clip": 0.5,
+        "include_anchor": false,
+        "density_correction": true,
+        "density_beta": 1.0,
+        "adaptive_density_beta": false,
+        "minimum_source_ess": 16.0,
+        "density_beta_grid_size": 257,
+        "source_q_eval": "mean",
+        "source_reference": "uniform_action",
+        "temperature": 0.25,
+        "sinkhorn_epsilon": 0.1,
+        "sinkhorn_iterations": 100,
+        "transport_target_mode": "argmax",
+        "td_noise_std": 0.0,
+        "td_noise_clip": 0.0,
+        "learning_starts": 256,
+        "density_correction_beta": 1.0,
+        "distillation_loss": "direct_gmm_nll",
+        "type": "semi_implicit",
+        "entropy_samples": 0,
+        "entropy_diagnostics": false,
+        "log_std_min": -5.0,
+        "log_std_max": -1.0,
+        "initial_log_std": -1.0,
+        "mean_output_init_scale": 1.0,
+        "log_std_output_init_scale": 0.0,
+        "proposal_std_pretanh": 0.006737946999085467,
+        "normalize_ot_cost": false,
+        "teacher_distribution": "conditional_mixture",
+        "teacher_std_floor": 0.006737946999085467,
+        "soft_guard": {
+          "enabled": false
+        },
+        "ot_student_action": "mean"
+      },
+      "behavior_uniform_probability": 0.0
+    },
+    "seed": 0,
+    "use_jit": true,
+    "require_gpu": true,
+    "total_steps": 1000000,
+    "eval_interval": 5000,
+    "num_eval_episodes": 10,
+    "eval_at_start": true,
+    "stochastic_eval": true,
+    "mu_only_eval": true,
+    "diagnostic_interval": 5000,
+    "checkpoint_interval": 50000,
+    "log_interval": 1,
+    "progress_bar": false,
+    "output_root": "/home/heechan/optiq-experiments/antmaze-multimodal-preflight-20260921/runs/v1-optiq-s0",
+    "run_name": "antmaze-gmm-trg-T0.25-b1.0-s0",
+    "wandb": {
+      "activate": true,
+      "mode": "online",
+      "entity": "OptiQ",
+      "project": "gmm-trg",
+      "group": "AntMaze_UMaze-v5_T0.25_b1.0",
+      "job_type": "gmm-trg-sweep"
+    },
+    "dual_mu_eval": true,
+    "experiment": {
+      "method": "truncated_marginal_nll",
+      "distribution": "box_truncated_gaussian",
+      "center_transform": "tanh",
+      "bounded_mu": true,
+      "ot": false,
+      "resampling": false,
+      "components": 64,
+      "candidates": 64,
+      "teacher_extra_floor": false
+    },
+    "dacer": {
+      "enabled": true,
+      "target_entropy_per_dim": -0.9,
+      "initial_alpha": 0.27,
+      "alpha_lr": 0.03,
+      "interval_updates": 10000,
+      "components": 3,
+      "samples": 200,
+      "noise_scale": 0.1,
+      "entropy_seed": 42,
+      "behavior_only": true
+    }
+  },
+  "environment": {
+    "task": "v1",
+    "map": [
+      [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        "g",
+        1,
+        "r",
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    ],
+    "scale": 4.0,
+    "walls": [
+      [
+        -12.0,
+        -8.0
+      ],
+      [
+        -8.0,
+        -8.0
+      ],
+      [
+        -4.0,
+        -8.0
+      ],
+      [
+        0.0,
+        -8.0
+      ],
+      [
+        4.0,
+        -8.0
+      ],
+      [
+        -12.0,
+        -4.0
+      ],
+      [
+        4.0,
+        -4.0
+      ],
+      [
+        -12.0,
+        0.0
+      ],
+      [
+        -4.0,
+        0.0
+      ],
+      [
+        4.0,
+        0.0
+      ],
+      [
+        -12.0,
+        4.0
+      ],
+      [
+        4.0,
+        4.0
+      ],
+      [
+        -12.0,
+        8.0
+      ],
+      [
+        -8.0,
+        8.0
+      ],
+      [
+        -4.0,
+        8.0
+      ],
+      [
+        0.0,
+        8.0
+      ],
+      [
+        4.0,
+        8.0
+      ]
+    ],
+    "goals": [
+      [
+        -8.0,
+        0.0
+      ]
+    ],
+    "start": [
+      0.0,
+      0.0
+    ],
+    "horizon": 500
+  },
+  "xml_sha256": "cfd330592e96d1ad41505d4eee60f155305d3964679e215892f524c8bb1a3336",
+  "observation": "qpos[:15]+qvel[:14], xy included, no specified-goal conditioning",
+  "reward": "-min distance to any goal; no success bonus/locomotion/control/survival rewards",
+  "reset": "v1 xy uniform[-2,2]^2; v3/v4 fixed origin; default robot pose and zero velocity",
+  "evaluation": "direct learned-policy sampling; no mean/best-of-K/external DACER noise",
+  "trajectory_episodes_per_reset_mode": 100,
+  "trajectory_reset_modes": [
+    "natural",
+    "fixed_full_simulator_state"
+  ],
+  "interval_eval_episodes": 10,
+  "eval_interval": 272,
+  "packages": {
+    "mujoco": "3.3.7",
+    "gymnasium": "1.2.3",
+    "jax": "0.4.33",
+    "flax": "0.9.0",
+    "optax": "0.1.7",
+    "torch": "2.7.1+cu128",
+    "numpy": "1.26.4",
+    "wandb": "0.29.0"
+  }
+}

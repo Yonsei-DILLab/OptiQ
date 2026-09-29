@@ -1,0 +1,1 @@
+추론 평가 완료: 최초3방식은 REPORT_KO.md, 최신 best-of64 추가 비교는 bestof64/REPORT_KO.md를 참조. 기존 μ / Q categorical / 근사 KDE IS / best-of64, 총9 checkpoint×4방식×20episode. 원본 actor·critic/config는 checkpoints/에, 각 평가 raw return은 results/와 bestof64/results/에 보존. 학습은 하지 않았으며 모든 평가 프로세스는 종료됨.

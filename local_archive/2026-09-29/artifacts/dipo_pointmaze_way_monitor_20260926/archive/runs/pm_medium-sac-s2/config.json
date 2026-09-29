@@ -1,0 +1,58 @@
+{
+  "task": "pm_medium",
+  "method": "sac",
+  "output": "/home/heechan/optiq-experiments/pointmaze-baselines-idle-backfill-20260926/runs/pm_medium-sac-s2",
+  "seed": 2,
+  "steps": 1000192,
+  "num_envs": 256,
+  "updates_per_collect": 16,
+  "batch_size": 4096,
+  "warmup": 8192,
+  "eval_every": 200000,
+  "eval_episodes": 200,
+  "final_eval_episodes": 500,
+  "render_each_eval": true,
+  "temperature": 1.0,
+  "optiq_eval_mode": "mu_only",
+  "sql_particles": 16,
+  "meow_alpha": 0.2,
+  "meow_device": "auto",
+  "mfpo_target_entropy_per_dim": -0.5,
+  "source_commit": "bfb06944705685a7dea84558aba40500c22349b9",
+  "agent": {
+    "algorithm": "Stable-Baselines3 SAC",
+    "network": [
+      256,
+      256
+    ],
+    "actor_lr": 0.0003,
+    "critic_lr": 0.0003,
+    "entropy": "automatic"
+  },
+  "task_mode": "original DrAC multi-goal PointMaze sparse +100",
+  "geometry": {
+    "goal_positions": [
+      [
+        -5.0,
+        4.0
+      ],
+      [
+        5.0,
+        4.0
+      ],
+      [
+        -5.0,
+        -4.0
+      ],
+      [
+        5.0,
+        -4.0
+      ]
+    ],
+    "horizon": 300,
+    "reward": "100 on reaching any goal, 0 otherwise",
+    "obstacle": "original upstream latent wall cells enabled at evaluation only",
+    "removal": "half goals removed, five-trial expected success"
+  },
+  "utd": 0.0625
+}

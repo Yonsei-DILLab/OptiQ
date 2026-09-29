@@ -1,0 +1,93 @@
+{
+  "diagnostic_source": "642327b6c706ec78c35098eeb866d5758bd3377e",
+  "training_source": "19fc37a7e51be2bb54d41ab9a980225ecd9f5ba5",
+  "source_root": "/home/heechan/OptiQ-ops/sources/642327b6c706ec78c35098eeb866d5758bd3377e",
+  "inference_only": true,
+  "production_jobs_unchanged": true,
+  "jobs": [
+    {
+      "method": "optiq",
+      "gpu": 0,
+      "service": "antmaze-route-audit-20260922-optiq",
+      "command": [
+        "/home/heechan/OptiQ-ops/run-gpu.sh",
+        "0",
+        "--branch",
+        "v5-direct-gmm",
+        "/home/heechan/.venv-optiq-antmaze/bin/python",
+        "-u",
+        "/home/heechan/OptiQ-ops/sources/642327b6c706ec78c35098eeb866d5758bd3377e/antmaze/route_diagnostics/rollout_audit.py",
+        "--method",
+        "optiq",
+        "--output",
+        "/home/heechan/optiq-experiments/antmaze-route-audit-20260922/optiq",
+        "--diagnostic-source-sha",
+        "642327b6c706ec78c35098eeb866d5758bd3377e"
+      ],
+      "config": "/home/heechan/OptiQ-ops/supervisor/jobs/antmaze-route-audit-20260922-optiq.conf"
+    },
+    {
+      "method": "sac",
+      "gpu": 1,
+      "service": "antmaze-route-audit-20260922-sac",
+      "command": [
+        "/home/heechan/OptiQ-ops/run-gpu.sh",
+        "1",
+        "--branch",
+        "v5-direct-gmm",
+        "/home/heechan/.venv-optiq-antmaze/bin/python",
+        "-u",
+        "/home/heechan/OptiQ-ops/sources/642327b6c706ec78c35098eeb866d5758bd3377e/antmaze/route_diagnostics/rollout_audit.py",
+        "--method",
+        "sac",
+        "--output",
+        "/home/heechan/optiq-experiments/antmaze-route-audit-20260922/sac",
+        "--diagnostic-source-sha",
+        "642327b6c706ec78c35098eeb866d5758bd3377e"
+      ],
+      "config": "/home/heechan/OptiQ-ops/supervisor/jobs/antmaze-route-audit-20260922-sac.conf"
+    },
+    {
+      "method": "mfpo",
+      "gpu": 2,
+      "service": "antmaze-route-audit-20260922-mfpo",
+      "command": [
+        "/home/heechan/OptiQ-ops/run-gpu.sh",
+        "2",
+        "--branch",
+        "v5-direct-gmm",
+        "/home/heechan/.venv-optiq-antmaze/bin/python",
+        "-u",
+        "/home/heechan/OptiQ-ops/sources/642327b6c706ec78c35098eeb866d5758bd3377e/antmaze/route_diagnostics/rollout_audit.py",
+        "--method",
+        "mfpo",
+        "--output",
+        "/home/heechan/optiq-experiments/antmaze-route-audit-20260922/mfpo",
+        "--diagnostic-source-sha",
+        "642327b6c706ec78c35098eeb866d5758bd3377e"
+      ],
+      "config": "/home/heechan/OptiQ-ops/supervisor/jobs/antmaze-route-audit-20260922-mfpo.conf"
+    },
+    {
+      "method": "meow",
+      "gpu": 3,
+      "service": "antmaze-route-audit-20260922-meow",
+      "command": [
+        "/home/heechan/OptiQ-ops/run-gpu.sh",
+        "3",
+        "--branch",
+        "v5-direct-gmm",
+        "/home/heechan/.venv-optiq-antmaze/bin/python",
+        "-u",
+        "/home/heechan/OptiQ-ops/sources/642327b6c706ec78c35098eeb866d5758bd3377e/antmaze/route_diagnostics/rollout_audit.py",
+        "--method",
+        "meow",
+        "--output",
+        "/home/heechan/optiq-experiments/antmaze-route-audit-20260922/meow",
+        "--diagnostic-source-sha",
+        "642327b6c706ec78c35098eeb866d5758bd3377e"
+      ],
+      "config": "/home/heechan/OptiQ-ops/supervisor/jobs/antmaze-route-audit-20260922-meow.conf"
+    }
+  ]
+}

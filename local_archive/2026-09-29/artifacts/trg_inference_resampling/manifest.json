@@ -1,0 +1,169 @@
+{
+  "jobs": [
+    {
+      "task": "ant",
+      "config": "/home/heechan/optiq-experiments/trg-dacer-priority-20260921/outputs/ant-trg-dacer-T0.25-b1-s0_20260921T042719Z_752d4a20/config.json",
+      "actor": "/home/heechan/optiq-experiments/trg-dacer-priority-20260921/outputs/ant-trg-dacer-T0.25-b1-s0_20260921T042719Z_752d4a20/checkpoints/ant-trg-dacer-T0.25-b1-s0_20260921T042719Z_752d4a20/actor_state_1000000.msgpack",
+      "critic": "/home/heechan/optiq-experiments/trg-dacer-priority-20260921/outputs/ant-trg-dacer-T0.25-b1-s0_20260921T042719Z_752d4a20/checkpoints/ant-trg-dacer-T0.25-b1-s0_20260921T042719Z_752d4a20/critic_state_1000000.msgpack",
+      "seed": 0,
+      "name": "ant-s0",
+      "source": "/home/heechan/OptiQ-ops/sources/efe67fde083513b89f57a34a54743cb1e6d4b49d",
+      "training_commit": "efe67fde083513b89f57a34a54743cb1e6d4b49d",
+      "checkpoint_steps": 1000000,
+      "input_sha256": {
+        "config": "e015960b2593a25da1b922a43c437b47357b138469fdc2c3891d16c7ba1691c9",
+        "actor": "dca9b8e3b04ed1285294a9bef528a3ad59cd9c16398cf902cd498af585cc7166",
+        "critic": "1f181bc2a05a7bbd02b44845098229b47d24fcbf2c57ed43733351d281b6789c"
+      }
+    },
+    {
+      "task": "ant",
+      "config": "/home/heechan/optiq-experiments/trg-dacer-priority-20260921/outputs/ant-trg-dacer-T0.25-b1-s1_20260921T042718Z_059fb55e/config.json",
+      "actor": "/home/heechan/optiq-experiments/trg-dacer-priority-20260921/outputs/ant-trg-dacer-T0.25-b1-s1_20260921T042718Z_059fb55e/checkpoints/ant-trg-dacer-T0.25-b1-s1_20260921T042718Z_059fb55e/actor_state_1000000.msgpack",
+      "critic": "/home/heechan/optiq-experiments/trg-dacer-priority-20260921/outputs/ant-trg-dacer-T0.25-b1-s1_20260921T042718Z_059fb55e/checkpoints/ant-trg-dacer-T0.25-b1-s1_20260921T042718Z_059fb55e/critic_state_1000000.msgpack",
+      "seed": 1,
+      "name": "ant-s1",
+      "source": "/home/heechan/OptiQ-ops/sources/efe67fde083513b89f57a34a54743cb1e6d4b49d",
+      "training_commit": "efe67fde083513b89f57a34a54743cb1e6d4b49d",
+      "checkpoint_steps": 1000000,
+      "input_sha256": {
+        "config": "758351c1454142f1809aaec770bc52b5a34d126eb7328f7dcac4cc97078f28cf",
+        "actor": "6f742f78fcb5a44376acc7003aa4ea4e042e967b5fded1d27ebb7cf107bad9e2",
+        "critic": "dd53e6957563c8805151866e59b980a11af76db7139e2388c6364edd02e1302e"
+      }
+    },
+    {
+      "task": "ant",
+      "config": "/home/heechan/optiq-experiments/trg-dacer-priority-20260921/outputs/ant-trg-dacer-T0.25-b1-s2_20260921T042719Z_033c3cac/config.json",
+      "actor": "/home/heechan/optiq-experiments/trg-dacer-priority-20260921/outputs/ant-trg-dacer-T0.25-b1-s2_20260921T042719Z_033c3cac/checkpoints/ant-trg-dacer-T0.25-b1-s2_20260921T042719Z_033c3cac/actor_state_1000000.msgpack",
+      "critic": "/home/heechan/optiq-experiments/trg-dacer-priority-20260921/outputs/ant-trg-dacer-T0.25-b1-s2_20260921T042719Z_033c3cac/checkpoints/ant-trg-dacer-T0.25-b1-s2_20260921T042719Z_033c3cac/critic_state_1000000.msgpack",
+      "seed": 2,
+      "name": "ant-s2",
+      "source": "/home/heechan/OptiQ-ops/sources/efe67fde083513b89f57a34a54743cb1e6d4b49d",
+      "training_commit": "efe67fde083513b89f57a34a54743cb1e6d4b49d",
+      "checkpoint_steps": 1000000,
+      "input_sha256": {
+        "config": "e8d8684b0e459543207464fa4308f7184939f2c8e3357c66bbf118fa72747654",
+        "actor": "3c88b6dde91fda8df4af3151abd916547b7178ba24c3be8e13ff07fbd1f2064f",
+        "critic": "381903471ad34cd42355cd814fd66fc7eab18628c834784fd67c5ca2e595e624"
+      }
+    },
+    {
+      "task": "ant",
+      "config": "/home/heechan/optiq-experiments/trg-dacer-priority-20260921/outputs/ant-trg-dacer-T0.25-b1-s3_20260921T042719Z_e2ad63c4/config.json",
+      "actor": "/home/heechan/optiq-experiments/trg-dacer-priority-20260921/outputs/ant-trg-dacer-T0.25-b1-s3_20260921T042719Z_e2ad63c4/checkpoints/ant-trg-dacer-T0.25-b1-s3_20260921T042719Z_e2ad63c4/actor_state_1000000.msgpack",
+      "critic": "/home/heechan/optiq-experiments/trg-dacer-priority-20260921/outputs/ant-trg-dacer-T0.25-b1-s3_20260921T042719Z_e2ad63c4/checkpoints/ant-trg-dacer-T0.25-b1-s3_20260921T042719Z_e2ad63c4/critic_state_1000000.msgpack",
+      "seed": 3,
+      "name": "ant-s3",
+      "source": "/home/heechan/OptiQ-ops/sources/efe67fde083513b89f57a34a54743cb1e6d4b49d",
+      "training_commit": "efe67fde083513b89f57a34a54743cb1e6d4b49d",
+      "checkpoint_steps": 1000000,
+      "input_sha256": {
+        "config": "540a85084ec58e93ac2bd5589ad7163645f9fe7ed8f27e1ed1d3132601f61816",
+        "actor": "8c44d1edae8dce1ef3401b8a645f5a94d171f2cc57634046b5dd9402237b0835",
+        "critic": "4e439d8dc8b47742c905dab15617f22c61b1b941e10b183e6aca34d43fc041bc"
+      }
+    },
+    {
+      "task": "halfcheetah",
+      "config": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/inputs/b278f114e632/config.json",
+      "actor": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/inputs/b278f114e632/actor_state_1000000.msgpack",
+      "critic": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/inputs/b278f114e632/critic_state_1000000.msgpack",
+      "original_wandb": "https://wandb.ai/OptiQ/gmm-trg/runs/b278f114e632",
+      "seed": 0,
+      "name": "halfcheetah-s0",
+      "source": "/home/heechan/OptiQ-ops/sources/4ca69473515b5083d6e651845ded39da34e14538",
+      "training_commit": "4ca69473515b5083d6e651845ded39da34e14538",
+      "checkpoint_steps": 1000000,
+      "input_sha256": {
+        "config": "cb81ab3cbbaab14d09b98b586037b4561220fa4c14fc42f872c3b5c027b5eef2",
+        "actor": "1ac2c9357a9056523a9f8a09507333603c92900d936a8013f3281961275d29b0",
+        "critic": "155f9b779dc7c2e4fc410192ac4936ea08a123cfd10b2a5c915853ae85244f48"
+      }
+    },
+    {
+      "task": "halfcheetah",
+      "config": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/inputs/7d6785ab8aa3/config.json",
+      "actor": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/inputs/7d6785ab8aa3/actor_state_1000000.msgpack",
+      "critic": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/inputs/7d6785ab8aa3/critic_state_1000000.msgpack",
+      "original_wandb": "https://wandb.ai/OptiQ/gmm-trg/runs/7d6785ab8aa3",
+      "seed": 1,
+      "name": "halfcheetah-s1",
+      "source": "/home/heechan/OptiQ-ops/sources/4ca69473515b5083d6e651845ded39da34e14538",
+      "training_commit": "4ca69473515b5083d6e651845ded39da34e14538",
+      "checkpoint_steps": 1000000,
+      "input_sha256": {
+        "config": "35115c93dc96786a28366846c9330e6a8036854710532140bb0122fa4569bd52",
+        "actor": "78414752e57c4780ccce7fc49f8421f37e63ea7e892413468d296370b81fde2a",
+        "critic": "0f350dbd006759dfcddb891bd2ea27cbfa7dce7c47194af8be17a1256e596da0"
+      }
+    },
+    {
+      "task": "halfcheetah",
+      "config": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/inputs/e2605d83f9d6/config.json",
+      "actor": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/inputs/e2605d83f9d6/actor_state_1000000.msgpack",
+      "critic": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/inputs/e2605d83f9d6/critic_state_1000000.msgpack",
+      "original_wandb": "https://wandb.ai/OptiQ/gmm-trg/runs/e2605d83f9d6",
+      "seed": 2,
+      "name": "halfcheetah-s2",
+      "source": "/home/heechan/OptiQ-ops/sources/4ca69473515b5083d6e651845ded39da34e14538",
+      "training_commit": "4ca69473515b5083d6e651845ded39da34e14538",
+      "checkpoint_steps": 1000000,
+      "input_sha256": {
+        "config": "276785f370cd5bb88fb02b21bc25bd95c2bc49bdd54eed9153064fff3d509595",
+        "actor": "918d867801a5e47e71b1c30de1b6d1b9fa3912818dcab681be44faa50c6267f0",
+        "critic": "1e060dc5fdd0aae10f3c9b4b32f7ac3b4166be7f9225d1b7f6eab30d5d0888b1"
+      }
+    },
+    {
+      "task": "halfcheetah",
+      "config": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/inputs/08ff8a4dc94f/config.json",
+      "actor": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/inputs/08ff8a4dc94f/actor_state_1000000.msgpack",
+      "critic": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/inputs/08ff8a4dc94f/critic_state_1000000.msgpack",
+      "original_wandb": "https://wandb.ai/OptiQ/gmm-trg/runs/08ff8a4dc94f",
+      "seed": 3,
+      "name": "halfcheetah-s3",
+      "source": "/home/heechan/OptiQ-ops/sources/4ca69473515b5083d6e651845ded39da34e14538",
+      "training_commit": "4ca69473515b5083d6e651845ded39da34e14538",
+      "checkpoint_steps": 1000000,
+      "input_sha256": {
+        "config": "e19b7e3eb24b1543b136058d4c3c3ad930a8c4e408d5fc6680f3f41c837261cb",
+        "actor": "3dbfb1b5baa1c43b62b45443cd4393edd091c9b80a305b35d7b29a7bd6e9b76e",
+        "critic": "fc96a6f0f554d1a27b30116031e7c264aa5630942c8dfc45b5267a0a1b107ce2"
+      }
+    },
+    {
+      "task": "halfcheetah",
+      "config": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/inputs/894a864c9a92/config.json",
+      "actor": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/inputs/894a864c9a92/actor_state_1000000.msgpack",
+      "critic": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/inputs/894a864c9a92/critic_state_1000000.msgpack",
+      "original_wandb": "https://wandb.ai/OptiQ/gmm-trg/runs/894a864c9a92",
+      "seed": 4,
+      "name": "halfcheetah-s4",
+      "source": "/home/heechan/OptiQ-ops/sources/4ca69473515b5083d6e651845ded39da34e14538",
+      "training_commit": "4ca69473515b5083d6e651845ded39da34e14538",
+      "checkpoint_steps": 1000000,
+      "input_sha256": {
+        "config": "e27c1e32fa584a0a81c788007b62fb241b82f271fceb67b09f427873be14c4bf",
+        "actor": "6a6d124bebb38512d39d92fe71f3969e7b32348a4825cd1cf1bce1d43961be46",
+        "critic": "05a69fa7bddfedc63975856b07eca415eca8bc5311598f7169213ed96a1d06ab"
+      }
+    }
+  ],
+  "output": "/home/heechan/optiq-experiments/trg-inference-resampling-20260921/results",
+  "evaluation_commit": "3524ea56d389733e4be97b645804d282971245b9",
+  "episodes": 20,
+  "seed_base": 19210921,
+  "candidates": 64,
+  "density_reference_samples": 256,
+  "temperature": 0.25,
+  "critic": "mean of two current trained critics (training source_q_eval)",
+  "proposal": "mu only, fresh Gaussian latent; no conditional sigma or DACER noise",
+  "kde": "independent 256 mu samples; diagonal Scott bandwidth max(std*n^(-1/(D+4)),.001); box-normalized Gaussian kernels",
+  "scope": "post-hoc final-1M checkpoint comparison; not last-100k training average",
+  "modes": {
+    "mu_one": "existing mu-only action",
+    "mu_q64": "categorical softmax(Q/.25)",
+    "mu_kde_is64": "categorical softmax(Q/.25-log KDE_mu); approximate importance resampling"
+  }
+}

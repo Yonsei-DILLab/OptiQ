@@ -1,0 +1,79 @@
+{
+  "source_commit": "0d23377f31bdd5c360e9c79d44bb9f4b1341012b",
+  "source": "/home/heechan/OptiQ-ops/sources/0d23377f31bdd5c360e9c79d44bb9f4b1341012b",
+  "shard": 0,
+  "methods": [
+    "optiq",
+    "sac",
+    "dipo",
+    "mfpo"
+  ],
+  "tasks": [
+    "v2",
+    "v3",
+    "v4"
+  ],
+  "coefficient": 0.1,
+  "total_across_hosts": 12,
+  "jobs": [
+    {
+      "id": "v3-dipo-s0",
+      "task": "v3",
+      "method": "dipo",
+      "seed": 0,
+      "steps": 1000000,
+      "status": "pending",
+      "stage": "queued"
+    },
+    {
+      "id": "v3-optiq-s0",
+      "task": "v3",
+      "method": "optiq",
+      "seed": 0,
+      "steps": 1000000,
+      "status": "pending",
+      "stage": "queued"
+    },
+    {
+      "id": "v3-sac-s0",
+      "task": "v3",
+      "method": "sac",
+      "seed": 0,
+      "steps": 1000000,
+      "status": "pending",
+      "stage": "queued"
+    },
+    {
+      "id": "v3-mfpo-s0",
+      "task": "v3",
+      "method": "mfpo",
+      "seed": 0,
+      "steps": 1000000,
+      "status": "pending",
+      "stage": "queued"
+    },
+    {
+      "id": "v4-optiq-s0",
+      "task": "v4",
+      "method": "optiq",
+      "seed": 0,
+      "steps": 1000000,
+      "status": "pending",
+      "stage": "queued"
+    },
+    {
+      "id": "v4-sac-s0",
+      "task": "v4",
+      "method": "sac",
+      "seed": 0,
+      "steps": 1000000,
+      "status": "pending",
+      "stage": "queued"
+    }
+  ],
+  "project": "OptiQ/gmm-trg",
+  "group": "antmaze-v234-noveld01-1m-s0-20260922",
+  "eval_interval": 250000,
+  "checkpoint_interval": 0,
+  "scheduling": "independent per-run preflight+training; 2s backfill; no maze barrier; slow DIPO first"
+}

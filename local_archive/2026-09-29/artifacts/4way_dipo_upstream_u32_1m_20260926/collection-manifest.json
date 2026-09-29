@@ -1,0 +1,17 @@
+{
+  "host": "vast-heechan-6",
+  "remote_root": "/home/heechan/optiq-experiments/maze-dipo-upstream-u32-s0-1m-20260926/runs/4way-dipo-upstream-u32-s0",
+  "sha256": {
+    "config.json": "84e5562ac2e8f3d8fd28b14cffb03759b4dfdd948c5dcbc27c15d8257cb2b6d4",
+    "progress.json": "4c6d8d59509fea3ca068b232e2f02ab85a0867921f7da076e643f1b103858678",
+    "evaluations/000200704_summary.json": "84fc52676c218e9efcdd693f6197e9992ef4f6a7eb90248abf19f15616d1eab2",
+    "evaluations/000401408_summary.json": "c03c8a3134eae7760ac30f15d828e5e26b450e543d6520e6e7d2e29ab3c5e442",
+    "evaluations/000600064_summary.json": "b6a7ec4f81fc69b6d506cf107b6701fa58546c599b8ec47ce5c7527bfd2bc286",
+    "evaluations/000800768_summary.json": "74c8bbb2a9606d82cfd148610c8f235a8ab30918ed23f0f08e9a38cb2bb06676",
+    "evaluations/001001472_summary.json": "c6450ed4569fffa3f682661aa6d3788790411bcc10d1529402417879c3a3ed55",
+    "evaluations/001001472_policy.npz": "dc624878552f63ce0697a62e81fdb473ab6890e4fba7148016e6c7cc44ca913d",
+    "evaluations/001001472_probe.npz": "ad1bc6fb59990a7a32eeb81f20958acd851eb42d855393cdce269e1e9001b171",
+    "figures/001001472_trajectories.png": "b18eefb21af40f3667f8a0b8791581054d9b21d881d2fc3a9b9a525cec2d0da5"
+  },
+  "training_source": "5f4b809d0e95899eef2435dd80cac2da48058931"
+}

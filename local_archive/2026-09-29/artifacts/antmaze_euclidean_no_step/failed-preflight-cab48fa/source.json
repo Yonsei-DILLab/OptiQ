@@ -1,0 +1,18 @@
+{
+  "branch": "direct-gmm-trg-antmaze",
+  "source_commit": "cab48faf07d41a86886355bfd6bef538fff29432",
+  "reward": "100*(nearest_goal_euclidean_distance_current-nearest_goal_euclidean_distance_next)",
+  "step_penalty": 0,
+  "bonus": 0,
+  "temperature": 1,
+  "seed": 0,
+  "tasks": [
+    "v3",
+    "v4",
+    "v1",
+    "v2"
+  ],
+  "eval_starts": "upstream",
+  "dacer": false,
+  "noveld": false
+}

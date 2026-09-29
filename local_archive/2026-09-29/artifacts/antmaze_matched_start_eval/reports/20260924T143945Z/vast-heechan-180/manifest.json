@@ -1,0 +1,28 @@
+{
+  "evaluation_source": "061e9888e1f3d0e59b5037441fa146c1eff25e2a",
+  "source": "/home/heechan/OptiQ-ops/sources/061e9888e1f3d0e59b5037441fa146c1eff25e2a",
+  "host": "vast-heechan-180",
+  "jobs": [
+    {
+      "id": "v3-optiq-geodesic-no-step-B0-T1-s0",
+      "run": "/home/heechan/optiq-experiments/antmaze-optiq-geodesic-no-step-B0-T1-s0-20260924/runs/v3-optiq-geodesic-no-step-B0-T1-s0",
+      "source_commit": "4d757159ef84e849250a6d5111f9931b2b392b21",
+      "floor_step": 1000192,
+      "task": "v3"
+    },
+    {
+      "id": "v4-optiq-geodesic-no-step-B0-T1-s0",
+      "run": "/home/heechan/optiq-experiments/antmaze-optiq-geodesic-no-step-B0-T1-s0-20260924/runs/v4-optiq-geodesic-no-step-B0-T1-s0",
+      "source_commit": "4d757159ef84e849250a6d5111f9931b2b392b21",
+      "floor_step": 500224,
+      "task": "v4"
+    }
+  ],
+  "max_parallel": 2,
+  "episodes_intermediate": 40,
+  "episodes_final": 100,
+  "training_unchanged": true,
+  "failure_holds_pending": true,
+  "automatic_restart": false,
+  "project": "OptiQ/antmaze"
+}

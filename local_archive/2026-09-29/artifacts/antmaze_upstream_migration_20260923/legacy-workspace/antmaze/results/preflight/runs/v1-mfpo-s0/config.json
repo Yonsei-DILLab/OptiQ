@@ -1,0 +1,192 @@
+{
+  "method": "mfpo",
+  "task": "v1",
+  "seed": 0,
+  "smoke": true,
+  "source_commit": "5510a999a6ab34d94db714a5c2e8a2aa81a441a8",
+  "source_root": "/home/heechan/OptiQ-antmaze-release-20260921",
+  "steps": 272,
+  "warmup": 256,
+  "batch_size": 256,
+  "utd": 1,
+  "native": {
+    "T": 2,
+    "actor_delay": 1,
+    "actor_hidden_dims": [
+      256,
+      256,
+      256
+    ],
+    "actor_layer_norm": true,
+    "actor_lr": 0.0003,
+    "atoms_num": 101,
+    "backup_entropy": true,
+    "critic_hidden_dims": [
+      256,
+      256,
+      256
+    ],
+    "critic_layer_norm": true,
+    "critic_lr": 0.0003,
+    "data_proportion": 0.75,
+    "discount": 0.99,
+    "div_samples_num": 2,
+    "eval_action_selection": true,
+    "eval_candidate_num": 10,
+    "logp_lr": 0.0003,
+    "target_entropy_coeff": -0.5,
+    "tau": 0.005,
+    "temp": 0.01,
+    "temp_lr": 0.0003,
+    "time_dist_name": "logit_normal",
+    "use_cdq": true,
+    "v_max": 1600,
+    "v_min": -1600,
+    "vel1_samples_num": 16,
+    "vel2_samples_num": 32
+  },
+  "environment": {
+    "task": "v1",
+    "map": [
+      [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        "g",
+        1,
+        "r",
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    ],
+    "scale": 4.0,
+    "walls": [
+      [
+        -12.0,
+        -8.0
+      ],
+      [
+        -8.0,
+        -8.0
+      ],
+      [
+        -4.0,
+        -8.0
+      ],
+      [
+        0.0,
+        -8.0
+      ],
+      [
+        4.0,
+        -8.0
+      ],
+      [
+        -12.0,
+        -4.0
+      ],
+      [
+        4.0,
+        -4.0
+      ],
+      [
+        -12.0,
+        0.0
+      ],
+      [
+        -4.0,
+        0.0
+      ],
+      [
+        4.0,
+        0.0
+      ],
+      [
+        -12.0,
+        4.0
+      ],
+      [
+        4.0,
+        4.0
+      ],
+      [
+        -12.0,
+        8.0
+      ],
+      [
+        -8.0,
+        8.0
+      ],
+      [
+        -4.0,
+        8.0
+      ],
+      [
+        0.0,
+        8.0
+      ],
+      [
+        4.0,
+        8.0
+      ]
+    ],
+    "goals": [
+      [
+        -8.0,
+        0.0
+      ]
+    ],
+    "start": [
+      0.0,
+      0.0
+    ],
+    "horizon": 500
+  },
+  "xml_sha256": "cfd330592e96d1ad41505d4eee60f155305d3964679e215892f524c8bb1a3336",
+  "observation": "qpos[:15]+qvel[:14], xy included, no specified-goal conditioning",
+  "reward": "-min distance to any goal; no success bonus/locomotion/control/survival rewards",
+  "reset": "v1 xy uniform[-2,2]^2; v3/v4 fixed origin; default robot pose and zero velocity",
+  "evaluation": "direct learned-policy sampling; no mean/best-of-K/external DACER noise",
+  "trajectory_episodes_per_reset_mode": 100,
+  "trajectory_reset_modes": [
+    "natural",
+    "fixed_full_simulator_state"
+  ],
+  "interval_eval_episodes": 10,
+  "eval_interval": 272,
+  "packages": {
+    "mujoco": "3.3.7",
+    "gymnasium": "1.2.3",
+    "jax": "0.4.33",
+    "flax": "0.9.0",
+    "optax": "0.1.7",
+    "torch": "2.7.1+cu128",
+    "numpy": "1.26.4",
+    "wandb": "0.29.0"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "n": 64,
+  "m": 64,
+  "batch": 32,
+  "seed": 1,
+  "variant": "init1",
+  "mean_output_init_scale": 1.0,
+  "initial_sigma": 0.5,
+  "temperature": 0.25,
+  "q": "0.25 log target density",
+  "latent": "fresh normal",
+  "requested_steps": 100000,
+  "source_commit": "6a06acabf03005d1a15edb646f59d6278821e98e",
+  "audit_commit": "cd082d9a1e6d2bc03fb4a8d13f6fcb9b852b9730",
+  "source_code_id": "68443abbe4d7c3c4fe1ef499c64da86eefb85cd9f3eb5264a1b4a48e7409d540",
+  "devices": [
+    "cuda:0"
+  ],
+  "engine": "unchanged experiments.gmm_mode_gradient_batch32.core.engine baseline",
+  "omitted": "counterfactual diagnostic branches only; same train engine and evaluation RNG"
+}

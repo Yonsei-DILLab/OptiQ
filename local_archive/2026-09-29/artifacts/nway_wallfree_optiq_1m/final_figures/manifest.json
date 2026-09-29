@@ -1,0 +1,105 @@
+{
+  "items": [
+    {
+      "task": "8way",
+      "host": "vast-heechan-199",
+      "source_commit": "973eca4a432cf027a5c725a372aafb86b9ed6c83",
+      "steps": 1000000,
+      "updates": 998976,
+      "episodes": 1024,
+      "goal_counts": [
+        139,
+        335,
+        140,
+        0,
+        223,
+        186,
+        0,
+        1
+      ],
+      "reachable_goals": 6,
+      "success": 1.0,
+      "files": {
+        "8way_progress.json": "abde8bf837271ca11bf6b61050b72467315fd8e47f43acde19a3ca8b3a3fcfa9",
+        "8way_policy_q_trajectories.png": "762fc8be85a5614bfd0992d35c91f19175a7c1b47f5c46012f6f2c4a4b91e389"
+      }
+    },
+    {
+      "task": "12way",
+      "host": "vast-heechan-180",
+      "source_commit": "973eca4a432cf027a5c725a372aafb86b9ed6c83",
+      "steps": 1000000,
+      "updates": 998976,
+      "episodes": 1024,
+      "goal_counts": [
+        174,
+        0,
+        311,
+        0,
+        0,
+        0,
+        201,
+        90,
+        0,
+        0,
+        248,
+        0
+      ],
+      "reachable_goals": 5,
+      "success": 1.0,
+      "files": {
+        "12way_progress.json": "9295e2ba22125967323e4039b81d812da3f9083ca2a884d83eebc07a007f492a",
+        "12way_policy_q_trajectories.png": "69b1a50d0aa2fd62136d72f2ef58119660774039154dc86ed6000c6e03213bf3"
+      }
+    },
+    {
+      "task": "32way",
+      "host": "vast-heechan-180",
+      "source_commit": "973eca4a432cf027a5c725a372aafb86b9ed6c83",
+      "steps": 1000000,
+      "updates": 998976,
+      "episodes": 1024,
+      "goal_counts": [
+        125,
+        110,
+        1,
+        186,
+        67,
+        229,
+        19,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        2,
+        141,
+        71,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        69
+      ],
+      "reachable_goals": 13,
+      "success": 1.0,
+      "files": {
+        "32way_progress.json": "573bd043f91ab2f502b623adb39ee819b8a0538d7df9129e99ddaaf85a9aae4b",
+        "32way_policy_q_trajectories.png": "b36d630e70cd2881cc488cda46d21618a8cf0a9c847ebfe5cc938f90e0a990f4"
+      }
+    }
+  ],
+  "note": "Final plots and progress files copied from completed remote runs; plots matched remote SHA256. Full checkpoint archive remains remote."
+}

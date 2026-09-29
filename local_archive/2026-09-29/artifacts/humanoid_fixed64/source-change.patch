@@ -1,0 +1,360 @@
+commit 9ce812054e9e271915143c095b541a6421e76305
+Author:     quant-jason <jason02951234@gmail.com>
+AuthorDate: Sun Sep 20 15:30:11 2026 +0000
+Commit:     quant-jason <jason02951234@gmail.com>
+CommitDate: Sun Sep 20 15:30:11 2026 +0000
+
+    Support fixed-codebook dual evaluation and Humanoid fixed64 campaign
+
+diff --git a/configs/mujoco_v5_direct_gmm_humanoid_fixed64.yaml b/configs/mujoco_v5_direct_gmm_humanoid_fixed64.yaml
+new file mode 100644
+index 0000000..a58d31b
+--- /dev/null
++++ b/configs/mujoco_v5_direct_gmm_humanoid_fixed64.yaml
+@@ -0,0 +1,24 @@
++# @package _global_
++defaults:
++  - v5_direct_gmm/final
++  - override /benchmark: humanoid
++  - _self_
++
++alg:
++  actor:
++    temperature: 0.1
++    latent_prior: finite
++    latent_components: 64
++    latent_codebook_seed: 20260911
++    num_policy_samples: 64
++    proposals_per_policy_sample: 1
++
++# Both modes use training's fixed codebook and epsilon=0.
++# eval/mean_reward aliases stochastic_z for the actual finite mixture.
++dual_mu_eval: true
++output_root: ../optiq-experiments/humanoid-direct-gmm-fixed64/outputs
++run_name: humanoid-v5-direct-gmm-fixed64-N64-M64-T${alg.actor.temperature}-s${seed}
++wandb:
++  project: v5-heechan-gmm
++  group: Humanoid-v4_directGMM_fixed64_N64_M64_T0.1_defaultRL
++  job_type: humanoid-direct-gmm-fixed64
+diff --git a/experiments/humanoid_direct_gmm_fixed64/PROTOCOL.md b/experiments/humanoid_direct_gmm_fixed64/PROTOCOL.md
+new file mode 100644
+index 0000000..2464269
+--- /dev/null
++++ b/experiments/humanoid_direct_gmm_fixed64/PROTOCOL.md
+@@ -0,0 +1,7 @@
++# Humanoid fixed64 Direct GMM campaign
++
++Humanoid-v4; seeds 0-3; 1M environment steps each; no early stopping. v5 Direct GMM NLL, T=0.1, N=M=64, fixed latent codebook seed20260911 (64x17). Preserve RL defaults: actor/critic256x2, batch256, UTD1, Adam3e-4, mean initialization1e-4, warmup5000, plainTD.
++
++Paired mu-only evaluation retains the v5 independent policy RNG and paired environment seeds: fixed_z is codebook[0], stochastic_z uniformly draws from the SAME training codebook per action. No newly sampled Gaussian latent support; epsilon=0 in both modes. For finite policies eval/mean_reward and final_eval_return alias stochastic_z. Continuous policies preserve zero_z/stochastic_z and zero_z alias unchanged.
++
++Commit code/config/protocol before launch. Launch from frozen clean source on vast-heechan-180 GPU0-3 with supervisor and GPU locks. Fresh output paths/IDs; W&B OptiQ/v5-heechan-gmm explicitly. Existing Ant workers/frozen source remain unchanged.
+diff --git a/experiments/humanoid_direct_gmm_fixed64/launch.py b/experiments/humanoid_direct_gmm_fixed64/launch.py
+new file mode 100644
+index 0000000..f5e03c8
+--- /dev/null
++++ b/experiments/humanoid_direct_gmm_fixed64/launch.py
+@@ -0,0 +1,46 @@
++"""Launch exactly four independent Humanoid fixed64 seeds with frozen source."""
++from datetime import datetime,timezone
++import json,hashlib,shlex,socket,subprocess,sys
++from pathlib import Path
++repo=Path(__file__).resolve().parents[2];ops=Path('/home/heechan/OptiQ-ops');supervisor=ops/'supervisor';conf=supervisor/'supervisord.conf'
++def git(*args):return subprocess.check_output(['git','-C',str(repo),*args],text=True).strip()
++assert git('branch','--show-current')=='v5-direct-gmm'
++assert not git('status','--porcelain'), 'Commit exact experiment before launch'
++assert [int(x) for x in (ops/'gpus.txt').read_text().split()]==[0,1,2,3]
++sha=git('rev-parse','HEAD');stamp=datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ');source=ops/'sources'/sha
++if not source.exists():
++ subprocess.run(['git','clone','--local','--no-hardlinks','--no-checkout',str(repo),str(source)],check=True)
++ subprocess.run(['git','-C',str(source),'checkout','--detach',sha],check=True)
++assert subprocess.check_output(['git','-C',str(source),'rev-parse','HEAD'],text=True).strip()==sha
++assert not subprocess.check_output(['git','-C',str(source),'status','--porcelain'],text=True).strip()
++campaign=Path('/home/heechan/optiq-experiments')/f'humanoid-direct-gmm-fixed64-{stamp}';campaign.mkdir(exist_ok=False)
++jobs=[]
++for seed in range(4):
++ name=f'hum-dgmm-f64-{stamp}-s{seed}'
++ cmd=[str(ops/'run-gpu.sh'),str(seed),'--branch','v5-direct-gmm','python','run_optiq_dime.py','--config-name=mujoco_v5_direct_gmm_humanoid_fixed64',f'seed={seed}','wandb.project=v5-heechan-gmm',f'run_name={name}',f'output_root={campaign/"runs"}',f'+campaign_source_commit={sha}']
++ jobs.append(dict(name=name,seed=seed,gpu=seed,command=cmd,log=str(supervisor/'logs'/f'{name}.log')))
++freeze=ops/'requirements-v5.freeze.txt'
++manifest=dict(source_commit=sha,source_branch='v5-direct-gmm',source=str(source),host=socket.gethostname(),created_utc=stamp,campaign=str(campaign),seeds=[0,1,2,3],config_name='mujoco_v5_direct_gmm_humanoid_fixed64',jobs=jobs,dependency_freeze=freeze.read_text(),dependency_sha256=hashlib.sha256(freeze.read_bytes()).hexdigest())
++(campaign/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
++assert conf.exists()
++subprocess.run(['supervisorctl','-c',str(conf),'pid'],check=True)
++for job in jobs:
++ (supervisor/'jobs'/f"{job['name']}.conf").write_text(f'''[program:{job['name']}]
++command={shlex.join(job['command']).replace('%','%%')}
++directory={source}
++environment=OPTIQ_SOURCE_DIR="{source}"
++autostart=false
++autorestart=false
++startsecs=5
++startretries=0
++stopasgroup=true
++killasgroup=true
++redirect_stderr=true
++stdout_logfile={job['log']}
++stdout_logfile_maxbytes=100MB
++stdout_logfile_backups=3
++''')
++subprocess.run(['supervisorctl','-c',str(conf),'reread'],check=True)
++subprocess.run(['supervisorctl','-c',str(conf),'update',*[j['name'] for j in jobs]],check=True)
++for job in jobs:subprocess.run(['supervisorctl','-c',str(conf),'start',job['name']],check=True)
++print(json.dumps(dict(manifest=str(campaign/'manifest.json'),source_commit=sha,jobs=[j['name'] for j in jobs]),indent=2),flush=True)
+diff --git a/experiments/humanoid_direct_gmm_fixed64/preflight.py b/experiments/humanoid_direct_gmm_fixed64/preflight.py
+new file mode 100644
+index 0000000..78fbf7a
+--- /dev/null
++++ b/experiments/humanoid_direct_gmm_fixed64/preflight.py
+@@ -0,0 +1,74 @@
++"""Bounded validation, not one of the four requested 1M-step runs."""
++import json,sys,copy
++from pathlib import Path
++import numpy as np
++import jax
++import jax.numpy as jnp
++from flax import serialization
++from hydra import compose,initialize_config_dir
++from omegaconf import OmegaConf
++from stable_baselines3.common.logger import configure
++ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT))
++from run_optiq_dime import validate_config,create_algorithm
++from optiq_dime.latent import FiniteMixtureTrainState,finite_latent_codes,sample_latents
++import optiq_dime.algorithm as algorithm
++out=Path(sys.argv[1]);out.mkdir(parents=True,exist_ok=False)
++with initialize_config_dir(config_dir=str(ROOT/'configs'),version_base=None):
++ base=compose(config_name='mujoco_v5_direct_gmm',overrides=['benchmark=humanoid'])
++ cfg=compose(config_name='mujoco_v5_direct_gmm_humanoid_fixed64')
++validate_config(cfg)
++b=OmegaConf.to_container(base.alg,resolve=True);c=OmegaConf.to_container(cfg.alg,resolve=True)
++for k in ['latent_prior','latent_components','latent_codebook_seed']:c['actor'].pop(k)
++c['actor']['num_policy_samples']=b['actor']['num_policy_samples'];c['actor']['proposals_per_policy_sample']=b['actor']['proposals_per_policy_sample']
++c['actor']['temperature']=b['actor']['temperature']
++assert b==c, 'Unexpected training setting change'
++assert cfg.env_name=='Humanoid-v4' and cfg.alg.utd==1 and cfg.alg.batch_size==256
++assert cfg.alg.actor.hidden_dims==[256,256] and cfg.alg.critic.hs==[256,256]
++assert cfg.alg.actor.temperature==.1 and cfg.alg.actor.distillation_loss=='direct_gmm_nll'
++assert cfg.alg.optimizer.lr_actor==cfg.alg.optimizer.lr_critic==3e-4
++assert cfg.alg.actor.mean_output_init_scale==1e-4 and cfg.total_steps==1000000
++for seed in range(4):
++ cfg.seed=seed;(out/f'resolved-seed{seed}.json').write_text(json.dumps(OmegaConf.to_container(cfg,resolve=True),indent=2))
++cfg.seed=0;cfg.output_root=str(out/'runtime');cfg.alg.buffer_size=512;cfg.alg.learning_starts=2;cfg.alg.actor.learning_starts=2
++cfg.num_eval_episodes=1;cfg.eval_interval=4;cfg.diagnostic_interval=4;cfg.checkpoint_interval=4
++validate_config(cfg)
++def forbidden(*args,**kwargs):raise AssertionError('Direct GMM invoked Sinkhorn')
++algorithm.sinkhorn=forbidden
++model,callbacks=create_algorithm(cfg);model.set_logger(configure(str(out/'runtime'/'validation_logs'),['csv']))
++cb=callbacks.callbacks[0];cb.eval_env.envs[0].env._max_episode_steps=2;model.get_env().envs[0].env._max_episode_steps=2
++before=copy.deepcopy(model.policy.actor_state.params);codes=np.asarray(finite_latent_codes(model.policy.actor_state,17))
++try:
++ model.learn(total_timesteps=8,callback=callbacks)
++ state=model.policy.actor_state
++ assert isinstance(state,FiniteMixtureTrainState) and state.latent_components==64
++ assert int(state.step)==model._n_updates==6
++ assert model.backup_mode=='td' and model.soft_guard_attempts==0
++ np.testing.assert_array_equal(codes,finite_latent_codes(state,17))
++ draws=np.asarray(sample_latents(state,jax.random.PRNGKey(53),(256,17)))
++ assert np.max(np.square(draws[:,None]-codes[None]).sum(-1).min(-1))==0
++ for head in ['mu','log_std']:assert not np.array_equal(before[head]['kernel'],state.params[head]['kernel'])
++ restored=serialization.from_bytes(state,serialization.to_bytes(state));np.testing.assert_array_equal(finite_latent_codes(restored,17),codes)
++ assert cb.evaluations_timesteps==[1,4,8] and np.isfinite(cb.evaluations_results).all()
++ assert cb.MODES == ('fixed_z','stochastic_z') and cb.primary_mode == 'stochastic_z'
++ assert cb.evaluations_results is cb.histories['stochastic_z']['results']
++ np.testing.assert_array_equal(cb.histories['fixed_z']['env_seeds'],cb.histories['stochastic_z']['env_seeds'])
++ np.testing.assert_array_equal(cb.histories['fixed_z']['policy_seeds'],cb.histories['stochastic_z']['policy_seeds'])
++ key,noise=model.policy.key,model.policy.noise_key
++ cb.n_calls=12;cb.num_timesteps=12;cb._on_step()
++ np.testing.assert_array_equal(model.policy.key,key);np.testing.assert_array_equal(model.policy.noise_key,noise)
++ assert not model.policy.evaluation_mu_only
++ import optiq_dime.dual_evaluation as de
++ original_evaluate=de.evaluate_policy
++ def fail(*args,**kwargs):raise RuntimeError('intentional eval failure')
++ de.evaluate_policy=fail
++ try:
++  try:cb._on_step()
++  except RuntimeError as e:assert str(e)=='intentional eval failure'
++  else:raise AssertionError('failure not propagated')
++ finally:de.evaluate_policy=original_evaluate
++ np.testing.assert_array_equal(model.policy.key,key);np.testing.assert_array_equal(model.policy.noise_key,noise)
++ assert not model.policy.evaluation_mu_only
++ result=dict(status='PASS',env='Humanoid-v4',batch=256,n=64,m=64,utd=1,actor_updates=6,critic_updates=model._n_updates,fixed_codebook_shape=list(codes.shape),no_sinkhorn=True,finite_evaluations=True,paired_fixed_stochastic=True,evaluation_rng_restored=True,training_defaults_preserved=True)
++ (out/'result.json').write_text(json.dumps(result,indent=2));print(json.dumps(result),flush=True)
++finally:
++ cb.eval_env.close();model.get_env().close();model.logger.close()
+diff --git a/optiq_dime/dual_evaluation.py b/optiq_dime/dual_evaluation.py
+index 3595f62..01c592c 100644
+--- a/optiq_dime/dual_evaluation.py
++++ b/optiq_dime/dual_evaluation.py
+@@ -1,4 +1,4 @@
+-"""Paired zero-latent and stochastic-latent conditional-mean evaluations."""
++"""Paired deterministic/stochastic evaluations using the policy latent prior."""
+ import jax
+ import numpy as np
+ from stable_baselines3.common.evaluation import evaluate_policy
+@@ -7,19 +7,44 @@ from stable_baselines3.common.vec_env import sync_envs_normalization
+ from .evaluation import MujocoEvalCallback
+ 
+ 
++def dual_mu_evaluation_spec(cfg):
++    """Describe the same latent support used by training and action sampling."""
++    finite = cfg.alg.actor.get("latent_prior", "normal") == "finite"
++    deterministic_mode = "fixed_z" if finite else "zero_z"
++    spec = {
++        deterministic_mode: ("z=training_codebook[0]; a=tanh(mu(s,z)); epsilon=0" if finite
++                             else "a=tanh(mu(s,0)); epsilon=0"),
++        "stochastic_z": ("uniform choice from the same fixed training codebook per action; a=tanh(mu(s,z)); epsilon=0" if finite
++                         else "z~N(0,I) per action; a=tanh(mu(s,z)); epsilon=0"),
++        "episodes_per_mode": int(cfg.num_eval_episodes),
++        "legacy_eval_alias": "stochastic_z" if finite else "zero_z",
++        "paired_episode_reset_seeds": True,
++        "rng_isolated_from_collection": True,
++    }
++    if finite:
++        spec.update(latent_components=int(cfg.alg.actor.latent_components),
++                    latent_codebook_seed=int(cfg.alg.actor.latent_codebook_seed))
++    return deterministic_mode, spec
++
++
+ class DualMuEvalCallback(MujocoEvalCallback):
+     """Both modes use epsilon=0; each episode receives a paired reset seed.
+ 
+     Evaluation RNG is independent of collection and restored even on failure.
+-    The legacy `eval/mean_reward` and `returns` refer to zero-z explicitly.
++    For finite policies stochastic-z samples the training codebook; fixed-z uses
++    its first component. The legacy reward aliases stochastic-z for finite
++    policies and zero-z for continuous policies.
+     """
+ 
+     MODES = ("zero_z", "stochastic_z")
+ 
+     def __init__(self, eval_env, cfg, directory):
+         super().__init__(eval_env, cfg, directory)
+-        if cfg.alg.actor.get("type") != "semi_implicit" or cfg.alg.actor.get("latent_prior", "normal") != "normal":
+-            raise ValueError("Dual mu evaluation requires a continuous Gaussian latent actor")
++        if cfg.alg.actor.get("type") != "semi_implicit":
++            raise ValueError("Dual mu evaluation requires a semi-implicit actor")
++        self.deterministic_mode, self.evaluation_spec = dual_mu_evaluation_spec(cfg)
++        self.MODES = (self.deterministic_mode, "stochastic_z")
++        self.primary_mode = self.evaluation_spec["legacy_eval_alias"]
+         self.training_seed = int(cfg.seed)
+         self.histories = {mode: {key: [] for key in
+             ("results", "ep_lengths", "env_seeds", "policy_seeds", "successes", "solved_steps")}
+@@ -52,7 +77,7 @@ class DualMuEvalCallback(MujocoEvalCallback):
+                     self._per_time_is_success_buffer = []
+                     reward, length = evaluate_policy(
+                         self.model, self.eval_env, n_eval_episodes=1,
+-                        deterministic=(mode == "zero_z"), return_episode_rewards=True,
++                        deterministic=(mode == self.deterministic_mode), return_episode_rewards=True,
+                         warn=self.warn, callback=self._log_success_callback)
+                     rewards.extend(reward)
+                     lengths.extend(length)
+@@ -85,12 +110,12 @@ class DualMuEvalCallback(MujocoEvalCallback):
+                 print(f"Eval {mode}, step={self.num_timesteps}, "
+                       f"reward={np.mean(result['results']):.2f}, "
+                       f"length={np.mean(result['ep_lengths']):.2f}", flush=True)
+-        self.evaluations_results = self.histories["zero_z"]["results"]
+-        self.evaluations_length = self.histories["zero_z"]["ep_lengths"]
+-        self.last_mean_reward = float(np.mean(current["zero_z"]["results"]))
++        self.evaluations_results = self.histories[self.primary_mode]["results"]
++        self.evaluations_length = self.histories[self.primary_mode]["ep_lengths"]
++        self.last_mean_reward = float(np.mean(current[self.primary_mode]["results"]))
+         self.best_mean_reward = max(self.best_mean_reward, self.last_mean_reward)
+         self.logger.record("eval/mean_reward", self.last_mean_reward)
+-        self.logger.record("eval/mean_ep_length", float(np.mean(current["zero_z"]["ep_lengths"])))
++        self.logger.record("eval/mean_ep_length", float(np.mean(current[self.primary_mode]["ep_lengths"])))
+         self.logger.record("time/total_timesteps", self.num_timesteps, exclude="tensorboard")
+         self.logger.dump(self.num_timesteps)
+         return True
+diff --git a/run_optiq_dime.py b/run_optiq_dime.py
+index cf11fde..f180ef8 100644
+--- a/run_optiq_dime.py
++++ b/run_optiq_dime.py
+@@ -21,7 +21,7 @@ from common.buffers import DMCCompatibleDictReplayBuffer
+ from models.actor_critic_evaluation_callback import EvalCallback
+ from optiq_dime import OptiQDIME
+ from optiq_dime.evaluation import MujocoEvalCallback
+-from optiq_dime.dual_evaluation import DualMuEvalCallback
++from optiq_dime.dual_evaluation import DualMuEvalCallback, dual_mu_evaluation_spec
+ from optiq_dime.temperature import parse_temperature_schedule
+ from optiq_dime.runtime import ROOT, WandbWriter, load_environment, provenance
+ 
+@@ -48,8 +48,8 @@ def validate_config(cfg):
+         raise ValueError(f"Invalid Dog task: {cfg.task}")
+     actor = cfg.alg.actor
+     if cfg.get("dual_mu_eval", False):
+-        if actor.get("type") != "semi_implicit" or actor.get("latent_prior", "normal") != "normal":
+-            raise ValueError("dual_mu_eval requires a continuous-latent semi-implicit actor")
++        if actor.get("type") != "semi_implicit":
++            raise ValueError("dual_mu_eval requires a semi-implicit actor")
+     guard = actor.get("soft_guard", {})
+     backup_mode = cfg.alg.critic.get(
+         "backup_mode", "soft_td" if actor.get("type") == "semi_implicit" else "td"
+@@ -361,14 +361,7 @@ def initialize_and_run(cfg: DictConfig):
+                         objective_temperature=float(cfg.alg.actor.temperature),
+                     )
+             if cfg.get("dual_mu_eval", False):
+-                environment_metadata["evaluation"] = {
+-                    "zero_z": "a=tanh(mu(s,0)); epsilon=0",
+-                    "stochastic_z": "z~N(0,I) per action; a=tanh(mu(s,z)); epsilon=0",
+-                    "episodes_per_mode": int(cfg.num_eval_episodes),
+-                    "legacy_eval_alias": "zero_z",
+-                    "paired_episode_reset_seeds": True,
+-                    "rng_isolated_from_collection": True,
+-                }
++                _, environment_metadata["evaluation"] = dual_mu_evaluation_spec(cfg)
+             run.config.update({"environment": environment_metadata})
+             wandb_config["environment"] = environment_metadata
+             (Path(cfg.output_root) / "config.json").write_text(json.dumps(wandb_config, indent=2))
+diff --git a/tests/test_finite_dual_evaluation.py b/tests/test_finite_dual_evaluation.py
+new file mode 100644
+index 0000000..3f64ef6
+--- /dev/null
++++ b/tests/test_finite_dual_evaluation.py
+@@ -0,0 +1,47 @@
++"""Evaluation must sample the trained finite support, with no Gaussian epsilon."""
++import jax
++import jax.numpy as jnp
++import numpy as np
++import optax
++from hydra import compose, initialize_config_dir
++from pathlib import Path
++from optiq_dime.latent import FiniteMixtureTrainState, finite_latent_codes
++from optiq_dime.policy import OptiQPolicy
++from optiq_dime.dual_evaluation import dual_mu_evaluation_spec
++from run_optiq_dime import validate_config
++
++
++def test_stochastic_finite_evaluation_uses_training_codes():
++    # An identity mu makes any out-of-codebook evaluation action observable.
++    # A huge sigma also makes accidental conditional noise easy to detect.
++    def apply_fn(params, observations, z):
++        return z, jnp.full_like(z, 10.)
++    state = FiniteMixtureTrainState.create(apply_fn=apply_fn,
++        params={"mu":{"bias":jnp.zeros(17)}}, tx=optax.adam(3e-4),
++        latent_components=64, latent_codebook_seed=20260911)
++    obs=jnp.zeros((4096, 376));key=jax.random.PRNGKey(41)
++    action=np.asarray(OptiQPolicy.sample_action(state,obs,key,False,False))
++    support=np.asarray(jnp.tanh(finite_latent_codes(state,17)))
++    distance=np.max(np.abs(action[:,None,:]-support[None,:,:]),axis=-1)
++    assert distance.min(axis=1).max()<1e-6
++    counts=np.bincount(distance.argmin(axis=1),minlength=64)
++    assert counts.min()>25 and counts.max()<110
++    other=np.asarray(OptiQPolicy.sample_action(state,obs,jax.random.PRNGKey(42),False,False))
++    assert not np.array_equal(action,other)
++    fixed=np.asarray(OptiQPolicy.sample_action(state,obs,key,True,False))
++    np.testing.assert_allclose(fixed,np.broadcast_to(support[0],fixed.shape),atol=1e-6)
++
++
++def test_finite_and_continuous_evaluation_specs():
++    root=Path(__file__).resolve().parents[1]
++    with initialize_config_dir(config_dir=str(root/'configs'),version_base=None):
++        finite=compose(config_name='mujoco_v5_direct_gmm_humanoid_fixed64')
++        continuous=compose(config_name='mujoco_v5_direct_gmm',overrides=['benchmark=humanoid'])
++    validate_config(finite);validate_config(continuous)
++    mode,spec=dual_mu_evaluation_spec(finite)
++    assert mode=='fixed_z' and spec['legacy_eval_alias']=='stochastic_z'
++    assert spec['latent_components']==64 and spec['latent_codebook_seed']==20260911
++    assert 'same fixed training codebook' in spec['stochastic_z']
++    mode,spec=dual_mu_evaluation_spec(continuous)
++    assert mode=='zero_z' and spec['legacy_eval_alias']=='zero_z'
++    assert 'z~N(0,I)' in spec['stochastic_z']

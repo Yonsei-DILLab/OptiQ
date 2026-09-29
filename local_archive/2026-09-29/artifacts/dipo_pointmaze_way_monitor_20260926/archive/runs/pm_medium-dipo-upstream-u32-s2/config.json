@@ -1,0 +1,71 @@
+{
+  "task": "pm_medium",
+  "method": "dipo",
+  "output": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_medium-dipo-upstream-u32-s2",
+  "seed": 2,
+  "steps": 1001472,
+  "num_envs": 2048,
+  "updates_per_collect": 32,
+  "batch_size": 4096,
+  "warmup": 8192,
+  "eval_every": 200000,
+  "eval_episodes": 200,
+  "final_eval_episodes": 500,
+  "render_each_eval": true,
+  "temperature": 1.0,
+  "optiq_eval_mode": "mu_only",
+  "sql_particles": 16,
+  "meow_alpha": 0.2,
+  "meow_device": "auto",
+  "mfpo_target_entropy_per_dim": -0.5,
+  "entropy_diagnostics": false,
+  "source_commit": "041738202b5e6bcf765a9a807e917afd2778608a",
+  "agent": {
+    "upstream": "BellmanTimeHut/DIPO",
+    "revision": "c6d8d1b39d6cea22e7d779e08111dbf974dbb4fc",
+    "actor": "Diffusion",
+    "actual_actor_class": "Diffusion",
+    "critic": "twin scalar Q",
+    "n_timesteps": 100,
+    "beta_schedule": "cosine",
+    "diffusion_lr": 0.0003,
+    "critic_lr": 0.0003,
+    "action_lr": 0.03,
+    "action_gradient_steps": 20,
+    "action_grad_norm": 0.2,
+    "ac_grad_norm": 2.0,
+    "tau": 0.005,
+    "gamma": 0.99,
+    "replay_capacity": 1000000,
+    "batch_size": 4096,
+    "diffusion_memory_replace": "upstream np.copyto (no persistent writeback)",
+    "diffusion_memory_replace_is_upstream": true,
+    "evaluation_policy": "fresh Gaussian initial noise; reverse noise disabled"
+  },
+  "task_mode": "original DrAC multi-goal PointMaze sparse +100",
+  "geometry": {
+    "goal_positions": [
+      [
+        -5.0,
+        4.0
+      ],
+      [
+        5.0,
+        4.0
+      ],
+      [
+        -5.0,
+        -4.0
+      ],
+      [
+        5.0,
+        -4.0
+      ]
+    ],
+    "horizon": 300,
+    "reward": "100 on reaching any goal, 0 otherwise",
+    "obstacle": "original upstream latent wall cells enabled at evaluation only",
+    "removal": "half goals removed, five-trial expected success"
+  },
+  "utd": 0.015625
+}

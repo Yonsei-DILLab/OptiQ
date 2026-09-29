@@ -1,0 +1,21 @@
+{
+  "step": 2048,
+  "updates": 1024,
+  "task": "4way",
+  "method": "meow",
+  "source_commit": "5abbefea0075a242f534c4adf0ca327bcc82b089",
+  "policy": {
+    "episodes": 8,
+    "success": 0.75,
+    "goals": [
+      1,
+      2,
+      0,
+      3
+    ],
+    "failure": 2,
+    "reachable_goals": 3,
+    "mean_return": -385.27593994140625,
+    "mean_length": 13.75
+  }
+}

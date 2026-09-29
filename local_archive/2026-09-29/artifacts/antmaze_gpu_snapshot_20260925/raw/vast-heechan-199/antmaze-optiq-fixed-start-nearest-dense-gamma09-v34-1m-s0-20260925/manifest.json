@@ -1,0 +1,154 @@
+{
+  "campaign": "antmaze-optiq-fixed-start-nearest-dense-gamma09-v34-1m-s0-20260925",
+  "source": "/home/heechan/OptiQ-ops/sources/419f79fb311504684efd9e9fb4cfb2af299ac235",
+  "source_commit": "419f79fb311504684efd9e9fb4cfb2af299ac235",
+  "host": "vast-heechan-199",
+  "shard": 1,
+  "eligible_gpus": [
+    3
+  ],
+  "protocol": "antmaze_experiments/FIXED_START_NEAREST_DENSE_GAMMA09_PROTOCOL.md",
+  "condition": "fixed_origin_fixed_two_goal_set_nearest_euclidean_dense",
+  "jobs": [
+    {
+      "id": "v4-optiq-fixed-start-nearest-dense-gamma09-T1-nm64-s0",
+      "task": "v4",
+      "method": "optiq",
+      "seed": 0,
+      "steps": 999936,
+      "collection_profile": "env256-update256",
+      "optiq_config_profile": "basic",
+      "default_nm": 64,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0003,
+        "tau": 0.005
+      },
+      "reward_profile": "dense",
+      "reward_specification": {
+        "formula": "r_t = -min_g ||p_{t+1} - g||_2",
+        "distance": "nearest-goal Euclidean",
+        "goals": [
+          [
+            -16.0,
+            4.0
+          ],
+          [
+            -16.0,
+            -4.0
+          ]
+        ],
+        "goal_count": 2,
+        "goal_set": "fixed maze goal coordinates; no random goal selection",
+        "step_penalty": 0.0,
+        "success_bonus": 0.0,
+        "noveld_separate": false,
+        "success_termination": "unchanged upstream behavior"
+      },
+      "noveld": "off",
+      "dacer": "off",
+      "temperature": 1.0,
+      "train_starts": "fixed",
+      "eval_starts": "upstream",
+      "eval_interval": 50000,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "save_intermediate_policy": true,
+      "start_xy": [
+        0.0,
+        0.0
+      ],
+      "fixed_goal_coordinates": [
+        [
+          -16.0,
+          4.0
+        ],
+        [
+          -16.0,
+          -4.0
+        ]
+      ],
+      "reward": "-min_g ||p_{t+1} - g||_2 over the two fixed maze goals; no step penalty, bonus, or NovelD",
+      "discount": 0.9
+    }
+  ],
+  "collection_profile": "env256-update256",
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 256,
+  "updates_per_transition": 1.0,
+  "replay_capacity": 1000000,
+  "warmup_transitions": 8192,
+  "total_transition_budget": 999936,
+  "post_warmup_transitions": 991744,
+  "temperature": 1.0,
+  "dacer_enabled": false,
+  "noveld_enabled": false,
+  "optiq_actor_critic": "256x2 GELU, Adam, actor/critic LR=3e-4, tau=.005",
+  "nm": 64,
+  "log_std_bounds": [
+    -5.0,
+    -1.0
+  ],
+  "initial_log_std": -1.0,
+  "training_start": "same original full state at XY origin for every reset and all vector workers",
+  "goal_set": {
+    "task": "v4",
+    "coordinates": [
+      [
+        -16.0,
+        4.0
+      ],
+      [
+        -16.0,
+        -4.0
+      ]
+    ],
+    "count": 2,
+    "random_selection": false
+  },
+  "dense_reward": {
+    "formula": "r_t=-min_g ||p_{t+1}-g||_2",
+    "distance": "Euclidean XY to nearest of both fixed goals",
+    "step_penalty": 0.0,
+    "success_bonus": 0.0,
+    "noveld": 0.0
+  },
+  "evaluation": {
+    "starts": "same original full state as training",
+    "interval_transitions": 50000,
+    "episodes_per_mode": 40,
+    "final_episodes_per_mode": 100,
+    "modes": [
+      "native_random_z_mu_only",
+      "direct_policy_random_z_conditional_sigma"
+    ],
+    "report_route_counts_and_proportions": true,
+    "route_definitions": {
+      "v3": "left x<-8 / right x>8 / both / uncommitted",
+      "v4": "first x=-4 gate crossing: upper y>2 / lower y<-2 / uncommitted"
+    }
+  },
+  "full_checkpoint": "final only; intermediate policy-only checkpoints every evaluation",
+  "wandb_entity": "OptiQ",
+  "wandb_project": "antmaze",
+  "wandb_mode": "online",
+  "seed": 0,
+  "existing_training_preserved": true,
+  "eligible_gpu_policy": "GPU3 only on each 5090 host; acquire OptiQ GPU lock; do not schedule on vast1",
+  "automatic_restart": false,
+  "failure_holds_pending": true,
+  "control_campaign": "antmaze-optiq-fixed-start-nearest-dense-v34-1m-s0-20260925-r2",
+  "control_source_commit": "c3a2668cc180d4713204181ec09b87aecbe7e52e",
+  "control_discount": 0.99,
+  "discount": 0.9,
+  "comparison": "Only OptiQ discount gamma changes from 0.99 to 0.9; fresh seed0 training, not a checkpoint resume."
+}

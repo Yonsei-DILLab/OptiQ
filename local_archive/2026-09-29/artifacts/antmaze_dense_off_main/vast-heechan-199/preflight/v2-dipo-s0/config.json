@@ -1,0 +1,198 @@
+{
+  "source_commit": "26336810f7ea4ca61210ea70c6aeeae9f7acaed0",
+  "upstream_commit": "7edd06c4799abbab0f8fa534c21deb56253b018e",
+  "method": "dipo",
+  "task": "v2",
+  "seed": 0,
+  "preflight": true,
+  "steps": 8448,
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 8,
+  "updates_per_transition": 0.03125,
+  "expected_updates": 8,
+  "warmup_transitions": 8192,
+  "upstream_max_step": 3000000,
+  "native_global_steps": 256,
+  "reward": "negative Euclidean distance from next xy to nearest goal; no sparse bonus",
+  "reward_profile": "dense",
+  "noveld_enabled": false,
+  "eval_starts": "random",
+  "primary_trajectory": "policy-natural",
+  "noveld_coefficient": 0.0,
+  "temperature": null,
+  "native": {
+    "algo": {
+      "actor_lr": 0.0003,
+      "critic_lr": 0.0005,
+      "batch_size": 4096,
+      "reward_scale": 1.0,
+      "max_grad_norm": 1.0,
+      "tracker_len": 500,
+      "obs_norm": false,
+      "value_norm": false,
+      "handle_timeout": true,
+      "name": "DIPO",
+      "horizon_len": 1,
+      "memory_size": 1000000.0,
+      "nstep": 1,
+      "tau": 0.05,
+      "gamma": 0.99,
+      "warm_up": 32,
+      "act_class": "TanhMLPPolicy",
+      "cri_class": "DistributionalDoubleQ",
+      "update_times": 8,
+      "no_tgt_actor": true,
+      "noise": {
+        "type": "mixed",
+        "decay": null,
+        "exp_decay_rate": 0.99,
+        "lin_decay_iters": 10000,
+        "std_max": 0.6,
+        "std_min": 0.05,
+        "tgt_pol_std": 0.8,
+        "tgt_pol_noise_bound": 0.2
+      },
+      "distl": false,
+      "v_min": -6000.0,
+      "v_max": 5,
+      "num_atoms": 51
+    },
+    "logging": {
+      "wandb": {
+        "project": "diffusion",
+        "mode": "online",
+        "tags": null,
+        "group": null,
+        "entity": null,
+        "name": null,
+        "settings": {
+          "ignore_globs": [
+            "*.pt"
+          ]
+        }
+      }
+    },
+    "num_envs": 256,
+    "eval_num_envs": 20,
+    "device": "cuda",
+    "sim_device": "cuda",
+    "rl_device": "cuda",
+    "graphics_device_id": 0,
+    "seed": 0,
+    "log_freq": 2,
+    "eval_freq": 100,
+    "max_step": 3000000,
+    "max_time": 3600,
+    "artifact": null,
+    "env": {
+      "env_kwargs": {
+        "deprecated": true,
+        "maze_map": [
+          [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            0,
+            1,
+            1,
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            1,
+            1,
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            0,
+            "r",
+            0,
+            "g",
+            1
+          ],
+          [
+            1,
+            0,
+            1,
+            1,
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            "g",
+            1,
+            1,
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        ],
+        "reward_type": "dense",
+        "dataset_url": "http://rail.eecs.berkeley.edu/datasets/offline_rl/ant_maze_new/Ant_maze_u-maze_noisy_multistart_False_multigoal_False_sparse.hdf5",
+        "non_zero_reset": false,
+        "eval": true,
+        "maze_size_scaling": 4.0,
+        "ref_min_score": 0.0,
+        "ref_max_score": 1.0,
+        "random_init": false
+      },
+      "name": "antmaze-v2",
+      "reward_type": "dense",
+      "random_init": false,
+      "resolution": 357
+    },
+    "diffusion": {
+      "diffusion_iter": 5,
+      "action_lr": 0.03,
+      "update_times": 20
+    },
+    "intrinsic": {
+      "type": "noveld",
+      "normalize": false,
+      "pos_enc": true,
+      "L": 10,
+      "enabled": false,
+      "effective_type": "off"
+    },
+    "projection_implementation": "float64 normalized bounded C51; guarded BCE"
+  },
+  "random_init": false,
+  "eval_interval": 250000,
+  "eval_num_envs": 20,
+  "interim_eval_episodes": 20,
+  "final_eval_episodes": 100,
+  "checkpoint": "final only",
+  "step_definition": "step includes warmup; global_steps excludes warmup as upstream; stop global_steps>max_step",
+  "evaluation": "primary=policy-natural; policy: direct draws, no extra exploration noise; native: SAC mean, MFPO Q-best-of10, OptiQ random-z mu-only, DIPO native diffusion; fixed starts are supplementary",
+  "runtime": {
+    "python": "3.11.16 (main, Sep  1 2026, 14:18:37) [Clang 22.1.3 ]",
+    "torch": "2.7.1+cu128",
+    "numpy": "1.26.4"
+  }
+}

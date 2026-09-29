@@ -1,0 +1,85 @@
+{
+  "captured_at": 1790413348.0570195,
+  "files": {
+    "pm_medium-dipo-upstream-u32-s2/config.json": {
+      "sha256": "85d2c80515150b36e81f155db26f99cb24f60f6bd59a40c778bb0a29c6dee671",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_medium-dipo-upstream-u32-s2/config.json",
+      "bytes": 1923
+    },
+    "pm_medium-dipo-upstream-u32-s2/progress.json": {
+      "sha256": "abdb7a0979667a8f9658d95b0f5b592408b60ff0ec4bcdbc1975822329d4ec3a",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_medium-dipo-upstream-u32-s2/progress.json",
+      "bytes": 1062
+    },
+    "pm_medium-dipo-upstream-u32-s2/evaluations/000200704_summary.json": {
+      "sha256": "cccdbda3213d7ae04b1e0abe00d1a6307e99c219fec8ce44b524be125f37e886",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_medium-dipo-upstream-u32-s2/evaluations/000200704_summary.json",
+      "bytes": 830
+    },
+    "pm_medium-dipo-upstream-u32-s2/evaluations/000200704_policy.npz": {
+      "sha256": "e031a5ee357a2332097c71b15caa499cf24ffa31eaa4c9e5e1738170e43ec69f",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_medium-dipo-upstream-u32-s2/evaluations/000200704_policy.npz",
+      "bytes": 77416
+    },
+    "pm_medium-dipo-upstream-u32-s2/evaluations/000401408_summary.json": {
+      "sha256": "4b2c789cd1d3bd8776e468d06ce847f2d1113d5b862bb60484ca20b00b7f7511",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_medium-dipo-upstream-u32-s2/evaluations/000401408_summary.json",
+      "bytes": 832
+    },
+    "pm_medium-dipo-upstream-u32-s2/evaluations/000401408_policy.npz": {
+      "sha256": "4801005d568482696af914598c242bcde976e47992c62c87fcb442f7b35d0168",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_medium-dipo-upstream-u32-s2/evaluations/000401408_policy.npz",
+      "bytes": 179813
+    },
+    "pm_medium-dipo-upstream-u32-s2/evaluations/000600064_summary.json": {
+      "sha256": "e7545dfcad28580b4a9a2481ecd64cf7e011692539ed49d0f89a6a395eaf2eab",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_medium-dipo-upstream-u32-s2/evaluations/000600064_summary.json",
+      "bytes": 832
+    },
+    "pm_medium-dipo-upstream-u32-s2/evaluations/000600064_policy.npz": {
+      "sha256": "70bf8da75b9e711fbbfc87e4f0cdfc1ab971bb3988348ee6a2934e701bd82c08",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_medium-dipo-upstream-u32-s2/evaluations/000600064_policy.npz",
+      "bytes": 414076
+    },
+    "pm_hard-dipo-upstream-u32-s2/config.json": {
+      "sha256": "04e722f3e0fd527c6a1107ba5ae44ab93032078920475b7e108791d4afdc6321",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_hard-dipo-upstream-u32-s2/config.json",
+      "bytes": 2091
+    },
+    "pm_hard-dipo-upstream-u32-s2/progress.json": {
+      "sha256": "48445c71fd79df1b12f1abd5c7fc06cac22eb28550aa32043cd13e4ec0d41da1",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_hard-dipo-upstream-u32-s2/progress.json",
+      "bytes": 1145
+    },
+    "pm_hard-dipo-upstream-u32-s2/evaluations/000200704_summary.json": {
+      "sha256": "0db52f6c8f3bbca4ee7a47971a6be4b7828c00f666fd3a683ed97186a71981c9",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_hard-dipo-upstream-u32-s2/evaluations/000200704_summary.json",
+      "bytes": 901
+    },
+    "pm_hard-dipo-upstream-u32-s2/evaluations/000200704_policy.npz": {
+      "sha256": "6b342f7900baf02f54d372acbdd9558ce0efe4b0a1c62b163382a938281443df",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_hard-dipo-upstream-u32-s2/evaluations/000200704_policy.npz",
+      "bytes": 122111
+    },
+    "pm_hard-dipo-upstream-u32-s2/evaluations/000401408_summary.json": {
+      "sha256": "53067d073ab904c250d1b224ccd88cfe3d5e99e33acd12a0433491ee8bd28505",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_hard-dipo-upstream-u32-s2/evaluations/000401408_summary.json",
+      "bytes": 900
+    },
+    "pm_hard-dipo-upstream-u32-s2/evaluations/000401408_policy.npz": {
+      "sha256": "01d9f7e252532d90fb79ba566de0b2a35fbf25ed118138bbfd04a413e10036c6",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_hard-dipo-upstream-u32-s2/evaluations/000401408_policy.npz",
+      "bytes": 146623
+    },
+    "pm_hard-dipo-upstream-u32-s2/evaluations/000600064_summary.json": {
+      "sha256": "c48e7706e973b0f80e7716eef48fad3bf02ba76d6185c522bb808e982d622c3c",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_hard-dipo-upstream-u32-s2/evaluations/000600064_summary.json",
+      "bytes": 899
+    },
+    "pm_hard-dipo-upstream-u32-s2/evaluations/000600064_policy.npz": {
+      "sha256": "ecd8d0003ab001fe4f7ea58e72022adfc1c9a4d32386faf1f31bfec1e129d24d",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_hard-dipo-upstream-u32-s2/evaluations/000600064_policy.npz",
+      "bytes": 130007
+    }
+  }
+}

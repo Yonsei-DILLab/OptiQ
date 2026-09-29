@@ -1,0 +1,80 @@
+{
+  "task": "pm_simple",
+  "method": "mfpo",
+  "output": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926/runs/pm_simple-mfpo-s0",
+  "seed": 0,
+  "steps": 100096,
+  "num_envs": 256,
+  "updates_per_collect": 16,
+  "batch_size": 4096,
+  "warmup": 8192,
+  "eval_every": 20000,
+  "eval_episodes": 200,
+  "final_eval_episodes": 500,
+  "render_each_eval": true,
+  "temperature": 1.0,
+  "source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "agent": {
+    "T": 2,
+    "actor_delay": 1,
+    "actor_hidden_dims": [
+      256,
+      256,
+      256
+    ],
+    "actor_layer_norm": true,
+    "actor_lr": 0.0003,
+    "atoms_num": 101,
+    "backup_entropy": true,
+    "critic_hidden_dims": [
+      256,
+      256,
+      256
+    ],
+    "critic_layer_norm": true,
+    "critic_lr": 0.0003,
+    "data_proportion": 0.75,
+    "discount": 0.99,
+    "div_samples_num": 2,
+    "eval_action_selection": true,
+    "eval_candidate_num": 10,
+    "logp_lr": 0.0003,
+    "target_entropy_coeff": -0.5,
+    "tau": 0.005,
+    "temp": 0.01,
+    "temp_lr": 0.0003,
+    "time_dist_name": "logit_normal",
+    "use_cdq": true,
+    "v_max": 1600,
+    "v_min": -1600,
+    "vel1_samples_num": 16,
+    "vel2_samples_num": 32,
+    "upstream_commit": "d8b3977d29d4ef2d315e871337e5826f2eb79eb2"
+  },
+  "task_mode": "original DrAC multi-goal PointMaze sparse +100",
+  "geometry": {
+    "goal_positions": [
+      [
+        -4.0,
+        4.0
+      ],
+      [
+        4.0,
+        4.0
+      ],
+      [
+        -4.0,
+        -4.0
+      ],
+      [
+        4.0,
+        -4.0
+      ]
+    ],
+    "horizon": 150,
+    "reward": "100 on reaching any goal, 0 otherwise",
+    "obstacle": "original upstream latent wall cells enabled at evaluation only",
+    "removal": "half goals removed, five-trial expected success"
+  },
+  "utd": 0.0625
+}

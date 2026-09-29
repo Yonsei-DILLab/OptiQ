@@ -1,0 +1,203 @@
+{
+  "profile": "ddiffpg-dense-noveld",
+  "method": "mfpo",
+  "task": "v1",
+  "seed": 0,
+  "smoke": true,
+  "source_commit": "592cad778c20647030629c84dade4e54f79df67f",
+  "source_root": "/home/heechan/OptiQ-ops/sources/592cad778c20647030629c84dade4e54f79df67f",
+  "steps": 8704,
+  "warmup": 8192,
+  "batch_size": 4096,
+  "num_envs": 256,
+  "updates_per_round": 8,
+  "utd": 0.03125,
+  "expected_updates": 16,
+  "native": {
+    "T": 2,
+    "actor_delay": 1,
+    "actor_hidden_dims": [
+      256,
+      256,
+      256
+    ],
+    "actor_layer_norm": true,
+    "actor_lr": 0.0003,
+    "atoms_num": 101,
+    "backup_entropy": true,
+    "critic_hidden_dims": [
+      256,
+      256,
+      256
+    ],
+    "critic_layer_norm": true,
+    "critic_lr": 0.0003,
+    "data_proportion": 0.75,
+    "discount": 0.99,
+    "div_samples_num": 2,
+    "eval_action_selection": true,
+    "eval_candidate_num": 10,
+    "logp_lr": 0.0003,
+    "target_entropy_coeff": -0.5,
+    "tau": 0.005,
+    "temp": 0.01,
+    "temp_lr": 0.0003,
+    "time_dist_name": "logit_normal",
+    "use_cdq": true,
+    "v_max": 1600,
+    "v_min": -1600,
+    "vel1_samples_num": 16,
+    "vel2_samples_num": 32
+  },
+  "intrinsic": {
+    "type": "noveld",
+    "coefficient": 0.01,
+    "novelty_discount": 0.5,
+    "normalize": false,
+    "positional_encoding": true,
+    "frequency_bands": 10,
+    "learning_rate": 0.0001,
+    "gradient_clip": 1.0,
+    "upstream_commit": "7edd06c4799abbab0f8fa534c21deb56253b018e"
+  },
+  "overrides": "NovelD + 256-env collection, batch4096, 8 updates/round,8192 warmup; native networks/LR/tau retained",
+  "environment": {
+    "task": "v1",
+    "map": [
+      [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        "g",
+        1,
+        "r",
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    ],
+    "scale": 4.0,
+    "walls": [
+      [
+        -12.0,
+        -8.0
+      ],
+      [
+        -8.0,
+        -8.0
+      ],
+      [
+        -4.0,
+        -8.0
+      ],
+      [
+        0.0,
+        -8.0
+      ],
+      [
+        4.0,
+        -8.0
+      ],
+      [
+        -12.0,
+        -4.0
+      ],
+      [
+        4.0,
+        -4.0
+      ],
+      [
+        -12.0,
+        0.0
+      ],
+      [
+        -4.0,
+        0.0
+      ],
+      [
+        4.0,
+        0.0
+      ],
+      [
+        -12.0,
+        4.0
+      ],
+      [
+        4.0,
+        4.0
+      ],
+      [
+        -12.0,
+        8.0
+      ],
+      [
+        -8.0,
+        8.0
+      ],
+      [
+        -4.0,
+        8.0
+      ],
+      [
+        0.0,
+        8.0
+      ],
+      [
+        4.0,
+        8.0
+      ]
+    ],
+    "goals": [
+      [
+        -8.0,
+        0.0
+      ]
+    ],
+    "start": [
+      0.0,
+      0.0
+    ],
+    "horizon": 500
+  },
+  "xml_sha256": "cfd330592e96d1ad41505d4eee60f155305d3964679e215892f524c8bb1a3336",
+  "reward": "environment=-nearest goal distance; training adds NovelD; evaluation excludes NovelD",
+  "collection_workers": 8,
+  "dacer_entropy_batch_size": 256,
+  "eval_interval": 25000,
+  "checkpoint_interval": 50000,
+  "trajectory_episodes_per_reset_mode": 100,
+  "packages": {
+    "mujoco": "3.3.7",
+    "gymnasium": "1.2.3",
+    "jax": "0.4.33",
+    "flax": "0.9.0",
+    "optax": "0.1.7",
+    "torch": "2.7.1+cu128",
+    "numpy": "1.26.4",
+    "wandb": "0.29.0"
+  }
+}

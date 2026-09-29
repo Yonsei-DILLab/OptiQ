@@ -1,0 +1,171 @@
+{
+  "dataset": "Original GMM40 iBOLT evaluation samples, 100000 actor updates",
+  "branch": "direct-gmm-trg",
+  "transformations": "None: all original data and metadata files are byte-for-byte copies. No resampling, filtering or coordinate rescaling.",
+  "runs": [
+    {
+      "name": "ibolt_nm64_s3_100k",
+      "N": 64,
+      "M": 64,
+      "seed": 3,
+      "actor_updates": 100000,
+      "source_commit": "732169a535940f75d06ccd27b386c62c9f7835f6",
+      "evaluation": {
+        "full_policy": {
+          "samples": "nm64_seed3_100k/samples.npy",
+          "shape": [
+            10000,
+            2
+          ],
+          "dtype": "float32",
+          "coordinates": "physical x1,x2 in [-40,40]; already multiplied by 40",
+          "mode_coverage": 40,
+          "high_density_fraction": 0.8598,
+          "min_mode_count_3sigma": 104,
+          "counts_and_near_recomputed": true
+        },
+        "mu_only": {
+          "samples": "nm64_seed3_100k/samples_mu_only.npy",
+          "shape": [
+            10000,
+            2
+          ],
+          "dtype": "float32",
+          "coordinates": "physical x1,x2 in [-40,40]; already multiplied by 40",
+          "mode_coverage": 40,
+          "high_density_fraction": 0.8787,
+          "min_mode_count_3sigma": 93,
+          "counts_and_near_recomputed": true
+        }
+      }
+    },
+    {
+      "name": "ibolt_nm256_s2_100k",
+      "N": 256,
+      "M": 256,
+      "seed": 2,
+      "actor_updates": 100000,
+      "source_commit": "c429fbb2b22abd607e87b28d7577aa8c0ae4c536",
+      "evaluation": {
+        "full_policy": {
+          "samples": "nm256_seed2_100k/samples.npy",
+          "shape": [
+            10000,
+            2
+          ],
+          "dtype": "float32",
+          "coordinates": "physical x1,x2 in [-40,40]; already multiplied by 40",
+          "mode_coverage": 40,
+          "high_density_fraction": 0.8906,
+          "min_mode_count_3sigma": 126,
+          "counts_and_near_recomputed": true
+        },
+        "mu_only": {
+          "samples": "nm256_seed2_100k/samples_mu_only.npy",
+          "shape": [
+            10000,
+            2
+          ],
+          "dtype": "float32",
+          "coordinates": "physical x1,x2 in [-40,40]; already multiplied by 40",
+          "mode_coverage": 40,
+          "high_density_fraction": 0.9066,
+          "min_mode_count_3sigma": 81,
+          "counts_and_near_recomputed": true
+        }
+      }
+    }
+  ],
+  "files": {
+    "nm64_seed3_100k/config.json": {
+      "sha256": "6fac0d5b765380d70343a9bb0d1d64945ed9040ee4b4375e6c92ba66c2faace2",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-dacer-off-nm64-100k-4seed-4090-20260925/results/ibolt_nm64_s3_100k/config.json",
+      "archive_sha256": "f1562c284cb847e912090e00ed6cc5dd29ee7dc690aad8a66e4c7775dec6b043"
+    },
+    "nm64_seed3_100k/update_count_audit.json": {
+      "sha256": "630b48d7509b19ba5c8d3838d3275fa7dd755f06cc6b007ea764d42e86934e06",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-dacer-off-nm64-100k-4seed-4090-20260925/results/ibolt_nm64_s3_100k/update_count_audit.json",
+      "archive_sha256": "f1562c284cb847e912090e00ed6cc5dd29ee7dc690aad8a66e4c7775dec6b043"
+    },
+    "nm64_seed3_100k/wandb_status.json": {
+      "sha256": "a346438090235a8595a14de699971e62c57859fc1a5b437fa4fe3acd22912aca",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-dacer-off-nm64-100k-4seed-4090-20260925/results/ibolt_nm64_s3_100k/wandb_status.json",
+      "archive_sha256": "f1562c284cb847e912090e00ed6cc5dd29ee7dc690aad8a66e4c7775dec6b043"
+    },
+    "nm64_seed3_100k/metrics.jsonl": {
+      "sha256": "ea9f87d1941e8c8c8c49c4d29fdbd7d2e8f5f4b7ea5b2f61e47bda2b5924e4d2",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-dacer-off-nm64-100k-4seed-4090-20260925/results/ibolt_nm64_s3_100k/metrics.jsonl",
+      "archive_sha256": "f1562c284cb847e912090e00ed6cc5dd29ee7dc690aad8a66e4c7775dec6b043"
+    },
+    "nm64_seed3_100k/target_definition.json": {
+      "sha256": "d4d01c3aae156e22571b2ab89cbbd264f712f3ea8e3d319a0a9eda92573a46df",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-dacer-off-nm64-100k-4seed-4090-20260925/results/target/definition.json",
+      "archive_sha256": "f1562c284cb847e912090e00ed6cc5dd29ee7dc690aad8a66e4c7775dec6b043"
+    },
+    "nm64_seed3_100k/samples.npy": {
+      "sha256": "ae59f5b23c8a7a29ba0e470765fc35fa2e1e478c71b028d0d2b214abaacb9d02",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-dacer-off-nm64-100k-4seed-4090-20260925/results/ibolt_nm64_s3_100k/evaluations/step_0100000/samples.npy",
+      "archive_sha256": "f1562c284cb847e912090e00ed6cc5dd29ee7dc690aad8a66e4c7775dec6b043"
+    },
+    "nm64_seed3_100k/metrics.json": {
+      "sha256": "f9278f93bc2a299242d194d47a65629c27e6c0ce75fa3561776e1e79b9d32301",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-dacer-off-nm64-100k-4seed-4090-20260925/results/ibolt_nm64_s3_100k/evaluations/step_0100000/metrics.json",
+      "archive_sha256": "f1562c284cb847e912090e00ed6cc5dd29ee7dc690aad8a66e4c7775dec6b043"
+    },
+    "nm64_seed3_100k/samples_mu_only.npy": {
+      "sha256": "e70a556694ddaa45cca17cf4b0dcbc2b6be14df754a2057b29786f073bb7e223",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-dacer-off-nm64-100k-4seed-4090-20260925/results/ibolt_nm64_s3_100k/evaluations/step_0100000/samples_mu_only.npy",
+      "archive_sha256": "f1562c284cb847e912090e00ed6cc5dd29ee7dc690aad8a66e4c7775dec6b043"
+    },
+    "nm64_seed3_100k/metrics_mu_only.json": {
+      "sha256": "794868e044fada34563499b70457c2e0fd384512a7cbb14383a60a4143863c7e",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-dacer-off-nm64-100k-4seed-4090-20260925/results/ibolt_nm64_s3_100k/evaluations/step_0100000/metrics_mu_only.json",
+      "archive_sha256": "f1562c284cb847e912090e00ed6cc5dd29ee7dc690aad8a66e4c7775dec6b043"
+    },
+    "nm256_seed2_100k/config.json": {
+      "sha256": "afed7b2c474e71252f0a4d113f004a343260630db77aed84742c867a690fc147",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-nm128-256-512-100k-4seed-4090-20260925/results/ibolt_nm256_s2_100k/config.json",
+      "archive_sha256": "db7a85ee11586fdf3df4ed4e965dc1c33c00e512f03b37cb582b13dd1aa699e8"
+    },
+    "nm256_seed2_100k/update_count_audit.json": {
+      "sha256": "f95ce8c96fbf49ed5db6a86d2ea26504f8b7cc031e208c832612b0a902efa80c",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-nm128-256-512-100k-4seed-4090-20260925/results/ibolt_nm256_s2_100k/update_count_audit.json",
+      "archive_sha256": "db7a85ee11586fdf3df4ed4e965dc1c33c00e512f03b37cb582b13dd1aa699e8"
+    },
+    "nm256_seed2_100k/wandb_status.json": {
+      "sha256": "da6036d6eecd500e271e92adfac639b9f163b9f0f4b15603fb90c66dfc5c35b2",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-nm128-256-512-100k-4seed-4090-20260925/results/ibolt_nm256_s2_100k/wandb_status.json",
+      "archive_sha256": "db7a85ee11586fdf3df4ed4e965dc1c33c00e512f03b37cb582b13dd1aa699e8"
+    },
+    "nm256_seed2_100k/metrics.jsonl": {
+      "sha256": "f12cbb67151406d77ed74d0b6a1a018e2284131c7565f2826402f46eecb6042f",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-nm128-256-512-100k-4seed-4090-20260925/results/ibolt_nm256_s2_100k/metrics.jsonl",
+      "archive_sha256": "db7a85ee11586fdf3df4ed4e965dc1c33c00e512f03b37cb582b13dd1aa699e8"
+    },
+    "nm256_seed2_100k/target_definition.json": {
+      "sha256": "ec34a1eb35e368f361b38dfcb91e5d7cf0568adbbeaa9423088fc95a91c4c0bf",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-nm128-256-512-100k-4seed-4090-20260925/results/target/definition.json",
+      "archive_sha256": "db7a85ee11586fdf3df4ed4e965dc1c33c00e512f03b37cb582b13dd1aa699e8"
+    },
+    "nm256_seed2_100k/samples.npy": {
+      "sha256": "dd5990e76a7957c6e933db5a08e7995c421e51d2152d8677878280cda32041ad",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-nm128-256-512-100k-4seed-4090-20260925/results/ibolt_nm256_s2_100k/evaluations/step_0100000/samples.npy",
+      "archive_sha256": "db7a85ee11586fdf3df4ed4e965dc1c33c00e512f03b37cb582b13dd1aa699e8"
+    },
+    "nm256_seed2_100k/metrics.json": {
+      "sha256": "5cbc59b5e1cecaefed8e8528d941659bb0ab69db5234a77b1e338ec5c5fe276c",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-nm128-256-512-100k-4seed-4090-20260925/results/ibolt_nm256_s2_100k/evaluations/step_0100000/metrics.json",
+      "archive_sha256": "db7a85ee11586fdf3df4ed4e965dc1c33c00e512f03b37cb582b13dd1aa699e8"
+    },
+    "nm256_seed2_100k/samples_mu_only.npy": {
+      "sha256": "97b067432a2f1720c6ccd842d761b10b1e6146ca50da980993e7ab26f370acee",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-nm128-256-512-100k-4seed-4090-20260925/results/ibolt_nm256_s2_100k/evaluations/step_0100000/samples_mu_only.npy",
+      "archive_sha256": "db7a85ee11586fdf3df4ed4e965dc1c33c00e512f03b37cb582b13dd1aa699e8"
+    },
+    "nm256_seed2_100k/metrics_mu_only.json": {
+      "sha256": "2a02f1839263ab62466c968adce99a4201cc8d327f3d19b931ff2c7fa621c683",
+      "source_path": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/gmm40_dacer_off_nm_4090/inputs/gmm40-ibolt-nm128-256-512-100k-4seed-4090-20260925/results/ibolt_nm256_s2_100k/evaluations/step_0100000/metrics_mu_only.json",
+      "archive_sha256": "db7a85ee11586fdf3df4ed4e965dc1c33c00e512f03b37cb582b13dd1aa699e8"
+    }
+  }
+}

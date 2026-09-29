@@ -1,0 +1,1 @@
+First preflight attempt only (source4607dd5). Both jobs completed8448 transitions/8updates, then result validation incorrectly required a periodic diagnostic metric. No main training started. All failure/checkpoint/source records are preserved. Corrected fresh r2 campaign is in ../antmaze_teacher_floor_250k_r2; do not resume this attempt.

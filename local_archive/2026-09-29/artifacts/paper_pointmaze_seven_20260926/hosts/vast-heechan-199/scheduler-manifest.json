@@ -1,0 +1,11 @@
+{
+  "training_source_commit": "c2d08d0767a2f625ba70906fae7a45dd3a719fe1",
+  "scheduler_guard_commit": "dac86fe09a66cc0c3c30d4eb24fda302602d5c27",
+  "host": "199",
+  "services": [
+    "paper-pointmaze-seven-20260926-199-gpu0",
+    "paper-pointmaze-seven-20260926-199-gpu1",
+    "paper-pointmaze-seven-20260926-199-gpu2",
+    "paper-pointmaze-seven-20260926-199-gpu3"
+  ]
+}

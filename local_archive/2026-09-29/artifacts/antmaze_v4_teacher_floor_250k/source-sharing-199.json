@@ -1,0 +1,18 @@
+{
+  "time": 1790294122.658846,
+  "source_commit": "555bb7e3c0101ee939545cc35d4d0729291781ec",
+  "host": "vast-heechan-199",
+  "source": "/home/heechan/OptiQ-ops/sources/555bb7e3c0101ee939545cc35d4d0729291781ec",
+  "canonical": "/home/heechan/OptiQ-direct-gmm-trg-antmaze",
+  "core_sha256": {
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/algorithm.py": "215d4933c6e08649afc4999e6f9feca79828768a0ffaeac0f23986f239ff07cf",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/policy.py": "45841bd9ae641a35e33db1696aed9ca5096a4ccbc036b25f040b9e6c4cb283a9",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/distillation.py": "ff305a7462e33970e4b786101c0af335cf594a351f846a596997c6dc9f3912c9",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/semi_implicit.py": "2ac70268019f60f4a83dfd233e54a32c30e26f3289979c0a44214997250c7231",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/transport.py": "830a11be1950d03b42eb07731e2a107225e0d14134eef3884298122d765d0e15",
+    "analysis_tools/studies/20260918_nonstationary_nd/v5/diffusion/dime.py": "165c836cc9aa5d79c021a13b8b7eea0c12f1ba21838704820efe49742558c0ca",
+    "analysis_tools/experiments/20260921_gmm_trg_sweep/regulator.py": "b5e353f06ae7ada02c9b4ea8c0f7dc3f1195132ab5763400ee1e6740141b5dc7"
+  },
+  "source_verified": true,
+  "training_started": false
+}

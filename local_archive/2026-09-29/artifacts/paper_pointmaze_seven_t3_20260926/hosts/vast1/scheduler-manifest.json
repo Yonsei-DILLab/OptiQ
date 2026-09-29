@@ -1,0 +1,24 @@
+{
+  "training_source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "launch_plan_commit": "f5a6f6e4f178572976a0404f2d5c3fa5ddc80896",
+  "transfer_plan_commit": "e8c4c9793627f78d41b9e0b03793c030e5852556",
+  "scheduler_guard_commit": "dac86fe09a66cc0c3c30d4eb24fda302602d5c27",
+  "host": "vast1",
+  "transferred_jobs": 15,
+  "smoke": {
+    "task": "pm_medium",
+    "method": "optiq",
+    "num_envs": 256,
+    "batch_size": 4096,
+    "steps": 4352,
+    "updates": 16,
+    "verified": true,
+    "path": "/home/heechan/optiq-experiments/paper-pointmaze-4090-smoke-20260926"
+  },
+  "services": [
+    "paper-pointmaze-seven-t3-20260926-vast1-gpu0",
+    "paper-pointmaze-seven-t3-20260926-vast1-gpu1",
+    "paper-pointmaze-seven-t3-20260926-vast1-gpu2",
+    "paper-pointmaze-seven-t3-20260926-vast1-gpu3"
+  ]
+}

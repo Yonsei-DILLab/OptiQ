@@ -1,0 +1,102 @@
+{
+  "task": "4way",
+  "method": "dipo",
+  "output": "/home/heechan/optiq-experiments/4way-wallfree-dipo-compat-100k-20260926/runs/dipo-s0",
+  "seed": 0,
+  "steps": 100000,
+  "num_envs": 16,
+  "updates_per_collect": 16,
+  "batch_size": 256,
+  "warmup": 1024,
+  "eval_every": 20000,
+  "eval_episodes": 100,
+  "temperature": 1.0,
+  "source_commit": "ef6da7286ca64ea5fb92ad7633f34476b25a008c",
+  "agent": {
+    "algo": {
+      "actor_lr": 0.0003,
+      "critic_lr": 0.0005,
+      "batch_size": 256,
+      "reward_scale": 1.0,
+      "max_grad_norm": 1.0,
+      "tracker_len": 500,
+      "obs_norm": false,
+      "value_norm": false,
+      "handle_timeout": true,
+      "name": "DIPO",
+      "horizon_len": 1,
+      "memory_size": 1000000.0,
+      "nstep": 1,
+      "tau": 0.05,
+      "gamma": 0.99,
+      "warm_up": 32,
+      "act_class": "TanhMLPPolicy",
+      "cri_class": "DistributionalDoubleQ",
+      "update_times": 1,
+      "no_tgt_actor": true,
+      "noise": {
+        "type": "mixed",
+        "decay": null,
+        "exp_decay_rate": 0.99,
+        "lin_decay_iters": 10000,
+        "std_max": 0.6,
+        "std_min": 0.05,
+        "tgt_pol_std": 0.8,
+        "tgt_pol_noise_bound": 0.2
+      },
+      "distl": false,
+      "v_min": -1500.0,
+      "v_max": 10.0,
+      "num_atoms": 51
+    },
+    "logging": {
+      "wandb": {
+        "project": "diffusion",
+        "mode": "online",
+        "tags": null,
+        "group": null,
+        "entity": null,
+        "name": null,
+        "settings": {
+          "ignore_globs": [
+            "*.pt"
+          ]
+        }
+      }
+    },
+    "num_envs": 16,
+    "eval_num_envs": 20,
+    "device": "cuda",
+    "sim_device": "cuda",
+    "rl_device": "cuda",
+    "graphics_device_id": 0,
+    "seed": 0,
+    "log_freq": 2,
+    "eval_freq": 100,
+    "max_step": 4000000,
+    "max_time": 3600,
+    "artifact": null,
+    "env": {
+      "env_kwargs": null,
+      "name": "fourway",
+      "reward_type": "sparse",
+      "random_init": false,
+      "resolution": "None"
+    },
+    "diffusion": {
+      "diffusion_iter": 5,
+      "action_lr": 0.03,
+      "update_times": 20
+    },
+    "intrinsic": "disabled",
+    "upstream": "supersglzc/ddiffpg",
+    "projection": "guarded float64 C51",
+    "value_support": [
+      -1500.0,
+      10.0
+    ],
+    "evaluation_policy": "initial diffusion noise; no extra exploration noise"
+  },
+  "task_mode": "existing wall-free symmetric four-goal",
+  "utd": 1.0
+}

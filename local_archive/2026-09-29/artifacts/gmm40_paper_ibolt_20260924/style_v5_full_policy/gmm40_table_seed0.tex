@@ -1,0 +1,23 @@
+% Requires \usepackage{booktabs,graphicx}
+\begin{table}[h]
+\centering
+\caption{Sample quality on the bounded GMM40 target after 100,000 actor updates. Values correspond to the seed-0 policies shown in Figure~\ref{fig:gmm40}. iBOLT uses its full conditional Gaussian policy, including learned $\sigma$ and fresh Gaussian latents; baselines use their native stochastic generators.}
+\label{tab:gmm40-seed0}
+\footnotesize
+\resizebox{0.95\textwidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Algorithm & \textbf{iBOLT (ours)} & SAC & SQL & MFPO & DIPO \\
+\midrule
+MMD $\downarrow$ & $\mathbf{0.0564}$ & $0.8387$ & $0.3674$ & $0.0857$ & $0.1315$ \\
+Mode coverage $\uparrow$ & $\mathbf{40/40}$ & $1/40$ & $12/40$ & $37/40$ & $34/40$ \\
+\bottomrule
+\end{tabular}%
+}
+\vspace{0.2em}
+\parbox{0.95\textwidth}{\scriptsize
+MMD is $\sqrt{\max(\widehat{\mathrm{MMD}}_u^2,0)}$, computed per seed using the first 2,048 of 10,000 draws and an equal mixture of RBF kernels with bandwidths $1,2,5,10,20$. 
+Coverage counts components among 40 using all 10,000 draws: nearest-center distance at most $3\sigma$, with at least $\max(10,0.1n_j^{\mathrm{GT}})$ assigned samples per component. 
+iBOLT uses the GMM40-tuned $256\times3$ setting; equal actor-update budgets do not imply equal computation.
+}
+\end{table}

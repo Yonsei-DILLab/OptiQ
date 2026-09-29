@@ -1,0 +1,10 @@
+{
+  "training_source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "transfer_plan_commit": "ef07d3c2c2eb40c72419f77a4eb6334cc2f1ce56",
+  "scheduler_guard_commit": "dac86fe09a66cc0c3c30d4eb24fda302602d5c27",
+  "host": "180",
+  "from": "vast1/paper-pointmaze-seven-t3-dipo-envfix-20260926",
+  "jobs": ["pm_hard-dipo-s0", "pm_simple-dipo-s0", "pm_medium-dipo-s0"],
+  "training_source_unchanged": true,
+  "services": ["paper-pointmaze-seven-t3-dipo-180-20260926-180-gpu3"]
+}

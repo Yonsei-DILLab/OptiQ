@@ -1,0 +1,234 @@
+{
+  "campaign": "antmaze-optiq-v3-teacherfloor1-retention-1m-s0-20260925",
+  "shard": 0,
+  "host": "vast-heechan-180",
+  "source": "/home/heechan/OptiQ-ops/sources/a5de32fe885b79700ab4566bf36fe91de2ee3860",
+  "source_commit": "a5de32fe885b79700ab4566bf36fe91de2ee3860",
+  "jobs": [
+    {
+      "id": "v3-optiq-startnorm-geodesic-T3-teacherfloor1-1m-s0",
+      "task": "v3",
+      "method": "optiq",
+      "reward_profile": "progress100_start_normalized_geodesic_no_step_no_bonus",
+      "noveld": "off",
+      "eval_starts": "upstream",
+      "steps": 1008384,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 3.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer": "on",
+      "reward_specification": {
+        "formula": "100*(d(current)-d(next))",
+        "success_bonus_enabled": false,
+        "distance": "minimum start-normalized remaining XY geodesic distance",
+        "step_cost": 0.0,
+        "progress_scale": 100.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -12.0,
+            12.0
+          ],
+          [
+            12.0,
+            -12.0
+          ]
+        ],
+        "goal_bonuses": [
+          0,
+          0
+        ],
+        "distance_endpoint": "existing success region: max(geodesic_to_goal_center - 0.5, 0)",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 1e-06,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af",
+        "potential": "min_i(max(d_geo(x, goal_i)-0.5,0) * reference_scale/reference_remaining_i)",
+        "reference_xy": [
+          0.0,
+          0.0
+        ],
+        "reference_remaining_distances": [
+          17.486460085480267,
+          16.47056274847832
+        ],
+        "reference_scale": 16.47056274847832,
+        "goal_distance_weights": [
+          0.9419037740036652,
+          1.0
+        ],
+        "episode_start_dependent": false,
+        "terminal_zero_is_distance_to_success_set": true
+      },
+      "seed": 0,
+      "dacer_target_entropy_per_dim": 0.7,
+      "dacer_interval_updates": 500,
+      "eval_interval": 50000,
+      "hypothesis": "teacher_floor1_retention",
+      "discount": 0.999,
+      "teacher_std_floor": 1.0
+    }
+  ],
+  "wandb_mode": "online",
+  "wandb_entity": "OptiQ",
+  "wandb_project": "antmaze",
+  "protocol": "antmaze_experiments/TEACHER_FLOOR_RETENTION_PROTOCOL.md",
+  "seed": 0,
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 8,
+  "reward_profile": "progress100_start_normalized_geodesic_no_step_no_bonus",
+  "noveld_enabled": false,
+  "noveld_coefficient": 0.0,
+  "reward": "100 * decrease in minimum start-normalized remaining XY geodesic distance to an existing success region; B=0; step penalty=0",
+  "evaluation_starts": "upstream: v1 random XY[-2,2]; v2-v4 fixed original full state at XY[0,0]",
+  "interim_eval_episodes": 40,
+  "final_eval_episodes": 100,
+  "optiq_temperature": "per-job",
+  "optiq_actor_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "optiq_critic_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "optiq_actor_lr": 0.0003,
+  "optiq_critic_lr": 0.0005,
+  "log_std_min": -5.0,
+  "log_std_max": -1.0,
+  "initial_log_std": -1.0,
+  "optiq_tau": 0.005,
+  "parent_source": "d25930197ee9ba060a3aa84c3b6fea419dfe856d",
+  "fresh_training": true,
+  "resume_cancelled_jobs": false,
+  "backfill_seconds": 2,
+  "failure_holds_pending": true,
+  "automatic_restart": false,
+  "comparison_campaign": "antmaze-optiq-v3-teacherfloor-250k-s0-20260925-r2",
+  "comparison_source": "d25930197ee9ba060a3aa84c3b6fea419dfe856d",
+  "source_dependencies": {},
+  "dacer_enabled": true,
+  "replay_capacity": 1000000,
+  "beta": 1.0,
+  "gradient_clipping": null,
+  "priority": "Use one independently unlocked180 GPU; preserve all completed/cancelled campaigns.",
+  "comparison_scope": "Same-seed fresh longer-budget confirmation; only budget and job identity differ from the completed teacher-floor1 screen.",
+  "target_entropy_per_dim_grid": [
+    0.7
+  ],
+  "target_entropy_grid": [
+    5.6
+  ],
+  "dacer_interval_updates": 500,
+  "dacer": {
+    "behavior_only": true,
+    "initial_alpha": 0.27,
+    "alpha_lr": 0.03,
+    "noise_scale": 0.1,
+    "components": 3,
+    "samples": 200,
+    "entropy_seed": 42,
+    "interval_updates": 500
+  },
+  "entropy_measure": "GMM joint-entropy proxy of clipped noisy conditional actions, not trajectory entropy",
+  "post_warmup_budget": 1000000,
+  "actual_post_warmup_transitions": 1000192,
+  "total_transitions_per_job": 1008384,
+  "warmup_transitions": 8192,
+  "expected_learner_updates": 31256,
+  "expected_regulator_updates": 63,
+  "eval_interval": 50000,
+  "evaluation_clock": "total transitions including warmup, rounded up to 256",
+  "preflight_total_transitions": 8448,
+  "preflight_required": "Per-job real batch4096 updates, signed target/cadence, reward replay and checkpoint readback before main training",
+  "diagnostics": {
+    "regulator_history": "every entropy update, including before/after noise and clipping",
+    "policy_checkpoints": "50k intervals; evaluation only, final full state at 1008384 total transitions",
+    "evaluation": "40 episodes/mode intermediate; 100 final; no external DACER noise"
+  },
+  "assigned_hosts": {
+    "0": "vast-heechan-180"
+  },
+  "excluded_hosts": [
+    "vast1"
+  ],
+  "existing_training_preserved": true,
+  "cross_job_completion_barriers": false,
+  "priority_campaign": null,
+  "discount_temperature_conditions": {
+    "teacher_floor1_retention": [
+      0.999,
+      3.0
+    ]
+  },
+  "algorithm_source_unchanged_from": "2564b59faa0d319eece496b93eff0f19359efc37",
+  "screen": "Inspect50k checkpoints; from500k stop if left entries are at most1/40 and left successes0 for three consecutive direct-policy evaluations. Stop on numerical/runtime failure without retry. Max1M post-warmup; no automatic extension. Preserve all failures and mu-only results.",
+  "evidence": {
+    "short_total_step": 258304,
+    "short_episodes": 100,
+    "short_direct_entries": {
+      "left": 11,
+      "right": 87,
+      "uncommitted": 2
+    },
+    "short_direct_successful_routes": {
+      "right": 44
+    },
+    "short_mu_only_successful_routes": {
+      "right": 80
+    },
+    "short_training_goal_visits": 0,
+    "short_transitions_per_environment": 1009,
+    "hypothesis": "Test acquisition and minority retention after the changing-policy collector obtains more complete episodes; the short saved policy already succeeds on the right.",
+    "limitations": [
+      "No left success has been demonstrated.",
+      "Same seed is not independent replication.",
+      "The absence of collected goal terminals does not establish the cause of imbalance."
+    ]
+  },
+  "fresh_start": true,
+  "checkpoint_resume": false,
+  "teacher_floor_grid": [
+    1.0
+  ],
+  "control_teacher_floor": 1.0,
+  "algorithm_file_sha256": {
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/algorithm.py": "215d4933c6e08649afc4999e6f9feca79828768a0ffaeac0f23986f239ff07cf",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/policy.py": "45841bd9ae641a35e33db1696aed9ca5096a4ccbc036b25f040b9e6c4cb283a9",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/distillation.py": "ff305a7462e33970e4b786101c0af335cf594a351f846a596997c6dc9f3912c9",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/semi_implicit.py": "2ac70268019f60f4a83dfd233e54a32c30e26f3289979c0a44214997250c7231",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/transport.py": "830a11be1950d03b42eb07731e2a107225e0d14134eef3884298122d765d0e15",
+    "analysis_tools/studies/20260918_nonstationary_nd/v5/diffusion/dime.py": "165c836cc9aa5d79c021a13b8b7eea0c12f1ba21838704820efe49742558c0ca",
+    "analysis_tools/experiments/20260921_gmm_trg_sweep/regulator.py": "b5e353f06ae7ada02c9b4ea8c0f7dc3f1195132ab5763400ee1e6740141b5dc7"
+  },
+  "comparison_validation": {
+    "changed_fields": [
+      "hypothesis",
+      "id",
+      "steps"
+    ],
+    "parent_completed": true,
+    "parent_checkpoint_sha256": "613867a725feff0f6e57ff05b5d4147f0755b029e2e58f11f847c1363b53f1a8"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "fixed_start_report": "FIXED_START_REPORT_KO.md",
+  "figure_manifest": "fixed_start_report.json",
+  "images": {
+    "trajectory_fixed_mu_only.png": {
+      "sha256": "699f67fb8c4e5c2033121959097d1819329d9d2c5983caa11e765b974ce3a4d9",
+      "bytes": 390132
+    },
+    "trajectory_fixed_sigma_included.png": {
+      "sha256": "d36fd1ad6364c930eddce8cbe2280fab9d9070052ac799634c30c5fdaaf71618",
+      "bytes": 398215
+    }
+  },
+  "archives": {
+    "fixed-start-v3.tar.gz": {
+      "sha256": "f71043915c6eaa4e3f3e5fa42af75ea17c0f081e3674feb3ee4495dedd13ce06",
+      "bytes": 947139
+    },
+    "fixed-start-v4.tar.gz": {
+      "sha256": "48370faf53b467b31721a0e213020f031b2e7dd69f82a6176744d1d843369270",
+      "bytes": 1225043
+    }
+  },
+  "raw_rollout_npz_count": 12
+}

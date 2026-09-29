@@ -1,0 +1,59 @@
+{
+  "campaign": "antmaze-v1-optiq-temp-10ku-s0-20260923",
+  "shard": 0,
+  "source": "/home/heechan/OptiQ-ops/sources/a8250c4cde21c8748f99c33329b0540bf54b19a3",
+  "source_commit": "a8250c4cde21c8748f99c33329b0540bf54b19a3",
+  "upstream_commit": "7edd06c4799abbab0f8fa534c21deb56253b018e",
+  "wandb_entity": "OptiQ",
+  "wandb_project": "gmm-trg",
+  "wandb_group": "antmaze-v1-optiq-temp-10ku-s0-20260923",
+  "wandb_mode": "online",
+  "task": "v1",
+  "method": "optiq",
+  "seed": 0,
+  "reward": "unchanged original DDiffPG sparse reward",
+  "noveld_coefficient": 0.01,
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 8,
+  "warmup_transitions": 8192,
+  "learner_updates": 10000,
+  "total_environment_transitions": 328192,
+  "eval_interval": 250000,
+  "final_eval_episodes_per_mode_per_reset": 100,
+  "checkpoint": "final only",
+  "jobs": [
+    {
+      "id": "v1-optiq-T1-s0",
+      "task": "v1",
+      "method": "optiq",
+      "temperature": 1.0,
+      "steps": 328192,
+      "final_eval_episodes": 100
+    },
+    {
+      "id": "v1-optiq-T0.25-s0",
+      "task": "v1",
+      "method": "optiq",
+      "temperature": 0.25,
+      "steps": 328192,
+      "final_eval_episodes": 100
+    },
+    {
+      "id": "v1-optiq-T0.05-s0",
+      "task": "v1",
+      "method": "optiq",
+      "temperature": 0.05,
+      "steps": 328192,
+      "final_eval_episodes": 100
+    },
+    {
+      "id": "v1-optiq-T0.01-s0",
+      "task": "v1",
+      "method": "optiq",
+      "temperature": 0.01,
+      "steps": 328192,
+      "final_eval_episodes": 100
+    }
+  ]
+}

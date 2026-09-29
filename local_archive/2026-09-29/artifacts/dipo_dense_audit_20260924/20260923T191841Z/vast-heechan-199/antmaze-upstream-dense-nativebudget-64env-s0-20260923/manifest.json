@@ -1,0 +1,78 @@
+{
+  "campaign": "antmaze-upstream-dense-nativebudget-64env-s0-20260923",
+  "source": "/home/heechan/OptiQ-ops/sources/a946a77226629688346d6f4c69952131fb528ed0",
+  "source_commit": "a946a77226629688346d6f4c69952131fb528ed0",
+  "shard": 1,
+  "seed": 0,
+  "upstream_commit": "7edd06c4799abbab0f8fa534c21deb56253b018e",
+  "reward": "negative Euclidean distance from next xy to nearest goal; no sparse bonus",
+  "noveld_coefficient": 0.01,
+  "num_envs": 64,
+  "batch_size": 4096,
+  "updates_per_vector_step": 2,
+  "warmup_transitions": 8192,
+  "replay_capacity": 1000000,
+  "eval_interval": 250000,
+  "checkpoint": "final only",
+  "dipo_support": [
+    -6000,
+    5
+  ],
+  "dipo_num_atoms": 51,
+  "budgets": {
+    "v1": 3000000,
+    "v2": 3000000,
+    "v3": 4000000,
+    "v4": 5000000
+  },
+  "jobs": [
+    {
+      "id": "v2-dipo-s0",
+      "task": "v2",
+      "method": "dipo",
+      "steps": 3000000
+    },
+    {
+      "id": "v4-dipo-s0",
+      "task": "v4",
+      "method": "dipo",
+      "steps": 5000000
+    },
+    {
+      "id": "v2-optiq-s0",
+      "task": "v2",
+      "method": "optiq",
+      "steps": 3000000
+    },
+    {
+      "id": "v2-mfpo-s0",
+      "task": "v2",
+      "method": "mfpo",
+      "steps": 3000000
+    },
+    {
+      "id": "v2-sac-s0",
+      "task": "v2",
+      "method": "sac",
+      "steps": 3000000
+    },
+    {
+      "id": "v4-optiq-s0",
+      "task": "v4",
+      "method": "optiq",
+      "steps": 5000000
+    },
+    {
+      "id": "v4-mfpo-s0",
+      "task": "v4",
+      "method": "mfpo",
+      "steps": 5000000
+    },
+    {
+      "id": "v4-sac-s0",
+      "task": "v4",
+      "method": "sac",
+      "steps": 5000000
+    }
+  ]
+}

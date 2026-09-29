@@ -1,0 +1,104 @@
+{
+  "source": "/home/heechan/OptiQ-antmaze-release-20260921",
+  "source_commit": "5510a999a6ab34d94db714a5c2e8a2aa81a441a8",
+  "smoke": true,
+  "gpus": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "jobs": [
+    {
+      "id": "v1-optiq-s0",
+      "task": "v1",
+      "method": "optiq",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v1-sac-s0",
+      "task": "v1",
+      "method": "sac",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v1-meow-s0",
+      "task": "v1",
+      "method": "meow",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v1-sql-s0",
+      "task": "v1",
+      "method": "sql",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v1-mfpo-s0",
+      "task": "v1",
+      "method": "mfpo",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v1-dipo-s0",
+      "task": "v1",
+      "method": "dipo",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v4-optiq-s0",
+      "task": "v4",
+      "method": "optiq",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v4-sac-s0",
+      "task": "v4",
+      "method": "sac",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v4-meow-s0",
+      "task": "v4",
+      "method": "meow",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v4-sql-s0",
+      "task": "v4",
+      "method": "sql",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v4-mfpo-s0",
+      "task": "v4",
+      "method": "mfpo",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v4-dipo-s0",
+      "task": "v4",
+      "method": "dipo",
+      "seed": 0,
+      "status": "pending"
+    }
+  ],
+  "project": "OptiQ/gmm-trg",
+  "group": "antmaze-multimodal-100k-20260921",
+  "tasks": [
+    "v1",
+    "v4"
+  ],
+  "budget": 100000
+}

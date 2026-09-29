@@ -1,0 +1,66 @@
+{
+  "source_commit": "bf69c2c548b7063a152138207c5c96149b3ed63d",
+  "task": "symmetric 2D four-way terminal goals",
+  "seed": 0,
+  "environment_transitions": 10000,
+  "warmup_transitions": 1000,
+  "updates_per_transition": 1,
+  "batch_size": 256,
+  "evaluation_start": "fixed origin",
+  "goals": [
+    [
+      5.0,
+      0.0
+    ],
+    [
+      -5.0,
+      0.0
+    ],
+    [
+      0.0,
+      5.0
+    ],
+    [
+      0.0,
+      -5.0
+    ]
+  ],
+  "reward": "-30*||a||^2 - min_g ||s_next-g||^2 + 10 on success",
+  "temperature": 1.0,
+  "beta": 1.0,
+  "num_policy_samples": 64,
+  "proposals_per_policy_sample": 1,
+  "actor_hidden_dims": [
+    256,
+    256
+  ],
+  "critic_hidden_dims": [
+    256,
+    256
+  ],
+  "mean_output_init_scale": 0.0001,
+  "log_std_bounds": [
+    -5.0,
+    -1.0
+  ],
+  "initial_log_std": -1.0,
+  "gamma": 0.99,
+  "critic_tau": 0.005,
+  "dacer": false,
+  "noveld": false,
+  "evaluation": {
+    "interim_episodes": 40,
+    "final_episodes": 100,
+    "checkpoints": [
+      0,
+      1000,
+      2000,
+      5000,
+      10000
+    ],
+    "modes": [
+      "policy",
+      "mu_only"
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "host": "vast-heechan-199",
+  "source_commit": "7d1b9f2ee63ba959e66f3453f2587cdbd6d993a3",
+  "before": "9b733bad9d52ba73fad01f03521f18a211d21a1e",
+  "canonical": "/home/heechan/OptiQ-direct-gmm-trg-antmaze",
+  "frozen": "/home/heechan/OptiQ-ops/sources/7d1b9f2ee63ba959e66f3453f2587cdbd6d993a3",
+  "source_only": true,
+  "core9_unchanged": true,
+  "unit_tests": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.038s\n\nOK"
+}

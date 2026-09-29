@@ -1,0 +1,6 @@
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{gmm40_main_seed0.pdf}
+\caption{Ground-truth samples and outputs of SAC, SQL (SVGD), MFPO, DIPO, and iBOLT on the bounded GMM40 target. All learned models are shown after 100,000 actor updates using training seed 0. Each panel displays all 10,000 evaluation draws without filtering; identical contours show the ground-truth log density. Blue samples lie within $3\sigma$ of at least one ground-truth component center; red samples lie outside all such regions. iBOLT displays $\mu(s,z)$ for fresh $z\sim\mathcal{N}(0,I)$, with conditional Gaussian noise removed; the baselines retain their native generator outputs. All axes use the physical action coordinates. Aggregate results over four training seeds are reported separately in Table~\ref{tab:gmm40}.}
+\label{fig:gmm40}
+\end{figure*}

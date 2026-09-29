@@ -1,0 +1,380 @@
+commit ffdecd365267a841b7493aa933a47df67a54e02a
+Author:     quant-jason <jason02951234@gmail.com>
+AuthorDate: Sun Sep 20 15:47:19 2026 +0000
+Commit:     quant-jason <jason02951234@gmail.com>
+CommitDate: Sun Sep 20 15:47:19 2026 +0000
+
+    Restore explicit zero-z and stochastic evaluation metrics for next runs
+
+diff --git a/configs/mujoco_v5_direct_gmm_ant_fixed64.yaml b/configs/mujoco_v5_direct_gmm_ant_fixed64.yaml
+index 6cc0c60..4900c2f 100644
+--- a/configs/mujoco_v5_direct_gmm_ant_fixed64.yaml
++++ b/configs/mujoco_v5_direct_gmm_ant_fixed64.yaml
+@@ -12,12 +12,11 @@ alg:
+     num_policy_samples: 64
+     proposals_per_policy_sample: 1
+ 
+-# zero-z dual evaluation is restricted to continuous latent policies.
+-# Keep inherited stochastic-z, epsilon=0 evaluation over the actual finite prior.
+-dual_mu_eval: false
++# Paired actual zero-z diagnostic and fixed-codebook stochastic-z evaluation.
++dual_mu_eval: true
+ output_root: ../optiq-experiments/ant-direct-gmm-fixed64/outputs
+ run_name: ant-v5-direct-gmm-fixed64-N64-M64-T${alg.actor.temperature}-s${seed}
+ wandb:
+-  project: v5-direct-gmm
++  project: v5-heechan-gmm
+   group: Ant-v4_directGMM_fixed64_N64_M64_T0.25_defaultRL_20260920
+   job_type: ant-direct-gmm-fixed64
+diff --git a/configs/mujoco_v5_direct_gmm_humanoid_fixed64.yaml b/configs/mujoco_v5_direct_gmm_humanoid_fixed64.yaml
+index a58d31b..6446ec8 100644
+--- a/configs/mujoco_v5_direct_gmm_humanoid_fixed64.yaml
++++ b/configs/mujoco_v5_direct_gmm_humanoid_fixed64.yaml
+@@ -13,8 +13,8 @@ alg:
+     num_policy_samples: 64
+     proposals_per_policy_sample: 1
+ 
+-# Both modes use training's fixed codebook and epsilon=0.
+-# eval/mean_reward aliases stochastic_z for the actual finite mixture.
++# zero_z uses the literal zero vector; stochastic_z uses training's codebook.
++# Both use epsilon=0; eval/mean_reward aliases zero_z, matching other branches.
+ dual_mu_eval: true
+ output_root: ../optiq-experiments/humanoid-direct-gmm-fixed64/outputs
+ run_name: humanoid-v5-direct-gmm-fixed64-N64-M64-T${alg.actor.temperature}-s${seed}
+diff --git a/docs/v5_direct_gmm/EVALUATION_SCHEMA2_KO.md b/docs/v5_direct_gmm/EVALUATION_SCHEMA2_KO.md
+new file mode 100644
+index 0000000..2860de4
+--- /dev/null
++++ b/docs/v5_direct_gmm/EVALUATION_SCHEMA2_KO.md
+@@ -0,0 +1,32 @@
++# Evaluation schema 2: zero-z / stochastic-z 기록 복구
++
++## 비교한 브랜치
++
++- `v5`: `a5d5e281bcb10b5c31557073d95e03a1c5f2af4f`
++- `origin/v4`: `f73c96b4457bef12f921f3509b41a2694bf751d0`
++- `origin/v8`: `e08003e4ba52be76e0110d38f48bd9bf44d6eb83`
++- `origin/v9`: `703a61b671f27295b3de65ace7daab290565889f`
++- `origin/v5_bestk`: `5ac2be86a7b41d2eee728f7fe4438edb4062d306`
++
++위 브랜치의 paired evaluator는 실제 z=0과 stochastic-z를 분리하고 `eval/mean_reward`를 zero_z에 연결한다. 기존 fixed64 추가 커밋 9ce8120은 finite 정책의 zero-z를 codebook[0]인 fixed_z로 대체하고 기본 alias를 stochastic_z로 바꿨다. 이 둘은 같은 평가가 아니므로 다음 실행부터 의미를 복구한다.
++
++## 다음 실행의 계약
++
++- `eval/zero_z/mean_reward`: 실제 영벡터 z=0, epsilon=0. finite 정책에서는 학습 support 밖의 diagnostic임을 config metadata에 명시.
++- `eval/stochastic_z/mean_reward`: finite는 학습 codebook에서 균등 샘플, continuous는 기존 Gaussian prior. epsilon=0.
++- `eval/mean_reward` / `final_eval_return`: 다른 브랜치와 동일하게 zero_z alias.
++- 각 mode별 std_reward, best_mean_reward, mean/std_ep_length, num_episodes 및 최종 return/std/best summary를 기록.
++- 모드별 NPZ에 episode reward/length, environment seeds, policy seeds, evaluation timesteps 보존.
++- 환경 reset seed를 mode 간 짝지으며 평가 RNG/zero-latent flag/mu-only flag는 성공 및 예외 시 복원.
++- W&B는 기존 직접 scalar writer로 두 모드를 같은 env_steps에 한 번에 기록. 평가와 학습이 같은 env step에 flush해도 W&B internal step은 따로 증가.
++- Ant/Humanoid fixed64 profile 모두 dual_mu_eval=true; W&B OptiQ/v5-heechan-gmm.
++
++## 현재 실험
++
++실행 중 Ant snapshot 25a6923 및 Humanoid snapshot 9ce8120, supervisor worker, W&B run에는 변경하지 않는다. 기존 fixed_z 기록을 zero_z로 재명명하지 않는다. 변경된 브랜치로 시작하는 다음 실험에만 schema_version=2가 적용된다.
++
++## 검증
++
++Identity-mu finite actor로 literal zero action과 codebook[0] action을 구별하고 stochastic action의 support를 확인한다. 실제 Ant 짧은 CPU integration에서 두 mode의 per-episode 결과, paired seeds, CSV/W&B payload의 동일 env_steps, mode별 best 통계, 예외 후 RNG/flag 복원을 검사한다. 기존 v4/v5/Direct GMM 회귀도 함께 실행한다.
++
++검증 결과: CPU에서 `tests/test_finite_dual_evaluation.py tests/test_v4.py tests/test_v5.py tests/test_direct_gmm.py` 38 passed, 13 dependency deprecation warnings, 55.24초. GPU 실험 worker를 중단/재시작하지 않고 검증했다.
+diff --git a/experiments/ant_direct_gmm_fixed64/PROTOCOL.md b/experiments/ant_direct_gmm_fixed64/PROTOCOL.md
+index e873f22..2f2abd5 100644
+--- a/experiments/ant_direct_gmm_fixed64/PROTOCOL.md
++++ b/experiments/ant_direct_gmm_fixed64/PROTOCOL.md
+@@ -1,6 +1,8 @@
+ # Ant-v4 v5 Direct GMM fixed64 N64/M64 campaign
+ User-requested four seeds0,1,2,3, actor/critic256x256, T.25, fixed latent64,64 teacher candidates/state. Inherit all other RL training defaults from mujoco_v5_direct_gmm (v5_direct_gmm/final): replay batch256, UTD1, policy delay1, actor/critic Adam3e-4, gamma.99, target tau.005, no clipping, warmup5000, replay capacity1M, no entropy TD/no guard/no annealing/no uniform replacement. Run1M environment steps/seed; no performance stopping. Mean-output initialization remains default1e-4 (not toy init1); sigma initial.5.
+ Fixed latent is existing FiniteMixtureTrainState with64 normalized Gaussian codes, canonical codebook seed20260911, shared across training seeds. This fixes codebook across all states/updates; actor still conditions on state. Use all64 components for teacher/student NLL and uniform component draws for collection/TD. N64, proposals_per_policy_sample1 => M64 IID teacher candidates; not one mandatory candidate per component. Exact finite proposal correction with beta1 and original direct_gmm_nll; no OT.
+-Evaluation compatibility: existing dual_mu_eval rejects finite prior because zero-z is outside its support. Disable that continuous-only dual evaluator; retain inherited stochastic_eval=true,mu_only_eval=true,10 episodes every5000 steps startingstep1, existing finite-policy-aware MujocoEvalCallback. Report this explicit evaluation difference. Checkpoints every50000. Training algorithm code unchanged.
+-Use existing JAX/MuJoCo environment and user-level supervisor with per-GPU locks. Independent seeds eligible together, one per5090 GPU. Fresh source snapshot/output/W&B IDs. W&B OptiQ/v5-direct-gmm group Ant-v4_directGMM_fixed64_N64_M64_T0.25_defaultRL_20260920.
++Evaluation schema2 for new runs: paired literal zero_z diagnostic and stochastic_z from the actual fixed training codebook, epsilon=0 for both, 10 episodes per mode every5000 startingstep1. Separate eval/zero_z and eval/stochastic_z metrics; legacy eval/mean_reward aliases zero_z. Isolate evaluation RNG and pair environment reset seeds. Checkpoints every50000.
++Use existing JAX/MuJoCo environment and user-level supervisor with per-GPU locks. Independent seeds eligible together, one per5090 GPU. Fresh source snapshot/output/W&B IDs. W&B OptiQ/v5-heechan-gmm.
+ Commit code/config/launcher/protocol before training, record fullSHA and resolved config for everyseed. Preflight validates inherited fields and actual finite Direct GMM Ant updates, no Sinkhorn, codebook unchanged, checkpoint serialization. Preflight shortened warmup/buffer/horizon are validation-only and never campaign overrides.
++
++Next runs use paired literal zero_z and same-codebook stochastic_z mu-only evaluations (schema2), recorded separately in W&B OptiQ/v5-heechan-gmm. The 20260920T150159Z frozen snapshot retains its original single stochastic evaluation.
+diff --git a/experiments/humanoid_direct_gmm_fixed64/PROTOCOL.md b/experiments/humanoid_direct_gmm_fixed64/PROTOCOL.md
+index 2464269..5f64557 100644
+--- a/experiments/humanoid_direct_gmm_fixed64/PROTOCOL.md
++++ b/experiments/humanoid_direct_gmm_fixed64/PROTOCOL.md
+@@ -2,6 +2,8 @@
+ 
+ Humanoid-v4; seeds 0-3; 1M environment steps each; no early stopping. v5 Direct GMM NLL, T=0.1, N=M=64, fixed latent codebook seed20260911 (64x17). Preserve RL defaults: actor/critic256x2, batch256, UTD1, Adam3e-4, mean initialization1e-4, warmup5000, plainTD.
+ 
+-Paired mu-only evaluation retains the v5 independent policy RNG and paired environment seeds: fixed_z is codebook[0], stochastic_z uniformly draws from the SAME training codebook per action. No newly sampled Gaussian latent support; epsilon=0 in both modes. For finite policies eval/mean_reward and final_eval_return alias stochastic_z. Continuous policies preserve zero_z/stochastic_z and zero_z alias unchanged.
++Paired mu-only evaluation retains the v5 independent policy RNG and paired environment seeds: zero_z is the literal zero vector (out-of-support diagnostic), stochastic_z uniformly draws from the SAME training codebook per action. No newly sampled Gaussian latent support for stochastic_z; epsilon=0 in both modes. eval/mean_reward and final_eval_return alias zero_z consistently across priors. Continuous policies preserve zero_z/stochastic_z and zero_z alias unchanged.
+ 
+ Commit code/config/protocol before launch. Launch from frozen clean source on vast-heechan-180 GPU0-3 with supervisor and GPU locks. Fresh output paths/IDs; W&B OptiQ/v5-heechan-gmm explicitly. Existing Ant workers/frozen source remain unchanged.
++
++Evaluation schema2 applies only to new runs. The 20260920T153146Z snapshot (9ce8120) remains schema1 with fixed_z/stochastic_z; never relabel its fixed_z as zero_z.
+diff --git a/experiments/humanoid_direct_gmm_fixed64/preflight.py b/experiments/humanoid_direct_gmm_fixed64/preflight.py
+index 78fbf7a..f983fca 100644
+--- a/experiments/humanoid_direct_gmm_fixed64/preflight.py
++++ b/experiments/humanoid_direct_gmm_fixed64/preflight.py
+@@ -49,14 +49,14 @@ try:
+  for head in ['mu','log_std']:assert not np.array_equal(before[head]['kernel'],state.params[head]['kernel'])
+  restored=serialization.from_bytes(state,serialization.to_bytes(state));np.testing.assert_array_equal(finite_latent_codes(restored,17),codes)
+  assert cb.evaluations_timesteps==[1,4,8] and np.isfinite(cb.evaluations_results).all()
+- assert cb.MODES == ('fixed_z','stochastic_z') and cb.primary_mode == 'stochastic_z'
+- assert cb.evaluations_results is cb.histories['stochastic_z']['results']
+- np.testing.assert_array_equal(cb.histories['fixed_z']['env_seeds'],cb.histories['stochastic_z']['env_seeds'])
+- np.testing.assert_array_equal(cb.histories['fixed_z']['policy_seeds'],cb.histories['stochastic_z']['policy_seeds'])
++ assert cb.MODES == ('zero_z','stochastic_z') and cb.primary_mode == 'zero_z'
++ assert cb.evaluations_results is cb.histories['zero_z']['results']
++ np.testing.assert_array_equal(cb.histories['zero_z']['env_seeds'],cb.histories['stochastic_z']['env_seeds'])
++ np.testing.assert_array_equal(cb.histories['zero_z']['policy_seeds'],cb.histories['stochastic_z']['policy_seeds'])
+  key,noise=model.policy.key,model.policy.noise_key
+  cb.n_calls=12;cb.num_timesteps=12;cb._on_step()
+  np.testing.assert_array_equal(model.policy.key,key);np.testing.assert_array_equal(model.policy.noise_key,noise)
+- assert not model.policy.evaluation_mu_only
++ assert not model.policy.evaluation_mu_only and not model.policy.evaluation_zero_latent
+  import optiq_dime.dual_evaluation as de
+  original_evaluate=de.evaluate_policy
+  def fail(*args,**kwargs):raise RuntimeError('intentional eval failure')
+@@ -67,8 +67,8 @@ try:
+   else:raise AssertionError('failure not propagated')
+  finally:de.evaluate_policy=original_evaluate
+  np.testing.assert_array_equal(model.policy.key,key);np.testing.assert_array_equal(model.policy.noise_key,noise)
+- assert not model.policy.evaluation_mu_only
+- result=dict(status='PASS',env='Humanoid-v4',batch=256,n=64,m=64,utd=1,actor_updates=6,critic_updates=model._n_updates,fixed_codebook_shape=list(codes.shape),no_sinkhorn=True,finite_evaluations=True,paired_fixed_stochastic=True,evaluation_rng_restored=True,training_defaults_preserved=True)
++ assert not model.policy.evaluation_mu_only and not model.policy.evaluation_zero_latent
++ result=dict(status='PASS',env='Humanoid-v4',batch=256,n=64,m=64,utd=1,actor_updates=6,critic_updates=model._n_updates,fixed_codebook_shape=list(codes.shape),no_sinkhorn=True,finite_evaluations=True,paired_zero_stochastic=True,evaluation_rng_restored=True,training_defaults_preserved=True)
+  (out/'result.json').write_text(json.dumps(result,indent=2));print(json.dumps(result),flush=True)
+ finally:
+  cb.eval_env.close();model.get_env().close();model.logger.close()
+diff --git a/optiq_dime/dual_evaluation.py b/optiq_dime/dual_evaluation.py
+index 01c592c..47f64d1 100644
+--- a/optiq_dime/dual_evaluation.py
++++ b/optiq_dime/dual_evaluation.py
+@@ -10,14 +10,15 @@ from .evaluation import MujocoEvalCallback
+ def dual_mu_evaluation_spec(cfg):
+     """Describe the same latent support used by training and action sampling."""
+     finite = cfg.alg.actor.get("latent_prior", "normal") == "finite"
+-    deterministic_mode = "fixed_z" if finite else "zero_z"
++    deterministic_mode = "zero_z"
+     spec = {
+-        deterministic_mode: ("z=training_codebook[0]; a=tanh(mu(s,z)); epsilon=0" if finite
+-                             else "a=tanh(mu(s,0)); epsilon=0"),
++        deterministic_mode: "z=0 vector; a=tanh(mu(s,0)); epsilon=0",
+         "stochastic_z": ("uniform choice from the same fixed training codebook per action; a=tanh(mu(s,z)); epsilon=0" if finite
+                          else "z~N(0,I) per action; a=tanh(mu(s,z)); epsilon=0"),
+         "episodes_per_mode": int(cfg.num_eval_episodes),
+-        "legacy_eval_alias": "stochastic_z" if finite else "zero_z",
++        "legacy_eval_alias": "zero_z",
++        "schema_version": 2,
++        "zero_z_role": "out-of-support diagnostic" if finite else "zero-latent diagnostic",
+         "paired_episode_reset_seeds": True,
+         "rng_isolated_from_collection": True,
+     }
+@@ -31,9 +32,9 @@ class DualMuEvalCallback(MujocoEvalCallback):
+     """Both modes use epsilon=0; each episode receives a paired reset seed.
+ 
+     Evaluation RNG is independent of collection and restored even on failure.
+-    For finite policies stochastic-z samples the training codebook; fixed-z uses
+-    its first component. The legacy reward aliases stochastic-z for finite
+-    policies and zero-z for continuous policies.
++    For finite policies stochastic-z samples the training codebook; zero-z is
++    the literal zero vector (an out-of-support diagnostic). Legacy reward
++    aliases zero-z for both finite and continuous policies.
+     """
+ 
+     MODES = ("zero_z", "stochastic_z")
+@@ -45,6 +46,7 @@ class DualMuEvalCallback(MujocoEvalCallback):
+         self.deterministic_mode, self.evaluation_spec = dual_mu_evaluation_spec(cfg)
+         self.MODES = (self.deterministic_mode, "stochastic_z")
+         self.primary_mode = self.evaluation_spec["legacy_eval_alias"]
++        self.best_rewards = {mode: -np.inf for mode in self.MODES}
+         self.training_seed = int(cfg.seed)
+         self.histories = {mode: {key: [] for key in
+             ("results", "ep_lengths", "env_seeds", "policy_seeds", "successes", "solved_steps")}
+@@ -58,6 +60,7 @@ class DualMuEvalCallback(MujocoEvalCallback):
+         policy = self.model.policy
+         old_key, old_noise_key = policy.key, policy.noise_key
+         old_mu_only = getattr(policy, "evaluation_mu_only", False)
++        old_zero_latent = getattr(policy, "evaluation_zero_latent", False)
+         rng = np.random.default_rng(np.random.SeedSequence([
+             self.training_seed, self.num_timesteps, 4404]))
+         env_seeds = rng.integers(0, 2**30, self.n_eval_episodes)
+@@ -66,6 +69,7 @@ class DualMuEvalCallback(MujocoEvalCallback):
+         try:
+             policy.evaluation_mu_only = True
+             for mode in self.MODES:
++                policy.evaluation_zero_latent = mode == "zero_z"
+                 rewards, lengths, successes, solved_steps = [], [], [], []
+                 for env_seed, policy_seed in zip(env_seeds, policy_seeds):
+                     self.eval_env.seed(int(env_seed))
+@@ -91,6 +95,7 @@ class DualMuEvalCallback(MujocoEvalCallback):
+         finally:
+             policy.key, policy.noise_key = old_key, old_noise_key
+             policy.evaluation_mu_only = old_mu_only
++            policy.evaluation_zero_latent = old_zero_latent
+ 
+         self.evaluations_timesteps.append(self.num_timesteps)
+         for mode, result in current.items():
+@@ -98,6 +103,10 @@ class DualMuEvalCallback(MujocoEvalCallback):
+             for key, value in result.items():
+                 history[key].append(value)
+             prefix = f"eval/{mode}"
++            self.best_rewards[mode] = max(self.best_rewards[mode], float(np.mean(result["results"])))
++            self.logger.record(f"{prefix}/best_mean_reward", self.best_rewards[mode])
++            self.logger.record(f"{prefix}/num_episodes", len(result["results"]))
++            self.logger.record(f"{prefix}/std_ep_length", float(np.std(result["ep_lengths"])))
+             self.logger.record(f"{prefix}/mean_reward", float(np.mean(result["results"])))
+             self.logger.record(f"{prefix}/std_reward", float(np.std(result["results"])))
+             self.logger.record(f"{prefix}/mean_ep_length", float(np.mean(result["ep_lengths"])))
+diff --git a/optiq_dime/policy.py b/optiq_dime/policy.py
+index ca579fe..7c758a8 100644
+--- a/optiq_dime/policy.py
++++ b/optiq_dime/policy.py
+@@ -185,18 +185,22 @@ class OptiQPolicy(BaseJaxPolicy):
+         return key
+ 
+     @staticmethod
+-    @partial(jax.jit, static_argnames=["deterministic", "sample_conditional_noise"])
++    @partial(jax.jit, static_argnames=["deterministic", "sample_conditional_noise", "evaluation_zero_latent"])
+     def sample_action(
+         actor_state,
+         observations,
+         key,
+         deterministic=False,
+         sample_conditional_noise=True,
++        evaluation_zero_latent=False,
+     ):
+         if "mu" in actor_state.params:
+             latent_key, noise_key = jax.random.split(key)
+             shape = (observations.shape[0], actor_state.params["mu"]["bias"].shape[0])
+-            if deterministic and isinstance(actor_state, FiniteMixtureTrainState):
++            if evaluation_zero_latent:
++                # Explicit z=0 diagnostic, even when zero is outside finite support.
++                z = jnp.zeros(shape, dtype=observations.dtype)
++            elif deterministic and isinstance(actor_state, FiniteMixtureTrainState):
+                 # A reproducible component mean; stochastic evaluation is default.
+                 z = jnp.broadcast_to(finite_latent_codes(actor_state, shape[-1], observations.dtype)[0], shape)
+             else:
+@@ -233,6 +237,7 @@ class OptiQPolicy(BaseJaxPolicy):
+             sample_conditional_noise=not bool(
+                 getattr(self, "evaluation_mu_only", False)
+             ),
++            evaluation_zero_latent=bool(getattr(self, "evaluation_zero_latent", False)),
+         )[0]
+ 
+     def reset_noise(self, batch_size: int = 1) -> None:
+diff --git a/run_optiq_dime.py b/run_optiq_dime.py
+index f180ef8..9d03d44 100644
+--- a/run_optiq_dime.py
++++ b/run_optiq_dime.py
+@@ -9,6 +9,7 @@ import uuid
+ 
+ import hydra
+ import jax
++import numpy as np
+ import omegaconf
+ import wandb
+ from omegaconf import DictConfig
+@@ -387,6 +388,8 @@ def initialize_and_run(cfg: DictConfig):
+                 for mode, history in evaluation.histories.items():
+                     values = history["results"][-1]
+                     run.summary[f"final_eval_return_{mode}"] = float(sum(values) / len(values))
++                    run.summary[f"final_eval_std_{mode}"] = float(np.std(values))
++                    run.summary[f"best_eval_return_{mode}"] = evaluation.best_rewards[mode]
+             artifact = wandb.Artifact(f"optiq-{run.id}", type="experiment")
+             artifact.add_file(str(Path(cfg.output_root) / "config.json"))
+             artifact.add_dir(str(evaluation.directory), name="evaluation")
+diff --git a/tests/test_finite_dual_evaluation.py b/tests/test_finite_dual_evaluation.py
+index 3f64ef6..8c9ee94 100644
+--- a/tests/test_finite_dual_evaluation.py
++++ b/tests/test_finite_dual_evaluation.py
+@@ -30,6 +30,9 @@ def test_stochastic_finite_evaluation_uses_training_codes():
+     assert not np.array_equal(action,other)
+     fixed=np.asarray(OptiQPolicy.sample_action(state,obs,key,True,False))
+     np.testing.assert_allclose(fixed,np.broadcast_to(support[0],fixed.shape),atol=1e-6)
++    zero=np.asarray(OptiQPolicy.sample_action(state,obs,key,True,False,True))
++    np.testing.assert_array_equal(zero,np.zeros_like(zero))
++    assert not np.allclose(zero,fixed)  # codebook[0] must never be relabeled z0
+ 
+ 
+ def test_finite_and_continuous_evaluation_specs():
+@@ -39,9 +42,81 @@ def test_finite_and_continuous_evaluation_specs():
+         continuous=compose(config_name='mujoco_v5_direct_gmm',overrides=['benchmark=humanoid'])
+     validate_config(finite);validate_config(continuous)
+     mode,spec=dual_mu_evaluation_spec(finite)
+-    assert mode=='fixed_z' and spec['legacy_eval_alias']=='stochastic_z'
++    assert mode=='zero_z' and spec['legacy_eval_alias']=='zero_z'
++    assert spec['zero_z_role']=='out-of-support diagnostic' and spec['schema_version']==2
+     assert spec['latent_components']==64 and spec['latent_codebook_seed']==20260911
+     assert 'same fixed training codebook' in spec['stochastic_z']
+     mode,spec=dual_mu_evaluation_spec(continuous)
+     assert mode=='zero_z' and spec['legacy_eval_alias']=='zero_z'
+     assert 'z~N(0,I)' in spec['stochastic_z']
++
++
++def test_real_finite_eval_records_both_modes_and_restores_flags(tmp_path, monkeypatch):
++    import copy
++    import pytest
++    from stable_baselines3.common.logger import configure
++    from run_optiq_dime import create_algorithm
++    from optiq_dime.runtime import WandbWriter
++    import optiq_dime.dual_evaluation as evaluation
++
++    root=Path(__file__).resolve().parents[1]
++    with initialize_config_dir(config_dir=str(root/'configs'),version_base=None):
++        cfg=compose(config_name='mujoco_v5_direct_gmm_ant_fixed64',overrides=[
++            f'output_root={tmp_path}', 'alg.batch_size=4','alg.buffer_size=32',
++            'alg.learning_starts=2','alg.actor.learning_starts=2',
++            'alg.actor.hidden_dims=[16,16]','alg.critic.hs=[16,16]',
++            'num_eval_episodes=2','eval_interval=4','checkpoint_interval=4','diagnostic_interval=4'])
++    validate_config(cfg)
++    model,callbacks=create_algorithm(cfg);cb=callbacks.callbacks[0]
++    class RecordingRun:
++        def __init__(self):self.rows=[]
++        def log(self,row):self.rows.append(dict(row))
++    run=RecordingRun()
++    model.set_logger(configure(str(tmp_path/'logs'),['csv']))
++    model.logger.output_formats.append(WandbWriter(run))
++    cb.eval_env.envs[0].env._max_episode_steps=2
++    observed=[]
++    original=evaluation.evaluate_policy
++    def inspect_eval(*args,**kwargs):
++        zero=kwargs['deterministic']
++        assert model.policy.evaluation_zero_latent == zero
++        assert model.policy.evaluation_mu_only
++        observed.append(zero)
++        return original(*args,**kwargs)
++    monkeypatch.setattr(evaluation,'evaluate_policy',inspect_eval)
++    try:
++        model.learn(total_timesteps=8,callback=callbacks)
++        assert model._n_updates==6
++        assert observed==[True,True,False,False]*3
++        assert not model.policy.evaluation_zero_latent and not model.policy.evaluation_mu_only
++        rows=[row for row in run.rows if 'eval/zero_z/mean_reward' in row]
++        assert [row['env_steps'] for row in rows]==[1,4,8]
++        for i,row in enumerate(rows):
++            assert row['eval/mean_reward']==row['eval/zero_z/mean_reward']
++            assert not any('fixed_z' in key for key in row)
++            for mode in ('zero_z','stochastic_z'):
++                assert row[f'eval/{mode}/num_episodes']==2
++                assert row[f'eval/{mode}/std_reward']>=0
++                assert row[f'eval/{mode}/std_ep_length']>=0
++                assert row[f'eval/{mode}/best_mean_reward']==max(x[f'eval/{mode}/mean_reward'] for x in rows[:i+1])
++        for mode in cb.MODES:
++            saved=np.load(cb.directory/f'evaluations_{mode}.npz')
++            np.testing.assert_array_equal(saved['timesteps'],[1,4,8])
++            assert saved['results'].shape==(3,2)
++        for key in ('env_seeds','policy_seeds'):
++            np.testing.assert_array_equal(cb.histories['zero_z'][key],cb.histories['stochastic_z'][key])
++        key,noise=model.policy.key,model.policy.noise_key
++        behavior=copy.deepcopy(model.behavior_rng.bit_generator.state)
++        # Restore pre-existing flags as well as RNG when either mode raises.
++        model.policy.evaluation_zero_latent=True
++        model.policy.evaluation_mu_only=True
++        def fail(*args,**kwargs):raise RuntimeError('intentional eval failure')
++        monkeypatch.setattr(evaluation,'evaluate_policy',fail)
++        cb.n_calls=12;cb.num_timesteps=12
++        with pytest.raises(RuntimeError,match='intentional'):cb._on_step()
++        np.testing.assert_array_equal(model.policy.key,key)
++        np.testing.assert_array_equal(model.policy.noise_key,noise)
++        assert model.policy.evaluation_zero_latent and model.policy.evaluation_mu_only
++        assert model.behavior_rng.bit_generator.state==behavior
++    finally:
++        cb.eval_env.close();model.get_env().close();model.logger.close()

@@ -1,0 +1,14 @@
+{
+  "training_source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "launch_plan_commit": "f5a6f6e4f178572976a0404f2d5c3fa5ddc80896",
+  "scheduler_guard_commit": "dac86fe09a66cc0c3c30d4eb24fda302602d5c27",
+  "predecessor": "paper-pointmaze-seven-20260926",
+  "predecessor_started_jobs": 0,
+  "host": "180",
+  "services": [
+    "paper-pointmaze-seven-t3-20260926-180-gpu0",
+    "paper-pointmaze-seven-t3-20260926-180-gpu1",
+    "paper-pointmaze-seven-t3-20260926-180-gpu2",
+    "paper-pointmaze-seven-t3-20260926-180-gpu3"
+  ]
+}

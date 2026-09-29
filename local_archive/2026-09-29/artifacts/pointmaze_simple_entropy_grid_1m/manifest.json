@@ -1,0 +1,69 @@
+{
+  "plan": {
+    "campaign": "pointmaze-simple-entropy-grid-1m-20260926",
+    "control_campaign": "maze-deadline-1m-20260926",
+    "control_source": "a55aaf13f7803b5cf8da7ba56f318675c7794171",
+    "seed": 0,
+    "new_jobs": 6,
+    "jobs": [
+      {
+        "name": "pm_simple-mfpo-h0-s0",
+        "task": "pm_simple",
+        "method": "mfpo",
+        "temperature": 3.0,
+        "mfpo_target_entropy_per_dim": 0.0,
+        "entropy_diagnostics": true,
+        "host": "vast-heechan-46"
+      },
+      {
+        "name": "pm_simple-mfpo-h025-s0",
+        "task": "pm_simple",
+        "method": "mfpo",
+        "temperature": 3.0,
+        "mfpo_target_entropy_per_dim": 0.25,
+        "entropy_diagnostics": true,
+        "host": "vast-heechan-46"
+      },
+      {
+        "name": "pm_simple-mfpo-h05-s0",
+        "task": "pm_simple",
+        "method": "mfpo",
+        "temperature": 3.0,
+        "mfpo_target_entropy_per_dim": 0.5,
+        "entropy_diagnostics": true,
+        "host": "vast-heechan-46"
+      },
+      {
+        "name": "pm_simple-meow-alpha1-s0",
+        "task": "pm_simple",
+        "method": "meow",
+        "temperature": 3.0,
+        "meow_alpha": 1.0,
+        "entropy_diagnostics": true,
+        "host": "vast-heechan-46"
+      },
+      {
+        "name": "pm_simple-meow-alpha3-s0",
+        "task": "pm_simple",
+        "method": "meow",
+        "temperature": 3.0,
+        "meow_alpha": 3.0,
+        "entropy_diagnostics": true,
+        "host": "vast-heechan-46"
+      },
+      {
+        "name": "pm_simple-meow-alpha10-s0",
+        "task": "pm_simple",
+        "method": "meow",
+        "temperature": 3.0,
+        "meow_alpha": 10.0,
+        "entropy_diagnostics": true,
+        "host": "vast-heechan-46"
+      }
+    ]
+  },
+  "source_commit": "caf133d3ed4bdc8e4f48c029e75ed8f6450144ac",
+  "source": "/home/heechan/OptiQ-ops/sources/caf133d3ed4bdc8e4f48c029e75ed8f6450144ac",
+  "controller_source": "/home/heechan/OptiQ-ops/sources/caf133d3ed4bdc8e4f48c029e75ed8f6450144ac",
+  "host": "vast-heechan-46"
+}

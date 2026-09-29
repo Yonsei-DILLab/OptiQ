@@ -1,0 +1,133 @@
+{
+  "runs": {
+    "4way-optiq-t1-s0": {
+      "checkpoint": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/maze_deadline_1m_20260926/runs/4way-optiq-t1-s0/checkpoints/policy_001000192.msgpack",
+      "checkpoint_sha256": "2a02760f5871a99ccac64ac4748597d512e92d9933cbc89462aaf4d4ca7004de",
+      "training_source": "a55aaf13f7803b5cf8da7ba56f318675c7794171",
+      "frozen_network_ast_sha256": {
+        "models/utils.py": "166f7e5794a087c4099da7bae773cf936d97c285a45e5e0612fc8b090ce4c747",
+        "models/critic.py": "e5ec7325d7d5e8062325432d29a5393eb1e191d2480580859aaf5bcf8f290e4e",
+        "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/policy.py": "072d7d0c9377662f6a9accffe2d75902c24c64710c121845e2974870e84cfe49"
+      },
+      "restored_probe_max_abs_error": 0.07466888427734375,
+      "restored_probe_rmse": 0.011653018184006214,
+      "restored_probe_q_range": 166.97381591796875,
+      "dense_grid": 101,
+      "normal_latent_samples": 128,
+      "latent_seed": 271828,
+      "learner_updates": 0,
+      "q_definition": "E_z [(Q1(s,mu(s,z))+Q2(s,mu(s,z)))/2]",
+      "conditional_sigma": false,
+      "common_random_numbers": true,
+      "spatial_smoothing": false,
+      "training_steps": 1000192,
+      "actor_updates": 62000,
+      "batch_size": 4096,
+      "output_sha256": "ad6efb25da2a0aae49dbf4d3860f494727a14ed9629ac638c57e89153cd1b40c",
+      "rollout_sha256": "d74428aad8a1b3eb06157e0ca0a5191380c7619cb3fdf8a4e8a133149e1a59f2",
+      "episodes": 1024,
+      "shown_trajectories": 32,
+      "goal_counts": [
+        367,
+        324,
+        333,
+        0
+      ],
+      "failures": 0
+    },
+    "8way-optiq-t1-s0": {
+      "checkpoint": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/maze_deadline_1m_20260926/runs/8way-optiq-t1-s0/checkpoints/policy_001000000.msgpack",
+      "checkpoint_sha256": "51847f77e5af46ba20b6ab92609c61f591f5c81df39c4452609cad182a792153",
+      "training_source": "973eca4a432cf027a5c725a372aafb86b9ed6c83",
+      "frozen_network_ast_sha256": {
+        "models/utils.py": "166f7e5794a087c4099da7bae773cf936d97c285a45e5e0612fc8b090ce4c747",
+        "models/critic.py": "e5ec7325d7d5e8062325432d29a5393eb1e191d2480580859aaf5bcf8f290e4e",
+        "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/policy.py": "072d7d0c9377662f6a9accffe2d75902c24c64710c121845e2974870e84cfe49"
+      },
+      "restored_probe_max_abs_error": 0.0800933837890625,
+      "restored_probe_rmse": 0.013698146678507328,
+      "restored_probe_q_range": 198.42782592773438,
+      "dense_grid": 101,
+      "normal_latent_samples": 128,
+      "latent_seed": 271828,
+      "learner_updates": 0,
+      "q_definition": "E_z [(Q1(s,mu(s,z))+Q2(s,mu(s,z)))/2]",
+      "conditional_sigma": false,
+      "common_random_numbers": true,
+      "spatial_smoothing": false,
+      "training_steps": 1000000,
+      "actor_updates": 998976,
+      "batch_size": 256,
+      "output_sha256": "d0a5f73731ddf8ce2e744946656b66e10bce1270dd6f60a4e9a1f4c4f765fc73",
+      "rollout_sha256": "adcd69d75b2f89f68359bcde866b931d7a90cd9ee3ada1975316df654f1ab598",
+      "episodes": 1024,
+      "shown_trajectories": 32,
+      "goal_counts": [
+        142,
+        333,
+        139,
+        0,
+        215,
+        195,
+        0,
+        0
+      ],
+      "failures": 0
+    },
+    "16way-optiq-t1-s0": {
+      "checkpoint": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/maze_deadline_1m_20260926/runs/16way-optiq-t1-s0/checkpoints/policy_001000000.msgpack",
+      "checkpoint_sha256": "cc03f48c4e1f016cebb29010d41c4f97fb29cdc3e7e4553a57f50a0c89b17e90",
+      "training_source": "973eca4a432cf027a5c725a372aafb86b9ed6c83",
+      "frozen_network_ast_sha256": {
+        "models/utils.py": "166f7e5794a087c4099da7bae773cf936d97c285a45e5e0612fc8b090ce4c747",
+        "models/critic.py": "e5ec7325d7d5e8062325432d29a5393eb1e191d2480580859aaf5bcf8f290e4e",
+        "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/policy.py": "072d7d0c9377662f6a9accffe2d75902c24c64710c121845e2974870e84cfe49"
+      },
+      "restored_probe_max_abs_error": 0.11083841323852539,
+      "restored_probe_rmse": 0.010722818784415722,
+      "restored_probe_q_range": 210.39242553710938,
+      "dense_grid": 101,
+      "normal_latent_samples": 128,
+      "latent_seed": 271828,
+      "learner_updates": 0,
+      "q_definition": "E_z [(Q1(s,mu(s,z))+Q2(s,mu(s,z)))/2]",
+      "conditional_sigma": false,
+      "common_random_numbers": true,
+      "spatial_smoothing": false,
+      "training_steps": 1000000,
+      "actor_updates": 998976,
+      "batch_size": 256,
+      "output_sha256": "fd377c194da40148085e5f3dbec4bca6c506f23f0b1aecfc3e9dceefb2221002",
+      "rollout_sha256": "f74553e30f1585d9f8a360b04fc0d7970eb197a301eb2b131052726fe20a18b5",
+      "episodes": 1024,
+      "shown_trajectories": 32,
+      "goal_counts": [
+        201,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        298,
+        0,
+        0,
+        0,
+        0,
+        300,
+        225
+      ],
+      "failures": 0
+    }
+  },
+  "reporting_source": "2b4f8bd5bb2d7886dda7a4812887680d9a84b980",
+  "scope": "Read-only final-checkpoint inference; no retraining, no checkpoint mutation",
+  "caveat": "4-Way has 62000 updates; 8/16-Way have 998976. These are existing T1 results, not a matched-training-budget comparison.",
+  "reference_contours": "exp(-nearest_goal_distance_squared/(2*1.35^2)); illustrative goal-proximity, not reward or learned density",
+  "outputs": {
+    "png": "ea412321eb408f09af022c106fa90db8f46275682e08be01df3ab8379b85f4aa",
+    "svg": "db59621de4336bdc9598a05728fd6432960b8bf791ee63af6803379155e6e681"
+  }
+}

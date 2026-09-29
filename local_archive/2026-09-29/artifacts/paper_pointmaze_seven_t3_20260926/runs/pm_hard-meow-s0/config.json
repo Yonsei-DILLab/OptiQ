@@ -1,0 +1,70 @@
+{
+  "task": "pm_hard",
+  "method": "meow",
+  "output": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-final-180-gpu0-20260926/runs/pm_hard-meow-s0",
+  "seed": 0,
+  "steps": 300032,
+  "num_envs": 256,
+  "updates_per_collect": 16,
+  "batch_size": 4096,
+  "warmup": 8192,
+  "eval_every": 60000,
+  "eval_episodes": 200,
+  "final_eval_episodes": 500,
+  "render_each_eval": true,
+  "temperature": 1.0,
+  "source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "agent": {
+    "algorithm": "MEOW CleanRL flow Q regression",
+    "upstream_commit": "b786d27aa9b03e4242ee8904ff884b21fe65e2f7",
+    "alpha": 0.2,
+    "sigma_min": -5.0,
+    "sigma_max": -0.3,
+    "q_lr": 0.001,
+    "tau": 0.005,
+    "grad_clip": 30,
+    "evaluation_policy": "direct flow sample"
+  },
+  "task_mode": "original DrAC multi-goal PointMaze sparse +100",
+  "geometry": {
+    "goal_positions": [
+      [
+        -2.0,
+        6.0
+      ],
+      [
+        2.0,
+        6.0
+      ],
+      [
+        -6.0,
+        2.0
+      ],
+      [
+        6.0,
+        2.0
+      ],
+      [
+        -6.0,
+        -2.0
+      ],
+      [
+        6.0,
+        -2.0
+      ],
+      [
+        -2.0,
+        -6.0
+      ],
+      [
+        2.0,
+        -6.0
+      ]
+    ],
+    "horizon": 600,
+    "reward": "100 on reaching any goal, 0 otherwise",
+    "obstacle": "original upstream latent wall cells enabled at evaluation only",
+    "removal": "half goals removed, five-trial expected success"
+  },
+  "utd": 0.0625
+}

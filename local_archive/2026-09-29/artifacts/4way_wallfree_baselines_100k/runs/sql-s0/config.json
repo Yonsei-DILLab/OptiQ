@@ -1,0 +1,18 @@
+{
+  "task": "4way",
+  "method": "sql",
+  "output": "/home/heechan/optiq-experiments/4way-wallfree-baselines-100k-20260926/runs/sql-s0",
+  "seed": 0,
+  "steps": 100000,
+  "num_envs": 16,
+  "updates_per_collect": 16,
+  "batch_size": 256,
+  "warmup": 1024,
+  "eval_every": 20000,
+  "eval_episodes": 100,
+  "temperature": 1.0,
+  "source_commit": "67469caf8641222f9458b9a871b6e46e78e94a5d",
+  "agent": "SQLConfig(hidden_dims=(256, 256), learning_rate=0.0003, kernel_particles=16, kernel_update_ratio=0.5, value_particles=16, target_update_interval=1000, discount=0.99, reward_scale=1.0, temperature=1.0)",
+  "task_mode": "existing wall-free symmetric four-goal",
+  "utd": 1.0
+}

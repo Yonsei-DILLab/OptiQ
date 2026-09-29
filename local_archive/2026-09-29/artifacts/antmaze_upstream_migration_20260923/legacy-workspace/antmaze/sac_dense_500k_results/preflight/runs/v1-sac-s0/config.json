@@ -1,0 +1,178 @@
+{
+  "method": "sac",
+  "task": "v1",
+  "seed": 0,
+  "smoke": true,
+  "source_commit": "79766ba4856b6f4092e4d5277f62296d6194361c",
+  "source_root": "/home/heechan/OptiQ-ops/sources/79766ba4856b6f4092e4d5277f62296d6194361c",
+  "steps": 272,
+  "campaign": "preflight",
+  "warmup": 256,
+  "batch_size": 256,
+  "utd": 1,
+  "native": {
+    "policy": "MlpPolicy",
+    "learning_rate": 0.0003,
+    "buffer_size": 1000000,
+    "learning_starts": 5000,
+    "batch_size": 256,
+    "tau": 0.005,
+    "gamma": 0.99,
+    "train_freq": 1,
+    "gradient_steps": 1,
+    "ent_coef": "auto",
+    "policy_kwargs": {
+      "net_arch": [
+        256,
+        256
+      ],
+      "use_sde": false
+    },
+    "device": "cuda"
+  },
+  "environment": {
+    "task": "v1",
+    "map": [
+      [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        "g",
+        1,
+        "r",
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    ],
+    "scale": 4.0,
+    "walls": [
+      [
+        -12.0,
+        -8.0
+      ],
+      [
+        -8.0,
+        -8.0
+      ],
+      [
+        -4.0,
+        -8.0
+      ],
+      [
+        0.0,
+        -8.0
+      ],
+      [
+        4.0,
+        -8.0
+      ],
+      [
+        -12.0,
+        -4.0
+      ],
+      [
+        4.0,
+        -4.0
+      ],
+      [
+        -12.0,
+        0.0
+      ],
+      [
+        -4.0,
+        0.0
+      ],
+      [
+        4.0,
+        0.0
+      ],
+      [
+        -12.0,
+        4.0
+      ],
+      [
+        4.0,
+        4.0
+      ],
+      [
+        -12.0,
+        8.0
+      ],
+      [
+        -8.0,
+        8.0
+      ],
+      [
+        -4.0,
+        8.0
+      ],
+      [
+        0.0,
+        8.0
+      ],
+      [
+        4.0,
+        8.0
+      ]
+    ],
+    "goals": [
+      [
+        -8.0,
+        0.0
+      ]
+    ],
+    "start": [
+      0.0,
+      0.0
+    ],
+    "horizon": 500
+  },
+  "xml_sha256": "cfd330592e96d1ad41505d4eee60f155305d3964679e215892f524c8bb1a3336",
+  "observation": "qpos[:15]+qvel[:14], xy included, no specified-goal conditioning",
+  "reward": "-min distance to any goal; no success bonus/locomotion/control/survival rewards",
+  "reset": "v1 xy uniform[-2,2]^2; v3/v4 fixed origin; default robot pose and zero velocity",
+  "evaluation": "direct learned-policy sampling; no mean/best-of-K/external DACER noise",
+  "trajectory_episodes_per_reset_mode": 100,
+  "trajectory_reset_modes": [
+    "natural",
+    "fixed_full_simulator_state"
+  ],
+  "interval_eval_episodes": 10,
+  "eval_interval": 272,
+  "checkpoint_interval": 50000,
+  "packages": {
+    "mujoco": "3.3.7",
+    "gymnasium": "1.2.3",
+    "jax": "0.4.33",
+    "flax": "0.9.0",
+    "optax": "0.1.7",
+    "torch": "2.7.1+cu128",
+    "numpy": "1.26.4",
+    "wandb": "0.29.0"
+  }
+}

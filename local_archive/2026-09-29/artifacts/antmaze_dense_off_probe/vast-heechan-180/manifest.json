@@ -1,0 +1,54 @@
+{
+  "campaign": "antmaze-dense-noveld-off-probe-s0-20260923",
+  "stage": "probe",
+  "shard": 0,
+  "source": "/home/heechan/OptiQ-ops/sources/c3366d15428b0d5cc46af0f9458450e28ee00c58",
+  "source_commit": "c3366d15428b0d5cc46af0f9458450e28ee00c58",
+  "wandb_mode": "online",
+  "jobs": [
+    {
+      "id": "v1-dipo-s0",
+      "task": "v1",
+      "method": "dipo",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "steps": 328192,
+      "final_eval_episodes": 100
+    },
+    {
+      "id": "v3-dipo-s0",
+      "task": "v3",
+      "method": "dipo",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "steps": 328192,
+      "final_eval_episodes": 100
+    },
+    {
+      "id": "v1-optiq-s0",
+      "task": "v1",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "steps": 328192,
+      "final_eval_episodes": 100
+    },
+    {
+      "id": "v3-optiq-s0",
+      "task": "v3",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "steps": 328192,
+      "final_eval_episodes": 100
+    }
+  ],
+  "probe_review": null,
+  "protocol": "antmaze_experiments/DENSE_OFF_PROTOCOL.md",
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 8,
+  "reward_profile": "dense",
+  "noveld_enabled": false,
+  "seed": 0
+}

@@ -1,0 +1,28 @@
+{
+  "task": "4way",
+  "method": "meow",
+  "output": "/home/heechan/optiq-experiments/4way-wallfree-baselines-100k-20260926/runs/meow-s0",
+  "seed": 0,
+  "steps": 100000,
+  "num_envs": 16,
+  "updates_per_collect": 16,
+  "batch_size": 256,
+  "warmup": 1024,
+  "eval_every": 20000,
+  "eval_episodes": 100,
+  "temperature": 1.0,
+  "source_commit": "67469caf8641222f9458b9a871b6e46e78e94a5d",
+  "agent": {
+    "algorithm": "MEOW CleanRL flow Q regression",
+    "upstream_commit": "b786d27aa9b03e4242ee8904ff884b21fe65e2f7",
+    "alpha": 0.2,
+    "sigma_min": -5.0,
+    "sigma_max": -0.3,
+    "q_lr": 0.001,
+    "tau": 0.005,
+    "grad_clip": 30,
+    "evaluation_policy": "direct flow sample"
+  },
+  "task_mode": "existing wall-free symmetric four-goal",
+  "utd": 1.0
+}

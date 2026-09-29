@@ -1,0 +1,156 @@
+{
+  "campaign": "antmaze-optiq-utd1-random-reward-pair-v34-s0-20260925",
+  "source": "/home/heechan/OptiQ-ops/sources/75874066c432c48501053eda055c1b71e61a85da",
+  "source_commit": "75874066c432c48501053eda055c1b71e61a85da",
+  "shard": 0,
+  "host": "vast-heechan-180",
+  "jobs": [
+    {
+      "id": "v3-optiq-utd1-random-progress100_cost01-nm64-s0",
+      "task": "v3",
+      "method": "optiq",
+      "seed": 0,
+      "steps": 4008448,
+      "collection_profile": "env256-update256",
+      "optiq_config_profile": "basic",
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0003,
+        "tau": 0.005
+      },
+      "reward_profile": "progress100_euclidean_step0p1_no_bonus",
+      "noveld": "off",
+      "dacer": "off",
+      "temperature": 1.0,
+      "eval_starts": "random",
+      "eval_interval": 50000,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "save_intermediate_policy": true,
+      "train_starts": "random",
+      "reward_specification": {
+        "formula": "100*(d(current)-d(next))-0.1",
+        "success_bonus_enabled": false,
+        "distance": "nearest-goal Euclidean",
+        "step_cost": 0.1,
+        "progress_scale": 100.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -12.0,
+            12.0
+          ],
+          [
+            12.0,
+            -12.0
+          ]
+        ],
+        "goal_bonuses": [
+          0,
+          0
+        ],
+        "distance_endpoint": "goal center; do not replace terminal distance by zero",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 0.0,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af"
+      }
+    },
+    {
+      "id": "v3-optiq-utd1-random-negative_distance-nm64-s0",
+      "task": "v3",
+      "method": "optiq",
+      "seed": 0,
+      "steps": 4008448,
+      "collection_profile": "env256-update256",
+      "optiq_config_profile": "basic",
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0003,
+        "tau": 0.005
+      },
+      "reward_profile": "dense",
+      "noveld": "off",
+      "dacer": "off",
+      "temperature": 1.0,
+      "eval_starts": "random",
+      "eval_interval": 50000,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "save_intermediate_policy": true,
+      "train_starts": "random"
+    }
+  ],
+  "protocol": "antmaze_experiments/RANDOM_REWARD_PAIR_PROTOCOL.md",
+  "condition": "random_start_reward_pair",
+  "comparison": "Fresh reward comparison, not directly matched to stopped fixed-start/N128/T3 runs",
+  "collection_profile": "env256-update256",
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 256,
+  "updates_per_transition": 1.0,
+  "warmup_transitions": 8192,
+  "replay_capacity": 1000000,
+  "native_post_warmup_budgets": {
+    "v1": 3000000,
+    "v2": 3000000,
+    "v3": 4000000,
+    "v4": 5000000
+  },
+  "temperature": 1.0,
+  "dacer_enabled": false,
+  "noveld_enabled": false,
+  "optiq_config_profile": "basic",
+  "evaluation_starts": "all tasks: fresh random starts matching training; fixed-full-state supplementary",
+  "interim_eval_interval_transitions": 50000,
+  "interim_eval_episodes_per_mode": 40,
+  "final_eval_episodes_per_mode": 100,
+  "eval_modes": [
+    "native_mu_only",
+    "direct_policy_with_sigma"
+  ],
+  "reporting": "report each 50k environment-transition boundary per task; exact evaluation steps round up to 256",
+  "wandb_entity": "OptiQ",
+  "wandb_project": "antmaze",
+  "wandb_mode": "online",
+  "seed": 0,
+  "excluded_hosts": [
+    "vast1"
+  ],
+  "existing_training_preserved": true,
+  "fresh_training": true,
+  "resume_cancelled_jobs": false,
+  "backfill_seconds": 2,
+  "failure_holds_pending": true,
+  "automatic_restart": false,
+  "reward_profiles": {
+    "progress100_cost01": "progress100_euclidean_step0p1_no_bonus",
+    "negative_distance": "dense"
+  },
+  "training_starts": "all tasks: upstream random_init=True, XY[-2,2] sampled at each reset",
+  "nm": 64,
+  "cancelled_predecessors": [
+    "antmaze-optiq-utd1-basic-euclidean-random-starts-v34-s0-20260925",
+    "antmaze-optiq-utd1-euclidean-NM128-256-v34-s0-20260925",
+    "antmaze-optiq-utd1-basic-euclidean-T3-v34-s0-20260925"
+  ]
+}

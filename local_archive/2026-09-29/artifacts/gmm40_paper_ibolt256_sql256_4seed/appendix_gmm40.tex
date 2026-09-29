@@ -1,0 +1,161 @@
+% Standalone subsection; requires amsmath, amssymb, booktabs, and array.
+% Matches the 100k full-policy, N=M=256 paper figure and four-seed table.
+\subsection{GMM40}
+\label{app:gmm40}
+
+\paragraph{Target and oracle Q-function.}
+We use the fixed two-dimensional GMM40 target from the DiKL implementation,
+with 40 equally weighted Gaussian components:
+\begin{equation}
+p_{\mathrm{GMM40}}(x)
+=\frac{1}{40}\sum_{k=1}^{40}
+\mathcal{N}(x;\mu_k,\sigma_{\mathrm{GT}}^2 I_2),
+\qquad \sigma_{\mathrm{GT}}\approx 1.31326.
+\end{equation}
+The component centers are generated once using target seed~0 and remain
+identical across methods and training seeds. We restrict the action domain
+to $\mathcal{X}=[-40,40]^2$ and fix $Q(x)=\log p_{\mathrm{GMM40}}(x)$.
+At temperature $\tau=1$, the evaluation target is therefore
+\begin{equation}
+\nu(x)=\frac{p_{\mathrm{GMM40}}(x)\mathbf{1}\{x\in\mathcal{X}\}}{Z_{\mathcal{X}}},
+\qquad
+Z_{\mathcal{X}}=\int_{\mathcal{X}}p_{\mathrm{GMM40}}(x)\,dx
+\approx 0.98267.
+\end{equation}
+This is global truncation of the mixture, rather than separate truncation
+of equally weighted components. Networks operate in normalized coordinates
+$a\in[-1,1]^2$, with $x=40a$ used for oracle queries and evaluation.
+No critic is learned and no ground-truth samples are provided during training;
+methods use oracle values or action gradients as required by their updates.
+
+\paragraph{Training protocol.}
+We compare iBOLT, SAC, SQL, MFPO, and DIPO using 100{,}000 actor optimizer
+updates, batch size~256, and training seeds $0,1,2,3$.
+For iBOLT, the batch consists of 256 independent latent/proposal groups
+at the same dummy state. All methods use Adam with learning rate
+$3\times10^{-4}$, retaining method-specific architectures and sampling
+procedures. Equal actor-update counts do not imply equal oracle-query
+counts or computational cost.
+
+\begin{table}[t]
+\centering
+\caption{GMM40 settings for the reported comparison.
+iBOLT scales refer to normalized action coordinates $a=x/40$.
+These are GMM40-specific settings, rather than the online RL defaults.}
+\label{tab:gmm40_settings}
+\small
+\begin{tabular}{@{}p{0.50\linewidth}p{0.44\linewidth}@{}}
+\toprule
+Setting & Value \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Common settings}} \\
+Target dimension / components & 2 / 40 \\
+Physical action domain & $[-40,40]^2$ \\
+Oracle / temperature & $Q(x)=\log p_{\mathrm{GMM40}}(x)$ / $1$ \\
+Actor optimizer updates & $100{,}000$ \\
+Batch size & $256$ \\
+Training seeds & $0,1,2,3$ \\
+Optimizer / learning rate & Adam / $3\times10^{-4}$ \\
+Evaluation samples per run & $10{,}000$ \\
+Samples per distribution for MMD & $2{,}048$ \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{iBOLT settings}} \\
+Actor hidden layers / activation & $(256,256,256)$ / GELU \\
+Latent prior & $z\sim\mathcal{N}(0,I_2)$, freshly sampled \\
+Mixture components per group, $N$ & $256$ \\
+Reference actions per group, $M$ & $256$ \\
+Conditional distribution & Diagonal box-truncated Gaussian \\
+Conditional center & $\tanh(\mu_\theta(z))$ \\
+Actor log-standard-deviation bounds & $[-5,-3.5]$ \\
+Initial log-standard deviation & $-4$ \\
+Proposal-only standard-deviation floor & $0.05$ \\
+Mean-head initialization variance scale & $16$ (fan-average uniform) \\
+Log-scale head initial weights / bias & $0$ / $-4$ \\
+Density-correction exponent & $1$ \\
+Gradient clipping & None \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{iBOLT proposal and initialization.}
+Each update draws fresh latent variables and constructs the finite mixture
+used in the actor likelihood. To broaden candidate sampling, the proposal
+uses $\widetilde{\sigma}_{\theta,d}(z)=\max(\sigma_{\theta,d}(z),0.05)$.
+Both proposal sampling and its density $q(a)$ use these broadened scales,
+while the actor likelihood and final policy sampling use the original
+actor scales. Thus, in this experiment, the proposal is distinct from the
+finite mixture used in the likelihood. Reference actions are sampled by
+uniformly choosing mixture components with replacement and drawing from
+their truncated Gaussians. The importance weights satisfy
+$w_j\propto\exp(Q(40a_j))/q(a_j)$ and are normalized within each group.
+Reference actions and weights are detached during the likelihood update.
+The mean head uses a fan-average uniform initializer with variance scale~16;
+this scales the initialization variance, not the output by a factor of~16.
+
+\paragraph{Baseline adaptations.}
+SAC uses a $(256,256)$ ReLU actor and a tanh-squashed diagonal Gaussian,
+with log-standard-deviation bounds $[-5,2]$ and initial standard deviation
+$0.5$ before squashing. Its actor minimizes
+$\mathbb{E}[\log\pi(x)-Q(x)]$ with the exact oracle.
+SQL uses a $(256,256)$ ReLU implicit actor and amortized SVGD with
+256 particles, split into 128 fixed and 128 updated particles.
+Its adaptive RBF kernel is $k(a,b)=\exp(-\|a-b\|^2/h)$, where
+$h=\max(\operatorname{median}_{\mathrm{lower}}\|a-b\|^2/\log 128,10^{-3})$,
+computed over fixed--updated particle pairs in normalized coordinates.
+The JAX port retains the upstream bounded-action score and
+TensorFlow-1-compatible Adam convention.
+DIPO uses 100 diffusion steps with a cosine noise schedule and 20 action
+refinement steps per actor update. Action refinement uses Adam with learning
+rate~$0.03$ and gradient-norm limit~$0.2$; the actor gradient-norm limit is~$2$.
+Both optimizers use $\epsilon=10^{-5}$. Its action buffer has capacity
+$10^6$ and starts with 5{,}000 uniform candidates; 32 new policy samples
+are added every 32 actor updates.
+MFPO uses separate mean-flow and divergence networks with three
+256-unit hidden layers, GELU activations, and layer normalization.
+Each actor update uses 16 policy candidates and 32 additional candidates;
+the divergence network is also updated once. Policy generation uses two steps.
+
+\paragraph{Policy sampling and aggregation.}
+At the final checkpoint, we draw 10{,}000 samples from each learned policy.
+iBOLT uses fresh Gaussian latents and conditional truncated-Gaussian noise;
+the reported results are not mean-only outputs. Baselines retain their
+stochastic generators, including reverse-diffusion noise for DIPO.
+We draw an independent 10{,}000-sample reference from $\nu$ using seed
+20260917 and share it across methods and training seeds.
+The main figure uses training seed~2 for every method.
+Reported numerical results are the mean and sample standard deviation
+across the four training seeds, computed from per-seed metrics.
+
+\paragraph{Mode coverage.}
+We measure coverage of the 40 reference components, rather than count
+local maxima of the learned density. A sample $x$ is assigned to
+$k^*(x)=\arg\min_k d_k^2(x)$, where
+$d_k^2(x)=\|x-\mu_k\|^2/\sigma_{\mathrm{GT}}^2$,
+and contributes to the assigned component only if $d_{k^*(x)}^2(x)\leq 9$.
+Let $c_k$ and $c_k^{\mathrm{GT}}$ denote the resulting counts from the
+10{,}000 policy and reference samples, respectively. We report
+\begin{equation}
+\operatorname{Coverage}
+=\sum_{k=1}^{40}\mathbf{1}\!\left\{
+c_k\geq\max(10,0.1c_k^{\mathrm{GT}})\right\}.
+\end{equation}
+Thus, an isolated sample near a component does not suffice for coverage,
+and overlapping neighborhoods do not cause a sample to be counted twice.
+
+\paragraph{Maximum mean discrepancy.}
+We use the first 2{,}048 policy samples and the first 2{,}048 reference
+samples in physical coordinates, with the shared kernel
+\begin{equation}
+k(x,y)=\frac{1}{5}\sum_{h\in\{1,2,5,10,20\}}
+\exp\!\left(-\frac{\|x-y\|^2}{2h^2}\right).
+\end{equation}
+We compute the unbiased U-statistic estimator of squared MMD, excluding
+diagonal terms within each sample set, and report
+$\sqrt{\max(\widehat{\operatorname{MMD}}_u^2,0)}$.
+The square root is taken separately for each seed before aggregation.
+
+\paragraph{Implementation.}
+For this fixed-Q comparison, iBOLT, SQL, and MFPO use JAX, while SAC and
+DIPO use PyTorch. The reported iBOLT runs use an RTX~4090; the SAC, MFPO,
+and DIPO runs use RTX~5090 GPUs. These benchmark-specific implementations
+and settings should be distinguished from the online RL implementations.

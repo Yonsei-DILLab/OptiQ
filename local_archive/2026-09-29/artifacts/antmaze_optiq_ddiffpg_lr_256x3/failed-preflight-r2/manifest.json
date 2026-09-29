@@ -1,0 +1,152 @@
+{
+  "campaign": "antmaze-optiq-ddiffpg-lr-256x3-s0-20260923-r2",
+  "source": "/home/heechan/OptiQ-ops/sources/297aad7103a7a8b465d927644c0976a5be1f6747",
+  "source_commit": "297aad7103a7a8b465d927644c0976a5be1f6747",
+  "host": "vast-heechan-180",
+  "wandb_mode": "online",
+  "wandb_entity": "OptiQ",
+  "wandb_project": "antmaze",
+  "jobs": [
+    {
+      "id": "v1-optiq-s0",
+      "task": "v1",
+      "method": "optiq",
+      "temperature": 0.01,
+      "reward_profile": "sparse",
+      "noveld": "on",
+      "eval_starts": "random",
+      "steps": 3008256,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      }
+    },
+    {
+      "id": "v2-optiq-s0",
+      "task": "v2",
+      "method": "optiq",
+      "temperature": 0.01,
+      "reward_profile": "sparse",
+      "noveld": "on",
+      "eval_starts": "random",
+      "steps": 3008256,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      }
+    },
+    {
+      "id": "v3-optiq-s0",
+      "task": "v3",
+      "method": "optiq",
+      "temperature": 0.01,
+      "reward_profile": "sparse",
+      "noveld": "on",
+      "eval_starts": "random",
+      "steps": 4008448,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      }
+    },
+    {
+      "id": "v4-optiq-s0",
+      "task": "v4",
+      "method": "optiq",
+      "temperature": 0.01,
+      "reward_profile": "sparse",
+      "noveld": "on",
+      "eval_starts": "random",
+      "steps": 5008384,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      }
+    }
+  ],
+  "seed": 0,
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 8,
+  "reward_profile": "sparse",
+  "noveld_enabled": true,
+  "noveld_coefficient": 0.01,
+  "temperature": 0.01,
+  "log_std_min": -5.0,
+  "log_std_max": -1.0,
+  "initial_log_std": -1.0,
+  "protocol": "antmaze_experiments/DDIFFPG_LR_256X3_PROTOCOL.md",
+  "actor_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "critic_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "actor_lr": 0.0003,
+  "critic_lr": 0.0005,
+  "rnd_lr": 0.0001,
+  "tau": 0.005,
+  "previous_campaign": "antmaze-sparse-noveld-t001-optiq-s0-20260923",
+  "changed_learning_fields": [
+    "critic_lr",
+    "actor_hidden_dims",
+    "critic_hidden_dims"
+  ],
+  "no_additional_methods_or_seeds": true
+}

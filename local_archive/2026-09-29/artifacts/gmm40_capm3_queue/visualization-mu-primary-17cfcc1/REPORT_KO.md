@@ -1,0 +1,21 @@
+# GMM40 100k · 4-seed 비교
+
+소스: `17ae649d0b265bae0d01425435172f74ae3881a6`
+
+고정 Q = 원본 GMM40 log density, T=1. 각 방법 seed 0~3, 100,000 actor updates, 평가당 10,000 samples.
+표의 ±는 학습 시드 간 표준편차(ddof=1)입니다. Target 샘플은 평가에서만 사용합니다.
+Primary: OptiQ μ only; other methods native outputs
+그림·표·학습곡선은 동일한 평가 모드를 사용합니다. μ-only에서도 latent는 원래 정책의 prior대로 샘플링합니다.
+
+| Method | Coverage /40 | Within 3σ | MMD² ↓ | SW ↓ | Mass TV ↓ |
+|---|---:|---:|---:|---:|---:|
+| OptiQ Direct GMM/TRG | 33.5 ± 4.65 | 0.89007 ± 0.0291 | 0.01241 ± 0.0107 | 5.9664 ± 3.48 | 0.24551 ± 0.0813 |
+
+OptiQ는 box-truncated Direct GMM NLL, N=64, M=64, random latent, 256×2, log σ 하한 -5.0, -3.0, mean-head init scale 1.0입니다.
+다른 baseline은 기존 native architecture와 optimizer를 유지했습니다. 모든 방법의 batch는 256입니다.
+동일 update 수 비교이며 Q 질의량과 계산량은 다릅니다. `per_seed.csv`의 Q_evaluations, train_seconds, parameters를 함께 보세요.
+GMM component coverage는 density의 실제 local maxima 개수와 같지 않습니다.
+
+![학습곡선](learning_curves.png)
+![최종지표](final_metrics.png)
+![최종분포](final_distributions.png)

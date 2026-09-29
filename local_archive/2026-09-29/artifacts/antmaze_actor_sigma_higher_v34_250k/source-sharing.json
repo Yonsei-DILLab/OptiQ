@@ -1,0 +1,12 @@
+{
+  "time": 1790303639.24401,
+  "source_commit": "b111a993b1e1bf895966dac4469abdfdb2c37c05",
+  "branch": "direct-gmm-trg-antmaze",
+  "github_pushed": true,
+  "hosts": [
+    "vast-heechan-180",
+    "vast-heechan-199"
+  ],
+  "frozen_source": "/home/heechan/OptiQ-ops/sources/b111a993b1e1bf895966dac4469abdfdb2c37c05",
+  "training_not_resumed": true
+}

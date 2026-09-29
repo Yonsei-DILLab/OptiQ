@@ -1,0 +1,18 @@
+{
+  "step": 280,
+  "updates": 24,
+  "source_commit": "19fc37a7e51be2bb54d41ab9a980225ecd9f5ba5",
+  "state_digest": "a73764d6cdf26dd7d8b0d9a43d6d6d3c4cc472c49a858217badcb4a06c53b3bc",
+  "replay_digest": "d9f83af80c48229e014d1abc43fbb954dfeac10be1a5279ba3037aab8bf882c3",
+  "replay_size": 280,
+  "files": {
+    "state.pt": {
+      "bytes": 6890315,
+      "sha256": "731e470a961921ea0cba8944e2bd42811fae3055b5c9150670394bc640b3aeb1"
+    },
+    "replay.npz": {
+      "bytes": 77438,
+      "sha256": "7a7da1ca2dae53e4b7226f890cd4f94b0c5fb6f26a8c0d5fc9b6bcb4d5f23030"
+    }
+  }
+}

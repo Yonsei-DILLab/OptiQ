@@ -1,0 +1,119 @@
+{
+  "campaign": "antmaze-optiq-utd1-basic-euclidean-random-starts-v34-s0-20260925",
+  "source": "/home/heechan/OptiQ-ops/sources/a8e1b2b3163c6b63e03b6a109c31ab45dccd811b",
+  "source_commit": "a8e1b2b3163c6b63e03b6a109c31ab45dccd811b",
+  "shard": 0,
+  "host": "vast-heechan-180",
+  "jobs": [
+    {
+      "id": "v3-optiq-utd1-basic-euclidean-random-starts-s0",
+      "task": "v3",
+      "method": "optiq",
+      "seed": 0,
+      "steps": 4008448,
+      "collection_profile": "env256-update256",
+      "optiq_config_profile": "basic",
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0003,
+        "tau": 0.005
+      },
+      "reward_profile": "progress100_euclidean_no_step_no_bonus",
+      "noveld": "off",
+      "dacer": "off",
+      "temperature": 1.0,
+      "eval_starts": "random",
+      "eval_interval": 50000,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "save_intermediate_policy": true,
+      "reward_specification": {
+        "formula": "100*(d(current)-d(next))",
+        "success_bonus_enabled": false,
+        "distance": "nearest-goal Euclidean",
+        "step_cost": 0.0,
+        "progress_scale": 100.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -12.0,
+            12.0
+          ],
+          [
+            12.0,
+            -12.0
+          ]
+        ],
+        "goal_bonuses": [
+          0,
+          0
+        ],
+        "distance_endpoint": "goal center; do not replace terminal distance by zero",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 0.0,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af"
+      },
+      "train_starts": "random"
+    }
+  ],
+  "protocol": "antmaze_experiments/RANDOM_STARTS_V34_PROTOCOL.md",
+  "condition": "basic_euclidean_matched_random_starts",
+  "comparison": "Fresh T=1/N=M64 basic Euclidean controls with v3/v4 training and evaluation resets randomized; T=3 runs were stopped and are not matched controls.",
+  "collection_profile": "env256-update256",
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 256,
+  "updates_per_transition": 1.0,
+  "warmup_transitions": 8192,
+  "replay_capacity": 1000000,
+  "native_post_warmup_budgets": {
+    "v1": 3000000,
+    "v2": 3000000,
+    "v3": 4000000,
+    "v4": 5000000
+  },
+  "temperature": 1.0,
+  "dacer_enabled": false,
+  "noveld_enabled": false,
+  "optiq_config_profile": "basic",
+  "reward_profile": "progress100_euclidean_no_step_no_bonus",
+  "evaluation_starts": "v3/v4: fresh upstream random XY[-2,2] at each reset, matching training",
+  "interim_eval_interval_transitions": 50000,
+  "interim_eval_episodes_per_mode": 40,
+  "final_eval_episodes_per_mode": 100,
+  "eval_modes": [
+    "native_mu_only",
+    "direct_policy_with_sigma"
+  ],
+  "reporting": "report each 50k environment-transition boundary per task; exact evaluation steps round up to 256",
+  "wandb_entity": "OptiQ",
+  "wandb_project": "antmaze",
+  "wandb_mode": "online",
+  "seed": 0,
+  "excluded_hosts": [
+    "vast1"
+  ],
+  "existing_training_preserved": true,
+  "fresh_training": true,
+  "resume_cancelled_jobs": false,
+  "backfill_seconds": 2,
+  "failure_holds_pending": true,
+  "automatic_restart": false,
+  "training_starts": "v3/v4: upstream random_init=True, as used for native v1",
+  "changed_learning_setting": {
+    "train_starts": "upstream fixed -> native v1-style random XY[-2,2]"
+  },
+  "previous_t3_stopped": true
+}

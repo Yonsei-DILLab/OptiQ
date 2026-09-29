@@ -1,0 +1,114 @@
+{
+  "campaign": "antmaze-optiq-utd1-basic-v1234-s0-20260925",
+  "source": "/home/heechan/OptiQ-ops/sources/db4ad09a8cbcc61646a779136e76deabd1414ffb",
+  "source_commit": "db4ad09a8cbcc61646a779136e76deabd1414ffb",
+  "shard": 1,
+  "host": "vast-heechan-199",
+  "jobs": [
+    {
+      "id": "v2-optiq-utd1-basic-s0",
+      "task": "v2",
+      "method": "optiq",
+      "seed": 0,
+      "steps": 3008256,
+      "collection_profile": "env256-update256",
+      "optiq_config_profile": "basic",
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0003,
+        "tau": 0.005
+      },
+      "reward_profile": "sparse",
+      "noveld": "off",
+      "dacer": "off",
+      "temperature": 1.0,
+      "eval_starts": "upstream",
+      "eval_interval": 50000,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "save_intermediate_policy": true
+    },
+    {
+      "id": "v4-optiq-utd1-basic-s0",
+      "task": "v4",
+      "method": "optiq",
+      "seed": 0,
+      "steps": 5008384,
+      "collection_profile": "env256-update256",
+      "optiq_config_profile": "basic",
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0003,
+        "tau": 0.005
+      },
+      "reward_profile": "sparse",
+      "noveld": "off",
+      "dacer": "off",
+      "temperature": 1.0,
+      "eval_starts": "upstream",
+      "eval_interval": 50000,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "save_intermediate_policy": true
+    }
+  ],
+  "protocol": "antmaze_experiments/UTD256_PROTOCOL.md",
+  "condition": "basic",
+  "comparison": "same condition at 8 updates per 256 transitions",
+  "collection_profile": "env256-update256",
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 256,
+  "updates_per_transition": 1.0,
+  "warmup_transitions": 8192,
+  "replay_capacity": 1000000,
+  "native_post_warmup_budgets": {
+    "v1": 3000000,
+    "v2": 3000000,
+    "v3": 4000000,
+    "v4": 5000000
+  },
+  "temperature": 1.0,
+  "dacer_enabled": false,
+  "noveld_enabled": false,
+  "optiq_config_profile": "basic",
+  "reward_profile": "sparse",
+  "evaluation_starts": "upstream: v1 random; v2-v4 original fixed full state",
+  "interim_eval_interval_transitions": 50000,
+  "interim_eval_episodes_per_mode": 40,
+  "final_eval_episodes_per_mode": 100,
+  "eval_modes": [
+    "native_mu_only",
+    "direct_policy_with_sigma"
+  ],
+  "reporting": "report each 50k environment-transition boundary per task; exact evaluation steps round up to 256",
+  "wandb_entity": "OptiQ",
+  "wandb_project": "antmaze",
+  "wandb_mode": "online",
+  "seed": 0,
+  "excluded_hosts": [
+    "vast1"
+  ],
+  "existing_training_preserved": true,
+  "fresh_training": true,
+  "resume_cancelled_jobs": false,
+  "backfill_seconds": 2,
+  "failure_holds_pending": true,
+  "automatic_restart": false
+}

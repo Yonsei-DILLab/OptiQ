@@ -1,0 +1,187 @@
+{
+  "profile": "ddiffpg-dense-noveld",
+  "method": "sac",
+  "task": "v1",
+  "seed": 0,
+  "smoke": false,
+  "source_commit": "592cad778c20647030629c84dade4e54f79df67f",
+  "source_root": "/home/heechan/OptiQ-ops/sources/592cad778c20647030629c84dade4e54f79df67f",
+  "steps": 100000,
+  "warmup": 8192,
+  "batch_size": 4096,
+  "num_envs": 256,
+  "updates_per_round": 8,
+  "utd": 0.03125,
+  "expected_updates": 2872,
+  "native": {
+    "policy": "MlpPolicy",
+    "learning_rate": 0.0003,
+    "buffer_size": 1000000,
+    "learning_starts": 5000,
+    "batch_size": 256,
+    "tau": 0.005,
+    "gamma": 0.99,
+    "train_freq": 1,
+    "gradient_steps": 1,
+    "ent_coef": "auto",
+    "policy_kwargs": {
+      "net_arch": [
+        256,
+        256
+      ],
+      "use_sde": false
+    },
+    "device": "cuda"
+  },
+  "intrinsic": {
+    "type": "noveld",
+    "coefficient": 0.01,
+    "novelty_discount": 0.5,
+    "normalize": false,
+    "positional_encoding": true,
+    "frequency_bands": 10,
+    "learning_rate": 0.0001,
+    "gradient_clip": 1.0,
+    "upstream_commit": "7edd06c4799abbab0f8fa534c21deb56253b018e"
+  },
+  "overrides": "NovelD + 256-env collection, batch4096, 8 updates/round,8192 warmup; native networks/LR/tau retained",
+  "environment": {
+    "task": "v1",
+    "map": [
+      [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        "g",
+        1,
+        "r",
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    ],
+    "scale": 4.0,
+    "walls": [
+      [
+        -12.0,
+        -8.0
+      ],
+      [
+        -8.0,
+        -8.0
+      ],
+      [
+        -4.0,
+        -8.0
+      ],
+      [
+        0.0,
+        -8.0
+      ],
+      [
+        4.0,
+        -8.0
+      ],
+      [
+        -12.0,
+        -4.0
+      ],
+      [
+        4.0,
+        -4.0
+      ],
+      [
+        -12.0,
+        0.0
+      ],
+      [
+        -4.0,
+        0.0
+      ],
+      [
+        4.0,
+        0.0
+      ],
+      [
+        -12.0,
+        4.0
+      ],
+      [
+        4.0,
+        4.0
+      ],
+      [
+        -12.0,
+        8.0
+      ],
+      [
+        -8.0,
+        8.0
+      ],
+      [
+        -4.0,
+        8.0
+      ],
+      [
+        0.0,
+        8.0
+      ],
+      [
+        4.0,
+        8.0
+      ]
+    ],
+    "goals": [
+      [
+        -8.0,
+        0.0
+      ]
+    ],
+    "start": [
+      0.0,
+      0.0
+    ],
+    "horizon": 500
+  },
+  "xml_sha256": "cfd330592e96d1ad41505d4eee60f155305d3964679e215892f524c8bb1a3336",
+  "reward": "environment=-nearest goal distance; training adds NovelD; evaluation excludes NovelD",
+  "collection_workers": 8,
+  "dacer_entropy_batch_size": 256,
+  "eval_interval": 25000,
+  "checkpoint_interval": 50000,
+  "trajectory_episodes_per_reset_mode": 100,
+  "packages": {
+    "mujoco": "3.3.7",
+    "gymnasium": "1.2.3",
+    "jax": "0.4.33",
+    "flax": "0.9.0",
+    "optax": "0.1.7",
+    "torch": "2.7.1+cu128",
+    "numpy": "1.26.4",
+    "wandb": "0.29.0"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "source_commit": "4b46c1bfb1f8bb9d93ec0b15e891edf5d9de8c6f",
+  "campaign": "maze-official-dipo-2048-1m-20260926",
+  "seed": 0,
+  "figures": {
+    "dipo_pointmaze_200k_vs_400k.png": "75d42431136928363915c5b85c5f5dabe0bce8344fdc4b270f4bcafb24242fd0",
+    "dipo_pointmaze_latest_trajectories.png": "ecb45a17208c0f07c29509e3fd72a696ff56ecbf9e7efc684128d61f6d368b5a",
+    "pm_hard-dipo-s0/figures/000200704_trajectories.png": "5d388f87bbbc8690059c0d35172ec7ba0741be91868b3cd084928a0aadb1b8c1",
+    "pm_hard-dipo-s0/figures/000401408_trajectories.png": "7a6b6928462283395173fc8dd37974ea7c887c4ea25edcfdc16b2fe48ae79555",
+    "pm_medium-dipo-s0/figures/000200704_trajectories.png": "b0a11d3a95bee6b04016dbf0de569a8913500d165574df5f2cf7dc88676e2bf4",
+    "pm_medium-dipo-s0/figures/000401408_trajectories.png": "6399d6cb2b3b720df21c0fc5caaa7db4e43af29749a82dda478123048d35498c",
+    "pm_simple-dipo-s0/figures/000200704_trajectories.png": "2449e0c112e8c50c712ff8c73c61bb2c767f0965bbac702cb94aa305cd480efb",
+    "pm_simple-dipo-s0/figures/000401408_trajectories.png": "bdc64bd96a5d19872516be5a46704cb1b73b8ea859551b26bbe8d41139f46d8d",
+    "pm_simple-dipo-s0/figures/000600064_trajectories.png": "1f2fe96f7609b6019de1004fff429442fb61e7140b973f622b0d487519f77080"
+  }
+}

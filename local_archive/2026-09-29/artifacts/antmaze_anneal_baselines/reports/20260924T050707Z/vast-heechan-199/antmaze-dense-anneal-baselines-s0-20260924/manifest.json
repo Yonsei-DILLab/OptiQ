@@ -1,0 +1,361 @@
+{
+  "campaign": "antmaze-dense-anneal-baselines-s0-20260924",
+  "shard": 1,
+  "host": "vast-heechan-199",
+  "source": "/home/heechan/OptiQ-ops/sources/05fc113aeb093f9f83208ca540dd2aadf8d934bb",
+  "source_commit": "05fc113aeb093f9f83208ca540dd2aadf8d934bb",
+  "jobs": [
+    {
+      "id": "v2-optiq-10to1-s0",
+      "task": "v2",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 3008256,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 10.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "temperature_schedule": {
+        "enabled": true,
+        "final_temperature": 1.0,
+        "anneal_steps": 1000000,
+        "decay": "linear"
+      },
+      "queue_class": "annealing"
+    },
+    {
+      "id": "v4-optiq-10to1-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 5008384,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 10.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "temperature_schedule": {
+        "enabled": true,
+        "final_temperature": 1.0,
+        "anneal_steps": 1000000,
+        "decay": "linear"
+      },
+      "queue_class": "annealing"
+    },
+    {
+      "id": "v2-optiq-10to0.25-s0",
+      "task": "v2",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 3008256,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 10.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "temperature_schedule": {
+        "enabled": true,
+        "final_temperature": 0.25,
+        "anneal_steps": 1000000,
+        "decay": "linear"
+      },
+      "queue_class": "annealing"
+    },
+    {
+      "id": "v4-optiq-10to0.25-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 5008384,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 10.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "temperature_schedule": {
+        "enabled": true,
+        "final_temperature": 0.25,
+        "anneal_steps": 1000000,
+        "decay": "linear"
+      },
+      "queue_class": "annealing"
+    },
+    {
+      "id": "v2-optiq-10to0.5-s0",
+      "task": "v2",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 3008256,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 10.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "temperature_schedule": {
+        "enabled": true,
+        "final_temperature": 0.5,
+        "anneal_steps": 1000000,
+        "decay": "linear"
+      },
+      "queue_class": "annealing"
+    },
+    {
+      "id": "v4-optiq-10to0.5-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 5008384,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 10.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "temperature_schedule": {
+        "enabled": true,
+        "final_temperature": 0.5,
+        "anneal_steps": 1000000,
+        "decay": "linear"
+      },
+      "queue_class": "annealing"
+    },
+    {
+      "id": "v2-mfpo-s0",
+      "task": "v2",
+      "method": "mfpo",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 3008256,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "queue_class": "missing_baseline",
+      "supersedes_incomplete": "/home/heechan/optiq-experiments/antmaze-dense-off-16-current-s0-20260924/runs/v2-mfpo-s0"
+    },
+    {
+      "id": "v4-mfpo-s0",
+      "task": "v4",
+      "method": "mfpo",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 5008384,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "queue_class": "missing_baseline",
+      "supersedes_incomplete": "/home/heechan/optiq-experiments/antmaze-dense-off-16-current-s0-20260924/runs/v4-mfpo-s0"
+    },
+    {
+      "id": "v4-sac-s0",
+      "task": "v4",
+      "method": "sac",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 5008384,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "queue_class": "missing_baseline",
+      "supersedes_incomplete": "/home/heechan/optiq-experiments/antmaze-dense-off-16-current-s0-20260924/runs/v4-sac-s0"
+    }
+  ],
+  "wandb_mode": "offline",
+  "wandb_entity": "OptiQ",
+  "wandb_project": "antmaze",
+  "protocol": "antmaze_experiments/ANNEAL_BASELINES_PROTOCOL.md",
+  "seed": 0,
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 8,
+  "reward_profile": "dense",
+  "noveld_enabled": false,
+  "noveld_coefficient": 0.0,
+  "reward": "negative Euclidean distance from next xy to nearest goal; no sparse bonus",
+  "evaluation_starts": "xy uniform[-2,2] per episode; native training resets unchanged",
+  "interim_eval_episodes": 40,
+  "final_eval_episodes": 100,
+  "optiq_temperature": 10.0,
+  "optiq_actor_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "optiq_critic_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "optiq_actor_lr": 0.0003,
+  "optiq_critic_lr": 0.0005,
+  "log_std_min": -5.0,
+  "log_std_max": -1.0,
+  "initial_log_std": -1.0,
+  "optiq_tau": 0.005,
+  "dipo_dense_value_support": [
+    -6000.0,
+    5.0
+  ],
+  "parent_source": "a9f6a7b9e982a31d217d0697746262dfd024a1b6",
+  "fresh_training": true,
+  "resume_cancelled_jobs": false,
+  "backfill_seconds": 2,
+  "failure_holds_pending": true,
+  "automatic_restart": false,
+  "temperature_schedule": {
+    "initial": 10.0,
+    "targets": [
+      1.0,
+      0.25,
+      0.5
+    ],
+    "decay": "linear",
+    "anneal_steps": 1000000,
+    "exclude_warmup": true,
+    "hold_after_anneal": true
+  },
+  "baseline_inventory": {
+    "v2-sac-s0": {
+      "task": "v2",
+      "method": "sac",
+      "status": "completed",
+      "reference": "/home/heechan/optiq-experiments/antmaze-dense-off-16-current-s0-20260924/runs/v2-sac-s0",
+      "result": "/home/heechan/optiq-experiments/antmaze-dense-off-16-current-s0-20260924/runs/v2-sac-s0/result.json"
+    },
+    "v2-dipo-s0": {
+      "task": "v2",
+      "method": "dipo",
+      "status": "already_running",
+      "reference": "/home/heechan/optiq-experiments/antmaze-dense-off-16-current-s0-20260924/runs/v2-dipo-s0",
+      "result": null
+    },
+    "v2-mfpo-s0": {
+      "task": "v2",
+      "method": "mfpo",
+      "status": "missing_or_incomplete",
+      "reference": "/home/heechan/optiq-experiments/antmaze-dense-off-16-current-s0-20260924/runs/v2-mfpo-s0",
+      "result": null
+    },
+    "v4-sac-s0": {
+      "task": "v4",
+      "method": "sac",
+      "status": "missing_or_incomplete",
+      "reference": "/home/heechan/optiq-experiments/antmaze-dense-off-16-current-s0-20260924/runs/v4-sac-s0",
+      "result": null
+    },
+    "v4-dipo-s0": {
+      "task": "v4",
+      "method": "dipo",
+      "status": "already_running",
+      "reference": "/home/heechan/optiq-experiments/antmaze-dense-off-16-current-s0-20260924/runs/v4-dipo-s0",
+      "result": null
+    },
+    "v4-mfpo-s0": {
+      "task": "v4",
+      "method": "mfpo",
+      "status": "missing_or_incomplete",
+      "reference": "/home/heechan/optiq-experiments/antmaze-dense-off-16-current-s0-20260924/runs/v4-mfpo-s0",
+      "result": null
+    }
+  },
+  "priority": "annealing first, then missing baselines; independent per-slot backfill",
+  "warmup_transitions": 8192,
+  "base_total_budgets_preserved": true,
+  "existing_training_preserved": true,
+  "source_dependencies": {
+    "mfpo": {
+      "path": "gmm40-baseline/MFPO",
+      "commit": "d8b3977d29d4ef2d315e871337e5826f2eb79eb2",
+      "verified": true
+    }
+  }
+}

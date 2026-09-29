@@ -1,0 +1,24 @@
+{
+  "plan": {
+    "campaign": "pointmaze-simple-meow-alpha05-1m-20260926",
+    "control_campaign": "pointmaze-simple-entropy-grid-1m-20260926",
+    "seed": 0,
+    "jobs": [
+      {
+        "name": "pm_simple-meow-alpha05-s0",
+        "task": "pm_simple",
+        "method": "meow",
+        "temperature": 3.0,
+        "meow_alpha": 0.5,
+        "entropy_diagnostics": true,
+        "host": "vast-heechan-46"
+      }
+    ]
+  },
+  "source_commit": "caf133d3ed4bdc8e4f48c029e75ed8f6450144ac",
+  "source": "/home/heechan/OptiQ-ops/sources/caf133d3ed4bdc8e4f48c029e75ed8f6450144ac",
+  "controller_source": "/home/heechan/OptiQ-direct-gmm-trg-antmaze",
+  "host": "vast-heechan-46",
+  "controller_commit": "8b5aa2434055e8c5d3f42a0c41c8cb1edb2fcca3",
+  "frozen_learner_commit": "caf133d3ed4bdc8e4f48c029e75ed8f6450144ac"
+}

@@ -1,0 +1,58 @@
+{
+  "plan": {
+    "campaign": "pointmaze-optiq-t5-t10-1m-20260926",
+    "control_campaign": "maze-deadline-1m-20260926",
+    "control_source": "a55aaf13f7803b5cf8da7ba56f318675c7794171",
+    "seed": 0,
+    "new_jobs": 6,
+    "evaluation": "fresh-random-z mu-only; no conditional sigma",
+    "jobs": [
+      {
+        "name": "pm_simple-optiq-t5-s0",
+        "task": "pm_simple",
+        "method": "optiq",
+        "temperature": 5.0,
+        "host": "vast-heechan-6"
+      },
+      {
+        "name": "pm_simple-optiq-t10-s0",
+        "task": "pm_simple",
+        "method": "optiq",
+        "temperature": 10.0,
+        "host": "vast-heechan-6"
+      },
+      {
+        "name": "pm_medium-optiq-t5-s0",
+        "task": "pm_medium",
+        "method": "optiq",
+        "temperature": 5.0,
+        "host": "vast-heechan-6"
+      },
+      {
+        "name": "pm_medium-optiq-t10-s0",
+        "task": "pm_medium",
+        "method": "optiq",
+        "temperature": 10.0,
+        "host": "vast-heechan-6"
+      },
+      {
+        "name": "pm_hard-optiq-t5-s0",
+        "task": "pm_hard",
+        "method": "optiq",
+        "temperature": 5.0,
+        "host": "vast-heechan-46"
+      },
+      {
+        "name": "pm_hard-optiq-t10-s0",
+        "task": "pm_hard",
+        "method": "optiq",
+        "temperature": 10.0,
+        "host": "vast-heechan-46"
+      }
+    ]
+  },
+  "source_commit": "bfb06944705685a7dea84558aba40500c22349b9",
+  "source": "/home/heechan/OptiQ-ops/sources/bfb06944705685a7dea84558aba40500c22349b9",
+  "controller_source": "/home/heechan/OptiQ-direct-gmm-trg-antmaze",
+  "host": "vast-heechan-6"
+}

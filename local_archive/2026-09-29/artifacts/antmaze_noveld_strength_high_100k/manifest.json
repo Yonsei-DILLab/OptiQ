@@ -1,0 +1,29 @@
+{
+  "source": "/home/heechan/OptiQ-ops/sources/36aab085bcfe8219997e1bc21e3ad8fe55f266b0",
+  "source_commit": "36aab085bcfe8219997e1bc21e3ad8fe55f266b0",
+  "project": "OptiQ/gmm-trg",
+  "group": "antmaze-v3-optiq-noveld-high-100k-s0-20260922",
+  "profile": "dense-noveld-strength-100k",
+  "total": 2,
+  "jobs": [
+    {
+      "id": "v3-optiq-c50-s0",
+      "coefficient": 50.0,
+      "method": "optiq",
+      "task": "v3",
+      "seed": 0,
+      "steps": 100000,
+      "gpu": 0
+    },
+    {
+      "id": "v3-optiq-c100-s0",
+      "coefficient": 100.0,
+      "method": "optiq",
+      "task": "v3",
+      "seed": 0,
+      "steps": 100000,
+      "gpu": 1
+    }
+  ],
+  "only_changed_hyperparameter": "NovelD coefficient"
+}

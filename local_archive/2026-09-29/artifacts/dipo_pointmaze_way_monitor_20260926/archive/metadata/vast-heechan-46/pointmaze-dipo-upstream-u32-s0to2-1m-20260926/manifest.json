@@ -1,0 +1,102 @@
+{
+  "plan": {
+    "campaign": "pointmaze-dipo-upstream-u32-s0to2-1m-20260926",
+    "reason": "User-approved replacement: inherit pinned upstream replay replace; fresh Medium/Hard seeds0-2; updates32 per2048 transitions for time.",
+    "jobs": [
+      {
+        "name": "pm_medium-dipo-upstream-u32-s0",
+        "task": "pm_medium",
+        "method": "dipo",
+        "temperature": 1.0,
+        "seed": 0,
+        "host": "vast-heechan-46",
+        "num_envs": 2048,
+        "batch_size": 4096,
+        "updates_per_collect": 32,
+        "warmup": 8192,
+        "steps": 1001472,
+        "eval_every": 200000,
+        "dipo_upstream_memory": true
+      },
+      {
+        "name": "pm_hard-dipo-upstream-u32-s0",
+        "task": "pm_hard",
+        "method": "dipo",
+        "temperature": 1.0,
+        "seed": 0,
+        "host": "vast-heechan-46",
+        "num_envs": 2048,
+        "batch_size": 4096,
+        "updates_per_collect": 32,
+        "warmup": 8192,
+        "steps": 1001472,
+        "eval_every": 200000,
+        "dipo_upstream_memory": true
+      },
+      {
+        "name": "pm_medium-dipo-upstream-u32-s1",
+        "task": "pm_medium",
+        "method": "dipo",
+        "temperature": 1.0,
+        "seed": 1,
+        "host": "vast-heechan-46",
+        "num_envs": 2048,
+        "batch_size": 4096,
+        "updates_per_collect": 32,
+        "warmup": 8192,
+        "steps": 1001472,
+        "eval_every": 200000,
+        "dipo_upstream_memory": true
+      },
+      {
+        "name": "pm_hard-dipo-upstream-u32-s1",
+        "task": "pm_hard",
+        "method": "dipo",
+        "temperature": 1.0,
+        "seed": 1,
+        "host": "vast-heechan-46",
+        "num_envs": 2048,
+        "batch_size": 4096,
+        "updates_per_collect": 32,
+        "warmup": 8192,
+        "steps": 1001472,
+        "eval_every": 200000,
+        "dipo_upstream_memory": true
+      },
+      {
+        "name": "pm_medium-dipo-upstream-u32-s2",
+        "task": "pm_medium",
+        "method": "dipo",
+        "temperature": 1.0,
+        "seed": 2,
+        "host": "vast-heechan-199",
+        "num_envs": 2048,
+        "batch_size": 4096,
+        "updates_per_collect": 32,
+        "warmup": 8192,
+        "steps": 1001472,
+        "eval_every": 200000,
+        "dipo_upstream_memory": true
+      },
+      {
+        "name": "pm_hard-dipo-upstream-u32-s2",
+        "task": "pm_hard",
+        "method": "dipo",
+        "temperature": 1.0,
+        "seed": 2,
+        "host": "vast-heechan-199",
+        "num_envs": 2048,
+        "batch_size": 4096,
+        "updates_per_collect": 32,
+        "warmup": 8192,
+        "steps": 1001472,
+        "eval_every": 200000,
+        "dipo_upstream_memory": true
+      }
+    ]
+  },
+  "source_commit": "041738202b5e6bcf765a9a807e917afd2778608a",
+  "source": "/home/heechan/OptiQ-ops/sources/041738202b5e6bcf765a9a807e917afd2778608a",
+  "controller_source": "/home/heechan/OptiQ-ops/sources/041738202b5e6bcf765a9a807e917afd2778608a",
+  "host": "vast-heechan-46"
+}

@@ -1,0 +1,33 @@
+{
+  "source_commit": "184bd7e26736a3af136f23b028f52168a34e80e0",
+  "mode": "fresh",
+  "seed": 1,
+  "n": 64,
+  "m": 64,
+  "batch": 256,
+  "temperature": 1.0,
+  "q": "log p_GMM40",
+  "steps": 100000,
+  "actor_hidden": [
+    256,
+    256
+  ],
+  "mean_output_init_scale": 1.0,
+  "sigma_init": 0.5,
+  "latent_skip": 0.0,
+  "learning_rate": 0.0003,
+  "teacher_sigma_floor": 0.05,
+  "action_scale": 40.0,
+  "eval_samples": 32768,
+  "primary_prior": "standard Gaussian continuous latent",
+  "target_branch_commit": "a2328f45b3604f1ab3f6e2b2117f7f21ca6d0b71",
+  "target_file_sha256": "6154338f6d880ea8610fe6832656a2c0b0f01abbdf3553076f9c89c83cffb91e",
+  "packages": {
+    "jax": "0.4.33",
+    "jaxlib": "0.4.33",
+    "flax": "0.9.0",
+    "numpy": "1.26.4",
+    "optax": "0.1.7",
+    "scipy": "1.11.4"
+  }
+}

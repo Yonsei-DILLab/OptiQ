@@ -1,0 +1,23 @@
+{
+  "time": 1790287807.760041,
+  "source_commit": "db4ca0a446f5fe8df1dda02e261fa9154c66d9c9",
+  "github": "pushed",
+  "vast-heechan-180": "canonical and frozen shared before launch",
+  "vast-heechan-199": "pending: SSH transport unavailable; no jobs launched there",
+  "vast1": "excluded: GMM40 reservation",
+  "actual_control_job_differences": {
+    "v3-optiq-startnorm-geodesic-gamma999-T1-H0.7-i500-250k-s0": [
+      "hypothesis",
+      "id",
+      "reward_profile",
+      "reward_specification"
+    ],
+    "v3-optiq-startnorm-geodesic-gamma999-T3-H0.7-i500-250k-s0": [
+      "hypothesis",
+      "id",
+      "reward_profile",
+      "reward_specification",
+      "temperature"
+    ]
+  }
+}

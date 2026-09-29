@@ -1,0 +1,580 @@
+{
+  "campaign": "antmaze-optiq-critic-dynamics-500k-s0-20260925",
+  "shard": 0,
+  "host": "vast-heechan-180",
+  "source": "/home/heechan/OptiQ-ops/sources/23603a7e7696aa64e8e49a38b986d6b430b6d6f3",
+  "source_commit": "23603a7e7696aa64e8e49a38b986d6b430b6d6f3",
+  "jobs": [
+    {
+      "id": "v3-optiq-control-500k-s0",
+      "task": "v3",
+      "method": "optiq",
+      "reward_profile": "progress100_euclidean_no_step_no_bonus",
+      "noveld": "off",
+      "eval_starts": "upstream",
+      "steps": 508416,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005,
+        "tau": 0.005,
+        "policy_delay": 1
+      },
+      "dacer": "off",
+      "reward_specification": {
+        "formula": "100*(d(current)-d(next))",
+        "success_bonus_enabled": false,
+        "distance": "nearest-goal Euclidean",
+        "step_cost": 0.0,
+        "progress_scale": 100.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -12.0,
+            12.0
+          ],
+          [
+            12.0,
+            -12.0
+          ]
+        ],
+        "goal_bonuses": [
+          0,
+          0
+        ],
+        "distance_endpoint": "goal center; do not replace terminal distance by zero",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 0.0,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af"
+      },
+      "seed": 0,
+      "dynamics_profile": "control",
+      "dynamics_settings": {
+        "reward_profile": "progress100_euclidean_no_step_no_bonus",
+        "reward_multiplier": 1.0,
+        "temperature": 1.0,
+        "tau": 0.005,
+        "critic_lr": 0.0005,
+        "policy_delay": 1
+      },
+      "reward_multiplier": 1.0,
+      "eval_interval": 100000,
+      "expected_critic_updates": 15632,
+      "expected_actor_updates": 15632
+    },
+    {
+      "id": "v4-optiq-scale02-500k-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "progress20_euclidean_no_step_no_bonus",
+      "noveld": "off",
+      "eval_starts": "upstream",
+      "steps": 508416,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 0.2,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005,
+        "tau": 0.005,
+        "policy_delay": 1
+      },
+      "dacer": "off",
+      "reward_specification": {
+        "formula": "20*(d(current)-d(next))",
+        "success_bonus_enabled": false,
+        "distance": "nearest-goal Euclidean",
+        "step_cost": 0.0,
+        "progress_scale": 20.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -16.0,
+            4.0
+          ],
+          [
+            -16.0,
+            -4.0
+          ]
+        ],
+        "goal_bonuses": [
+          0,
+          0
+        ],
+        "distance_endpoint": "goal center; do not replace terminal distance by zero",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 0.0,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af"
+      },
+      "seed": 0,
+      "dynamics_profile": "scale02",
+      "dynamics_settings": {
+        "reward_profile": "progress20_euclidean_no_step_no_bonus",
+        "reward_multiplier": 0.2,
+        "temperature": 0.2,
+        "tau": 0.005,
+        "critic_lr": 0.0005,
+        "policy_delay": 1
+      },
+      "reward_multiplier": 0.2,
+      "eval_interval": 100000,
+      "expected_critic_updates": 15632,
+      "expected_actor_updates": 15632
+    },
+    {
+      "id": "v3-optiq-ema01-500k-s0",
+      "task": "v3",
+      "method": "optiq",
+      "reward_profile": "progress100_euclidean_no_step_no_bonus",
+      "noveld": "off",
+      "eval_starts": "upstream",
+      "steps": 508416,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005,
+        "tau": 0.01,
+        "policy_delay": 1
+      },
+      "dacer": "off",
+      "reward_specification": {
+        "formula": "100*(d(current)-d(next))",
+        "success_bonus_enabled": false,
+        "distance": "nearest-goal Euclidean",
+        "step_cost": 0.0,
+        "progress_scale": 100.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -12.0,
+            12.0
+          ],
+          [
+            12.0,
+            -12.0
+          ]
+        ],
+        "goal_bonuses": [
+          0,
+          0
+        ],
+        "distance_endpoint": "goal center; do not replace terminal distance by zero",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 0.0,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af"
+      },
+      "seed": 0,
+      "dynamics_profile": "ema01",
+      "dynamics_settings": {
+        "reward_profile": "progress100_euclidean_no_step_no_bonus",
+        "reward_multiplier": 1.0,
+        "temperature": 1.0,
+        "tau": 0.01,
+        "critic_lr": 0.0005,
+        "policy_delay": 1
+      },
+      "reward_multiplier": 1.0,
+      "eval_interval": 100000,
+      "expected_critic_updates": 15632,
+      "expected_actor_updates": 15632
+    },
+    {
+      "id": "v4-optiq-criticlr2-500k-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "progress100_euclidean_no_step_no_bonus",
+      "noveld": "off",
+      "eval_starts": "upstream",
+      "steps": 508416,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.001,
+        "tau": 0.005,
+        "policy_delay": 1
+      },
+      "dacer": "off",
+      "reward_specification": {
+        "formula": "100*(d(current)-d(next))",
+        "success_bonus_enabled": false,
+        "distance": "nearest-goal Euclidean",
+        "step_cost": 0.0,
+        "progress_scale": 100.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -16.0,
+            4.0
+          ],
+          [
+            -16.0,
+            -4.0
+          ]
+        ],
+        "goal_bonuses": [
+          0,
+          0
+        ],
+        "distance_endpoint": "goal center; do not replace terminal distance by zero",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 0.0,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af"
+      },
+      "seed": 0,
+      "dynamics_profile": "criticlr2",
+      "dynamics_settings": {
+        "reward_profile": "progress100_euclidean_no_step_no_bonus",
+        "reward_multiplier": 1.0,
+        "temperature": 1.0,
+        "tau": 0.005,
+        "critic_lr": 0.001,
+        "policy_delay": 1
+      },
+      "reward_multiplier": 1.0,
+      "eval_interval": 100000,
+      "expected_critic_updates": 15632,
+      "expected_actor_updates": 15632
+    },
+    {
+      "id": "v3-optiq-actordelay2-500k-s0",
+      "task": "v3",
+      "method": "optiq",
+      "reward_profile": "progress100_euclidean_no_step_no_bonus",
+      "noveld": "off",
+      "eval_starts": "upstream",
+      "steps": 508416,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005,
+        "tau": 0.005,
+        "policy_delay": 2
+      },
+      "dacer": "off",
+      "reward_specification": {
+        "formula": "100*(d(current)-d(next))",
+        "success_bonus_enabled": false,
+        "distance": "nearest-goal Euclidean",
+        "step_cost": 0.0,
+        "progress_scale": 100.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -12.0,
+            12.0
+          ],
+          [
+            12.0,
+            -12.0
+          ]
+        ],
+        "goal_bonuses": [
+          0,
+          0
+        ],
+        "distance_endpoint": "goal center; do not replace terminal distance by zero",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 0.0,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af"
+      },
+      "seed": 0,
+      "dynamics_profile": "actordelay2",
+      "dynamics_settings": {
+        "reward_profile": "progress100_euclidean_no_step_no_bonus",
+        "reward_multiplier": 1.0,
+        "temperature": 1.0,
+        "tau": 0.005,
+        "critic_lr": 0.0005,
+        "policy_delay": 2
+      },
+      "reward_multiplier": 1.0,
+      "eval_interval": 100000,
+      "expected_critic_updates": 15632,
+      "expected_actor_updates": 7816
+    },
+    {
+      "id": "v4-optiq-scale02ema01-500k-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "progress20_euclidean_no_step_no_bonus",
+      "noveld": "off",
+      "eval_starts": "upstream",
+      "steps": 508416,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 0.2,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005,
+        "tau": 0.01,
+        "policy_delay": 1
+      },
+      "dacer": "off",
+      "reward_specification": {
+        "formula": "20*(d(current)-d(next))",
+        "success_bonus_enabled": false,
+        "distance": "nearest-goal Euclidean",
+        "step_cost": 0.0,
+        "progress_scale": 20.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -16.0,
+            4.0
+          ],
+          [
+            -16.0,
+            -4.0
+          ]
+        ],
+        "goal_bonuses": [
+          0,
+          0
+        ],
+        "distance_endpoint": "goal center; do not replace terminal distance by zero",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 0.0,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af"
+      },
+      "seed": 0,
+      "dynamics_profile": "scale02ema01",
+      "dynamics_settings": {
+        "reward_profile": "progress20_euclidean_no_step_no_bonus",
+        "reward_multiplier": 0.2,
+        "temperature": 0.2,
+        "tau": 0.01,
+        "critic_lr": 0.0005,
+        "policy_delay": 1
+      },
+      "reward_multiplier": 0.2,
+      "eval_interval": 100000,
+      "expected_critic_updates": 15632,
+      "expected_actor_updates": 15632
+    }
+  ],
+  "wandb_mode": "online",
+  "wandb_entity": "OptiQ",
+  "wandb_project": "antmaze",
+  "protocol": "antmaze_experiments/CRITIC_DYNAMICS_PROTOCOL.md",
+  "seed": 0,
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 8,
+  "reward_profile": "per-job dynamics_settings.reward_profile",
+  "noveld_enabled": false,
+  "noveld_coefficient": 0.0,
+  "reward": "100*Euclidean distance decrease, or 20*decrease in scale02 conditions; bonus=step_cost=0",
+  "evaluation_starts": "upstream fixed original full state for v3 and v4",
+  "interim_eval_episodes": 40,
+  "final_eval_episodes": 100,
+  "optiq_actor_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "optiq_critic_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "optiq_actor_lr": 0.0003,
+  "log_std_min": -5.0,
+  "log_std_max": -1.0,
+  "initial_log_std": -1.0,
+  "parent_source": "f953d28456d3800860dddb9b9cb91b6bd520ae00",
+  "fresh_training": true,
+  "resume_cancelled_jobs": false,
+  "backfill_seconds": 2,
+  "failure_holds_pending": true,
+  "automatic_restart": false,
+  "comparison_campaign": "antmaze-optiq-euclidean-no-step-B0-T1-s0-20260925-r2",
+  "comparison_source": "f953d28456d3800860dddb9b9cb91b6bd520ae00",
+  "source_dependencies": {},
+  "dacer_enabled": false,
+  "dacer_behavior_noise_std": 0.0,
+  "replay_capacity": 1000000,
+  "beta": 1.0,
+  "gradient_clipping": null,
+  "priority": "control first on each host; then listed order; independent per-slot 2-second backfill",
+  "campaign_kind": "bounded hypothesis diagnostic, not a final performance benchmark",
+  "conditions": {
+    "control": {
+      "reward_profile": "progress100_euclidean_no_step_no_bonus",
+      "reward_multiplier": 1.0,
+      "temperature": 1.0,
+      "tau": 0.005,
+      "critic_lr": 0.0005,
+      "policy_delay": 1
+    },
+    "scale02": {
+      "reward_profile": "progress20_euclidean_no_step_no_bonus",
+      "reward_multiplier": 0.2,
+      "temperature": 0.2,
+      "tau": 0.005,
+      "critic_lr": 0.0005,
+      "policy_delay": 1
+    },
+    "ema01": {
+      "reward_profile": "progress100_euclidean_no_step_no_bonus",
+      "reward_multiplier": 1.0,
+      "temperature": 1.0,
+      "tau": 0.01,
+      "critic_lr": 0.0005,
+      "policy_delay": 1
+    },
+    "criticlr2": {
+      "reward_profile": "progress100_euclidean_no_step_no_bonus",
+      "reward_multiplier": 1.0,
+      "temperature": 1.0,
+      "tau": 0.005,
+      "critic_lr": 0.001,
+      "policy_delay": 1
+    },
+    "actordelay2": {
+      "reward_profile": "progress100_euclidean_no_step_no_bonus",
+      "reward_multiplier": 1.0,
+      "temperature": 1.0,
+      "tau": 0.005,
+      "critic_lr": 0.0005,
+      "policy_delay": 2
+    },
+    "scale02ema01": {
+      "reward_profile": "progress20_euclidean_no_step_no_bonus",
+      "reward_multiplier": 0.2,
+      "temperature": 0.2,
+      "tau": 0.01,
+      "critic_lr": 0.0005,
+      "policy_delay": 1
+    }
+  },
+  "post_warmup_budget": 500000,
+  "actual_post_warmup_transitions": 500224,
+  "total_transitions_per_job": 508416,
+  "warmup_transitions": 8192,
+  "expected_critic_updates": 15632,
+  "eval_interval": 100000,
+  "evaluation_clock": "total transitions including warmup, rounded up to 256",
+  "preflight_total_transitions": 8448,
+  "preflight_critic_updates": 8,
+  "preflight_required": "Each job validates its own profile, real batch4096 updates, counters, reward replay and checkpoint readback before main training",
+  "diagnostics": {
+    "enabled": true,
+    "cadence": "intermediate policy checkpoints and final",
+    "preserve": [
+      "raw states",
+      "raw actions",
+      "critic and target Q",
+      "teacher weights",
+      "Monte Carlo returns",
+      "route labels"
+    ],
+    "full_checkpoint": "final only"
+  },
+  "assigned_hosts": {
+    "0": "vast-heechan-180",
+    "1": "vast-heechan-199"
+  },
+  "excluded_hosts": [
+    "vast1"
+  ],
+  "existing_training_preserved": true,
+  "cross_job_completion_barriers": false
+}

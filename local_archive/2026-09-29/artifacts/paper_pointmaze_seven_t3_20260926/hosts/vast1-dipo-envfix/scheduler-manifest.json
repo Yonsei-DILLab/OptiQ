@@ -1,0 +1,21 @@
+{
+  "training_source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "repair_plan_commit": "eded337b7e75228a6204eeb4be2efd1adfe7b7cd",
+  "scheduler_guard_commit": "dac86fe09a66cc0c3c30d4eb24fda302602d5c27",
+  "host": "vast1",
+  "reason": "Retry separately after the MuJoCo 2.1 library path failure, without altering or overwriting the failed preflight records.",
+  "smoke": {
+    "task": "pm_simple",
+    "method": "dipo",
+    "num_envs": 256,
+    "batch_size": 4096,
+    "steps": 4352,
+    "updates": 16,
+    "verified": true,
+    "path": "/home/heechan/optiq-experiments/paper-pointmaze-dipo-4090-smoke-20260926"
+  },
+  "services": [
+    "paper-pointmaze-seven-t3-dipo-envfix-20260926-vast1-gpu2",
+    "paper-pointmaze-seven-t3-dipo-envfix-20260926-vast1-gpu3"
+  ]
+}

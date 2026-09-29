@@ -1,0 +1,6 @@
+{
+  "training_source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "archive_collection_source_commit": "6e9395a60d3003d68800045304cb7e33afc7c184",
+  "final_figure_source_commit": "d4382b7c1f9dd73db88a89894d3cd492a63660cc",
+  "figure_protocol": "seed0; direct sampled policy; final500 episodes per method and maze"
+}

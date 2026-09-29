@@ -1,0 +1,10 @@
+{
+  "time": 1790286180.2978373,
+  "commit": "8eb830d553f93e1360bcee5f6c9649e6392e5d25",
+  "github": "pushed before registration",
+  "vast-heechan-180": "canonical and immutable source verified",
+  "vast-heechan-199": "pending SSH transport recovery; source-only",
+  "excluded": [
+    "vast1"
+  ]
+}

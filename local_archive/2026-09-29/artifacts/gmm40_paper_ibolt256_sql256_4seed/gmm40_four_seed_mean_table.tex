@@ -1,0 +1,18 @@
+\begin{table}[h]
+\centering
+\sffamily
+\caption{GMM40 sampling quality after 100{,}000 actor updates: mean $\pm$ sample standard deviation over four training seeds (0--3). iBOLT uses $N=M=256$. Each run contributes 10{,}000 native full-policy samples. MMD uses the first 2{,}048 samples and a shared, independent ground-truth draw. Ground truth is a fixed reference, not a trained method. Mode coverage counts reference components covered out of 40.}
+\label{tab:gmm40_sampling_quality}
+\footnotesize
+\resizebox{0.85\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+    \toprule
+    Algorithm & Ground truth & SAC & SQL & MFPO & DIPO & \textbf{iBOLT (ours)} \\
+    \midrule
+    MMD $\downarrow$ & -- & 0.8112 $\pm$ 0.0519 & 0.3627 $\pm$ 0.0554 & 0.0949 $\pm$ 0.0164 & 0.1276 $\pm$ 0.0064 & \textbf{0.0260 $\pm$ 0.0050} \\
+    Mode coverage (/40) $\uparrow$ & 40.00 & 1.75 $\pm$ 0.96 & 14.00 $\pm$ 5.35 & 36.00 $\pm$ 0.82 & 36.50 $\pm$ 1.73 & \textbf{40.00 $\pm$ 0.00} \\
+    \bottomrule
+\end{tabular}%
+}
+\vspace{0.2em}
+\end{table}

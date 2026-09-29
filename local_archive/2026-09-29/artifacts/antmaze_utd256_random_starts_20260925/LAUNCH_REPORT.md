@@ -1,0 +1,11 @@
+# AntMaze OptiQ v3/v4 matched random starts
+
+The former T=3 v3/v4 runs were stopped on 2026-09-25 at 217,088 and 180,224 total environment steps, respectively. Their controller and W&B sync services are stopped; frozen source and partial data remain on the servers. The separate N=M128 v3/v4 experiment on vast1 remains active.
+
+The replacement source is commit `a8e1b2b3163c6b63e03b6a109c31ab45dccd811b` on `direct-gmm-trg-antmaze`, pushed to GitHub and frozen on both training servers. Vast-heechan-180 runs v3; vast-heechan-199 runs v4. Each is seed 0, OptiQ basic N=M64, T=1, 256x2, random Gaussian latent, 256 parallel environments, batch 4,096, 256 updates per 256 collected transitions, replay capacity 1M. Reward is `100*(d(current)-d(next))` using nearest-goal Euclidean distance, with no step penalty, success bonus, DACER or NovelD. v3 budget is 4,008,448 total transitions and v4 is 5,008,384, including 8,192 warmup transitions.
+
+Training and primary evaluation use the official DDiffPG Ant `random_init=True` mechanism used by v1: every reset samples a fresh XY start uniformly in [-2,2]^2. This intentionally differs from the official fixed-start v3/v4 defaults. Evaluation is every 50k transitions, 40 episodes per random-z μ-only/native and direct stochastic/σ-inclusive mode, with 100 episodes per mode at the end. Final fixed-start supplementary evaluation repeats one sampled full state and must not be confused with the original fixed origin.
+
+Real preflight on each server completed 8,448 transitions and exactly 256 actor/critic updates, confirmed N=M64, a correct reward, differing natural evaluation starts and full checkpoint readback. The 256 training starts covered roughly [-1.984,1.991] in X and [-1.999,1.989] in Y on each server. The preflight and main configuration snapshots are stored here. Both main learners are running on GPU 0. W&B: [v3](https://wandb.ai/OptiQ/antmaze/runs/fjl5fp59), [v4](https://wandb.ai/OptiQ/antmaze/runs/20zo8gxt).
+
+Random-start route variety can arise from different initial positions. Claims that one learned policy retains multiple paths require route analysis conditioned on a common full initial state, in addition to the primary random-start results.

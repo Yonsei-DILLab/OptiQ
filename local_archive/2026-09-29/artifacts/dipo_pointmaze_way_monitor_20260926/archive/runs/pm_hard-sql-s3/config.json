@@ -1,0 +1,65 @@
+{
+  "task": "pm_hard",
+  "method": "sql",
+  "output": "/home/heechan/optiq-experiments/pointmaze-baselines-s1to3-1m-20260926/runs/pm_hard-sql-s3",
+  "seed": 3,
+  "steps": 1000192,
+  "num_envs": 256,
+  "updates_per_collect": 16,
+  "batch_size": 4096,
+  "warmup": 8192,
+  "eval_every": 200000,
+  "eval_episodes": 200,
+  "final_eval_episodes": 500,
+  "render_each_eval": true,
+  "temperature": 1.0,
+  "optiq_eval_mode": "mu_only",
+  "sql_particles": 16,
+  "meow_alpha": 0.2,
+  "meow_device": "auto",
+  "mfpo_target_entropy_per_dim": -0.5,
+  "source_commit": "bfb06944705685a7dea84558aba40500c22349b9",
+  "agent": "SQLConfig(hidden_dims=(256, 256), learning_rate=0.0003, kernel_particles=16, kernel_update_ratio=0.5, value_particles=16, target_update_interval=1000, discount=0.99, reward_scale=1.0, temperature=1.0)",
+  "task_mode": "original DrAC multi-goal PointMaze sparse +100",
+  "geometry": {
+    "goal_positions": [
+      [
+        -2.0,
+        6.0
+      ],
+      [
+        2.0,
+        6.0
+      ],
+      [
+        -6.0,
+        2.0
+      ],
+      [
+        6.0,
+        2.0
+      ],
+      [
+        -6.0,
+        -2.0
+      ],
+      [
+        6.0,
+        -2.0
+      ],
+      [
+        -2.0,
+        -6.0
+      ],
+      [
+        2.0,
+        -6.0
+      ]
+    ],
+    "horizon": 600,
+    "reward": "100 on reaching any goal, 0 otherwise",
+    "obstacle": "original upstream latent wall cells enabled at evaluation only",
+    "removal": "half goals removed, five-trial expected success"
+  },
+  "utd": 0.0625
+}

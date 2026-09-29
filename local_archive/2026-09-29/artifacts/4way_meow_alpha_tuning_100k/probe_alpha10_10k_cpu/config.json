@@ -1,0 +1,33 @@
+{
+  "task": "4way",
+  "method": "meow",
+  "output": "/Users/yunheechan/Documents/ChatGPT/OptiQ/artifacts/4way_meow_alpha_tuning_100k/probe_alpha10_10k_cpu",
+  "seed": 0,
+  "steps": 10000,
+  "num_envs": 16,
+  "updates_per_collect": 16,
+  "batch_size": 256,
+  "warmup": 1024,
+  "eval_every": 2000,
+  "eval_episodes": 100,
+  "final_eval_episodes": null,
+  "render_each_eval": false,
+  "temperature": 1.0,
+  "meow_alpha": 10.0,
+  "meow_device": "cpu",
+  "source_commit": "5abbefea0075a242f534c4adf0ca327bcc82b089",
+  "agent": {
+    "algorithm": "MEOW CleanRL flow Q regression",
+    "upstream_commit": "b786d27aa9b03e4242ee8904ff884b21fe65e2f7",
+    "alpha": 10.0,
+    "sigma_min": -5.0,
+    "sigma_max": -0.3,
+    "device": "cpu",
+    "q_lr": 0.001,
+    "tau": 0.005,
+    "grad_clip": 30,
+    "evaluation_policy": "direct flow sample"
+  },
+  "task_mode": "existing wall-free symmetric four-goal",
+  "utd": 1.0
+}

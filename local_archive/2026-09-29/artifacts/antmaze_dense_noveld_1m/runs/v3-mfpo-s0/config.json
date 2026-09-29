@@ -1,0 +1,370 @@
+{
+  "profile": "dense-noveld-1m",
+  "method": "mfpo",
+  "task": "v3",
+  "seed": 0,
+  "smoke": false,
+  "source_commit": "19fc37a7e51be2bb54d41ab9a980225ecd9f5ba5",
+  "source_root": "/home/heechan/OptiQ-ops/sources/19fc37a7e51be2bb54d41ab9a980225ecd9f5ba5",
+  "steps": 1000000,
+  "warmup": 10000,
+  "batch_size": 256,
+  "num_envs": 1,
+  "utd": 1,
+  "expected_updates": 990000,
+  "native": {
+    "T": 2,
+    "actor_delay": 1,
+    "actor_hidden_dims": [
+      256,
+      256,
+      256
+    ],
+    "actor_layer_norm": true,
+    "actor_lr": 0.0003,
+    "atoms_num": 101,
+    "backup_entropy": true,
+    "critic_hidden_dims": [
+      256,
+      256,
+      256
+    ],
+    "critic_layer_norm": true,
+    "critic_lr": 0.0003,
+    "data_proportion": 0.75,
+    "discount": 0.99,
+    "div_samples_num": 2,
+    "eval_action_selection": true,
+    "eval_candidate_num": 10,
+    "logp_lr": 0.0003,
+    "target_entropy_coeff": -0.5,
+    "tau": 0.005,
+    "temp": 0.01,
+    "temp_lr": 0.0003,
+    "time_dist_name": "logit_normal",
+    "use_cdq": true,
+    "v_max": 1600,
+    "v_min": -1600,
+    "vel1_samples_num": 16,
+    "vel2_samples_num": 32
+  },
+  "intrinsic": {
+    "type": "noveld",
+    "coefficient": 0.01,
+    "novelty_discount": 0.5,
+    "normalize": false,
+    "positional_encoding": true,
+    "frequency_bands": 10,
+    "learning_rate": 0.0001,
+    "gradient_clip": 1.0,
+    "upstream_commit": "7edd06c4799abbab0f8fa534c21deb56253b018e"
+  },
+  "environment": {
+    "task": "v3",
+    "map": [
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        "g",
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        0,
+        "r",
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      [
+        1,
+        "g",
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    ],
+    "scale": 4.0,
+    "walls": [
+      [
+        -16.0,
+        -16.0
+      ],
+      [
+        -12.0,
+        -16.0
+      ],
+      [
+        -8.0,
+        -16.0
+      ],
+      [
+        -4.0,
+        -16.0
+      ],
+      [
+        0.0,
+        -16.0
+      ],
+      [
+        4.0,
+        -16.0
+      ],
+      [
+        8.0,
+        -16.0
+      ],
+      [
+        12.0,
+        -16.0
+      ],
+      [
+        16.0,
+        -16.0
+      ],
+      [
+        -16.0,
+        -12.0
+      ],
+      [
+        8.0,
+        -12.0
+      ],
+      [
+        16.0,
+        -12.0
+      ],
+      [
+        -16.0,
+        -8.0
+      ],
+      [
+        -8.0,
+        -8.0
+      ],
+      [
+        -4.0,
+        -8.0
+      ],
+      [
+        16.0,
+        -8.0
+      ],
+      [
+        -16.0,
+        -4.0
+      ],
+      [
+        8.0,
+        -4.0
+      ],
+      [
+        16.0,
+        -4.0
+      ],
+      [
+        -16.0,
+        0.0
+      ],
+      [
+        -8.0,
+        0.0
+      ],
+      [
+        16.0,
+        0.0
+      ],
+      [
+        -16.0,
+        4.0
+      ],
+      [
+        8.0,
+        4.0
+      ],
+      [
+        16.0,
+        4.0
+      ],
+      [
+        -16.0,
+        8.0
+      ],
+      [
+        -8.0,
+        8.0
+      ],
+      [
+        -4.0,
+        8.0
+      ],
+      [
+        8.0,
+        8.0
+      ],
+      [
+        16.0,
+        8.0
+      ],
+      [
+        -16.0,
+        12.0
+      ],
+      [
+        16.0,
+        12.0
+      ],
+      [
+        -16.0,
+        16.0
+      ],
+      [
+        -12.0,
+        16.0
+      ],
+      [
+        -8.0,
+        16.0
+      ],
+      [
+        -4.0,
+        16.0
+      ],
+      [
+        0.0,
+        16.0
+      ],
+      [
+        4.0,
+        16.0
+      ],
+      [
+        8.0,
+        16.0
+      ],
+      [
+        12.0,
+        16.0
+      ],
+      [
+        16.0,
+        16.0
+      ]
+    ],
+    "goals": [
+      [
+        -12.0,
+        12.0
+      ],
+      [
+        12.0,
+        -12.0
+      ]
+    ],
+    "start": [
+      0.0,
+      0.0
+    ],
+    "horizon": 700
+  },
+  "xml_sha256": "028cd208c7c1883eb1a429993fbb37712929633ff898938cf0bdb743256300af",
+  "reward": "environment=-nearest goal distance; learner adds NovelD; evaluation excludes NovelD",
+  "reward_provenance": "MaxEntDP D.2 dense distance penalty + user-requested DDiffPG NovelD; not exact unpublished MaxEntDP AntMaze reproduction",
+  "eval_modes": {
+    "native": "SAC tanh(mu); MFPO Q-best-of10; MEOW center-prior; OptiQ random-z mu-only",
+    "policy": "direct stochastic policy including conditional sigma for OptiQ; no external DACER noise",
+    "zero_z": "OptiQ z=0, mu-only"
+  },
+  "eval_interval": 25000,
+  "checkpoint_interval": 100000,
+  "trajectory_episodes_per_reset_mode": 100,
+  "resume_from": null,
+  "packages": {
+    "mujoco": "3.3.7",
+    "gymnasium": "1.2.3",
+    "jax": "0.4.33",
+    "flax": "0.9.0",
+    "optax": "0.1.7",
+    "torch": "2.7.1+cu128",
+    "numpy": "1.26.4",
+    "wandb": "0.29.0"
+  }
+}

@@ -1,0 +1,191 @@
+{
+  "profile": "dense-noveld-1m",
+  "method": "meow",
+  "task": "v1",
+  "seed": 0,
+  "smoke": false,
+  "source_commit": "19fc37a7e51be2bb54d41ab9a980225ecd9f5ba5",
+  "source_root": "/home/heechan/OptiQ-ops/sources/19fc37a7e51be2bb54d41ab9a980225ecd9f5ba5",
+  "steps": 1000000,
+  "warmup": 5000,
+  "batch_size": 256,
+  "num_envs": 1,
+  "utd": 1,
+  "expected_updates": 995000,
+  "native": {
+    "alpha": 0.2,
+    "sigma_max": -0.3,
+    "sigma_min": -5.0,
+    "q_lr": 0.001,
+    "grad_clip": 30.0,
+    "gamma": 0.99,
+    "tau": 0.005,
+    "batch_size": 256,
+    "flow_hidden_dims": [
+      64,
+      64
+    ],
+    "scale_hidden_dims": [
+      256,
+      256
+    ],
+    "flow_layers": 2,
+    "deterministic_action": true,
+    "autotune": false
+  },
+  "intrinsic": {
+    "type": "noveld",
+    "coefficient": 0.01,
+    "novelty_discount": 0.5,
+    "normalize": false,
+    "positional_encoding": true,
+    "frequency_bands": 10,
+    "learning_rate": 0.0001,
+    "gradient_clip": 1.0,
+    "upstream_commit": "7edd06c4799abbab0f8fa534c21deb56253b018e"
+  },
+  "environment": {
+    "task": "v1",
+    "map": [
+      [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        "g",
+        1,
+        "r",
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    ],
+    "scale": 4.0,
+    "walls": [
+      [
+        -12.0,
+        -8.0
+      ],
+      [
+        -8.0,
+        -8.0
+      ],
+      [
+        -4.0,
+        -8.0
+      ],
+      [
+        0.0,
+        -8.0
+      ],
+      [
+        4.0,
+        -8.0
+      ],
+      [
+        -12.0,
+        -4.0
+      ],
+      [
+        4.0,
+        -4.0
+      ],
+      [
+        -12.0,
+        0.0
+      ],
+      [
+        -4.0,
+        0.0
+      ],
+      [
+        4.0,
+        0.0
+      ],
+      [
+        -12.0,
+        4.0
+      ],
+      [
+        4.0,
+        4.0
+      ],
+      [
+        -12.0,
+        8.0
+      ],
+      [
+        -8.0,
+        8.0
+      ],
+      [
+        -4.0,
+        8.0
+      ],
+      [
+        0.0,
+        8.0
+      ],
+      [
+        4.0,
+        8.0
+      ]
+    ],
+    "goals": [
+      [
+        -8.0,
+        0.0
+      ]
+    ],
+    "start": [
+      0.0,
+      0.0
+    ],
+    "horizon": 500
+  },
+  "xml_sha256": "cfd330592e96d1ad41505d4eee60f155305d3964679e215892f524c8bb1a3336",
+  "reward": "environment=-nearest goal distance; learner adds NovelD; evaluation excludes NovelD",
+  "reward_provenance": "MaxEntDP D.2 dense distance penalty + user-requested DDiffPG NovelD; not exact unpublished MaxEntDP AntMaze reproduction",
+  "eval_modes": {
+    "native": "SAC tanh(mu); MFPO Q-best-of10; MEOW center-prior; OptiQ random-z mu-only",
+    "policy": "direct stochastic policy including conditional sigma for OptiQ; no external DACER noise",
+    "zero_z": "OptiQ z=0, mu-only"
+  },
+  "eval_interval": 25000,
+  "checkpoint_interval": 100000,
+  "trajectory_episodes_per_reset_mode": 100,
+  "resume_from": null,
+  "packages": {
+    "mujoco": "3.3.7",
+    "gymnasium": "1.2.3",
+    "jax": "0.4.33",
+    "flax": "0.9.0",
+    "optax": "0.1.7",
+    "torch": "2.7.1+cu128",
+    "numpy": "1.26.4",
+    "wandb": "0.29.0"
+  }
+}

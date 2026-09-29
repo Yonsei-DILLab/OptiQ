@@ -1,0 +1,211 @@
+{
+  "campaign": "antmaze-optiq-dense-dacer-off-T3-T5-T10-s0-20260924",
+  "shard": 0,
+  "host": "vast-heechan-180",
+  "source": "/home/heechan/OptiQ-ops/sources/5baa5b3463416cdfdcad465e8f862f3729802568",
+  "source_commit": "5baa5b3463416cdfdcad465e8f862f3729802568",
+  "jobs": [
+    {
+      "id": "v4-optiq-dacer-off-T3-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 5008384,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 3.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer": "off"
+    },
+    {
+      "id": "v3-optiq-dacer-off-T5-s0",
+      "task": "v3",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 4008448,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 5.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer": "off"
+    },
+    {
+      "id": "v1-optiq-dacer-off-T3-s0",
+      "task": "v1",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 3008256,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 3.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer": "off"
+    },
+    {
+      "id": "v1-optiq-dacer-off-T5-s0",
+      "task": "v1",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 3008256,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 5.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer": "off"
+    },
+    {
+      "id": "v1-optiq-dacer-off-T10-s0",
+      "task": "v1",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 3008256,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 10.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer": "off"
+    }
+  ],
+  "wandb_mode": "online",
+  "wandb_entity": "OptiQ",
+  "wandb_project": "antmaze",
+  "protocol": "antmaze_experiments/DACER_OFF_TEMPERATURE_PROTOCOL.md",
+  "seed": 0,
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 8,
+  "reward_profile": "dense",
+  "noveld_enabled": false,
+  "noveld_coefficient": 0.0,
+  "reward": "negative Euclidean distance from next xy to nearest goal; no sparse bonus",
+  "evaluation_starts": "xy uniform[-2,2] per episode; native training resets unchanged",
+  "interim_eval_episodes": 40,
+  "final_eval_episodes": 100,
+  "optiq_actor_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "optiq_critic_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "optiq_actor_lr": 0.0003,
+  "optiq_critic_lr": 0.0005,
+  "log_std_min": -5.0,
+  "log_std_max": -1.0,
+  "initial_log_std": -1.0,
+  "optiq_tau": 0.005,
+  "parent_source": "484f92e7d6d34c964d85b4493ff17c5a9ebcf32e",
+  "fresh_training": true,
+  "resume_cancelled_jobs": false,
+  "backfill_seconds": 2,
+  "failure_holds_pending": true,
+  "automatic_restart": false,
+  "comparison_campaign": "antmaze-optiq-dense-dacer-off-T1-s0-20260924",
+  "comparison_source": "484f92e7d6d34c964d85b4493ff17c5a9ebcf32e",
+  "changed_learning_setting": {
+    "temperature": {
+      "previous": 1.0,
+      "current": [
+        3.0,
+        5.0,
+        10.0
+      ]
+    }
+  },
+  "source_dependencies": {},
+  "dacer_enabled": false,
+  "dacer_behavior_noise_std": 0.0,
+  "optiq_temperatures": [
+    3.0,
+    5.0,
+    10.0
+  ],
+  "replay_capacity": 1000000,
+  "beta": 1.0,
+  "gradient_clipping": null,
+  "policy_temperature_schedule": null,
+  "priority": "Independent local GPU backfill every 2 seconds; no maze/temperature barrier"
+}

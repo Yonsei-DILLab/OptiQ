@@ -1,0 +1,21 @@
+{
+  "branch": "direct-gmm-trg-antmaze",
+  "source_commit": "f953d28456d3800860dddb9b9cb91b6bd520ae00",
+  "reward": "100*(nearest_goal_euclidean_distance_current-nearest_goal_euclidean_distance_next)",
+  "step_penalty": 0,
+  "bonus": 0,
+  "temperature": 1,
+  "seed": 0,
+  "tasks": [
+    "v3",
+    "v4",
+    "v1",
+    "v2"
+  ],
+  "eval_starts": "upstream",
+  "dacer": false,
+  "noveld": false,
+  "failed_preflight_source": "cab48faf07d41a86886355bfd6bef538fff29432",
+  "failed_preflight_reason": "Runtime reward-description dispatch did not recognize the new profile; no learner updates or main training started",
+  "campaign": "antmaze-optiq-euclidean-no-step-B0-T1-s0-20260925-r2"
+}

@@ -1,0 +1,27 @@
+{
+  "campaign": "trg-dacer-mean1-20260921",
+  "host": "vast-heechan-199",
+  "gpus": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "jobs": [
+    "halfcheetah-trg-dacer-mean1-T0.25-b1-s0",
+    "halfcheetah-trg-dacer-mean1-T0.25-b1-s1",
+    "ant-trg-dacer-mean1-T0.25-b1-s0",
+    "ant-trg-dacer-mean1-T0.25-b1-s1",
+    "ant-trg-dacer-mean1-T0.25-b1-s2",
+    "ant-trg-dacer-mean1-T0.25-b1-s3"
+  ],
+  "commit": "8cba41497da673c5b643e2fd41536d7951f6c9da",
+  "source": "/home/heechan/OptiQ-ops/sources/8cba41497da673c5b643e2fd41536d7951f6c9da",
+  "branch": "direct-gmm-trg",
+  "project": "OptiQ/gmm-trg",
+  "deps": "/home/heechan/optiq-experiments/trg-dacer-priority-20260921/deps",
+  "created": 1789985372.1622565,
+  "total_steps": 1000000,
+  "scheduling": "First four immediately; backfill any free GPU every 2 seconds",
+  "failure_policy": "Preserve active runs; block pending jobs; no automatic retries"
+}

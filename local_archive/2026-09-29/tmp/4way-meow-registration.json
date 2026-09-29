@@ -1,0 +1,14 @@
+{
+  "campaign": "4way-meow-alpha-100k-s0-20260926",
+  "host": "vast-heechan-199",
+  "learning_source_commit": "5abbefea0075a242f534c4adf0ca327bcc82b089",
+  "scheduling_commit": "0f7cb37c4522ff392d11f2ba1866c1afdf806abb",
+  "plan_sha256": "69a863619c26d895a29f98ab76c0966ad8a273288bc3814700dc7c96732c59ba",
+  "gpu_alpha": {
+    "0": 2.0,
+    "1": 10.0,
+    "2": 30.0
+  },
+  "state": "queued_waiting_for_gpu",
+  "native_control_retained": true
+}

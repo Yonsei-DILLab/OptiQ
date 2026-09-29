@@ -1,0 +1,1684 @@
+{
+  "training_source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+  "reporting_source_commit": "6e9395a60d3003d68800045304cb7e33afc7c184",
+  "completed": 21,
+  "expected": 21,
+  "runs": {
+    "pm_simple-optiq-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926",
+      "sha256": {
+        "checkpoints/policy_000020224.msgpack": "90975647cf5e41ec0f31c58c58d6fe9c29845b87574b16701699bea16821eb3e",
+        "checkpoints/policy_000040192.msgpack": "6983876b2298de13f395f62f03fa9bbbe707772f879e4dc72d552593fd358d62",
+        "checkpoints/policy_000060160.msgpack": "f3ea4ce0fd9511f3d2cd9e692efca7ecc115ca40c1adcd546ba9c793d148cb90",
+        "checkpoints/policy_000080128.msgpack": "f4197ec4fe888b6cb9d75f25bb03c27cb2b32ad70370bd4cf2b42ab4e7751ce8",
+        "checkpoints/policy_000100096.msgpack": "ac46a7921101efc7c4def5450ef1c82f4ff411403f2db82218647bb566e607dc",
+        "checkpoints/replay_000100096.npz": "22066f525d63b3cfce79f917e5d2817ea6ac25ff5784a3af4d53c47d76e990af",
+        "config.json": "96268f662bf0094a6ef526c3d701cf6bd091fae8fc90987ea0f49c9c7a120914",
+        "evaluations/000020224_mu_only.npz": "112404632ae7a28599521fdefeb9598f7486405c21219f1fab05a02fd1663f65",
+        "evaluations/000020224_obstacle_policy.npz": "ad7c74a27dfc5f00219a79cf35fc37e732db36aec0e6f575ae103605fb01ea4b",
+        "evaluations/000020224_policy.npz": "1ec6c21d6fbbc474cbd126090a1455ad8a9213540c1704828a1547e4ba5f5be6",
+        "evaluations/000020224_summary.json": "0960bddd199ba518584ee8b94f34d227e91b51c92cac996a3f7b7e4705ff863a",
+        "evaluations/000040192_mu_only.npz": "ef6d152eaa80b30d65446104c0d9f19684ebfea4eb487a8cba4cfcf42e4530e3",
+        "evaluations/000040192_obstacle_policy.npz": "829ea240a4db4be3191bc3cbe7d54fa755d11430cfec68b225de6eb74a89faf9",
+        "evaluations/000040192_policy.npz": "0929dc21b8610264d3f2800c84465a863a36c11adf4fb4bf005889e65391de26",
+        "evaluations/000040192_summary.json": "2ffc8864f35bb1a0981b0c020789b8dc1300fc6641757b71cf5486f341739cf6",
+        "evaluations/000060160_mu_only.npz": "db8d31407d06d5e13942b0700dc0fee5859928876a01e5c129c63cfe7c31262e",
+        "evaluations/000060160_obstacle_policy.npz": "6b33c57e86fc9bc94cfd0beb9a4fb1a7812ce0500d6c3fd534b0021163215c8e",
+        "evaluations/000060160_policy.npz": "e08f464db91bf4d7acc31d3abb19b5ea8d0b95435956c4244c5859b41c931d7b",
+        "evaluations/000060160_summary.json": "44fbee93f1f62c1d1796452e116edc5cf86a227b72fd1991d5ee6d29477c55cb",
+        "evaluations/000080128_mu_only.npz": "681d09aa917af8d835eb694613693e3329a3a354a2580e860b84ce9789a924b4",
+        "evaluations/000080128_obstacle_policy.npz": "f8a393814ee66cc3efd06b1b887d07b187ae40be28fe15ae6ce4afcb1da52194",
+        "evaluations/000080128_policy.npz": "b0e1d1985e9faf1539877337f0ba0c7594218c7693ede849e12a685ba977540d",
+        "evaluations/000080128_summary.json": "2b7303039ca28f3b4f602ce45544219a6f3f08a121cdcb6264fd137bc6cdd851",
+        "evaluations/000100096_mu_only.npz": "7a8e19469586dcdcad845ee102ed62e779967ea448e8f1cb9b211e269b4cf348",
+        "evaluations/000100096_obstacle_policy.npz": "1722c81b4d169c5e87a0dd35fe8aeb524d55a53e544b42f3cd4043671bb7580f",
+        "evaluations/000100096_policy.npz": "307884dd6bba1788a8e5f052da601c4c19dd35ea9fb5158b2ef7d12b50731b67",
+        "evaluations/000100096_summary.json": "b0c64a1c037ad883214f1521167b8ec8459fc87470bbee5f254bd9f7f23eaa9b",
+        "figures/000020224_trajectories.png": "a300d663d2255992e7f404bb97233891e63036f3e7dde076367643e05c0e7714",
+        "figures/000040192_trajectories.png": "1b40c5f1467395dc53a176e57a43f03c1fd16229a6dd9b026d6b0897aa0df5b6",
+        "figures/000060160_trajectories.png": "73c5412fae2a02c1447b0062354085c0a6a7e78d7652624f276c2cae180e314c",
+        "figures/000080128_trajectories.png": "1f94754e8f86730435ad2420005add36fcf68ef0c60e2c125e5081eca367cda9",
+        "figures/000100096_trajectories.png": "766e72b058f9da6a19aa59b488b151fe76aae641f1b1807d74afe374b69307fc",
+        "learner/progress.csv": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "progress.json": "c1178a10d443b97fc2c7f2798587220287fdbeb55069d4ae477e41b4e0aa1911"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 100096,
+        "updates": 5744,
+        "policy": {
+          "episodes": 500,
+          "success": 0.516,
+          "goals": [
+            74,
+            60,
+            60,
+            64
+          ],
+          "failure": 242,
+          "reachable_goals": 4,
+          "mean_return": 51.599998474121094,
+          "mean_length": 134.62,
+          "sr5_removal": 0.835
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.204,
+          "goals": [
+            24,
+            29,
+            32,
+            17
+          ],
+          "failure": 398,
+          "reachable_goals": 4,
+          "mean_return": 20.399999618530273,
+          "mean_length": 116.896,
+          "sr5_obstacle": 0.74
+        },
+        "checkpoint_sha256": {
+          "policy_000100096.msgpack": "ac46a7921101efc7c4def5450ef1c82f4ff411403f2db82218647bb566e607dc"
+        }
+      }
+    },
+    "pm_simple-sql-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926",
+      "sha256": {
+        "checkpoints/policy_000020224.msgpack": "0b115c922a1b32a65edcb2d5fabbc313e9b5b55bb9f7520d0aca91edf8de0d8d",
+        "checkpoints/policy_000040192.msgpack": "2039498be8f99fa3cc55715de3c3314d8be5e2598790867b11feaf0eaeeb9ea7",
+        "checkpoints/policy_000060160.msgpack": "c7465db2f99d2ab47ecc2180687dfa7b19319375f4fe98853eb1b8c9a74cd916",
+        "checkpoints/policy_000080128.msgpack": "41f23f1eb155641cc98b60d3f21ac4efdbc4745e28e9a27abcdb11b9776b953b",
+        "checkpoints/policy_000100096.msgpack": "8c048e57d64d49f9b4271e4d57836e55ca05fd7774aaad294a8e3288916ca75e",
+        "checkpoints/replay_000100096.npz": "6df52443d69f74a026aae6ac768d787d09c19faab5726c8d41532a92eba61546",
+        "config.json": "15de0a618967149eff10a40c0ad866d1ca9ffde265921e243e05d7e0831345fc",
+        "evaluations/000020224_obstacle_policy.npz": "8317caae52ccea480b529c9d8a218281b9154ba1688304f086603acaf736a96f",
+        "evaluations/000020224_policy.npz": "1b6f595d41e52813d01c74742184d4bfd972f435c68b9c1e1211aec70f59e853",
+        "evaluations/000020224_summary.json": "d00d690b66bc3fe521896e059a3033cf519c40fd2faf4091f7abebc16ea33a4a",
+        "evaluations/000040192_obstacle_policy.npz": "699d4b60d52859411484dba89147eccb3d28b79960656e590b2998180c868b6a",
+        "evaluations/000040192_policy.npz": "ec1b52e5dfea36ef13dddce3c10c7c5ccb58f72992274d1dfdd3366c8a6392bc",
+        "evaluations/000040192_summary.json": "fe602aa5e36cf04cfe224629f1ee6c999d581f8a5f028c146c91884660fb1413",
+        "evaluations/000060160_obstacle_policy.npz": "c5956f7efd25767b758d58fcf57ebafc372288c467ba2e9aae0c67d1f3ee63ef",
+        "evaluations/000060160_policy.npz": "f1d7c9c7f5b9597fab63cca79abe65866a50518fd8253c8ffb894abd095b6a6f",
+        "evaluations/000060160_summary.json": "bb7883c1d72ff05918b398dbf330110662fe1a0c91297cab5615a916f2dc55b1",
+        "evaluations/000080128_obstacle_policy.npz": "c1416f074c9f2af7b3526fbc4333f9582f6ffd9de5170d7f0f67a0a82e89f492",
+        "evaluations/000080128_policy.npz": "ebd521554239ed1ff0c0753d8a48be4e535ec00b45c6c59e1337453eaeead119",
+        "evaluations/000080128_summary.json": "40abac29198d5b3913f67a0f5b35f833e840ab850d5159bc144db43286c579ac",
+        "evaluations/000100096_obstacle_policy.npz": "c062c8138289ed146743d0cf2f01afe3d9d757f5b3e8de50d16582565689c966",
+        "evaluations/000100096_policy.npz": "383d2968e3c33f6a66f6c4d47807f8cb4010682cdfa64d9ac591e1f8bf727d22",
+        "evaluations/000100096_summary.json": "e076bc4013ab1a6226f58e9b3488eec8233ec8a8bd96d4edb696ab3f2d914787",
+        "figures/000020224_trajectories.png": "0f68b40d487688e7bb099791423e79cbcd51bd7f05cbf58bd4842cf940afe1a0",
+        "figures/000040192_trajectories.png": "63e2755276e5559a7e3a64858d6441c4a3630b2a49862cdcd75ba810816db605",
+        "figures/000060160_trajectories.png": "f2383a5ea4e6112b21e25775b773d7ed27184fdb5f6e2427dad7e7dfc54fa2ea",
+        "figures/000080128_trajectories.png": "f008270b97531d6110d4f7c36237eddf20e57debc317ca90a49f0175537c9d16",
+        "figures/000100096_trajectories.png": "513a3d3f8096ffa208cd6e8e99eeba24d3bf6f1d60337a5464d28215ab022a53",
+        "progress.json": "4db99cd77ee7f271300ce82d82a4bbe5584938369dbcda3cdbce1ffd53b2522a"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 100096,
+        "updates": 5744,
+        "policy": {
+          "episodes": 500,
+          "success": 0.126,
+          "goals": [
+            14,
+            8,
+            33,
+            8
+          ],
+          "failure": 437,
+          "reachable_goals": 4,
+          "mean_return": 12.600000381469727,
+          "mean_length": 147.372,
+          "sr5_removal": 0.28
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.104,
+          "goals": [
+            6,
+            4,
+            36,
+            6
+          ],
+          "failure": 448,
+          "reachable_goals": 4,
+          "mean_return": 10.399999618530273,
+          "mean_length": 136.114,
+          "sr5_obstacle": 0.46
+        },
+        "checkpoint_sha256": {
+          "policy_000100096.msgpack": "8c048e57d64d49f9b4271e4d57836e55ca05fd7774aaad294a8e3288916ca75e"
+        }
+      }
+    },
+    "pm_simple-mfpo-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926",
+      "sha256": {
+        "checkpoints/policy_000020224.msgpack": "0579eb2793eed8687048d398469888186598592ec992e447264bce2eee382341",
+        "checkpoints/policy_000040192.msgpack": "d8a97f1085450b8c2f5509fa34390276f7c10ae760354cacce635230895e37ba",
+        "checkpoints/policy_000060160.msgpack": "b31b0a1d50f5124814b2b21b0db4e9376dbc28467901112f965ab24370a74bd1",
+        "checkpoints/policy_000080128.msgpack": "03e9d8cbaecdfdbe8725475bbe4858fcfa75d3904fc40c6a8d7fc26eb0568184",
+        "checkpoints/policy_000100096.msgpack": "b340834960aad94fc6d7a9275a60df626578c16721b25e0491cc347fe6588f51",
+        "checkpoints/replay_000100096.npz": "7296d31afa424defb3b31b57800c405e8b51371fa89d244378b931fc32089fa5",
+        "config.json": "6c8fd3d53185f9b807a9326cc16374322b62afc7228bbbc1440dd55976f53281",
+        "evaluations/000020224_obstacle_policy.npz": "80983d1eddc16227995d5ed8798ee81afa43a7b40c00d40cfceb6d6969bb4e9a",
+        "evaluations/000020224_policy.npz": "ca3a83625d0d36b9ab18724f0329f954dcceba522650dcf7c13d33ca37af50fa",
+        "evaluations/000020224_summary.json": "f0c6a9ba82239854416a97d4e4dce723146929944aa0f1511e86e0b261711e67",
+        "evaluations/000040192_obstacle_policy.npz": "47e56e12d0ff48c9983424f889e896966795e9df456b08bf5463f26f5c011302",
+        "evaluations/000040192_policy.npz": "9909335aaa69927777ac3c2606e6750b02584e2078312dba9ce34c4603af1e3f",
+        "evaluations/000040192_summary.json": "a253956c9711eae38c2698b63aad8de9e1bd5bf9bf0121b027512e1560af476e",
+        "evaluations/000060160_obstacle_policy.npz": "afcd6207e2cc521745d06d4845a808c8430caf156d18d092a5666125a6ddcabf",
+        "evaluations/000060160_policy.npz": "10c2737981b70ff9cc400844230c5670aeb08ce1a3e7234064c37f4452a6df0f",
+        "evaluations/000060160_summary.json": "f2c2bd3c1f171bfda20d22f11f1352906039d8738cc4ee97545010774dfe1d87",
+        "evaluations/000080128_obstacle_policy.npz": "ed27f88876699b606eb7739db1c8271331c2b2cf4f20cf70f7ad16fb3cf35dc2",
+        "evaluations/000080128_policy.npz": "d18c32e9fcd52023d3382a1872e97462960c216aad497471ac4d362fb044679b",
+        "evaluations/000080128_summary.json": "74d99c9cd829e7c5b0e7a5d4fa5b7f7deeb845d5a2bf9df40c02068eb9ba1091",
+        "evaluations/000100096_obstacle_policy.npz": "778cf881c01cb55d51e16f468d4dc84d8122bfcb778732a54fbd7e6c49363b1b",
+        "evaluations/000100096_policy.npz": "0be4f6cfab742c40cabaeb085c06531a72192905cd38573ec8d7d743226a0de5",
+        "evaluations/000100096_summary.json": "56b7cfe7807fe58ed397a6cd39a3c436c58b9f6e6589c5d0b37cda3e259ea47b",
+        "figures/000020224_trajectories.png": "dcee02732661e918229b06ca713a0e41ebd74a9b31cc146ed6e906020f09282e",
+        "figures/000040192_trajectories.png": "0afb5d72fcf264e85aa54f24f2f87dcb371120b4e5eb795f0bfea6c4a177b6cc",
+        "figures/000060160_trajectories.png": "1bd35d122f6bddf148e27129d5a70632b1e58cd91f4e252aeeedc5f78c5c0788",
+        "figures/000080128_trajectories.png": "7c01c486687bfa42a7a6a452ff2c629bab4a6a321d1870ce9bd62e55e4d78c2f",
+        "figures/000100096_trajectories.png": "92b9cb38a070ef745033d902ed42b52d2b8eeaf92d631f7d9021f9ae001b0ed9",
+        "progress.json": "879ce47e256be9b1d650af226ba2028919bd433edf793516a7172950faf6ef48"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 100096,
+        "updates": 5744,
+        "policy": {
+          "episodes": 500,
+          "success": 1.0,
+          "goals": [
+            0,
+            0,
+            500,
+            0
+          ],
+          "failure": 0,
+          "reachable_goals": 1,
+          "mean_return": 100.0,
+          "mean_length": 58.654,
+          "sr5_removal": 0.5
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.034,
+          "goals": [
+            0,
+            0,
+            17,
+            0
+          ],
+          "failure": 483,
+          "reachable_goals": 1,
+          "mean_return": 3.4000000953674316,
+          "mean_length": 37.112,
+          "sr5_obstacle": 0.14
+        },
+        "checkpoint_sha256": {
+          "policy_000100096.msgpack": "b340834960aad94fc6d7a9275a60df626578c16721b25e0491cc347fe6588f51"
+        }
+      }
+    },
+    "pm_simple-td3-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926",
+      "sha256": {
+        "checkpoints/policy_000020224.zip": "d26d3a1145aa15b89129ed37bd45fbcf4e676570324b85effbf229611b4d98af",
+        "checkpoints/policy_000040192.zip": "0469ba91f3a971306eba72189ad8cca048af01301a70d9d1540036f8bb4a4765",
+        "checkpoints/policy_000060160.zip": "e103cb30025a63ab61e367387318663565b5e7585dafb62dd89f4d2d03579849",
+        "checkpoints/policy_000080128.zip": "21a370ad36693b635128f9e81fab3a9ca94cc01e603f01c9f6176bf98a172601",
+        "checkpoints/policy_000100096.zip": "0cdbe01c36834549a8198e3090f2bb2800cdb9973d68cda882f16ce9f38cea64",
+        "checkpoints/replay_000100096.npz": "e1182b78503af8b8ccb74c69217aa968b80c3522af742e97c1e2c999918f3b7d",
+        "config.json": "804a67d2906ab1807bf0f4fcbdf5916593d0cdaa2d8e456283f7e07430b52bd9",
+        "evaluations/000020224_obstacle_policy.npz": "ee03de437ef5eff769b461c412a910fa9b2435210ca9f062d299fcde6a76876b",
+        "evaluations/000020224_policy.npz": "e0039061983836702d984fcb8fb3bc76a790ee0a753748972b81e256b4c5c171",
+        "evaluations/000020224_summary.json": "07e0b831bcc39cc097b2cf15214d9aedc3b3ead1b1b0fd0ccaa9cfb0fdbd6f34",
+        "evaluations/000040192_obstacle_policy.npz": "3b348642c77257f41401c14ce95a4756ba0d8260c56ef2cb61064d543b77e16e",
+        "evaluations/000040192_policy.npz": "aaa2ceb849f566693ec7e7ca158f47b803c3acaaeaff10393824862ed1cfd631",
+        "evaluations/000040192_summary.json": "0214a801c35480268e88aa716ce3fecd57b363978e913cd08b7aaeb7a4ce0278",
+        "evaluations/000060160_obstacle_policy.npz": "ee49228981e578f476c84498d29b097109a5b390aad3dc15a1783c4fd0677231",
+        "evaluations/000060160_policy.npz": "4ad09da6b06dee35cea771ab701c660f51c034689a0cd83cd29a93b44ed02705",
+        "evaluations/000060160_summary.json": "63c6f650feeb7a50ec334ab9bc250e6f24d079bcfb2e51c9cd6224275aa22210",
+        "evaluations/000080128_obstacle_policy.npz": "e2cd5bfe624ee50132f3a25806b8b2c2e49c091ec854e1d5e6d1e655a4fb1c91",
+        "evaluations/000080128_policy.npz": "66cde0ed96a206ba72fa46d066d07df6865604a241cf8f2a563dda351b1c4a6a",
+        "evaluations/000080128_summary.json": "c892f4fdabcd2b37330cfc4858152500bd6e98a775b1ce7126c5659c63c396fd",
+        "evaluations/000100096_obstacle_policy.npz": "5dd197cce1a99886d914b87f29d5d2d222dabf0ce922824ffe2b4d7d61d783f6",
+        "evaluations/000100096_policy.npz": "07d9e36c3c61f44a6395bc3331beb476aa9bd3e536237a7df0f579f6aa5ec441",
+        "evaluations/000100096_summary.json": "932147bae831c02a1a4b765bb47a1fc8c60415a331fdbe2467cf56caaa6f9f0d",
+        "figures/000020224_trajectories.png": "cf9ca37e839f356bf3dd499d700143aabd9b5214640d39362d346b798a73b26c",
+        "figures/000040192_trajectories.png": "00e498067924973c084e7394e579b9fae9174e858d522d2ece16a21184c06bd9",
+        "figures/000060160_trajectories.png": "04311c7754e1b8eb931248ded4c7caf9a5316296df57d1fc24578b5e0f450737",
+        "figures/000080128_trajectories.png": "58a34a627c24f79f68dca725e0e2ad039445e6f74ecea614850feff4f9fb1d44",
+        "figures/000100096_trajectories.png": "9b08d2eda835b3813de0805a16b164bc4422a94949fa6399214dd15362cfa74c",
+        "learner/progress.csv": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "progress.json": "d2846c8dc0317490b131fb2fd3f29aebb43eb34429648b733f4c10dadd1db307"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 100096,
+        "updates": 5744,
+        "policy": {
+          "episodes": 500,
+          "success": 1.0,
+          "goals": [
+            0,
+            500,
+            0,
+            0
+          ],
+          "failure": 0,
+          "reachable_goals": 1,
+          "mean_return": 100.0,
+          "mean_length": 53.0,
+          "sr5_removal": 0.5
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.0,
+          "goals": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "failure": 500,
+          "reachable_goals": 0,
+          "mean_return": 0.0,
+          "mean_length": 28.0,
+          "sr5_obstacle": 0.0
+        },
+        "checkpoint_sha256": {
+          "policy_000100096.zip": "0cdbe01c36834549a8198e3090f2bb2800cdb9973d68cda882f16ce9f38cea64"
+        }
+      }
+    },
+    "pm_medium-sac-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926",
+      "sha256": {
+        "checkpoints/policy_000040192.zip": "8adb07d09cc316e6deeb0be34e71b9786577a6c4998b2340dad7b73f1b4e450e",
+        "checkpoints/policy_000080128.zip": "32500bd51754956d5222265d0e736ad7f3c9f103b2b0776fe4c39a57314905e6",
+        "checkpoints/policy_000120064.zip": "a37db293d16e2b53acddf5291e298056fefa11061a6835fd8841b3e33d73bf02",
+        "checkpoints/policy_000160000.zip": "228953d6eb9c8408293b22968a8884f759dfa2843aeb32bf442ea7ed0a258ef3",
+        "checkpoints/policy_000200192.zip": "05ccf3bae4bdc3bb03a78f824c57bc148d1bbcc32b6f4f8332fb178fd4f35036",
+        "checkpoints/replay_000200192.npz": "d0cea3e47b5883eca98b86a517436811962ccd630fb903ea9890600e5ca9bdab",
+        "config.json": "8ee2471355f7cdcdeca3a3e53dff1c3b281838e40aacc693106edea691f85fae",
+        "evaluations/000040192_obstacle_policy.npz": "d06c5ca95fd0fab450dd84723df36ca3de0304470b1317f6b63ee2d7b1d5b65c",
+        "evaluations/000040192_policy.npz": "cf5c1b7d50e1db43f2c03ea8d658c23bfc30fbdcc7ce063fac102a03494704ae",
+        "evaluations/000040192_summary.json": "ceb5bb144f856a504a8c0d70f2b947b19c35a1d66fd08581739f4737f555dae8",
+        "evaluations/000080128_obstacle_policy.npz": "682e0791a67ae3e9e945b03292022e19cec72988498f63217bd0d68325295c59",
+        "evaluations/000080128_policy.npz": "7f7ed827eb16c24c88cef4e7c70ce0651199913855ce58dd1b2041b9c7fa2a9c",
+        "evaluations/000080128_summary.json": "d4917af42ab16c04ee10a15f04b9b65c26371000b2166f2033aa723b5521dfe9",
+        "evaluations/000120064_obstacle_policy.npz": "6d5e5102dcf015bde82745c771c96551867b56d804a7b612f09601ecca350c92",
+        "evaluations/000120064_policy.npz": "9606c79ac4be2ca016c45c069b731323c07eb7767515fecbc0681381275dbbaa",
+        "evaluations/000120064_summary.json": "b8019aed4de51c9c112d2b6ad0f782801eba46177f00e346ffe663b007771855",
+        "evaluations/000160000_obstacle_policy.npz": "b0443803e15fe581bc12b44dc4b2df7970828edbddcd2300edbd5bc1b66c14cc",
+        "evaluations/000160000_policy.npz": "a2c50e20440d531e9b2ecb0654ceb29353b4756ec7a2b2071ce183efc2ed72de",
+        "evaluations/000160000_summary.json": "688022bb1d6687553ce79a7da7b204b56424606e72f4209cf66be27116f25948",
+        "evaluations/000200192_obstacle_policy.npz": "f715dfa732c28fdcd48345c6d6ec01675feaff2fbf910a9db7eb2e23f9214f49",
+        "evaluations/000200192_policy.npz": "03367448ad2711b52331e13092f28c9c4b302f65c372b9bce7e97ff3baa6a378",
+        "evaluations/000200192_summary.json": "c2e04a4bbd84da9700c90b48d6711850345b7ec149d3698004735edadb6392fd",
+        "figures/000040192_trajectories.png": "f80e4837727f48bf210fa55b58f613976069bbb1028fefede4229bcf294bf293",
+        "figures/000080128_trajectories.png": "61dc7f7f9e107db3920a8edc34a6fae2f6594c6f86cbed454fa90fb261cda1ad",
+        "figures/000120064_trajectories.png": "acb1857b2ffdd01b3f8cbfa324313ce5675ee3310ccd3ef5fe25eb220f7d05cb",
+        "figures/000160000_trajectories.png": "873437c95603e298895e3ccea5e696b72d87a9bb34c0aa9efed17bc2dc48dcb6",
+        "figures/000200192_trajectories.png": "3c10b139be109f3416036a233b9e0ea4152d0522efa50f30c453aa400063df25",
+        "learner/progress.csv": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "progress.json": "4b7d7df81c06ffc05106cc6c531b3f6e3623be890028a9fdc5c4ca401d93d855"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 200192,
+        "updates": 12000,
+        "policy": {
+          "episodes": 500,
+          "success": 1.0,
+          "goals": [
+            500,
+            0,
+            0,
+            0
+          ],
+          "failure": 0,
+          "reachable_goals": 1,
+          "mean_return": 100.0,
+          "mean_length": 61.588,
+          "sr5_removal": 0.5
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.006,
+          "goals": [
+            3,
+            0,
+            0,
+            0
+          ],
+          "failure": 497,
+          "reachable_goals": 1,
+          "mean_return": 0.6000000238418579,
+          "mean_length": 31.9,
+          "sr5_obstacle": 0.03
+        },
+        "checkpoint_sha256": {
+          "policy_000200192.zip": "05ccf3bae4bdc3bb03a78f824c57bc148d1bbcc32b6f4f8332fb178fd4f35036"
+        }
+      }
+    },
+    "pm_medium-meow-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926",
+      "sha256": {
+        "checkpoints/policy_000040192.pt": "c2dc7105de055f98ee1e9aa5b4e7428c7d430e46e9295b3497fef42a9b95c6db",
+        "checkpoints/policy_000080128.pt": "813d0f6ddf1e4764eccf2cb6d688444b86be51a88becfad7ee897e4aac7329e3",
+        "checkpoints/policy_000120064.pt": "ff57d39d6e4cbcf10ead0a28f1e3c270f645aab33c76b3b432b72761c1e00447",
+        "checkpoints/policy_000160000.pt": "c374e743c2e4380f6f26bbcb222d95426d4ae30395824ec151dcec4c9fa056af",
+        "checkpoints/policy_000200192.pt": "24d87b69a4674793181dd8727fde0fbec8af9603a8c78c285180c5a2aaf3aa0d",
+        "checkpoints/replay_000200192.npz": "1b7e7e1a726dc8d8ba371963672704f35f3ba53393fd4544d69b43da21995828",
+        "config.json": "e2bf695509f5b553539de568c37197152af1cde6ee34325324d319f0b34635e2",
+        "evaluations/000040192_obstacle_policy.npz": "fe1381e5ef0faba846cf4aa6faa73fe65a5aa0c8f9a6c3723126e20d96f06674",
+        "evaluations/000040192_policy.npz": "2f54b3e073d9d8b46e22f770169bc89a76692692736a5ec895ee896e2175b554",
+        "evaluations/000040192_summary.json": "874ab3cf7e8c5a844c0ceb8bde06112f150793c21fbbf00897bd8b7f7d7c29d7",
+        "evaluations/000080128_obstacle_policy.npz": "04a245511fbbb188f4140edc82ac5a8806acd1ee6b46dabfc2721463793cce40",
+        "evaluations/000080128_policy.npz": "8c396e0adfca55f6921994b8d54ff2655ec0221f0e726249c6fe1d2b7bbcf3ef",
+        "evaluations/000080128_summary.json": "960a23d78e41ccef01e57288f5cf78bf17e8c6d6a38fcda127672ffa2da56d02",
+        "evaluations/000120064_obstacle_policy.npz": "05132159a64d42a0608e66b9fdd3557792e60c79a2dfafff94339ca70fab4e12",
+        "evaluations/000120064_policy.npz": "9dc8401d36c7f71fee3b6988d13b342551380943f069791051b2062054a3dcc9",
+        "evaluations/000120064_summary.json": "44aa88a929b79e9e284355cb1c524a59c2baa900d9f2a70d9ad711241e0e1161",
+        "evaluations/000160000_obstacle_policy.npz": "68324f3106a6d2b9359a3a5cab47912305df026357f5bac58b0c09bee67e10c3",
+        "evaluations/000160000_policy.npz": "534cfbade0e6ec66dcf2b8dcfd9b15e6d8ad398bfb4c3157d071a66d9b6c5eec",
+        "evaluations/000160000_summary.json": "42181ef13f5dcef2958e9b5c21ea1d69c9110609021d2f0f92d3ff0e851a1531",
+        "evaluations/000200192_obstacle_policy.npz": "f1802039bac5a5bd78f5c9c14c7b5e38d2df73f8fca472b51f31129e8859b31e",
+        "evaluations/000200192_policy.npz": "2e5929fff6eebf13fc47dc5883bfa41555c983db5d4531bd186d9a3655978a39",
+        "evaluations/000200192_summary.json": "58860f3bec530935ccb3d7860a7263e8f51ca1ee1add464ea0a2e24444baddbc",
+        "figures/000040192_trajectories.png": "5f785ea3c6be77e98dd678787abedd926d5888b6f4e6c9eff179d4f4b8de84c7",
+        "figures/000080128_trajectories.png": "44268cda9e39053e19e67ac391f72f097ca7662be88f6c70789bed19a8750905",
+        "figures/000120064_trajectories.png": "95b81b8949466fc24480d3043f5bc502c1e0e56d43f5aea0be20e9730c4beb55",
+        "figures/000160000_trajectories.png": "be574f6f373fc9c2eca1524861365f27246f967befd6c23d4e6bf953ab4aa40e",
+        "figures/000200192_trajectories.png": "b926ec0717f8452b8b71a93dbacad807c6821434fc8be248d962a100b68c5a87",
+        "progress.json": "c3030ae5b6af4fa4972f13b936b51f7a55a2bc7bb345c5d1c82467e05c7a9a3a"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 200192,
+        "updates": 12000,
+        "policy": {
+          "episodes": 500,
+          "success": 1.0,
+          "goals": [
+            0,
+            0,
+            0,
+            500
+          ],
+          "failure": 0,
+          "reachable_goals": 1,
+          "mean_return": 100.0,
+          "mean_length": 62.244,
+          "sr5_removal": 0.5
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.012,
+          "goals": [
+            0,
+            0,
+            0,
+            6
+          ],
+          "failure": 494,
+          "reachable_goals": 1,
+          "mean_return": 1.2000000476837158,
+          "mean_length": 34.372,
+          "sr5_obstacle": 0.06
+        },
+        "checkpoint_sha256": {
+          "policy_000200192.pt": "24d87b69a4674793181dd8727fde0fbec8af9603a8c78c285180c5a2aaf3aa0d"
+        }
+      }
+    },
+    "pm_medium-optiq-s0": {
+      "host": "vast1",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926",
+      "sha256": {
+        "checkpoints/policy_000040192.msgpack": "a339a18273ef82ad045df6e7fa7e2c4e0325270f3ae6bf08f44a10dd57358e99",
+        "checkpoints/policy_000080128.msgpack": "8e432dc68cca2593b0d6e215c7c0fad93f62f6be27777bec463463eb9ef0700a",
+        "checkpoints/policy_000120064.msgpack": "fd92ea4af95678d41a630d4f8b6573ac21c477fc5edfef6eee174291588b3f48",
+        "checkpoints/policy_000160000.msgpack": "b8d30e4a65a1091635f1377f341f442bcc4096ed4a7aa3e7e8daf041c5c539ba",
+        "checkpoints/policy_000200192.msgpack": "bc3409cd435e6c8390cd96825277ae0d79f2e96f270c640358c64e10f5a27aa0",
+        "checkpoints/replay_000200192.npz": "da9bc87647f093843dedaca76c68ed693a71598fbfea64a0dedd2c62f4e18916",
+        "config.json": "cb235c6494a85dae33fe74b987055e648078232f2727c4bf0f357febd55571a1",
+        "evaluations/000040192_mu_only.npz": "35a9e6d8e4fbc50ec41577594efbf437f821d9c447bb9adbfd0ff73cdc2082d9",
+        "evaluations/000040192_obstacle_policy.npz": "32310275eedf444692cad11c9048aeb51431dd976b76d2e2a29e81cfb61ebbf4",
+        "evaluations/000040192_policy.npz": "5548419343b662b8e490c6668a3ab7ac50bd0c5d7c7cc184c3144bbbfca4f1a3",
+        "evaluations/000040192_summary.json": "64ff8e853b243eab48cb7e02be055ffbda956120884ceed1eca9ca3770f266b3",
+        "evaluations/000080128_mu_only.npz": "b280e722d530cef83fd7d48b123eeac8e547e23c8da1aeac723cbf0722872e54",
+        "evaluations/000080128_obstacle_policy.npz": "24b2abcb4d77fcc9ed6ee8f6b0e9f70301010ac6f7a42ff4b9566611c8dc6ee3",
+        "evaluations/000080128_policy.npz": "fc859bb424744a49f22d31e1e3cd20752f355ea26de587aff1d7da8c08116dda",
+        "evaluations/000080128_summary.json": "5fda43290c82e0b0b1c287fe5ec3ef653c378cac78efaa5b64705d0f6125f616",
+        "evaluations/000120064_mu_only.npz": "18cd010628a36584ef4fa8b74e36a1221676521ccc41b431834422a1ae22d66a",
+        "evaluations/000120064_obstacle_policy.npz": "962029525708a5ed9ba259602111c539e32901930ca8472fd2eb7c6c629c8bc2",
+        "evaluations/000120064_policy.npz": "170baa520ec1f3f80bd268287f73d21c11d642a9eaacb9f4c044fe0e9800f6be",
+        "evaluations/000120064_summary.json": "a00276894881e68739fea65f43d17d7090f1e0b1f5b654004fa836717ce5c9ba",
+        "evaluations/000160000_mu_only.npz": "611b61af14a4572a9cdb1890ade32751501fcc1fc15898c0429011140bcfab5a",
+        "evaluations/000160000_obstacle_policy.npz": "14d9ea8cea6db13ab0ba16c019bf805bd38ba4dbee90c829a4e72a86d694d54a",
+        "evaluations/000160000_policy.npz": "cbfa7eef939b2d3a570c14b41d22568bfaec6a71b13691da514449904145eb7c",
+        "evaluations/000160000_summary.json": "bce3dfec918be9b3fd51bfaca5b01fa44e38e3594b36e935b821026bfbb2683b",
+        "evaluations/000200192_mu_only.npz": "dd353559094365ee20915bc9c6c5fd79f76db6362b36c1874045e38f57a24c82",
+        "evaluations/000200192_obstacle_policy.npz": "a6ec2f33c549991e064f2f4213279c83a664127a810947a6903233d23ecef78c",
+        "evaluations/000200192_policy.npz": "ee47ad5e2bacde1dcada879b2f62104c1ca8875388310c5f7e0b86f9718861f1",
+        "evaluations/000200192_summary.json": "1591d011a05012d5c48f639805de22c69a7962c207eed5f7b53903036542d91f",
+        "figures/000040192_trajectories.png": "59c0b0e0ed1d1f804331826926e7643fa3ed733a3fb60f9b881b3bfd4852dc42",
+        "figures/000080128_trajectories.png": "2edc63c09db16634dd4056388285b2df60dff66ef6c08c3f1c1106c49d51c3ca",
+        "figures/000120064_trajectories.png": "e40d3b1716496da92f667a2de3656bcde141b8b15907a6d01efbb19b0140bf7f",
+        "figures/000160000_trajectories.png": "c4f93fffaaee653482adbef86dba51b5e0bc28f570ff9bb137f7266268ac62d3",
+        "figures/000200192_trajectories.png": "ae002ef9953f879a1e1b30fca8be978ec0765d955c125a3685491a85ad1e74c2",
+        "learner/progress.csv": "c81d0d232a010cae5759b2ed1d4b3856212faba0454290ad806967eab91840ec",
+        "progress.json": "372551aae6793833ee982e4dc828a9a9e586beec38007b50391e03409c4144d0"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 200192,
+        "updates": 12000,
+        "policy": {
+          "episodes": 500,
+          "success": 0.622,
+          "goals": [
+            88,
+            71,
+            90,
+            62
+          ],
+          "failure": 189,
+          "reachable_goals": 4,
+          "mean_return": 62.20000076293945,
+          "mean_length": 223.322,
+          "sr5_removal": 0.9
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.096,
+          "goals": [
+            16,
+            16,
+            6,
+            10
+          ],
+          "failure": 452,
+          "reachable_goals": 4,
+          "mean_return": 9.600000381469727,
+          "mean_length": 203.48,
+          "sr5_obstacle": 0.42
+        },
+        "checkpoint_sha256": {
+          "policy_000200192.msgpack": "bc3409cd435e6c8390cd96825277ae0d79f2e96f270c640358c64e10f5a27aa0"
+        }
+      }
+    },
+    "pm_hard-optiq-s0": {
+      "host": "vast1",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-20260926",
+      "sha256": {
+        "checkpoints/policy_000060160.msgpack": "e209d08e7c2497909cae1f75baa2636b49088a9e4c5603260254d80732e38ac7",
+        "checkpoints/policy_000120064.msgpack": "43f7f6ee446ed95c049e65698d3520fea7792bb841b82742f65a8e795dd5ada6",
+        "checkpoints/policy_000180224.msgpack": "e49184ad6ccf003951b51f5688a61dda2dfcfa6447d96d29d0e780c36fb32865",
+        "checkpoints/policy_000240128.msgpack": "a9ff9f5deb5c27f7f25f02d573294287c88dae8be317167197d6be33e0088921",
+        "checkpoints/policy_000300032.msgpack": "c698ff8c51e9b97e44ca293be3b38a1059ed3239e94e57bb3ec38c2234d0ebc0",
+        "checkpoints/replay_000300032.npz": "6770f9da19fd793ee82b3cf6065a017814f78304710cb14397de393f91f08278",
+        "config.json": "88e93028875f38be95f5ee22c504581460e8c5cd2b9ab9ccaba5b48e44e06c18",
+        "evaluations/000060160_mu_only.npz": "4c7ae86bfa8e18a44a1a5b155c0288fa6b5b65d795182746ecffd15b3b154832",
+        "evaluations/000060160_obstacle_policy.npz": "9171441393cc84af40616cd082171e6ff55fa19e115494f801d11dc8b19e83d3",
+        "evaluations/000060160_policy.npz": "7b578e3109036dac5086eae4d53a8ac17988f27c9f855835a768a4b83fc76290",
+        "evaluations/000060160_summary.json": "ab18e181ddcb5dba3161487ae6d25e8e28d08479fcf3919848ee86140c2ed49e",
+        "evaluations/000120064_mu_only.npz": "ca863d6e1c8e3249cee48e5045acfe743bc0e0770ca5296a36510fb47d1b04ec",
+        "evaluations/000120064_obstacle_policy.npz": "502bb86a474e2d58baf6c7436206ac4a717a2dd5210cade9890f78e26764cd57",
+        "evaluations/000120064_policy.npz": "aaf9a5e374a665939664fd37c7c4a7e668c3003d7c023cc0446b3e8666e54763",
+        "evaluations/000120064_summary.json": "6dcc468e847f9aca04606b37893731d4ff718f63da42298558ec50f30b00cee3",
+        "evaluations/000180224_mu_only.npz": "f46868fc5cc82f3b68ab97ad60499608dbeebdf6283ea28639f5ae3ff248b653",
+        "evaluations/000180224_obstacle_policy.npz": "e00a7d2512a2f73cc07b2dd9f055dec241d3d5b37e62f7da4e3a6d659355b939",
+        "evaluations/000180224_policy.npz": "073d9a7adc49e2c8e6cbd3c952c4fa49c929a4df9eb6b7b96a5a0e86fecad8a1",
+        "evaluations/000180224_summary.json": "07296fcc1d704a620e7b54f3c72211de4865ad62797249868238cac4fbbb3c04",
+        "evaluations/000240128_mu_only.npz": "6e41244c36090389dfdc338c685f79476422d5bc1b0ea42ef4b2c3d7f3c17091",
+        "evaluations/000240128_obstacle_policy.npz": "3ef6b6129d473ea1092ff3c8b9793b034f28b51583fa6ad64b2b7dc2eb4cbd32",
+        "evaluations/000240128_policy.npz": "bd5353651e522f875d3fc149c9e4c3956ac3a8a4b28f09e1e128d424dd414ce5",
+        "evaluations/000240128_summary.json": "8278579c1e78fdec4f2014932b30206d1d02b72e741f678dc854dbe7dc9bb2e7",
+        "evaluations/000300032_mu_only.npz": "a5eb52c6f01003dfd3d7cd05089fede789fc201f4898e3bd07184d979652c106",
+        "evaluations/000300032_obstacle_policy.npz": "6b94c467379afd037fe65b5c86b75fe39e4652b6a6d922050415ccd3466bd858",
+        "evaluations/000300032_policy.npz": "66ea32295635d984ceb1ec95151cd6e35fb7bb8dd594682e5da11dd5cbd2a408",
+        "evaluations/000300032_summary.json": "b015c389a93f2a51ccf73c9c8de8fd9dfeae0be4327a56c049530235b0905717",
+        "figures/000060160_trajectories.png": "0c7dc30856d2012db2936b6bf41403246a7db72d49fdc3abc4f7ea21858bfc7a",
+        "figures/000120064_trajectories.png": "4b1b88996454f17de0ccad592e2abfc8ed3405eda0cd39700dc7e03679dd9387",
+        "figures/000180224_trajectories.png": "e2c40de769b5a6e0a6f25486647b6b25f29ee8e082bde6cd63f4e7eea9b31349",
+        "figures/000240128_trajectories.png": "398d2b97bfb3933ea73d826fc183fcb51cacbaa19100d8a527191e4e3b8f841f",
+        "figures/000300032_trajectories.png": "ca96c759059afd2b4e6781749debe36d1b2627a4936d77ace9f8c9cc228c419d",
+        "learner/progress.csv": "f8d79b1105804b3b0b40fb2f4cfe52c5e5347c183c70ef5acf14a7f90ec830a3",
+        "progress.json": "202e3ba0670ef64446b790c07ab6fbf9d34594fac43ef737b50a065b7811d804"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 300032,
+        "updates": 18240,
+        "policy": {
+          "episodes": 500,
+          "success": 0.912,
+          "goals": [
+            52,
+            7,
+            39,
+            43,
+            167,
+            80,
+            5,
+            63
+          ],
+          "failure": 44,
+          "reachable_goals": 8,
+          "mean_return": 91.19999694824219,
+          "mean_length": 254.316,
+          "sr5_removal": 0.9271428571428574
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.14,
+          "goals": [
+            6,
+            1,
+            5,
+            0,
+            48,
+            5,
+            0,
+            5
+          ],
+          "failure": 430,
+          "reachable_goals": 6,
+          "mean_return": 14.0,
+          "mean_length": 228.412,
+          "sr5_obstacle": 0.48
+        },
+        "checkpoint_sha256": {
+          "policy_000300032.msgpack": "c698ff8c51e9b97e44ca293be3b38a1059ed3239e94e57bb3ec38c2234d0ebc0"
+        }
+      }
+    },
+    "pm_hard-dipo-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-dipo-180-20260926",
+      "sha256": {
+        "checkpoints/policy_000060160.pt": "3ba686833cd7590842ca44d8da58a69e936d3fa2f49e657b54571244baa40fbd",
+        "checkpoints/policy_000120064.pt": "ff792c8aef3f583c7597708dde7f73c61979d33bea9b9e0745d33df2ee184157",
+        "checkpoints/policy_000180224.pt": "e3215374593647a3854488bafbbc5301bfc4ce213a9ee8137d46fbcb47b600e2",
+        "checkpoints/policy_000240128.pt": "5d569a77060cb0202bceab1b7e369ca6011ba8bd3e0cbc6d159865b5ea63454d",
+        "checkpoints/policy_000300032.pt": "249bbdc850d4763e875441124a9505a3f587bdd98693affa5fe1d2d61b3b18a5",
+        "checkpoints/replay_000300032.npz": "eebd1da2cea2b18916d542d0f6650303fec6ef79dca83b36cd127c5879221e31",
+        "config.json": "cece1ba5c4f8177d88cc51c97040ebf8a5ed81cb9d0996af957c95dcaee7f8c3",
+        "evaluations/000060160_obstacle_policy.npz": "de63920e1c2cf3b0d8c2a533d5ff1b930ae7a5cc1803ec3ebfc1374533cdb03b",
+        "evaluations/000060160_policy.npz": "4375c17a270d998a647e0c98c935c75dc2a52212c14f1c2a5d3c3977d112f8de",
+        "evaluations/000060160_summary.json": "7c719f795982ff2099b14e764cbd117d37bc6f3f299ca149c493198b22c68e62",
+        "evaluations/000120064_obstacle_policy.npz": "623163f33e129ac1a509d991dbdd650235028d68d9be65da6b5ec953c368ebb0",
+        "evaluations/000120064_policy.npz": "e09d284b9a745128a05c1b3e41c139f3471befa5d1fc5b7bfa1796c1762e0250",
+        "evaluations/000120064_summary.json": "61817b3850c34ee4c26b07cea01adfdc819b707251c5631c03311f5211889cbb",
+        "evaluations/000180224_obstacle_policy.npz": "4bf622fb89e700bc09ab7227d178313decaf2d591895bad4c0c952bee4fe0c4f",
+        "evaluations/000180224_policy.npz": "524283502bd6a2974dbd801b47264b5690b3597aa858eeeb8868e897b6eaafb8",
+        "evaluations/000180224_summary.json": "15d35ec8781f8d85d8f034173f5bc2d662b7c93e46d576b2f0df6a94e721bf03",
+        "evaluations/000240128_obstacle_policy.npz": "da21b3a873b7e060532c9098605ff5293acdf7855450422ff1c0d050a6c9df09",
+        "evaluations/000240128_policy.npz": "873296b94828a536099e3ae5da3722886f6cae3788fb982af6b0a825d1a79f33",
+        "evaluations/000240128_summary.json": "b89cd55309168683b829c26d033bba9deb3413ac15456ce2dfb4991cf5c1a198",
+        "evaluations/000300032_obstacle_policy.npz": "4647b4a2ff04f04dc141db9c8c7dff54e7f6065a3ddaa872fe15b3d3c1d91903",
+        "evaluations/000300032_policy.npz": "0339a7d64d486f5be000869dc2373256a3685ccf9ef15ab76cd76b783817c8fc",
+        "evaluations/000300032_summary.json": "7bf39ab2fcbd1d553b12580b622e66d3a9787af3b40014ec20e507d51049fb3d",
+        "figures/000060160_trajectories.png": "6207ff06766cc1705231a059e25d99c878b464afffcdb0cf1feb0fedcbc32fd4",
+        "figures/000120064_trajectories.png": "3e59a73c11d8d0acd3e868bd4eb350a2127d01c3ea8afdd0b9bee5c05460aecd",
+        "figures/000180224_trajectories.png": "05f38e1687cfb7358c5b62e71ce7fa3a40660d81eb35bc04822168306b612512",
+        "figures/000240128_trajectories.png": "0a0bf0ae4b34ee39d2d70781564861f4c0fe2291a380664fc74c55c07eda4eb9",
+        "figures/000300032_trajectories.png": "b12df05d15222a478457a07e7ff6b3185139e25cbf1ce74d46fabcd3e53dbf1d",
+        "progress.json": "7beedfbde0620c689b3748be478b7a2ed5466fe0c03eb8b9561799fba467083e"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 300032,
+        "updates": 18240,
+        "policy": {
+          "episodes": 500,
+          "success": 1.0,
+          "goals": [
+            0,
+            500,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "failure": 0,
+          "reachable_goals": 1,
+          "mean_return": 100.0,
+          "mean_length": 58.0,
+          "sr5_removal": 0.5
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.0,
+          "goals": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "failure": 500,
+          "reachable_goals": 0,
+          "mean_return": 0.0,
+          "mean_length": 92.0,
+          "sr5_obstacle": 0.0
+        },
+        "checkpoint_sha256": {
+          "policy_000300032.pt": "249bbdc850d4763e875441124a9505a3f587bdd98693affa5fe1d2d61b3b18a5"
+        }
+      }
+    },
+    "pm_simple-dipo-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-dipo-180-20260926",
+      "sha256": {
+        "checkpoints/policy_000020224.pt": "9b46cdbbfd590f889d412e5c19b98138f501d459aa08dbd75ee6a0169a7d0417",
+        "checkpoints/policy_000040192.pt": "e2297c637e4f8ca21bdd610ecb7559780c4ca68607b89dcabfb18bff45dd40ac",
+        "checkpoints/policy_000060160.pt": "6dc411b5607767cbeb85150d029f750f72a9b5926b2d1df333bf56e42f75619d",
+        "checkpoints/policy_000080128.pt": "be319e82a81d1c4addb5a014177fa438dbf24bc3932d9780cb22c40fbb037ef0",
+        "checkpoints/policy_000100096.pt": "3e43bac6aa0fafeca94f58b4814ea7ef958bffc85639a7c812b7b9a6930d0e67",
+        "checkpoints/replay_000100096.npz": "8168900fac60ad4df1e046753b6ddc23f89cc02023f76f8b90cf8266ea187f90",
+        "config.json": "fd055f096ff369ad269639bdce5d263cfed7c0f238775ec42f1298e7e862e927",
+        "evaluations/000020224_obstacle_policy.npz": "74a869a324cccb5ca4da00aa29087515976115bfa8726dfd6e9f4e5289399751",
+        "evaluations/000020224_policy.npz": "01628e51986cce764a3e84e7db689625e05f0da5609486bcd072851ce7c62834",
+        "evaluations/000020224_summary.json": "e8c27339e2551eb07e558e5fcd679f85ea1b79ba32d4ae6824234df46e714d3f",
+        "evaluations/000040192_obstacle_policy.npz": "7781f9fb2eca88888763187c158c82136897e806d832ecdcf4a3f3b5700bde87",
+        "evaluations/000040192_policy.npz": "424b4f2d0212f8625a427889bff22cc52cedc1a1a6ef4da0a60935910d93a4be",
+        "evaluations/000040192_summary.json": "fb964f6ee1ce070c8816aaf33efae27962de7b2f66d0fbe1deafd91ebd478ed0",
+        "evaluations/000060160_obstacle_policy.npz": "8b64850eac9299656aea8c957c8f4568d00722f6547a3736e99888f5aaa8ce6c",
+        "evaluations/000060160_policy.npz": "d35121899184a5bb8e19d3e707e896ad9dd7e9fdb0ac16bd828023035d49a29c",
+        "evaluations/000060160_summary.json": "2ebaccebfd98c69316626f281489a6afba83b230b60adbc33f2379e146c7fe4e",
+        "evaluations/000080128_obstacle_policy.npz": "a723a8cfa04f2bd13214491c40f9c863e0ba4dd63e0b127512a53ef308dbf490",
+        "evaluations/000080128_policy.npz": "2529461c93a48567b4aa6b25cea85742eaa1579fe024d597fe52b0bd7e33b801",
+        "evaluations/000080128_summary.json": "1a8900d69bfd0120f91d03105aa0fbd38efd455e62966eea7ea8de75925ff80d",
+        "evaluations/000100096_obstacle_policy.npz": "6303cad98382919b13d9951cfa2e1601fc1b8c8e7d6427563c39cba24d71d74e",
+        "evaluations/000100096_policy.npz": "01ba2a7544f80ba960fedacc8e65e976be8d3a7201fd92a5f0758dda2c441530",
+        "evaluations/000100096_summary.json": "a03f06c9e74105672613a70ae0aa31d6f59198ca7616da52b1f9683cb1b0b9ea",
+        "figures/000020224_trajectories.png": "72cc4fef149b545f024b0adaa4f4bdb1c04a9987902200d8dc008a9b17e5dc30",
+        "figures/000040192_trajectories.png": "3f0392a90b5c362a5d2a5bf7346a5b250057cff34256d03a7845007b7dbc8fe3",
+        "figures/000060160_trajectories.png": "44543757356e8f2e10eb2ebcb8b6b7c7844140b3cc7e106a46dccb0b60d70e1a",
+        "figures/000080128_trajectories.png": "d650fd183c646047de41f5835f40be4e4d1c926098ba1142bc3bfce06257c378",
+        "figures/000100096_trajectories.png": "dc366b711ffa90e9b5e9f259dd792e09ad5858cfe3f39ce601d56f0cf4263b3f",
+        "progress.json": "e529efed198af5fd9297d7605513fee804cd6901ac5fc24e804f96329580f79b"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 100096,
+        "updates": 5744,
+        "policy": {
+          "episodes": 500,
+          "success": 1.0,
+          "goals": [
+            0,
+            500,
+            0,
+            0
+          ],
+          "failure": 0,
+          "reachable_goals": 1,
+          "mean_return": 100.0,
+          "mean_length": 39.0,
+          "sr5_removal": 0.5
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.0,
+          "goals": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "failure": 500,
+          "reachable_goals": 0,
+          "mean_return": 0.0,
+          "mean_length": 19.002,
+          "sr5_obstacle": 0.0
+        },
+        "checkpoint_sha256": {
+          "policy_000100096.pt": "3e43bac6aa0fafeca94f58b4814ea7ef958bffc85639a7c812b7b9a6930d0e67"
+        }
+      }
+    },
+    "pm_medium-dipo-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-dipo-180-20260926",
+      "sha256": {
+        "checkpoints/policy_000040192.pt": "c2d5c294676718e8fd113568a9d112259df2d7f1f7693d56c41da7e77ff21c06",
+        "checkpoints/policy_000080128.pt": "e8b486648c6cfb6e7f313522d57bf73e85fb7d936ce230b7035ae102efe02c63",
+        "checkpoints/policy_000120064.pt": "18058b57e3987a31a0d85cf318627cb3fbb462e3ee5ee679a9b4e5c3b10e85b8",
+        "checkpoints/policy_000160000.pt": "973793343c200014208dd93ac118d7dbeac2772c3986bd874d0f503b0adc95e3",
+        "checkpoints/policy_000200192.pt": "dc9ae2bdb1cb42d86ac30e43d8b6d676cf182cb21f3c0d2a2e626af16eacf031",
+        "checkpoints/replay_000200192.npz": "0b276287b5afb2fe670834f0c3afc2c06c4637f2101b1b01b03372dbca5a4c72",
+        "config.json": "989e180e04aa1794b452c52756982bc2f7f9bc032b837ddae1c7a3588c175cac",
+        "evaluations/000040192_obstacle_policy.npz": "56d3e1e2a5e250cd5c2785c2e0fa36887d55f430f9ce6f8ae4b21c1c18cd95ec",
+        "evaluations/000040192_policy.npz": "112b0da0e1e3e5abb9c774066def3be19f411a20649d4761ddeacabafe882052",
+        "evaluations/000040192_summary.json": "005d782387dfe293e9f2c674adf9367af79359bed0adfdc2c533dc3fce4e08b3",
+        "evaluations/000080128_obstacle_policy.npz": "6010ef8ad21c4b259ae7a51f30447f25f14504caa956317474099a3a7be16916",
+        "evaluations/000080128_policy.npz": "f09fbfaf58591dfc105e218fef4781e53f1aa56d143b5640d4aa346f7d1d5682",
+        "evaluations/000080128_summary.json": "7445ecb01983da2557af15887fab96cf8433d43020baad25896d131624354618",
+        "evaluations/000120064_obstacle_policy.npz": "a1debc2a98b53dbebf0cd25b516588c0a096ab614fc6866a97aef2ad158ad49f",
+        "evaluations/000120064_policy.npz": "55ba9515831903edbcfc2671337b8d45bdb772c8d9b5be81bbfd4e4953974714",
+        "evaluations/000120064_summary.json": "e923c87d4602a0e022ab7f61448b2f95bb86b5c0970d7ae687cdf9fb972d6610",
+        "evaluations/000160000_obstacle_policy.npz": "ff0509aa84afbfca6250b7d015169fd152192ee5334c3c1dad82fbb052e0c6cf",
+        "evaluations/000160000_policy.npz": "619e0f25ae5f05b9b94c725b699231e35323f0fa28780488ca3191dd6376f237",
+        "evaluations/000160000_summary.json": "e19ab85bb525731835b505f3327aad7056027bdf3fbd3ae3497ce592c1f3abc9",
+        "evaluations/000200192_obstacle_policy.npz": "a445c3b4405f31e838cae3d600e755326c7ff285d1256bd6ab8ebdd7be024856",
+        "evaluations/000200192_policy.npz": "838512b34278660d8d24e83f820d85774549b5a7b6151b031f991edf1e1f9072",
+        "evaluations/000200192_summary.json": "78b2a7fc2066ca0c79e3ecb21e41db84c322c7e4e41a1ae9d6854a5b1b22f6d4",
+        "figures/000040192_trajectories.png": "bf136ed7e697c361bc14be2da33959e2ada18c3d8167fd423847e364ae352959",
+        "figures/000080128_trajectories.png": "648037b2fb38e9a57c667ccc7b9de0b360838ba6faaa94e4a666c315f453f3ce",
+        "figures/000120064_trajectories.png": "c32cf17a267e0c74f4ff8a161daf12175f0627a64067d8adf5cb967bf74a6e4d",
+        "figures/000160000_trajectories.png": "804b7f03dabff1cf6a745a4e691ab03a86ef58701a7aa4982dd3474c9051de95",
+        "figures/000200192_trajectories.png": "9684cd026bb29545d26a521734bd8fa3c8e4f110e313614de01041c4c8a060d9",
+        "progress.json": "b7d846735b1f5fc0142459745384a809db5f89a510728b1fe278e1142f84e1a2"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 200192,
+        "updates": 12000,
+        "policy": {
+          "episodes": 500,
+          "success": 1.0,
+          "goals": [
+            0,
+            0,
+            500,
+            0
+          ],
+          "failure": 0,
+          "reachable_goals": 1,
+          "mean_return": 100.0,
+          "mean_length": 51.0,
+          "sr5_removal": 0.5
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.0,
+          "goals": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "failure": 500,
+          "reachable_goals": 0,
+          "mean_return": 0.0,
+          "mean_length": 71.522,
+          "sr5_obstacle": 0.0
+        },
+        "checkpoint_sha256": {
+          "policy_000200192.pt": "dc9ae2bdb1cb42d86ac30e43d8b6d676cf182cb21f3c0d2a2e626af16eacf031"
+        }
+      }
+    },
+    "pm_simple-sac-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-overflow-180-20260926",
+      "sha256": {
+        "checkpoints/policy_000020224.zip": "edcdb2ea6604d6047e68003a40c14c61b46c1610c4febe2be05700f881c6ee7c",
+        "checkpoints/policy_000040192.zip": "d7175129ff640402ba08bd4e2bb2511810406677e2716aee6b5ede0aec3dd150",
+        "checkpoints/policy_000060160.zip": "1a0a9371388c472c1e60a13e54fe52603765873969ba65f6a1645bb7a715fab9",
+        "checkpoints/policy_000080128.zip": "eaa94a9f642ddaee8786831deaca6f867686189275dda2a9859ce6f84d1a5648",
+        "checkpoints/policy_000100096.zip": "beb8684e0daad4fdff057aba32d062f1ae99d373e170394af72f81404118b5f9",
+        "checkpoints/replay_000100096.npz": "07239cf5d88a2f0ce1f5f3d1ab42e1ccd773d277e4dfea2404080f23b6f8df7e",
+        "config.json": "4a6d177e685d5b1c5d01fb3408077a4b1d9d798e8b5b377f57c048a9bfe52d24",
+        "evaluations/000020224_obstacle_policy.npz": "f9ff09e094d8d0a398f9f8e2655bd49fd14a5cbe509c5e69a5ae60c750794649",
+        "evaluations/000020224_policy.npz": "5cc347c15bcfc6fa77acc3cd8b8808adc6d6c8599040e3fb120e1a196482795a",
+        "evaluations/000020224_summary.json": "f7894f0232589f001120c27a405eecc07c9a3447b474cdc73e597c6664f82b3b",
+        "evaluations/000040192_obstacle_policy.npz": "5ab870ee32c8129c64bd8a95a855c7008be3eb51c26338acf03d7c8969b8403a",
+        "evaluations/000040192_policy.npz": "f1caed0b1821afaa94aaa92bd1c98bdefde5c00fb75a0a46de7f3b6f147e192d",
+        "evaluations/000040192_summary.json": "856244c66da97089ccdfe3e5e92319231737f5ce440457868436e240672e941e",
+        "evaluations/000060160_obstacle_policy.npz": "ef7f48d7dfc1d32bf35566a22a05bb182dff0420a341c793088028e10c8cdeae",
+        "evaluations/000060160_policy.npz": "856126ded4fec42be3002bcba39f4996af1ebd339a10772d323f5b09c1aa40b6",
+        "evaluations/000060160_summary.json": "ad2854c74821386d193c4d21f0bbb6720904979a34f730f52cdb9b6e49b927b8",
+        "evaluations/000080128_obstacle_policy.npz": "d9363c9d7384e215ceea71e680cca0163c7a1affd6cf8961b2eff26262c830b0",
+        "evaluations/000080128_policy.npz": "0e3e83e413092972af5f7cde452067b3557dbec71bd1631341b4dff6994b1ade",
+        "evaluations/000080128_summary.json": "c8c3c8b518f71055564445ed56dcd3c45479f14f00d275709514420d2e92e176",
+        "evaluations/000100096_obstacle_policy.npz": "4469f99f7fd2cc7b290aa89b2aacf5e6599532b5accd57505f6032cf552d63e6",
+        "evaluations/000100096_policy.npz": "4d689e5764ed96e7c88297daa4b3b73d689923fd38d4b564658c4e94899d63e8",
+        "evaluations/000100096_summary.json": "4cdf394d98eca379336075373dd64094f22c3f461d5fa9d78573b5fc7139f050",
+        "figures/000020224_trajectories.png": "47f3ac4b668edbbce46cd411505b51e09d2d91c9cfda9721cb4e3ad56538d4a8",
+        "figures/000040192_trajectories.png": "3b59c52bc673a95a1bdbb433068cc10b8646c0c341ce95795eedccd8a4723f0c",
+        "figures/000060160_trajectories.png": "83cfc96bf164e51e15b09d1698566aba60128344bddcbea3d22d97a3b72e85d8",
+        "figures/000080128_trajectories.png": "f271fdb7543d2fbcb1744e44d9885602a207473fd8ca12e576250da7931ac6d8",
+        "figures/000100096_trajectories.png": "4261b7cc3e4fabca10c82f33a30ea5133087ddc5d7b4212dcaa43788fd8e5851",
+        "learner/progress.csv": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "progress.json": "362096efd9fe8dd05d3e4d1a7bce34f898e91387e60f0aeaf89b49f0b4e5de96"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 100096,
+        "updates": 5744,
+        "policy": {
+          "episodes": 500,
+          "success": 0.716,
+          "goals": [
+            100,
+            220,
+            36,
+            2
+          ],
+          "failure": 142,
+          "reachable_goals": 4,
+          "mean_return": 71.5999984741211,
+          "mean_length": 122.538,
+          "sr5_removal": 0.9
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.04,
+          "goals": [
+            13,
+            4,
+            3,
+            0
+          ],
+          "failure": 480,
+          "reachable_goals": 3,
+          "mean_return": 4.0,
+          "mean_length": 103.084,
+          "sr5_obstacle": 0.18
+        },
+        "checkpoint_sha256": {
+          "policy_000100096.zip": "beb8684e0daad4fdff057aba32d062f1ae99d373e170394af72f81404118b5f9"
+        }
+      }
+    },
+    "pm_simple-meow-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-overflow-180-20260926",
+      "sha256": {
+        "checkpoints/policy_000020224.pt": "0cad2e747f9469a34b922cfe509131e08d1c3f9bf0d5a3cc32508f5403cf61d2",
+        "checkpoints/policy_000040192.pt": "5470131fa2ddead656533005aafeb07c391871eaa1f4a5a7525af8d77220d543",
+        "checkpoints/policy_000060160.pt": "1e896a54954322e026789c01e52218d413469b46dd91714be70c551f6d230d5e",
+        "checkpoints/policy_000080128.pt": "27e07fcd7476067677a692238a7b9d52cb19ad1a111c8841acf72fd3c70ff15c",
+        "checkpoints/policy_000100096.pt": "e1957070003ae05dac304258d31306ee655d726e8fb67fc3a1b24667184851ba",
+        "checkpoints/replay_000100096.npz": "b4bcfbba227b8a5cb5b3c8f8546705e5af2cebec6f1034405fd6db46c2a64f6d",
+        "config.json": "c5fe4e7564ad528b15a73e6b908ac1e7177eaa310a8df2cd8585497e763e6320",
+        "evaluations/000020224_obstacle_policy.npz": "c7ad18c6a668b6fe04ddb7314b1ffa0aa061581734b5c3fd2bd512fcfe5d256f",
+        "evaluations/000020224_policy.npz": "fe15aca1165269bebd21cb1b64723842757fbae23499fb1b3cab83463040c36e",
+        "evaluations/000020224_summary.json": "ab3403a6a88ffc89e3dae868dbafe3916cc5888ed4eae2b4f6f83db95f69c2cc",
+        "evaluations/000040192_obstacle_policy.npz": "e3e7bc465e59e66244e41b61cfa6e63240fd8cb69489a6db1bd921efe6055e97",
+        "evaluations/000040192_policy.npz": "bd6384790846e40cc07ea399afe5d7c574adbe498f3cec80f4e6ab4ae69bf650",
+        "evaluations/000040192_summary.json": "579b7d3a54c26919b508b5c03941cf8aac5f5c17287a657c7c4d79361da3ee82",
+        "evaluations/000060160_obstacle_policy.npz": "659aefc7f89b735ba5b286b4be8a6029b9c97c5d0f1fb998e83abdd95e35d718",
+        "evaluations/000060160_policy.npz": "3618498d7ee59c7c0649fdca107b8f8ebc9aa4691f900ed2a66e6c977448f4ea",
+        "evaluations/000060160_summary.json": "6d8cffcb70f11709d49b8f966ebc3881646ef649c1ac3ec1a805821bacf178a9",
+        "evaluations/000080128_obstacle_policy.npz": "76983d938e64770d41f410fe22d929e74d1ba14b3a65b19f818fb8a11f092afa",
+        "evaluations/000080128_policy.npz": "1768ff6d2f1e2ab41db024c757413423cc33f352a5a7aac3c20249454861ac3f",
+        "evaluations/000080128_summary.json": "a1b0f9136089444cbe982eccc1a49496460433ca618f361113f9ee297bdb9bba",
+        "evaluations/000100096_obstacle_policy.npz": "0730f0b65c0f0451366b2a99a750cbe27e66d7b4ae4fbeb53c69a6d88a38d0bb",
+        "evaluations/000100096_policy.npz": "806011229b49fb0c2652c3ec46c791094015f861af22842630a1bf6b0d55ff93",
+        "evaluations/000100096_summary.json": "d1f63a78588242c44d029319edbcaca437657bceb2911fc25e61865764b039f7",
+        "figures/000020224_trajectories.png": "4d0725b1eef66b08faa501c44ec8ce9c4385aa3dfa0d0b43bf241c7ad49a4b8e",
+        "figures/000040192_trajectories.png": "fc6b3bf72c821dddbdbaf482e1d936550275e0f2074038a23495c75c202813a2",
+        "figures/000060160_trajectories.png": "b22ad99876e9d6ca37e44abe1e72dda50b9514c9e368e6b407636fd130cc87d4",
+        "figures/000080128_trajectories.png": "d353be23162b79e27ecf99efdec027adca93c11bcafa1300eeb1827a3a06c433",
+        "figures/000100096_trajectories.png": "c452c9521c7e1ec7965f4eca13ba982d294d891fc85e532e6f8683e8dadcb49b",
+        "progress.json": "23f9e39174d65f8f3ac9ddfe777e3f0d1a2e471e74e71d9b706e8a1d5c34ad82"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 100096,
+        "updates": 5744,
+        "policy": {
+          "episodes": 500,
+          "success": 0.934,
+          "goals": [
+            276,
+            57,
+            122,
+            12
+          ],
+          "failure": 33,
+          "reachable_goals": 4,
+          "mean_return": 93.4000015258789,
+          "mean_length": 96.772,
+          "sr5_removal": 0.97
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.552,
+          "goals": [
+            156,
+            39,
+            80,
+            1
+          ],
+          "failure": 224,
+          "reachable_goals": 4,
+          "mean_return": 55.20000076293945,
+          "mean_length": 84.03,
+          "sr5_obstacle": 0.94
+        },
+        "checkpoint_sha256": {
+          "policy_000100096.pt": "e1957070003ae05dac304258d31306ee655d726e8fb67fc3a1b24667184851ba"
+        }
+      }
+    },
+    "pm_medium-sql-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-overflow-180-20260926",
+      "sha256": {
+        "checkpoints/policy_000040192.msgpack": "6da67dbe2ea6ef5dd03fc41f7594a27a0fbe64c548b009b9f14e67a3d758acfd",
+        "checkpoints/policy_000080128.msgpack": "d7aca17b7003bb4651d1b172f5b6b2a28e6786b37ed624fcd6439b0607f4bfd6",
+        "checkpoints/policy_000120064.msgpack": "f0874644cb0d1d55b65cad8d4db39d19c3905050fb692fb30eb39053818f47b3",
+        "checkpoints/policy_000160000.msgpack": "0afc1199e35970e5df5e0851a2499e3d8e37275954f11f88a6fde9b92282cd39",
+        "checkpoints/policy_000200192.msgpack": "7e05f1ad8d72a20ba7b237c0552d9b34b5ffc797337b2ad7e299eb06f08c2bef",
+        "checkpoints/replay_000200192.npz": "d1696e602aba62e664d779abab55f9ad1b74182c674f68d3c08eac2d965b2a5f",
+        "config.json": "ded2ac2c53c880f5a5b334dd4e1e3345010d8fa8686d7179c487cb685f2c329b",
+        "evaluations/000040192_obstacle_policy.npz": "e96512de2e138a69707b3cfcd8fac9fb532dbabba6c197053d7547adbb0402d3",
+        "evaluations/000040192_policy.npz": "1d2294e394dff86ba2d95b35925a2ace59a48c0b345738c7d24ebc5f54c433ce",
+        "evaluations/000040192_summary.json": "2efb97915b35b05dc238e89b31adffe9bc4b103f7162f2a1b91e83bac5251a0e",
+        "evaluations/000080128_obstacle_policy.npz": "9b0212b4ff7b4d01abf47aae5e4161ad4c496c7a01c250121d687fc18d1d04a2",
+        "evaluations/000080128_policy.npz": "b27f3eb30a425186dcd991509a4b43cb17bd3a722fdf3a69d3b03d92486098cf",
+        "evaluations/000080128_summary.json": "ea7a71aba92366c68ea02b9b7b2055b9f444082abee32b715a16e2bfaa09cbea",
+        "evaluations/000120064_obstacle_policy.npz": "aa2f854ac1cbe1fbe7bfc9498e11dfc4eae19f7f4fc3057a1903d87eb8232703",
+        "evaluations/000120064_policy.npz": "64d1d4e6b3cf35ce49f73b750baa8d8cdd7a05d1da96dc61aa975f1383872eee",
+        "evaluations/000120064_summary.json": "ff883d7f8d8e1406303df2ca6f865a9ad88514add8c646834390e40ac529d255",
+        "evaluations/000160000_obstacle_policy.npz": "d7e3702cb0773e55e894beb4d48153d413f2013861bd43ad4aa310fca4c9f567",
+        "evaluations/000160000_policy.npz": "74f3a64f200654c05dd0693294ddc9d5cd7a322bca35ae12636399e0a7d37695",
+        "evaluations/000160000_summary.json": "21be7c4e179d5b3872c40c8e137c1928cd040a6548cfc50c0ae06fbb2024c39e",
+        "evaluations/000200192_obstacle_policy.npz": "25c0e4d7791aafc8422969b459784e2e54e0e1b43558be67508544c2c1007616",
+        "evaluations/000200192_policy.npz": "944f05909e6990b50fe26616d7986322e2c98f778e05ec6dd4559490e00db2eb",
+        "evaluations/000200192_summary.json": "970705395860f6d5cea16c8de51fd5029a422e6ecb90246388d9441fa110887e",
+        "figures/000040192_trajectories.png": "c36472580e811e4c4ecbc53a7c994e5733156745217741b457b5291eb908e447",
+        "figures/000080128_trajectories.png": "ffe81ca0fd627959538f044e089dad14d95986d17ab05169830753c1d16d9bae",
+        "figures/000120064_trajectories.png": "3ebdf9dcf6550f77090f6a736261b2f0fd4687f5ef8454065aed6b9373996366",
+        "figures/000160000_trajectories.png": "dafe879119d903cfe6771fd9a2919dd528b056733298da6baab2458c3986853d",
+        "figures/000200192_trajectories.png": "7b68dc2793f87422d8709bdb2ed84f2c3173ac06cc29f6201863a32aebfbef28",
+        "progress.json": "9b07f50211b5503c13da73023382e4e6a3332b80851b6c55e6c5c2f634cc5a78"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 200192,
+        "updates": 12000,
+        "policy": {
+          "episodes": 500,
+          "success": 0.262,
+          "goals": [
+            49,
+            37,
+            33,
+            12
+          ],
+          "failure": 369,
+          "reachable_goals": 4,
+          "mean_return": 26.200000762939453,
+          "mean_length": 276.812,
+          "sr5_removal": 0.55
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.052,
+          "goals": [
+            13,
+            3,
+            8,
+            2
+          ],
+          "failure": 474,
+          "reachable_goals": 4,
+          "mean_return": 5.199999809265137,
+          "mean_length": 234.072,
+          "sr5_obstacle": 0.24
+        },
+        "checkpoint_sha256": {
+          "policy_000200192.msgpack": "7e05f1ad8d72a20ba7b237c0552d9b34b5ffc797337b2ad7e299eb06f08c2bef"
+        }
+      }
+    },
+    "pm_medium-mfpo-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-overflow-180-20260926",
+      "sha256": {
+        "checkpoints/policy_000040192.msgpack": "2a1b707cfa6451727fe7e5d949dfeaf8ddccfb88a617c691782292309243e435",
+        "checkpoints/policy_000080128.msgpack": "b0951f29ac488f552681f3a9faf44dcb7c5a491c40ab3417f224a8fb81a44861",
+        "checkpoints/policy_000120064.msgpack": "efac1684e603e2058e7e3800e5e2531044e2c962377448c542b4e91817da5818",
+        "checkpoints/policy_000160000.msgpack": "549c01c9eeb56d932d0f79124d4478c43375664bdab05c9f765d0810d5a1833c",
+        "checkpoints/policy_000200192.msgpack": "c705a861dbd9918e4037f7e832d8e0a3715c555ccac535224047a61f2e2882d6",
+        "checkpoints/replay_000200192.npz": "eb20388afecb68e2a11005d6a4f45d490a11f1168332a2389c75575f2f283406",
+        "config.json": "5e663838514d19dd1cf1365c813822df9b605645744e8538422781bd11440e4e",
+        "evaluations/000040192_obstacle_policy.npz": "6e74bec975ba5c070277a7e2fe10a0c6b57420d81852bba20a9f02db375f679e",
+        "evaluations/000040192_policy.npz": "c98841af2705ef3f8f56ab03b93a2577ee5b5389959da5cf7ad444f67870fc40",
+        "evaluations/000040192_summary.json": "679b24f92b40a8b45f42805743a5b369a39653327d19026a01683a004308e3c8",
+        "evaluations/000080128_obstacle_policy.npz": "4375f52bdfdb13aef89006b74436edcc202fd212b06049a1ed5658464d792033",
+        "evaluations/000080128_policy.npz": "13326592295c0659410ef06d008a7e6afe33345fec86ba73433a9eb9c02ca421",
+        "evaluations/000080128_summary.json": "bde563c6b7be4f4b0069466e01ae1e5db41541d8553046116ca9363059b83cf0",
+        "evaluations/000120064_obstacle_policy.npz": "087d096706ff427fc3de63fdf26274dccc491c6ffc57e0e57942d351904e60df",
+        "evaluations/000120064_policy.npz": "900cf474997ca3e4a89946474acf216bf19766f028cf50e2d8d36ad43afc7c66",
+        "evaluations/000120064_summary.json": "1b022573a8f2f5677333c4a4de60a16e6f08f72dcfb79d0d5f4b3c6d85663708",
+        "evaluations/000160000_obstacle_policy.npz": "384c3bdc34bb474894cd5c1577e9aa71b1d2095f75d0ec056816f15fbd330a3f",
+        "evaluations/000160000_policy.npz": "b8f69af1c687e6de50b2dd44926f95e9d597d9bf99199c3f45d2d0469abc957c",
+        "evaluations/000160000_summary.json": "38e9426d89e89e6a5ae599ddfc6609121bcc26b4e8d4b8b1e5f5bbe08c33d21d",
+        "evaluations/000200192_obstacle_policy.npz": "20f9981399c39b8ba204082e51b8230a205694e1f19c39838e68be2e28cf2741",
+        "evaluations/000200192_policy.npz": "2bb8f4cf7cb829fc74a541f9e52792cae1cb38dc3549fc3b5eb8221405e63615",
+        "evaluations/000200192_summary.json": "69c5c6aedf02c21100988818d0bd5b418d157493730e4ac08a4fd7813cd52ea4",
+        "figures/000040192_trajectories.png": "84f31ef166e838605bd15dc05660cfd2f79ffe44606db743725a43456bb33a0e",
+        "figures/000080128_trajectories.png": "79e7df29c65198b7f798be5a0f15ed83898ebccdbf6bc2451aea3c9dfe27ad6e",
+        "figures/000120064_trajectories.png": "b6db40da8fd8a40c99e22b81be11da3426e31e4984e85be59fefc0d0ab6784f0",
+        "figures/000160000_trajectories.png": "6657d103e04ff6b55e4f4b990d47d36e9de0abf71959f8ad1d7f6d9d58e6f4da",
+        "figures/000200192_trajectories.png": "39151bd0289b07afc7c290dbdf2536599506c0b8dd320738df3710c525ea0779",
+        "progress.json": "fa0a85cafbff867f70e19f60cb85fefc789495c888c3b4683fa07cce0c96640e"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 200192,
+        "updates": 12000,
+        "policy": {
+          "episodes": 500,
+          "success": 0.466,
+          "goals": [
+            0,
+            0,
+            0,
+            233
+          ],
+          "failure": 267,
+          "reachable_goals": 1,
+          "mean_return": 46.599998474121094,
+          "mean_length": 218.982,
+          "sr5_removal": 0.485
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.0,
+          "goals": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "failure": 500,
+          "reachable_goals": 0,
+          "mean_return": 0.0,
+          "mean_length": 128.748,
+          "sr5_obstacle": 0.0
+        },
+        "checkpoint_sha256": {
+          "policy_000200192.msgpack": "c705a861dbd9918e4037f7e832d8e0a3715c555ccac535224047a61f2e2882d6"
+        }
+      }
+    },
+    "pm_medium-td3-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-final-180-gpu0-20260926",
+      "sha256": {
+        "checkpoints/policy_000040192.zip": "27a5a3f7857167099e32a52b99bcb5ed69c08e430a2a49179cc32eee51b46b96",
+        "checkpoints/policy_000080128.zip": "bc1bbfbe3fbda7a3ecf10113212da2148441ed4a0a97bdcacb9e92b7a5c88ced",
+        "checkpoints/policy_000120064.zip": "55112d26fc041290e5c94b90d294c13f6984f3dfce03b9eb86d18bc8a87b11ac",
+        "checkpoints/policy_000160000.zip": "6e0d8fb4587f9b30c7c2ae38d306fd91a291f06c04e9123df8e4cde28bc577d5",
+        "checkpoints/policy_000200192.zip": "2e920ec6d14bee7fe077b5c80d4210703f72f6fe7cdc2656ddd4c6d25b512e74",
+        "checkpoints/replay_000200192.npz": "6da5a2f5ba67ced0315ece331f2a20b8a9cc857cc512e7db764e070e3f86abee",
+        "config.json": "ee790c98bbfa21bb08caa37e9321f4f7cf54c6ffdadf9d9ae69ed0db044433b4",
+        "evaluations/000040192_obstacle_policy.npz": "61b76cc65d02cfcf103c08b9852105d8c110e9944f34288c19139401ed80b8bf",
+        "evaluations/000040192_policy.npz": "04f202f322991d1e46696ad964fc5926b4e22a0f935f37593924689ccf412c75",
+        "evaluations/000040192_summary.json": "89d265daa9f18a2f2904b7fe41098dfc82f113c661c5d412e936f9d1cbf9fb9a",
+        "evaluations/000080128_obstacle_policy.npz": "94193fe5143b005bd907d9b8bf34f9d6f4371a286145feca60d30abedbe6bc7c",
+        "evaluations/000080128_policy.npz": "001f74097d7ad81ae4419490790400b9ff963cadd3c57f34250c634f68312f0c",
+        "evaluations/000080128_summary.json": "39ce7d761dc0463abbe414df094209890d6547645e91b3ea0c2149ce167e827e",
+        "evaluations/000120064_obstacle_policy.npz": "2a86759617a46b10b610a46d3e7f5f3876a11f902f254be45ce32759be3a20d8",
+        "evaluations/000120064_policy.npz": "efd4e32bf9286e62b5dd08014d05e0de4bd15b7fe1c3096aac9e202d3d118f38",
+        "evaluations/000120064_summary.json": "14c07977de9f86f3efaea1b18bfe9dd5cb5f08384b80de86a3a733e928f088d6",
+        "evaluations/000160000_obstacle_policy.npz": "bd7b68d7fd0fe48d250435847f15fbbd3f71e4c495d30d7aaf631b5ac7f5209e",
+        "evaluations/000160000_policy.npz": "a87e9c671b531acaa922c805c6ac64417389cc27a06c7541a11496a9c3029385",
+        "evaluations/000160000_summary.json": "7ea7a477ec620225c717c3342bf205c78f55d513b26d0ba35489d7fcf17ad573",
+        "evaluations/000200192_obstacle_policy.npz": "4378248dd3de416f4d27d25e267928e366a8932f779ab890a0fdb078eb20e6b1",
+        "evaluations/000200192_policy.npz": "bb2f1e22dc92ab940010da79c43496dcd7bfbffb2b4434fdd2f5589fe0da42d4",
+        "evaluations/000200192_summary.json": "69f0710ac2ac56198423e61c18bcd66fe2af133cbc3165785d82f015f141b2ae",
+        "figures/000040192_trajectories.png": "fb5ef9dfaf486e6ed7a27fa148d935586426937b90d45c082dfe9eff2d9bcbcc",
+        "figures/000080128_trajectories.png": "d3354f5cfec78e0e7ecdc597deb7188b97d64bc4365362c56a3ffce4c6c1da39",
+        "figures/000120064_trajectories.png": "afda6be68dd4ecec3126037756c28c488ea6230f0c93d7b4e8afb2f1c29d5920",
+        "figures/000160000_trajectories.png": "0b78805cf150a819a81929f42b3458310b59b8821f9268ad9770fafc736c4ff1",
+        "figures/000200192_trajectories.png": "0d12619e0bc0a89e7d178741f85ddc04aec6e6c26cb646cd4525f3d2d7eeefd6",
+        "learner/progress.csv": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "progress.json": "77fecb38bb177418ad4bc19a664398c0636984e4e4691085232df22dcc6eeb5b"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 200192,
+        "updates": 12000,
+        "policy": {
+          "episodes": 500,
+          "success": 1.0,
+          "goals": [
+            0,
+            0,
+            500,
+            0
+          ],
+          "failure": 0,
+          "reachable_goals": 1,
+          "mean_return": 100.0,
+          "mean_length": 51.0,
+          "sr5_removal": 0.5
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.0,
+          "goals": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "failure": 500,
+          "reachable_goals": 0,
+          "mean_return": 0.0,
+          "mean_length": 22.0,
+          "sr5_obstacle": 0.0
+        },
+        "checkpoint_sha256": {
+          "policy_000200192.zip": "2e920ec6d14bee7fe077b5c80d4210703f72f6fe7cdc2656ddd4c6d25b512e74"
+        }
+      }
+    },
+    "pm_hard-sac-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-final-180-gpu0-20260926",
+      "sha256": {
+        "checkpoints/policy_000060160.zip": "51c68aac578781acc20043b1c1e01ce39df837403c65a79cb28184bf63c01eeb",
+        "checkpoints/policy_000120064.zip": "5fcf266e2a9f7028b1f806b7189e7e6ba2807056a159d84415631f19d2d93b65",
+        "checkpoints/policy_000180224.zip": "e2d0416dbaa48be0da411c9ad59852b6ea37b9b1757f87d30857f7ddf999a733",
+        "checkpoints/policy_000240128.zip": "9ce22ae0fda82368ab7c962a3fd990e42b7738ac59334e5d458a9893718f2498",
+        "checkpoints/policy_000300032.zip": "ef6a3bee96bd82b0f3e0c480bc1969051589ddcc462a00dda09b7ed086b5aee0",
+        "checkpoints/replay_000300032.npz": "c0a8006b655af6524341f7b147338da75766ce6ed7979cebc6b8a1ce25b8008a",
+        "config.json": "09d5ba7d5090d6ee1172eda86201b7c479a89217605180e385d64b839837e37d",
+        "evaluations/000060160_obstacle_policy.npz": "f56346eecba83c0de2de2a9cf187e48db8e197e909bd0f930b5b6c758fe56679",
+        "evaluations/000060160_policy.npz": "ef1a993352ee8dcc50eb5fbad68794f079bb842b3686ed3b08e2475dc073a8f5",
+        "evaluations/000060160_summary.json": "6a0baaac97b7abb87f8fff59bdbe5b400099fddf21ef2c6bc59a2bc94dfbc6d2",
+        "evaluations/000120064_obstacle_policy.npz": "d2e1870667febf0416e060b831233597d5197609fbcdbbb49d00bfa4f94854db",
+        "evaluations/000120064_policy.npz": "5c00abaced56de079329db5677942c37bc6e7eb9d6f9d68b1f6c5ee5ddd0f259",
+        "evaluations/000120064_summary.json": "9a0b56c65d4cf6f5296c4037bb0bb42d7829685ac301bfd02d1829fde699b345",
+        "evaluations/000180224_obstacle_policy.npz": "d3a47ff559096e9c9ecdb41fda768f401bf671edf2e24f8ad2a82a92d4ee5909",
+        "evaluations/000180224_policy.npz": "690ee31aebf8995b6a8dc9d71a10fa11a206eb07209620b66ab6e753d78d400e",
+        "evaluations/000180224_summary.json": "12984ceac0e872f4af547f76bb1df839089460a80763e9c7e2ad2ed258f6046e",
+        "evaluations/000240128_obstacle_policy.npz": "07ce7d753f353aeb045de7c6067c8fe8da1305f9fe85951cd6c5375414884710",
+        "evaluations/000240128_policy.npz": "f1e584616c837191f44af1d0d0e87f6ce62e92af3f9bde23cdb375da19fcc361",
+        "evaluations/000240128_summary.json": "af1e4fb6f6510793a9e97121dfe2831dd809bc496ed1df8faeb0ccabcb2a4fac",
+        "evaluations/000300032_obstacle_policy.npz": "87ab32bc9eb58dad438119c6603adf82017e6d0851e49b3f60a34f486d54bbcd",
+        "evaluations/000300032_policy.npz": "654a6a9c15421fcccb7b4a524535a6905332f7772a0dcfd47836f1b6ca2417a6",
+        "evaluations/000300032_summary.json": "172cc0a6d03fc43236fcf29c4444d52cd4d6dcb5de8eb08b261979519ee32224",
+        "figures/000060160_trajectories.png": "e6ec173f9ca1c9f322ab81a3182e4db16fe054c993377883d31b63e0d4731fdc",
+        "figures/000120064_trajectories.png": "0da2a5bf073b8feb073e236ceb14369acff83d470b656b649c60455ac528382b",
+        "figures/000180224_trajectories.png": "101e340dceb26d41adce055cc51d0b9927395a0cadb677d058d345dd47188522",
+        "figures/000240128_trajectories.png": "a1591fe0de00d70b377c07f5ee02d5f1539b7be2e1ff645441e41d65c808b394",
+        "figures/000300032_trajectories.png": "d21b716b19fa6d2f9877b97852f8b0eeba86b19c10efa360e9f872ab1db4b7ad",
+        "learner/progress.csv": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "progress.json": "5868e90880a19f8f1e555e6a8505760b81e7e23a234bbc7ca8a99b49d99379cf"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 300032,
+        "updates": 18240,
+        "policy": {
+          "episodes": 500,
+          "success": 0.0,
+          "goals": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "failure": 500,
+          "reachable_goals": 0,
+          "mean_return": 0.0,
+          "mean_length": 600.0,
+          "sr5_removal": 0.0
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.0,
+          "goals": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "failure": 500,
+          "reachable_goals": 0,
+          "mean_return": 0.0,
+          "mean_length": 553.356,
+          "sr5_obstacle": 0.0
+        },
+        "checkpoint_sha256": {
+          "policy_000300032.zip": "ef6a3bee96bd82b0f3e0c480bc1969051589ddcc462a00dda09b7ed086b5aee0"
+        }
+      }
+    },
+    "pm_hard-meow-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-final-180-gpu0-20260926",
+      "sha256": {
+        "checkpoints/policy_000060160.pt": "256412066bb081a47f9a2d9ed8904bf5a9f1a5c26b5196fd0e3d6d89603618e0",
+        "checkpoints/policy_000120064.pt": "8757fd2a7749c32f42beb6c30d9378e89bb5ba8948946469fcde2e1050b920a5",
+        "checkpoints/policy_000180224.pt": "f80e4ca792538475ef8fe35a356d4bf4716860b3bb2b2abc3bb4d73d53988613",
+        "checkpoints/policy_000240128.pt": "14dbe37413099b32dbc8adf265f028b8561dce2a25e4b0d9edf2a15b78e27f9a",
+        "checkpoints/policy_000300032.pt": "b7f5d73e7e91204b795a46b141f04481c90602f6c02ff0d1dd6353bb9c58130c",
+        "checkpoints/replay_000300032.npz": "25dde9f000e593d7911def9e28b5c87a269e9ae5204b9efcc3087f8346f44f24",
+        "config.json": "2ce09454947bcf7b1b98c8e2b6f7fd5f61e534ddc4646d674ce9401611c81acc",
+        "evaluations/000060160_obstacle_policy.npz": "5da605293b3d0b3e48ead24f905f29deba15a0e2259828e5c7828d9b1fddbcce",
+        "evaluations/000060160_policy.npz": "845aece0bfe63a243e337fe522fa8ca8fe53fb0dad913db3d6aaa1f70ce9c0fb",
+        "evaluations/000060160_summary.json": "9b88008b5192c77430946faa96c8733623feb56ed20bd8d3ad026249d0677d37",
+        "evaluations/000120064_obstacle_policy.npz": "98eba5972b56998b032d28abaf245e7460ac480e80a8c7322e5f136440256558",
+        "evaluations/000120064_policy.npz": "8a62c2b261204cfb69d694209abb79c70adc5e3b4c90bfc67f172fd11e129b1e",
+        "evaluations/000120064_summary.json": "d386a662a55ed6d67668006364afe6830ab89ac9bdc7d959f2432718b53fae51",
+        "evaluations/000180224_obstacle_policy.npz": "c139ad2e6c987207c8ab4ae1dc9ef3b5e69057bed42de646c290dd069f939737",
+        "evaluations/000180224_policy.npz": "9f4f5e52d4160d6bb30951584f81d5e2c3e2bbbb025911124f800984920ca3e3",
+        "evaluations/000180224_summary.json": "b06e259168eef00e9819d0019b256599a27ec5b5710d1adcd6346ba84b666c31",
+        "evaluations/000240128_obstacle_policy.npz": "0858412c44e759b06d3483930c29038b1a43eef41ac429ea7a98a63826fecf0e",
+        "evaluations/000240128_policy.npz": "5db42d9b784a9426d6c258c9ef88d5712066227ccbaaa99810d88b55ecdea73d",
+        "evaluations/000240128_summary.json": "0799b3f78740692e62fbc50e84f5f1fe84e3d643612ce395f5f8aa51f209f4d2",
+        "evaluations/000300032_obstacle_policy.npz": "1b67a054917aa7bf5096726bc0a9107889caaf55f09320dd32493d28ef010f71",
+        "evaluations/000300032_policy.npz": "b380146253813f725af2c7491fa85487662453a24fcf72485c250f287391ec49",
+        "evaluations/000300032_summary.json": "4951a6b5e305f9c0478819070a7714bc46d66d50ed7e62829443c7be28519912",
+        "figures/000060160_trajectories.png": "adc14cc4a5334cf1bb88009988e6e4f102bbf6d389720351c6c34bf11b818bc0",
+        "figures/000120064_trajectories.png": "dc95dbb34c3792377be4fe46f4a35bdec95a0d8f3e36553021e0a02f1753e2dd",
+        "figures/000180224_trajectories.png": "0725340e8f0bac6db6230eef9a813239e7dc1964d29286c739a10326a3f2416f",
+        "figures/000240128_trajectories.png": "93b0bcfd3212b32e884dcad948b265fc456a2c5211ad3798114bb79f2575d4e7",
+        "figures/000300032_trajectories.png": "3a760691f24261aae6c461d064109745f08d629c071a7e4e4ba53043b717e666",
+        "progress.json": "bf538438e839a420dc08f052f76c9b0e5b8be333d731817300cb70e23530b2f5"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 300032,
+        "updates": 18240,
+        "policy": {
+          "episodes": 500,
+          "success": 0.052,
+          "goals": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            26
+          ],
+          "failure": 474,
+          "reachable_goals": 1,
+          "mean_return": 5.199999809265137,
+          "mean_length": 585.928,
+          "sr5_removal": 0.125
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.0,
+          "goals": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "failure": 500,
+          "reachable_goals": 0,
+          "mean_return": 0.0,
+          "mean_length": 194.746,
+          "sr5_obstacle": 0.0
+        },
+        "checkpoint_sha256": {
+          "policy_000300032.pt": "b7f5d73e7e91204b795a46b141f04481c90602f6c02ff0d1dd6353bb9c58130c"
+        }
+      }
+    },
+    "pm_hard-sql-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-final-180-gpu3-20260926",
+      "sha256": {
+        "checkpoints/policy_000060160.msgpack": "eb89ed727a3c4f61b4277dfcb90e861d1f7fe3e4d0189f95c762a5a81aa601dc",
+        "checkpoints/policy_000120064.msgpack": "0bf792d906ee4887473276220d9927de3c9f0af53497ad655aebe16ff1f48e31",
+        "checkpoints/policy_000180224.msgpack": "615eb5615166ea84894630fe9dcb5f9c496b82b58ede756c7f7c294f02b53d26",
+        "checkpoints/policy_000240128.msgpack": "a7ed13fcaab97a5f66e1e49a066cc95a0700a8e1940c79466ac1a2fcfb5dd8de",
+        "checkpoints/policy_000300032.msgpack": "ea016e453ff98470fc70f2f372c242c95dc58af45d43bb79461ebaab1d5d1953",
+        "checkpoints/replay_000300032.npz": "12d2b6ad2aaafe603e7efca2062ef0876e5c50f7d4dfac373b1e0acb68f7b6dd",
+        "config.json": "8ef6010dd78be0717525a46c9374089cfee7d9eeb72c0a8f367a69f853fbd5a4",
+        "evaluations/000060160_obstacle_policy.npz": "d3a79061d0b6478e4dea66f6bc8fcce87cf75b0b15f1bc69f7b7a1866f6290d1",
+        "evaluations/000060160_policy.npz": "7341f3eab918609901796a62f342f3dbddf55bbf398b7226052f23d281a7fc19",
+        "evaluations/000060160_summary.json": "6594d489dd681b6e5f4842c6255c3d9aac0ac790a3c2b79f90f86fcecc70b1cd",
+        "evaluations/000120064_obstacle_policy.npz": "4e861635135201263508c3fce1072c3586a9f5cfbe50ec13ffb2a8cc19f84d55",
+        "evaluations/000120064_policy.npz": "c3fc91c31990c070a84ce5e10c199e2c6b3edca74f8cbf2982d24eaf1e7a3b1c",
+        "evaluations/000120064_summary.json": "03dcfe4c8268d83d6a43932c150a2825f802b26b71328dc20331efd6ce434b70",
+        "evaluations/000180224_obstacle_policy.npz": "e9570a4660082ea6eb02a004ede71d65d7c59a8c3af6f435bcd2b306101845b8",
+        "evaluations/000180224_policy.npz": "e5615bb8127918ac6c899a0b33e43f9ae2057d6dc4b854f2830154c9d27bf462",
+        "evaluations/000180224_summary.json": "78cdb82e68a970b0aafa9574f73764c6d2dbbf5f1d08bc8d95fb2e13884f7951",
+        "evaluations/000240128_obstacle_policy.npz": "63848feaf5d919f90616e2a0258bf286a2c5920d448102ae65d92c7de93cd288",
+        "evaluations/000240128_policy.npz": "a06fcd93ac00161ab15837832088117f69ddc113a0f9d10a00a8974190ede5a3",
+        "evaluations/000240128_summary.json": "3d155498465f974fbfbdbb47c9293727cd5746c108a32b43cf8126fc587cc255",
+        "evaluations/000300032_obstacle_policy.npz": "4cd02ee3119480018ee109bdba9bf3466c452b93767844deaaa57b090fb4cdf0",
+        "evaluations/000300032_policy.npz": "990926a2f4ed1dcdf39b5bc81dd74a7913f2c6d17589fc737e62816d61744fd6",
+        "evaluations/000300032_summary.json": "4ed7241365491f5222af97097783dcd3398a73a16d5084dd5e96b54564448116",
+        "figures/000060160_trajectories.png": "d3c127350fb687a796ed638a15f92cabcfd569925c62f3cbcf272b2cf26fe945",
+        "figures/000120064_trajectories.png": "1f8b52d1e2b6462bec71f0376d1dc8ad83b0cc3c7ad24cc65a9e40f7baaab193",
+        "figures/000180224_trajectories.png": "d7d671038bdd689715d44faa50c291a9778a18df2f6fdde9fc799b1d356faabb",
+        "figures/000240128_trajectories.png": "8b7295ff25846301656b958bf602d5f5dff869f9e7da9b1639c3f588d3550693",
+        "figures/000300032_trajectories.png": "b89a668f1c7684cb52b2f6af025a50735cb834a901c5df13f8ecc99bbd5e165a",
+        "progress.json": "7c1824fa44993cd254bf9800c50cdc71d65b0879bd85c63e3f01371a9eb4441b"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 300032,
+        "updates": 18240,
+        "policy": {
+          "episodes": 500,
+          "success": 0.512,
+          "goals": [
+            23,
+            34,
+            39,
+            30,
+            34,
+            30,
+            45,
+            21
+          ],
+          "failure": 244,
+          "reachable_goals": 8,
+          "mean_return": 51.20000076293945,
+          "mean_length": 474.312,
+          "sr5_removal": 0.7864285714285715
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.092,
+          "goals": [
+            4,
+            3,
+            5,
+            10,
+            4,
+            2,
+            14,
+            4
+          ],
+          "failure": 454,
+          "reachable_goals": 8,
+          "mean_return": 9.199999809265137,
+          "mean_length": 421.42,
+          "sr5_obstacle": 0.39
+        },
+        "checkpoint_sha256": {
+          "policy_000300032.msgpack": "ea016e453ff98470fc70f2f372c242c95dc58af45d43bb79461ebaab1d5d1953"
+        }
+      }
+    },
+    "pm_hard-mfpo-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-final-180-gpu3-20260926",
+      "sha256": {
+        "checkpoints/policy_000060160.msgpack": "f685f1e079c1031c755b21a5bac095e6a945ff7d5bf0fb0c4929dbd5b4bc21a5",
+        "checkpoints/policy_000120064.msgpack": "ac25a4a8d0e32f380102ee36ed7676817a1257bc39d9534fee37e26b39e200d2",
+        "checkpoints/policy_000180224.msgpack": "03f5688dd4f96e59f8d814083c45bd592b478fe33b1375df9b8c8b136a7ce26f",
+        "checkpoints/policy_000240128.msgpack": "2278eaee4cc7e71944b493583829de7a6408590b5ee79639653bdfaf2255aa89",
+        "checkpoints/policy_000300032.msgpack": "75e2372b000ff952080275e4c2e25536b9d85cf85a2bfa1440c562966c4b3a22",
+        "checkpoints/replay_000300032.npz": "f247944ee72df0fded2d43150c299cc3fe5110a54fdc18262cc526f076936d07",
+        "config.json": "94217b4a791759311b8e1c56d4d6434f3b00cf23ad252cf8d013d487bda5ef47",
+        "evaluations/000060160_obstacle_policy.npz": "451bb218789f9e04c1f3fc40d06d5549712f4e347a5df373408f5c61e12a454c",
+        "evaluations/000060160_policy.npz": "d54f967532cfc2e5f75a44e67e1693bab6de9a3fa56c0a667cab22aac9c59577",
+        "evaluations/000060160_summary.json": "8611dcd8782888d9ec7c9dcd6ba9d573d3b9de5b1c38e7dc5ed30c3545594c04",
+        "evaluations/000120064_obstacle_policy.npz": "1acba1d3648dcd21f76f8f0afa0c02fd4eece22d50e4a7b5425146169698ff33",
+        "evaluations/000120064_policy.npz": "8aff14526519959e84f1f4879e3ab71f35aae634ad5075f97c858e792f016c85",
+        "evaluations/000120064_summary.json": "89c8211fa9cbe0721ec6a4a467782cf2b6320940548db19d5552eafcff930066",
+        "evaluations/000180224_obstacle_policy.npz": "bc595b10a36da32ce2c9aa4fa9751833aff4901e58f24e6474cf5d704d4bd148",
+        "evaluations/000180224_policy.npz": "6e7437a60c56529f7905e34b3f7bdcb608d2e4b9503c1e21776ac6aac78194ed",
+        "evaluations/000180224_summary.json": "10155e0ad302b90260c109d78a855994dba1918971e7b0744fc8124a4e80453c",
+        "evaluations/000240128_obstacle_policy.npz": "32884f3e03bb41d9e957914e066e882c38dc5d4e5b7519838acc32b6f9f29adc",
+        "evaluations/000240128_policy.npz": "807eb4b5744a38502d0b1898878a787f774b47ea0ecad3155022e64a68f9018a",
+        "evaluations/000240128_summary.json": "ae8b9fd6664a7915183de6a10641f6b8ad436f0ae90b106ffd73d1edea8251cc",
+        "evaluations/000300032_obstacle_policy.npz": "35ced73bd5d25171ad5be0f0002747859da0ee2337078893bd309ebdad217231",
+        "evaluations/000300032_policy.npz": "4ea7b9017973914878d6eb60d1d2be31c6737dd50f2da047d927bcd468835be0",
+        "evaluations/000300032_summary.json": "8bf355608bd8e1f2c03747b74aabe3c98089286450a7142d28814801e85d49c4",
+        "figures/000060160_trajectories.png": "b1dc05cb82eb5aa33924c21252827bbd1cd1a34caa6fb8d02c17481a7a5c7d28",
+        "figures/000120064_trajectories.png": "7409891cd80ed674efe5f980695e192940d9f71117b2cf62d3f905ed979a1f7a",
+        "figures/000180224_trajectories.png": "73ef5764e22e484d8f7e1d4e08658619f19e6c48a62324e4047e63ab2a4a2b73",
+        "figures/000240128_trajectories.png": "bc019f6b3f9f28ab27ad92b0c931eee14636d1ea772c5b0aeb95d0a5941f9324",
+        "figures/000300032_trajectories.png": "3ef593183d68ac86389e5b0f9f5926d1a13e145081efd65249c14a7ffb361eaf",
+        "progress.json": "fecb85ff6c2165500405e3753d6feaf76b1a105c900d9ce808e53af3804b9cc8"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 300032,
+        "updates": 18240,
+        "policy": {
+          "episodes": 500,
+          "success": 0.7,
+          "goals": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            350,
+            0,
+            0
+          ],
+          "failure": 150,
+          "reachable_goals": 1,
+          "mean_return": 70.0,
+          "mean_length": 448.418,
+          "sr5_removal": 0.495
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.0,
+          "goals": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "failure": 500,
+          "reachable_goals": 0,
+          "mean_return": 0.0,
+          "mean_length": 433.476,
+          "sr5_obstacle": 0.0
+        },
+        "checkpoint_sha256": {
+          "policy_000300032.msgpack": "75e2372b000ff952080275e4c2e25536b9d85cf85a2bfa1440c562966c4b3a22"
+        }
+      }
+    },
+    "pm_hard-td3-s0": {
+      "host": "vast-heechan-180",
+      "campaign_root": "/home/heechan/optiq-experiments/paper-pointmaze-seven-t3-final-180-gpu3-20260926",
+      "sha256": {
+        "checkpoints/policy_000060160.zip": "854bcbfccb6f21f830eb1ec208e88c15baeb9f19b364f00e5b0333463245c888",
+        "checkpoints/policy_000120064.zip": "7390b012888616c387a290566a3706e2450b817124b9c1ac6f4282c2fe0d7a68",
+        "checkpoints/policy_000180224.zip": "c740d8f0238a3a40a5ceb771641fdc324696834c7d08ea5c9c5e776e10712f1a",
+        "checkpoints/policy_000240128.zip": "35a5423096453eecb051acbe78beb55f450d3a79d2032b1b0ce6c19caf618a1c",
+        "checkpoints/policy_000300032.zip": "358f6d7ba37566b8f4ea50b51b836386f066bafb581ba3c0e8b8eaf00ff1842c",
+        "checkpoints/replay_000300032.npz": "755d69105fb7330a22e85a73a6da224b5e76ec5c25074761a3e0a90888aa9ca8",
+        "config.json": "87e8c39ace29d8e29a9aa0fc7d70b21d6e93dce11e13e93e8dd5408efa48dab5",
+        "evaluations/000060160_obstacle_policy.npz": "8af03b92a1de87eea87a1f04758c2787c9d724c43d0836d8aff1123daf099ba7",
+        "evaluations/000060160_policy.npz": "20459dcccc27982c26b1c3f27497fa89cfb102966884c19b7896e9440a10d813",
+        "evaluations/000060160_summary.json": "a832f8869193b2f52b1fc8ce0f5c7e1625e470c8caa14bf8b9dd3f2fdfcbc7de",
+        "evaluations/000120064_obstacle_policy.npz": "88498e29c8f322452aa1ee460259a79651890abd6e4c40b549ad84cf3a80b63a",
+        "evaluations/000120064_policy.npz": "3a245b8566914cb463a07d7c13ba786fb13e938cb16487c61d965ac0c73ea308",
+        "evaluations/000120064_summary.json": "aa2669874fc9e9999843a5608418e1f8adc0b4e44ed9a553bff72593c7b21564",
+        "evaluations/000180224_obstacle_policy.npz": "dcbbf7341dbd89dd7b9a20c69bc4285c4c60739fe565f6ead42d931f47b5c36a",
+        "evaluations/000180224_policy.npz": "18eb01731a7975b290ab7f883c59e6a967dc7bc10bfeed72778da41ac4cf4a0e",
+        "evaluations/000180224_summary.json": "caee8960e8d2a57834904abb20b5d6b59d1877f5b0631aff8b7947169f032d36",
+        "evaluations/000240128_obstacle_policy.npz": "32b4591b048ddc5c8990ff28c17196adc00bc94130a0ddb6f6c9c954d9bbefd9",
+        "evaluations/000240128_policy.npz": "da86195333a153b2d2d0d8f503a328ade55da385fbad9faf359bce40a7adf3b6",
+        "evaluations/000240128_summary.json": "43a95ab83b7e9a588672200f0d664c424e3f837863e724764c2c8f87389cd958",
+        "evaluations/000300032_obstacle_policy.npz": "8370b883601a09db819be8c8354f320b3d3b4e3922ec55240de172325151b38b",
+        "evaluations/000300032_policy.npz": "670399899463e15eca258773a594cd531a1ae5bae971b5d81153f08a9aedf0c8",
+        "evaluations/000300032_summary.json": "b0102c9349260fd733799063a608832bc9849a9b1b1226240309dd2a9c955d7c",
+        "figures/000060160_trajectories.png": "3f7939db21c4974fcc653ace7a5826a5215b40758093d9c0664e7d0bfb58f0be",
+        "figures/000120064_trajectories.png": "83e5769fb904fcf0386b1df958e7bb3f10e1c257104e8eba5d5b0362ea41b2d9",
+        "figures/000180224_trajectories.png": "8b56dba3eac21f61b5f8287b39e6980eec1a9c235fd4abbc5fa4168d05c85a52",
+        "figures/000240128_trajectories.png": "f3b2f7e523c5468da4986832ba2cba7461bdcb4b97b5bcf5b30bec91a4404488",
+        "figures/000300032_trajectories.png": "02e3611a26db4d4a32929a10570bedbc9bd1c85eb5cbd249ed63bd34a423071a",
+        "learner/progress.csv": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "progress.json": "fa54fb9fc34f832d39bf8b5f1ccb32b4d5ed6385a9223b53b0a7bdb8868261b4"
+      },
+      "selected": {
+        "num_envs": 256,
+        "batch_size": 4096,
+        "updates_per_collect": 16
+      },
+      "result": {
+        "steps": 300032,
+        "updates": 18240,
+        "policy": {
+          "episodes": 500,
+          "success": 0.0,
+          "goals": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "failure": 500,
+          "reachable_goals": 0,
+          "mean_return": 0.0,
+          "mean_length": 600.0,
+          "sr5_removal": 0.0
+        },
+        "obstacle": {
+          "episodes": 500,
+          "success": 0.0,
+          "goals": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "failure": 500,
+          "reachable_goals": 0,
+          "mean_return": 0.0,
+          "mean_length": 39.0,
+          "sr5_obstacle": 0.0
+        },
+        "checkpoint_sha256": {
+          "policy_000300032.zip": "358f6d7ba37566b8f4ea50b51b836386f066bafb581ba3c0e8b8eaf00ff1842c"
+        }
+      }
+    }
+  }
+}

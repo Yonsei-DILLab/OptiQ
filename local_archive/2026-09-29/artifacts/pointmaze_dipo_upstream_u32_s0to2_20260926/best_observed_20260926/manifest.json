@@ -1,0 +1,113 @@
+{
+  "selection_rule": "highest observed native-eval success; ties: latest training step, then lower seed",
+  "selected": [
+    {
+      "task": "pm_simple",
+      "seed": 0,
+      "step": 1001472,
+      "updates": 15520,
+      "source": "5f4b809d0e95899eef2435dd80cac2da48058931",
+      "policy": {
+        "episodes": 500,
+        "success": 1,
+        "goals": [
+          0,
+          0,
+          500,
+          0
+        ],
+        "failure": 0,
+        "reachable_goals": 1,
+        "mean_return": 100,
+        "mean_length": 53,
+        "sr5_removal": 0.5
+      },
+      "root": "/home/heechan/optiq-experiments/maze-dipo-upstream-u32-s0-1m-20260926/runs/pm_simple-dipo-upstream-u32-s0",
+      "host": "vast-heechan-6",
+      "captured": 1790414120.6080663
+    },
+    {
+      "task": "pm_medium",
+      "seed": 1,
+      "step": 1001472,
+      "updates": 15520,
+      "source": "041738202b5e6bcf765a9a807e917afd2778608a",
+      "policy": {
+        "episodes": 500,
+        "success": 1,
+        "goals": [
+          500,
+          0,
+          0,
+          0
+        ],
+        "failure": 0,
+        "reachable_goals": 1,
+        "mean_return": 100,
+        "mean_length": 187,
+        "sr5_removal": 0.5
+      },
+      "root": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_medium-dipo-upstream-u32-s1",
+      "host": "vast-heechan-46",
+      "captured": 1790414121.7579312
+    },
+    {
+      "task": "pm_hard",
+      "seed": 1,
+      "step": 401408,
+      "updates": 6144,
+      "source": "041738202b5e6bcf765a9a807e917afd2778608a",
+      "policy": {
+        "episodes": 200,
+        "success": 1,
+        "goals": [
+          0,
+          0,
+          200,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "failure": 0,
+        "reachable_goals": 1,
+        "mean_return": 100,
+        "mean_length": 112,
+        "sr5_removal": 0.5
+      },
+      "root": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_hard-dipo-upstream-u32-s1",
+      "host": "vast-heechan-46",
+      "captured": 1790414121.7579312
+    }
+  ],
+  "description": "Post-hoc best checkpoints, not a same-budget or final-checkpoint aggregate",
+  "verification": [
+    {
+      "task": "pm_simple",
+      "remote_sha256": {
+        "config.json": "b64fd02e4fd99caaf2faba237c39d7474b03de7e7c5053a23d8d72145c80fd22",
+        "evaluations/001001472_summary.json": "27b4b6a880dcb8801745a525a7fda5f099ed724f072a171ffe435179b2db9a73",
+        "evaluations/001001472_policy.npz": "fde9eaa09c68e6da9cd410849d3bc6ef764d44ee4630145c47899b558d498b3b"
+      }
+    },
+    {
+      "task": "pm_medium",
+      "remote_sha256": {
+        "config.json": "3f010b4e41e17b016350a8c560a2d1c7d4d4e6040901c5deecfb792ec79a9164",
+        "evaluations/001001472_summary.json": "b477387b3a125f53802574c6f9578ce0296e4eaf5c6baba39b6a2cf3daecf8a3",
+        "evaluations/001001472_policy.npz": "7fc8c507c819460084a89414ec2447075663192ec4e5661a21b700b0fd702806"
+      }
+    },
+    {
+      "task": "pm_hard",
+      "remote_sha256": {
+        "config.json": "bb7cfd250480b5940169942630051b6bc48f3db6051723ca41ea8b2dfaff37bc",
+        "evaluations/000401408_summary.json": "42dd967c1697eb9475798c1244717fbbe78d890ecc1f80e7b134b33a910662a3",
+        "evaluations/000401408_policy.npz": "016bba2b1ff397d78d519e2f811a17276fb2efb295be24f3b53b090e5a4c66a4"
+      }
+    }
+  ],
+  "report_source": "f41d6c723afcc20a017135ba4aa588f113b61bf3",
+  "all_recorded_episodes_plotted": true
+}

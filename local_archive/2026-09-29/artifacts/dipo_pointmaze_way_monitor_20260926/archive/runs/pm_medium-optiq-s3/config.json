@@ -1,0 +1,190 @@
+{
+  "task": "pm_medium",
+  "method": "optiq",
+  "output": "/home/heechan/optiq-experiments/pointmaze-baselines-s1to3-1m-20260926/runs/pm_medium-optiq-s3",
+  "seed": 3,
+  "steps": 1000192,
+  "num_envs": 256,
+  "updates_per_collect": 16,
+  "batch_size": 4096,
+  "warmup": 8192,
+  "eval_every": 200000,
+  "eval_episodes": 200,
+  "final_eval_episodes": 500,
+  "render_each_eval": true,
+  "temperature": 3.0,
+  "optiq_eval_mode": "mu_only",
+  "sql_particles": 16,
+  "meow_alpha": 0.2,
+  "meow_device": "auto",
+  "mfpo_target_entropy_per_dim": -0.5,
+  "source_commit": "bfb06944705685a7dea84558aba40500c22349b9",
+  "agent": {
+    "env_name": "Ant-v4",
+    "task": "ant",
+    "successful_steps": null,
+    "alg": {
+      "tau": 0.005,
+      "policy_tau": 1.0,
+      "utd": 1,
+      "gamma": 0.99,
+      "policy_delay": 1,
+      "batch_size": 4096,
+      "buffer_size": 1000000,
+      "learning_starts": 0,
+      "reset_models": false,
+      "ent_coef": {
+        "type": "const",
+        "init": 0.0
+      },
+      "critic": {
+        "backup_mode": "td",
+        "activation": "gelu",
+        "n_critics": 2,
+        "hs": [
+          256,
+          256
+        ],
+        "dropout_rate": null,
+        "use_layer_norm": false,
+        "n_atoms": 1,
+        "v_min": -3600,
+        "v_max": 3600,
+        "entr_coeff": 0.0,
+        "type": "scalar",
+        "crossq_style": false
+      },
+      "optimizer": {
+        "bn": false,
+        "bn_momentum": 0.99,
+        "bn_mode": "brn_actor",
+        "bn_warmup": 100000,
+        "lr_critic": 0.0003,
+        "lr_actor": 0.0003,
+        "critic_b1": 0.9,
+        "critic_b2": 0.999,
+        "actor_b1": 0.9,
+        "actor_b2": 0.999,
+        "ac_grad_norm": null
+      },
+      "actor": {
+        "hidden_dims": [
+          256,
+          256
+        ],
+        "num_policy_samples": 64,
+        "proposals_per_policy_sample": 1,
+        "proposal_sampling_mode": "exact",
+        "proposal_std": 0.006737946999085467,
+        "proposal_clip": 0.5,
+        "include_anchor": false,
+        "density_correction": true,
+        "density_beta": 1.0,
+        "adaptive_density_beta": false,
+        "minimum_source_ess": 16.0,
+        "density_beta_grid_size": 257,
+        "source_q_eval": "mean",
+        "source_reference": "uniform_action",
+        "temperature": 3.0,
+        "sinkhorn_epsilon": 0.1,
+        "sinkhorn_iterations": 100,
+        "transport_target_mode": "argmax",
+        "td_noise_std": 0.0,
+        "td_noise_clip": 0.0,
+        "learning_starts": 0,
+        "density_correction_beta": 1.0,
+        "distillation_loss": "direct_gmm_nll",
+        "type": "semi_implicit",
+        "entropy_samples": 0,
+        "entropy_diagnostics": false,
+        "log_std_min": -5.0,
+        "log_std_max": -1.0,
+        "initial_log_std": -1.0,
+        "mean_output_init_scale": 0.0001,
+        "log_std_output_init_scale": 0.0,
+        "proposal_std_pretanh": 0.006737946999085467,
+        "normalize_ot_cost": false,
+        "teacher_distribution": "conditional_mixture",
+        "teacher_std_floor": 0.006737946999085467,
+        "soft_guard": {
+          "enabled": false
+        },
+        "ot_student_action": "mean"
+      },
+      "behavior_uniform_probability": 0.0
+    },
+    "seed": 3,
+    "use_jit": true,
+    "require_gpu": true,
+    "total_steps": 1000192,
+    "eval_interval": 5000,
+    "num_eval_episodes": 10,
+    "eval_at_start": true,
+    "stochastic_eval": true,
+    "mu_only_eval": true,
+    "diagnostic_interval": 5000,
+    "checkpoint_interval": 50000,
+    "log_interval": 1,
+    "progress_bar": false,
+    "output_root": "/home/heechan/optiq-experiments/pointmaze-baselines-s1to3-1m-20260926/runs/pm_medium-optiq-s3",
+    "run_name": "ant-gmm-trg-T3.0-b1.0-s3",
+    "wandb": {
+      "activate": false,
+      "mode": "online",
+      "entity": "OptiQ",
+      "project": "gmm-trg",
+      "group": "Ant-v4_T3.0_b1.0",
+      "job_type": "gmm-trg-sweep"
+    },
+    "dual_mu_eval": true,
+    "experiment": {
+      "method": "truncated_marginal_nll",
+      "distribution": "box_truncated_gaussian",
+      "center_transform": "tanh",
+      "bounded_mu": true,
+      "ot": false,
+      "resampling": false,
+      "components": 64,
+      "candidates": 64,
+      "teacher_extra_floor": false
+    },
+    "dacer": {
+      "enabled": false,
+      "target_entropy_per_dim": -0.9,
+      "initial_alpha": 0.27,
+      "alpha_lr": 0.03,
+      "interval_updates": 10000,
+      "components": 3,
+      "samples": 200,
+      "noise_scale": 0.1,
+      "entropy_seed": 42,
+      "behavior_only": true
+    }
+  },
+  "task_mode": "original DrAC multi-goal PointMaze sparse +100",
+  "geometry": {
+    "goal_positions": [
+      [
+        -5.0,
+        4.0
+      ],
+      [
+        5.0,
+        4.0
+      ],
+      [
+        -5.0,
+        -4.0
+      ],
+      [
+        5.0,
+        -4.0
+      ]
+    ],
+    "horizon": 300,
+    "reward": "100 on reaching any goal, 0 otherwise",
+    "obstacle": "original upstream latent wall cells enabled at evaluation only",
+    "removal": "half goals removed, five-trial expected success"
+  },
+  "utd": 0.0625
+}

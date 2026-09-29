@@ -1,0 +1,92 @@
+{
+  "final": false,
+  "seed": 0,
+  "runs": {
+    "medium": {
+      "step": 80128,
+      "training_source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+      "policy": {
+        "episodes": 200,
+        "success": 0.27,
+        "goals": [
+          20,
+          11,
+          19,
+          4
+        ],
+        "failure": 146,
+        "reachable_goals": 4,
+        "mean_return": 27.0,
+        "mean_length": 277.35,
+        "sr5_removal": 0.5
+      },
+      "mu_only": {
+        "episodes": 200,
+        "success": 0.275,
+        "goals": [
+          14,
+          9,
+          26,
+          6
+        ],
+        "failure": 145,
+        "reachable_goals": 4,
+        "mean_return": 27.5,
+        "mean_length": 275.7,
+        "sr5_removal": 0.575
+      },
+      "sha256": {
+        "000080128_policy.npz": "fc859bb424744a49f22d31e1e3cd20752f355ea26de587aff1d7da8c08116dda",
+        "000080128_mu_only.npz": "b280e722d530cef83fd7d48b123eeac8e547e23c8da1aeac723cbf0722872e54",
+        "000080128_summary.json": "5fda43290c82e0b0b1c287fe5ec3ef653c378cac78efaa5b64705d0f6125f616"
+      }
+    },
+    "hard": {
+      "step": 60160,
+      "training_source_commit": "d069b8f1b81b325269d0beb3bf54818e8abf2747",
+      "policy": {
+        "episodes": 200,
+        "success": 0.5,
+        "goals": [
+          11,
+          23,
+          13,
+          8,
+          17,
+          10,
+          7,
+          11
+        ],
+        "failure": 100,
+        "reachable_goals": 8,
+        "mean_return": 50.0,
+        "mean_length": 475.875,
+        "sr5_removal": 0.7732142857142856
+      },
+      "mu_only": {
+        "episodes": 200,
+        "success": 0.54,
+        "goals": [
+          17,
+          21,
+          8,
+          8,
+          26,
+          8,
+          12,
+          8
+        ],
+        "failure": 92,
+        "reachable_goals": 8,
+        "mean_return": 54.0,
+        "mean_length": 477.18,
+        "sr5_removal": 0.8035714285714286
+      },
+      "sha256": {
+        "000060160_mu_only.npz": "4c7ae86bfa8e18a44a1a5b155c0288fa6b5b65d795182746ecffd15b3b154832",
+        "000060160_policy.npz": "7b578e3109036dac5086eae4d53a8ac17988f27c9f855835a768a4b83fc76290",
+        "000060160_summary.json": "ab18e181ddcb5dba3161487ae6d25e8e28d08479fcf3919848ee86140c2ed49e"
+      }
+    }
+  }
+}

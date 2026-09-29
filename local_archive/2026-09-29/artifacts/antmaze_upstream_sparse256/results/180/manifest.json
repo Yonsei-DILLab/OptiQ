@@ -1,0 +1,87 @@
+{
+  "wandb_mode": "online",
+  "campaign": "antmaze-upstream-sparse256-nativebudget-s0-20260923",
+  "source": "/home/heechan/OptiQ-ops/sources/0ebd8d26c711d79723f457343b36eb8788bd87b8",
+  "source_commit": "0ebd8d26c711d79723f457343b36eb8788bd87b8",
+  "shard": 0,
+  "seed": 0,
+  "upstream_commit": "7edd06c4799abbab0f8fa534c21deb56253b018e",
+  "reward": "unchanged upstream sparse reward:0 except goal bonus10 or20",
+  "noveld_coefficient": 0.01,
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 8,
+  "warmup_transitions": 8192,
+  "replay_capacity": 1000000,
+  "eval_interval": 250000,
+  "checkpoint": "final only",
+  "dipo_support": [
+    0,
+    5
+  ],
+  "dipo_num_atoms": 51,
+  "budgets": {
+    "v1": 3000000,
+    "v2": 3000000,
+    "v3": 4000000,
+    "v4": 5000000
+  },
+  "jobs": [
+    {
+      "id": "v1-dipo-s0",
+      "task": "v1",
+      "method": "dipo",
+      "upstream_max_step": 3000000,
+      "steps": 3008256
+    },
+    {
+      "id": "v3-dipo-s0",
+      "task": "v3",
+      "method": "dipo",
+      "upstream_max_step": 4000000,
+      "steps": 4008448
+    },
+    {
+      "id": "v1-optiq-s0",
+      "task": "v1",
+      "method": "optiq",
+      "upstream_max_step": 3000000,
+      "steps": 3008256
+    },
+    {
+      "id": "v1-mfpo-s0",
+      "task": "v1",
+      "method": "mfpo",
+      "upstream_max_step": 3000000,
+      "steps": 3008256
+    },
+    {
+      "id": "v1-sac-s0",
+      "task": "v1",
+      "method": "sac",
+      "upstream_max_step": 3000000,
+      "steps": 3008256
+    },
+    {
+      "id": "v3-optiq-s0",
+      "task": "v3",
+      "method": "optiq",
+      "upstream_max_step": 4000000,
+      "steps": 4008448
+    },
+    {
+      "id": "v3-mfpo-s0",
+      "task": "v3",
+      "method": "mfpo",
+      "upstream_max_step": 4000000,
+      "steps": 4008448
+    },
+    {
+      "id": "v3-sac-s0",
+      "task": "v3",
+      "method": "sac",
+      "upstream_max_step": 4000000,
+      "steps": 4008448
+    }
+  ]
+}

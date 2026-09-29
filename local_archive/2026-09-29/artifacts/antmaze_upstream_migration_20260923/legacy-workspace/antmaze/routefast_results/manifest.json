@@ -1,0 +1,100 @@
+{
+  "source": "/home/heechan/OptiQ-ops/sources/69c684f72a4aeb543328d2f98f40bb03be625f22",
+  "source_commit": "69c684f72a4aeb543328d2f98f40bb03be625f22",
+  "smoke": false,
+  "gpus": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "jobs": [
+    {
+      "id": "v1-optiq-s0",
+      "task": "v1",
+      "method": "optiq",
+      "seed": 0,
+      "steps": 100000,
+      "status": "pending"
+    },
+    {
+      "id": "v1-sac-s0",
+      "task": "v1",
+      "method": "sac",
+      "seed": 0,
+      "steps": 100000,
+      "status": "pending"
+    },
+    {
+      "id": "v1-mfpo-s0",
+      "task": "v1",
+      "method": "mfpo",
+      "seed": 0,
+      "steps": 100000,
+      "status": "pending"
+    },
+    {
+      "id": "v1-meow-s0",
+      "task": "v1",
+      "method": "meow",
+      "seed": 0,
+      "steps": 100000,
+      "status": "pending"
+    }
+  ],
+  "project": "OptiQ/gmm-trg",
+  "group": "antmaze-v1-routefast-100k-s0-20260921",
+  "tasks": [
+    "v1"
+  ],
+  "budget": {
+    "v1": 100000
+  },
+  "methods": [
+    "optiq",
+    "sac",
+    "mfpo",
+    "meow"
+  ],
+  "seeds": [
+    0
+  ],
+  "profile": "routefast",
+  "host": "c15c78a6d9c5",
+  "all_jobs": [
+    {
+      "id": "v1-optiq-s0",
+      "task": "v1",
+      "method": "optiq",
+      "seed": 0,
+      "steps": 100000,
+      "status": "pending"
+    },
+    {
+      "id": "v1-sac-s0",
+      "task": "v1",
+      "method": "sac",
+      "seed": 0,
+      "steps": 100000,
+      "status": "pending"
+    },
+    {
+      "id": "v1-mfpo-s0",
+      "task": "v1",
+      "method": "mfpo",
+      "seed": 0,
+      "steps": 100000,
+      "status": "pending"
+    },
+    {
+      "id": "v1-meow-s0",
+      "task": "v1",
+      "method": "meow",
+      "seed": 0,
+      "steps": 100000,
+      "status": "pending"
+    }
+  ],
+  "shard_index": 0,
+  "shard_count": 1
+}

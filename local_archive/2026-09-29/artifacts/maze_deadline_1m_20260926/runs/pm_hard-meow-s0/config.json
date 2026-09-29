@@ -1,0 +1,75 @@
+{
+  "task": "pm_hard",
+  "method": "meow",
+  "output": "/home/heechan/optiq-experiments/maze-deadline-1m-20260926/runs/pm_hard-meow-s0",
+  "seed": 0,
+  "steps": 1000192,
+  "num_envs": 256,
+  "updates_per_collect": 16,
+  "batch_size": 4096,
+  "warmup": 8192,
+  "eval_every": 200000,
+  "eval_episodes": 200,
+  "final_eval_episodes": 500,
+  "render_each_eval": true,
+  "temperature": 1.0,
+  "sql_particles": 16,
+  "meow_alpha": 0.2,
+  "meow_device": "auto",
+  "mfpo_target_entropy_per_dim": -0.5,
+  "source_commit": "a55aaf13f7803b5cf8da7ba56f318675c7794171",
+  "agent": {
+    "algorithm": "MEOW CleanRL flow Q regression",
+    "upstream_commit": "b786d27aa9b03e4242ee8904ff884b21fe65e2f7",
+    "alpha": 0.2,
+    "sigma_min": -5.0,
+    "sigma_max": -0.3,
+    "device": "cuda",
+    "q_lr": 0.001,
+    "tau": 0.005,
+    "grad_clip": 30,
+    "evaluation_policy": "direct flow sample"
+  },
+  "task_mode": "original DrAC multi-goal PointMaze sparse +100",
+  "geometry": {
+    "goal_positions": [
+      [
+        -2.0,
+        6.0
+      ],
+      [
+        2.0,
+        6.0
+      ],
+      [
+        -6.0,
+        2.0
+      ],
+      [
+        6.0,
+        2.0
+      ],
+      [
+        -6.0,
+        -2.0
+      ],
+      [
+        6.0,
+        -2.0
+      ],
+      [
+        -2.0,
+        -6.0
+      ],
+      [
+        2.0,
+        -6.0
+      ]
+    ],
+    "horizon": 600,
+    "reward": "100 on reaching any goal, 0 otherwise",
+    "obstacle": "original upstream latent wall cells enabled at evaluation only",
+    "removal": "half goals removed, five-trial expected success"
+  },
+  "utd": 0.0625
+}

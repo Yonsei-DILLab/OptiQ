@@ -1,0 +1,476 @@
+{
+  "profile": "dense-noveld-strength-100k",
+  "method": "optiq",
+  "task": "v3",
+  "seed": 0,
+  "smoke": false,
+  "source_commit": "262a10d6280eb6e79eec24e6170541a7b0f58e72",
+  "source_root": "/home/heechan/OptiQ-ops/sources/262a10d6280eb6e79eec24e6170541a7b0f58e72",
+  "steps": 100000,
+  "warmup": 5000,
+  "batch_size": 256,
+  "num_envs": 1,
+  "utd": 1,
+  "expected_updates": 95000,
+  "native": {
+    "env_name": "DDiffPG-v3-dense-noveld-port",
+    "task": "antmaze",
+    "successful_steps": null,
+    "alg": {
+      "tau": 0.005,
+      "policy_tau": 1.0,
+      "utd": 1,
+      "gamma": 0.99,
+      "policy_delay": 1,
+      "batch_size": 256,
+      "buffer_size": 1000000,
+      "learning_starts": 5000,
+      "reset_models": false,
+      "ent_coef": {
+        "type": "const",
+        "init": 0.0
+      },
+      "critic": {
+        "backup_mode": "td",
+        "activation": "gelu",
+        "n_critics": 2,
+        "hs": [
+          256,
+          256
+        ],
+        "dropout_rate": null,
+        "use_layer_norm": false,
+        "n_atoms": 1,
+        "v_min": -3600,
+        "v_max": 3600,
+        "entr_coeff": 0.0,
+        "type": "scalar",
+        "crossq_style": false
+      },
+      "optimizer": {
+        "bn": false,
+        "bn_momentum": 0.99,
+        "bn_mode": "brn_actor",
+        "bn_warmup": 100000,
+        "lr_critic": 0.0003,
+        "lr_actor": 0.0003,
+        "critic_b1": 0.9,
+        "critic_b2": 0.999,
+        "actor_b1": 0.9,
+        "actor_b2": 0.999,
+        "ac_grad_norm": null
+      },
+      "actor": {
+        "hidden_dims": [
+          256,
+          256
+        ],
+        "num_policy_samples": 64,
+        "proposals_per_policy_sample": 1,
+        "proposal_sampling_mode": "exact",
+        "proposal_std": 0.006737946999085467,
+        "proposal_clip": 0.5,
+        "include_anchor": false,
+        "density_correction": true,
+        "density_beta": 1.0,
+        "adaptive_density_beta": false,
+        "minimum_source_ess": 16.0,
+        "density_beta_grid_size": 257,
+        "source_q_eval": "mean",
+        "source_reference": "uniform_action",
+        "temperature": 0.25,
+        "sinkhorn_epsilon": 0.1,
+        "sinkhorn_iterations": 100,
+        "transport_target_mode": "argmax",
+        "td_noise_std": 0.0,
+        "td_noise_clip": 0.0,
+        "learning_starts": 5000,
+        "density_correction_beta": 1.0,
+        "distillation_loss": "direct_gmm_nll",
+        "type": "semi_implicit",
+        "entropy_samples": 0,
+        "entropy_diagnostics": false,
+        "log_std_min": -5.0,
+        "log_std_max": -1.0,
+        "initial_log_std": -1.0,
+        "mean_output_init_scale": 1.0,
+        "log_std_output_init_scale": 0.0,
+        "proposal_std_pretanh": 0.006737946999085467,
+        "normalize_ot_cost": false,
+        "teacher_distribution": "conditional_mixture",
+        "teacher_std_floor": 0.006737946999085467,
+        "soft_guard": {
+          "enabled": false
+        },
+        "ot_student_action": "mean"
+      },
+      "behavior_uniform_probability": 0.0
+    },
+    "seed": 0,
+    "use_jit": true,
+    "require_gpu": true,
+    "total_steps": 1000000,
+    "eval_interval": 5000,
+    "num_eval_episodes": 10,
+    "eval_at_start": true,
+    "stochastic_eval": true,
+    "mu_only_eval": true,
+    "diagnostic_interval": 5000,
+    "checkpoint_interval": 50000,
+    "log_interval": 1,
+    "progress_bar": false,
+    "output_root": "/home/heechan/optiq-experiments/antmaze-v3-optiq-noveld-strength-100k-s0-20260922/runs/v3-optiq-c0p1-s0",
+    "run_name": "antmaze-gmm-trg-T0.25-b1.0-s0",
+    "wandb": {
+      "activate": true,
+      "mode": "online",
+      "entity": "OptiQ",
+      "project": "gmm-trg",
+      "group": "AntMaze_UMaze-v5_T0.25_b1.0",
+      "job_type": "gmm-trg-sweep"
+    },
+    "dual_mu_eval": true,
+    "experiment": {
+      "method": "truncated_marginal_nll",
+      "distribution": "box_truncated_gaussian",
+      "center_transform": "tanh",
+      "bounded_mu": true,
+      "ot": false,
+      "resampling": false,
+      "components": 64,
+      "candidates": 64,
+      "teacher_extra_floor": false
+    },
+    "dacer": {
+      "enabled": true,
+      "target_entropy_per_dim": -0.9,
+      "initial_alpha": 0.27,
+      "alpha_lr": 0.03,
+      "interval_updates": 10000,
+      "components": 3,
+      "samples": 200,
+      "noise_scale": 0.1,
+      "entropy_seed": 42,
+      "behavior_only": true
+    }
+  },
+  "intrinsic": {
+    "type": "noveld",
+    "coefficient": 0.1,
+    "novelty_discount": 0.5,
+    "normalize": false,
+    "positional_encoding": true,
+    "frequency_bands": 10,
+    "learning_rate": 0.0001,
+    "gradient_clip": 1.0,
+    "upstream_commit": "7edd06c4799abbab0f8fa534c21deb56253b018e"
+  },
+  "environment": {
+    "task": "v3",
+    "map": [
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        "g",
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        0,
+        "r",
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      [
+        1,
+        "g",
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    ],
+    "scale": 4.0,
+    "walls": [
+      [
+        -16.0,
+        -16.0
+      ],
+      [
+        -12.0,
+        -16.0
+      ],
+      [
+        -8.0,
+        -16.0
+      ],
+      [
+        -4.0,
+        -16.0
+      ],
+      [
+        0.0,
+        -16.0
+      ],
+      [
+        4.0,
+        -16.0
+      ],
+      [
+        8.0,
+        -16.0
+      ],
+      [
+        12.0,
+        -16.0
+      ],
+      [
+        16.0,
+        -16.0
+      ],
+      [
+        -16.0,
+        -12.0
+      ],
+      [
+        8.0,
+        -12.0
+      ],
+      [
+        16.0,
+        -12.0
+      ],
+      [
+        -16.0,
+        -8.0
+      ],
+      [
+        -8.0,
+        -8.0
+      ],
+      [
+        -4.0,
+        -8.0
+      ],
+      [
+        16.0,
+        -8.0
+      ],
+      [
+        -16.0,
+        -4.0
+      ],
+      [
+        8.0,
+        -4.0
+      ],
+      [
+        16.0,
+        -4.0
+      ],
+      [
+        -16.0,
+        0.0
+      ],
+      [
+        -8.0,
+        0.0
+      ],
+      [
+        16.0,
+        0.0
+      ],
+      [
+        -16.0,
+        4.0
+      ],
+      [
+        8.0,
+        4.0
+      ],
+      [
+        16.0,
+        4.0
+      ],
+      [
+        -16.0,
+        8.0
+      ],
+      [
+        -8.0,
+        8.0
+      ],
+      [
+        -4.0,
+        8.0
+      ],
+      [
+        8.0,
+        8.0
+      ],
+      [
+        16.0,
+        8.0
+      ],
+      [
+        -16.0,
+        12.0
+      ],
+      [
+        16.0,
+        12.0
+      ],
+      [
+        -16.0,
+        16.0
+      ],
+      [
+        -12.0,
+        16.0
+      ],
+      [
+        -8.0,
+        16.0
+      ],
+      [
+        -4.0,
+        16.0
+      ],
+      [
+        0.0,
+        16.0
+      ],
+      [
+        4.0,
+        16.0
+      ],
+      [
+        8.0,
+        16.0
+      ],
+      [
+        12.0,
+        16.0
+      ],
+      [
+        16.0,
+        16.0
+      ]
+    ],
+    "goals": [
+      [
+        -12.0,
+        12.0
+      ],
+      [
+        12.0,
+        -12.0
+      ]
+    ],
+    "start": [
+      0.0,
+      0.0
+    ],
+    "horizon": 700
+  },
+  "xml_sha256": "028cd208c7c1883eb1a429993fbb37712929633ff898938cf0bdb743256300af",
+  "reward": "environment=-nearest goal distance; learner adds NovelD; evaluation excludes NovelD",
+  "reward_provenance": "MaxEntDP D.2 dense distance penalty + user-requested DDiffPG NovelD; not exact unpublished MaxEntDP AntMaze reproduction",
+  "eval_modes": {
+    "native": "SAC tanh(mu); MFPO Q-best-of10; MEOW center-prior; OptiQ random-z mu-only",
+    "policy": "direct stochastic policy including conditional sigma for OptiQ; no external DACER noise",
+    "zero_z": "OptiQ z=0, mu-only"
+  },
+  "eval_interval": 25000,
+  "checkpoint_interval": 100000,
+  "trajectory_episodes_per_reset_mode": 100,
+  "resume_from": null,
+  "packages": {
+    "mujoco": "3.3.7",
+    "gymnasium": "1.2.3",
+    "jax": "0.4.33",
+    "flax": "0.9.0",
+    "optax": "0.1.7",
+    "torch": "2.7.1+cu128",
+    "numpy": "1.26.4",
+    "wandb": "0.29.0"
+  }
+}

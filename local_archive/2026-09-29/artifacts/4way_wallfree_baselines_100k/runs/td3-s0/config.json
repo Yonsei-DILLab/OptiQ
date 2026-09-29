@@ -1,0 +1,31 @@
+{
+  "task": "4way",
+  "method": "td3",
+  "output": "/home/heechan/optiq-experiments/4way-wallfree-baselines-100k-20260926/runs/td3-s0",
+  "seed": 0,
+  "steps": 100000,
+  "num_envs": 16,
+  "updates_per_collect": 16,
+  "batch_size": 256,
+  "warmup": 1024,
+  "eval_every": 20000,
+  "eval_episodes": 100,
+  "temperature": 1.0,
+  "source_commit": "67469caf8641222f9458b9a871b6e46e78e94a5d",
+  "agent": {
+    "algorithm": "Stable-Baselines3 TD3",
+    "network": [
+      256,
+      256
+    ],
+    "actor_lr": 0.0003,
+    "critic_lr": 0.0003,
+    "policy_delay": 2,
+    "target_policy_noise": 0.2,
+    "target_noise_clip": 0.5,
+    "training_exploration_std": 0.1,
+    "evaluation_policy": "deterministic actor"
+  },
+  "task_mode": "existing wall-free symmetric four-goal",
+  "utd": 1.0
+}

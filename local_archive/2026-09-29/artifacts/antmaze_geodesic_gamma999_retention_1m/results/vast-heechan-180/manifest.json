@@ -1,0 +1,274 @@
+{
+  "campaign": "antmaze-optiq-geodesic-gamma999-retention-1m-s0-20260925",
+  "shard": 0,
+  "host": "vast-heechan-180",
+  "source": "/home/heechan/OptiQ-ops/sources/8e9d7d3c2c79f797654ccfb21913d2c000b89f71",
+  "source_commit": "8e9d7d3c2c79f797654ccfb21913d2c000b89f71",
+  "jobs": [
+    {
+      "id": "v4-optiq-geodesic-gamma999-H0.7-i500-1m-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "progress100_geodesic_no_step_no_bonus",
+      "noveld": "off",
+      "eval_starts": "upstream",
+      "steps": 1008384,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer": "on",
+      "reward_specification": {
+        "formula": "100*(d(current)-d(next))",
+        "success_bonus_enabled": false,
+        "distance": "nearest-goal XY visibility-graph geodesic",
+        "step_cost": 0.0,
+        "progress_scale": 100.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -16.0,
+            4.0
+          ],
+          [
+            -16.0,
+            -4.0
+          ]
+        ],
+        "goal_bonuses": [
+          0,
+          0
+        ],
+        "distance_endpoint": "goal center; do not replace terminal distance by zero",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 1e-06,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af"
+      },
+      "seed": 0,
+      "dacer_target_entropy_per_dim": 0.7,
+      "dacer_interval_updates": 500,
+      "eval_interval": 50000,
+      "hypothesis": "geodesic_gamma999_retention",
+      "discount": 0.999
+    },
+    {
+      "id": "v1-optiq-geodesic-gamma999-H0.7-i500-1m-s0",
+      "task": "v1",
+      "method": "optiq",
+      "reward_profile": "progress100_geodesic_no_step_no_bonus",
+      "noveld": "off",
+      "eval_starts": "upstream",
+      "steps": 1008384,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer": "on",
+      "reward_specification": {
+        "formula": "100*(d(current)-d(next))",
+        "success_bonus_enabled": false,
+        "distance": "nearest-goal XY visibility-graph geodesic",
+        "step_cost": 0.0,
+        "progress_scale": 100.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -8.0,
+            0.0
+          ]
+        ],
+        "goal_bonuses": [
+          0
+        ],
+        "distance_endpoint": "goal center; do not replace terminal distance by zero",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 1e-06,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af"
+      },
+      "seed": 0,
+      "dacer_target_entropy_per_dim": 0.7,
+      "dacer_interval_updates": 500,
+      "eval_interval": 50000,
+      "hypothesis": "geodesic_gamma999_retention",
+      "discount": 0.999
+    }
+  ],
+  "wandb_mode": "online",
+  "wandb_entity": "OptiQ",
+  "wandb_project": "antmaze",
+  "protocol": "antmaze_experiments/GEODESIC_RETENTION_PROTOCOL.md",
+  "seed": 0,
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 8,
+  "reward_profile": "progress100_geodesic_no_step_no_bonus",
+  "noveld_enabled": false,
+  "noveld_coefficient": 0.0,
+  "reward": "100 * nearest-goal XY geodesic distance decrease; B=0; step penalty=0",
+  "evaluation_starts": "upstream: v1 random XY[-2,2]; v2-v4 fixed original full state at XY[0,0]",
+  "interim_eval_episodes": 40,
+  "final_eval_episodes": 100,
+  "optiq_temperature": "per-job",
+  "optiq_actor_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "optiq_critic_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "optiq_actor_lr": 0.0003,
+  "optiq_critic_lr": 0.0005,
+  "log_std_min": -5.0,
+  "log_std_max": -1.0,
+  "initial_log_std": -1.0,
+  "optiq_tau": 0.005,
+  "parent_source": "438907f3a5ef681d6cde9012a66c7336fa642546",
+  "fresh_training": true,
+  "resume_cancelled_jobs": false,
+  "backfill_seconds": 2,
+  "failure_holds_pending": true,
+  "automatic_restart": false,
+  "comparison_campaign": "antmaze-optiq-geodesic-gamma999-250k-s0-20260925",
+  "comparison_source": "438907f3a5ef681d6cde9012a66c7336fa642546",
+  "source_dependencies": {},
+  "dacer_enabled": true,
+  "replay_capacity": 1000000,
+  "beta": 1.0,
+  "gradient_clipping": null,
+  "priority": "Preserve live v3 T3 and any GPU locks; fill independent unlocked180 slots",
+  "comparison_scope": "Fresh same-seed longer-budget runs; not checkpoint resumes or independent seeds",
+  "target_entropy_per_dim_grid": [
+    0.7
+  ],
+  "target_entropy_grid": [
+    5.6
+  ],
+  "dacer_interval_updates": 500,
+  "dacer": {
+    "behavior_only": true,
+    "initial_alpha": 0.27,
+    "alpha_lr": 0.03,
+    "noise_scale": 0.1,
+    "components": 3,
+    "samples": 200,
+    "entropy_seed": 42,
+    "interval_updates": 500
+  },
+  "entropy_measure": "GMM joint-entropy proxy of clipped noisy conditional actions, not trajectory entropy",
+  "post_warmup_budget": 1000000,
+  "actual_post_warmup_transitions": 1000192,
+  "total_transitions_per_job": 1008384,
+  "warmup_transitions": 8192,
+  "expected_learner_updates": 31256,
+  "expected_regulator_updates": 63,
+  "eval_interval": 50000,
+  "evaluation_clock": "total transitions including warmup, rounded up to 256",
+  "preflight_total_transitions": 8448,
+  "preflight_required": "Per-job real batch4096 updates, signed target/cadence, reward replay and checkpoint readback before main training",
+  "diagnostics": {
+    "regulator_history": "every entropy update, including before/after noise and clipping",
+    "policy_checkpoints": "50k intervals; evaluation only; final full state",
+    "evaluation": "40 episodes/mode intermediate; 100 final; no external DACER noise"
+  },
+  "assigned_hosts": {
+    "0": "vast-heechan-180"
+  },
+  "excluded_hosts": [
+    "vast1"
+  ],
+  "existing_training_preserved": true,
+  "cross_job_completion_barriers": false,
+  "priority_campaign": "/home/heechan/optiq-experiments/antmaze-optiq-v3-gamma999-T3-retention-1m-s0-20260925",
+  "discount_temperature_conditions": {
+    "geodesic_gamma999_retention": [
+      0.999,
+      1.0
+    ]
+  },
+  "algorithm_source_unchanged_from": "2564b59faa0d319eece496b93eff0f19359efc37",
+  "screen": "Inspect500k/750k/final1M; require successful distinct routes, not corridor entries alone.",
+  "evidence": {
+    "screen_total_step": 258304,
+    "episodes_per_mode": 100,
+    "v1": {
+      "policy_successful_routes": {
+        "upper": 17,
+        "lower": 9
+      },
+      "native_successful_routes": {
+        "upper": 13,
+        "lower": 6
+      },
+      "reset": "native random start; not same-state multimodality evidence"
+    },
+    "v4": {
+      "policy_entries": {
+        "lower": 73,
+        "upper": 25,
+        "uncommitted": 2
+      },
+      "policy_successes": 0,
+      "native_entries": {
+        "lower": 61,
+        "upper": 39
+      },
+      "native_successful_routes": {
+        "lower": 1,
+        "upper": 1
+      },
+      "reset": "original fixed full state; two native successes are weak exploratory evidence"
+    },
+    "hypothesis": "Test goal acquisition and later route retention without changing any learning setting.",
+    "exclusion": "v3 geodesic collapsed to right-only in the short screen and is not extended."
+  },
+  "fresh_start": true,
+  "checkpoint_resume": false,
+  "algorithm_file_sha256": {
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/algorithm.py": "215d4933c6e08649afc4999e6f9feca79828768a0ffaeac0f23986f239ff07cf",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/policy.py": "45841bd9ae641a35e33db1696aed9ca5096a4ccbc036b25f040b9e6c4cb283a9",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/distillation.py": "ff305a7462e33970e4b786101c0af335cf594a351f846a596997c6dc9f3912c9",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/semi_implicit.py": "2ac70268019f60f4a83dfd233e54a32c30e26f3289979c0a44214997250c7231",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/transport.py": "830a11be1950d03b42eb07731e2a107225e0d14134eef3884298122d765d0e15",
+    "analysis_tools/studies/20260918_nonstationary_nd/v5/diffusion/dime.py": "165c836cc9aa5d79c021a13b8b7eea0c12f1ba21838704820efe49742558c0ca",
+    "analysis_tools/experiments/20260921_gmm_trg_sweep/regulator.py": "b5e353f06ae7ada02c9b4ea8c0f7dc3f1195132ab5763400ee1e6740141b5dc7"
+  }
+}

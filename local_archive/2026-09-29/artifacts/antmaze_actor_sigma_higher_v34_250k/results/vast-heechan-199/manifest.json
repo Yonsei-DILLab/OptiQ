@@ -1,0 +1,536 @@
+{
+  "campaign": "antmaze-optiq-sigmacap-higher-v34-250k-s0-20260925",
+  "shard": 1,
+  "host": "vast-heechan-199",
+  "source": "/home/heechan/OptiQ-ops/sources/b111a993b1e1bf895966dac4469abdfdb2c37c05",
+  "source_commit": "b111a993b1e1bf895966dac4469abdfdb2c37c05",
+  "jobs": [
+    {
+      "id": "v4-optiq-geodesic-T1-teacherfloor0.5-cap0-initm1-250k-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "progress100_geodesic_no_step_no_bonus",
+      "noveld": "off",
+      "eval_starts": "upstream",
+      "steps": 258304,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer": "on",
+      "reward_specification": {
+        "formula": "100*(d(current)-d(next))",
+        "success_bonus_enabled": false,
+        "distance": "nearest-goal XY visibility-graph geodesic",
+        "step_cost": 0.0,
+        "progress_scale": 100.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -16.0,
+            4.0
+          ],
+          [
+            -16.0,
+            -4.0
+          ]
+        ],
+        "goal_bonuses": [
+          0,
+          0
+        ],
+        "distance_endpoint": "goal center; do not replace terminal distance by zero",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 1e-06,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af"
+      },
+      "seed": 0,
+      "dacer_target_entropy_per_dim": 0.7,
+      "dacer_interval_updates": 500,
+      "eval_interval": 50000,
+      "hypothesis": "v4_cap0-initm1",
+      "discount": 0.999,
+      "teacher_std_floor": 0.5,
+      "actor_sigma_profile": "cap0-initm1"
+    },
+    {
+      "id": "v4-optiq-geodesic-T1-teacherfloor0.5-cap1-initm1-250k-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "progress100_geodesic_no_step_no_bonus",
+      "noveld": "off",
+      "eval_starts": "upstream",
+      "steps": 258304,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer": "on",
+      "reward_specification": {
+        "formula": "100*(d(current)-d(next))",
+        "success_bonus_enabled": false,
+        "distance": "nearest-goal XY visibility-graph geodesic",
+        "step_cost": 0.0,
+        "progress_scale": 100.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -16.0,
+            4.0
+          ],
+          [
+            -16.0,
+            -4.0
+          ]
+        ],
+        "goal_bonuses": [
+          0,
+          0
+        ],
+        "distance_endpoint": "goal center; do not replace terminal distance by zero",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 1e-06,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af"
+      },
+      "seed": 0,
+      "dacer_target_entropy_per_dim": 0.7,
+      "dacer_interval_updates": 500,
+      "eval_interval": 50000,
+      "hypothesis": "v4_cap1-initm1",
+      "discount": 0.999,
+      "teacher_std_floor": 0.5,
+      "actor_sigma_profile": "cap1-initm1"
+    },
+    {
+      "id": "v4-optiq-geodesic-T1-teacherfloor0.5-cap2-initm1-250k-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "progress100_geodesic_no_step_no_bonus",
+      "noveld": "off",
+      "eval_starts": "upstream",
+      "steps": 258304,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer": "on",
+      "reward_specification": {
+        "formula": "100*(d(current)-d(next))",
+        "success_bonus_enabled": false,
+        "distance": "nearest-goal XY visibility-graph geodesic",
+        "step_cost": 0.0,
+        "progress_scale": 100.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -16.0,
+            4.0
+          ],
+          [
+            -16.0,
+            -4.0
+          ]
+        ],
+        "goal_bonuses": [
+          0,
+          0
+        ],
+        "distance_endpoint": "goal center; do not replace terminal distance by zero",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 1e-06,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af"
+      },
+      "seed": 0,
+      "dacer_target_entropy_per_dim": 0.7,
+      "dacer_interval_updates": 500,
+      "eval_interval": 50000,
+      "hypothesis": "v4_cap2-initm1",
+      "discount": 0.999,
+      "teacher_std_floor": 0.5,
+      "actor_sigma_profile": "cap2-initm1"
+    },
+    {
+      "id": "v4-optiq-geodesic-T1-teacherfloor0.5-cap3-initm1-250k-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "progress100_geodesic_no_step_no_bonus",
+      "noveld": "off",
+      "eval_starts": "upstream",
+      "steps": 258304,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer": "on",
+      "reward_specification": {
+        "formula": "100*(d(current)-d(next))",
+        "success_bonus_enabled": false,
+        "distance": "nearest-goal XY visibility-graph geodesic",
+        "step_cost": 0.0,
+        "progress_scale": 100.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -16.0,
+            4.0
+          ],
+          [
+            -16.0,
+            -4.0
+          ]
+        ],
+        "goal_bonuses": [
+          0,
+          0
+        ],
+        "distance_endpoint": "goal center; do not replace terminal distance by zero",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 1e-06,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af"
+      },
+      "seed": 0,
+      "dacer_target_entropy_per_dim": 0.7,
+      "dacer_interval_updates": 500,
+      "eval_interval": 50000,
+      "hypothesis": "v4_cap3-initm1",
+      "discount": 0.999,
+      "teacher_std_floor": 0.5,
+      "actor_sigma_profile": "cap3-initm1"
+    },
+    {
+      "id": "v4-optiq-geodesic-T1-teacherfloor0.5-uncapped-initm1-250k-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "progress100_geodesic_no_step_no_bonus",
+      "noveld": "off",
+      "eval_starts": "upstream",
+      "steps": 258304,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer": "on",
+      "reward_specification": {
+        "formula": "100*(d(current)-d(next))",
+        "success_bonus_enabled": false,
+        "distance": "nearest-goal XY visibility-graph geodesic",
+        "step_cost": 0.0,
+        "progress_scale": 100.0,
+        "discount_inside_reward": false,
+        "goals": [
+          [
+            -16.0,
+            4.0
+          ],
+          [
+            -16.0,
+            -4.0
+          ]
+        ],
+        "goal_bonuses": [
+          0,
+          0
+        ],
+        "distance_endpoint": "goal center; do not replace terminal distance by zero",
+        "success_radius": 0.5,
+        "success_terminates": true,
+        "timeout_bootstraps": true,
+        "geometry_margin_m": 1e-06,
+        "physical_body_inflation_m": 0.0,
+        "map_scale_m": 4.0,
+        "upstream_geometry_sha256": "39fa0547eda154d79aeaae9d32ac23119bd92b4956b488272f4a6e5557f313af"
+      },
+      "seed": 0,
+      "dacer_target_entropy_per_dim": 0.7,
+      "dacer_interval_updates": 500,
+      "eval_interval": 50000,
+      "hypothesis": "v4_uncapped-initm1",
+      "discount": 0.999,
+      "teacher_std_floor": 0.5,
+      "actor_sigma_profile": "uncapped-initm1"
+    }
+  ],
+  "wandb_mode": "online",
+  "wandb_entity": "OptiQ",
+  "wandb_project": "antmaze",
+  "protocol": "antmaze_experiments/ACTOR_SIGMA_HIGHER_PROTOCOL.md",
+  "seed": 0,
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 8,
+  "reward_profile": "progress100_geodesic_no_step_no_bonus",
+  "noveld_enabled": false,
+  "noveld_coefficient": 0.0,
+  "reward": "100 * nearest-goal XY geodesic distance decrease; B=0; step penalty=0",
+  "evaluation_starts": "upstream: v1 random XY[-2,2]; v2-v4 fixed original full state at XY[0,0]",
+  "interim_eval_episodes": 40,
+  "final_eval_episodes": 100,
+  "optiq_temperature": "per-job",
+  "optiq_actor_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "optiq_critic_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "optiq_actor_lr": 0.0003,
+  "optiq_critic_lr": 0.0005,
+  "log_std_min": -5.0,
+  "log_std_max": -1.0,
+  "initial_log_std": -1.0,
+  "optiq_tau": 0.005,
+  "fresh_training": true,
+  "resume_cancelled_jobs": false,
+  "backfill_seconds": 2,
+  "failure_holds_pending": true,
+  "automatic_restart": false,
+  "source_dependencies": {},
+  "dacer_enabled": true,
+  "replay_capacity": 1000000,
+  "beta": 1.0,
+  "gradient_clipping": null,
+  "priority": "Use independently free5090GPU slots, backfill every2seconds; no all-maze or all-method barriers. Preserve all existing jobs/results.",
+  "comparison_scope": "Only actor log-sigma upper bound changes; initial log sigma remains -1 in every condition",
+  "target_entropy_per_dim_grid": [
+    0.7
+  ],
+  "target_entropy_grid": [
+    5.6
+  ],
+  "dacer_interval_updates": 500,
+  "dacer": {
+    "behavior_only": true,
+    "initial_alpha": 0.27,
+    "alpha_lr": 0.03,
+    "noise_scale": 0.1,
+    "components": 3,
+    "samples": 200,
+    "entropy_seed": 42,
+    "interval_updates": 500
+  },
+  "entropy_measure": "GMM joint-entropy proxy of clipped noisy conditional actions, not trajectory entropy",
+  "post_warmup_budget": 250000,
+  "actual_post_warmup_transitions": 250112,
+  "total_transitions_per_job": 258304,
+  "warmup_transitions": 8192,
+  "expected_learner_updates": 7816,
+  "expected_regulator_updates": 16,
+  "eval_interval": 50000,
+  "evaluation_clock": "total transitions including warmup, rounded up to 256",
+  "preflight_total_transitions": 8448,
+  "preflight_required": "Per-job real batch4096 updates, signed target/cadence, reward replay and checkpoint readback before main training",
+  "diagnostics": {
+    "regulator_history": "every entropy update, including before/after noise and clipping",
+    "policy_checkpoints": "50k intervals; evaluation only, final full state at 258304 total transitions",
+    "evaluation": "40 episodes/mode intermediate; 100 final; no external DACER noise"
+  },
+  "assigned_hosts": {
+    "0": "vast-heechan-180",
+    "1": "vast-heechan-199"
+  },
+  "excluded_hosts": [
+    "vast1"
+  ],
+  "existing_training_preserved": true,
+  "cross_job_completion_barriers": false,
+  "priority_campaign": null,
+  "discount_temperature_conditions": {
+    "v4_cap0-initm1": [
+      0.999,
+      1.0
+    ],
+    "v4_cap1-initm1": [
+      0.999,
+      1.0
+    ],
+    "v4_cap2-initm1": [
+      0.999,
+      1.0
+    ],
+    "v4_cap3-initm1": [
+      0.999,
+      1.0
+    ],
+    "v4_uncapped-initm1": [
+      0.999,
+      1.0
+    ]
+  },
+  "algorithm_source_unchanged_from": "2564b59faa0d319eece496b93eff0f19359efc37",
+  "screen": "250k postwarmup;40direct+40native each50k;100final, original fixed full start. Both successful routes required. No automatic extension/retry.",
+  "evidence": {
+    "lower_caps": "Changing cap AND initial to -2/-3 worsened v4 route balance; final direct successes were0/100 for both.",
+    "observed_scale": "Always-logged actor_std_mean approaches the respective cap in -1/-2/-3 runs.",
+    "v3_control": "At258304, default cap-1 gives44right/0left direct successes versus80right/0left mu-only.",
+    "teacher_diagnostic": "Frozen8state x8cloud diagnostic gave M64 ESS averages32.6(v3)/26.2(v4); it does not establish a one-candidate collapse or justify changing N/M.",
+    "hypothesis": "A higher permitted conditional scale may preserve useful exploration without reducing the initial scale.",
+    "risks": [
+      "Higher conditional noise may impair accurate movement and goal acquisition.",
+      "The mixture may represent spread through sigma instead of distinct latent means.",
+      "DACER adaptation can respond to policy entropy; its settings remain unchanged.",
+      "A cap-saturated optimizer is not by itself evidence that raising the cap improves returns.",
+      "Unbounded raw sigma can exceed float32 inverse-CDF precision; existing finite checks stop a numerical failure without adding a hidden cap."
+    ]
+  },
+  "fresh_start": true,
+  "checkpoint_resume": false,
+  "initial_parameter_control": {
+    "actor": {
+      "sha256": "58fd041f7ff1c40ac56f7fa5ad311ba8bc0f39ff61c0fa1932c0db945c3713fc",
+      "parameters": 145424
+    },
+    "critic": {
+      "sha256": "5ceb33a400875e63fb44f5d7123248179a94f15ecf0b9479fb21c05612219f52",
+      "parameters": 283138
+    }
+  },
+  "controls": {
+    "v3": {
+      "source": "d25930197ee9ba060a3aa84c3b6fea419dfe856d",
+      "host": "vast-heechan-180",
+      "campaign": "antmaze-optiq-v3-teacherfloor-250k-s0-20260925-r2",
+      "job": "v3-optiq-startnorm-geodesic-T3-teacherfloor1-250k-s0"
+    },
+    "v4": {
+      "source": "555bb7e3c0101ee939545cc35d4d0729291781ec",
+      "host": "vast-heechan-199",
+      "campaign": "antmaze-optiq-v4-teacherfloor-250k-s0-20260925",
+      "job": "v4-optiq-geodesic-T1-teacherfloor0.5-250k-s0"
+    }
+  },
+  "actor_sigma_profiles": {
+    "cap0-initm1": {
+      "log_std_min": -5.0,
+      "log_std_max": 0.0,
+      "initial_log_std": -1.0
+    },
+    "cap1-initm1": {
+      "log_std_min": -5.0,
+      "log_std_max": 1.0,
+      "initial_log_std": -1.0
+    },
+    "cap2-initm1": {
+      "log_std_min": -5.0,
+      "log_std_max": 2.0,
+      "initial_log_std": -1.0
+    },
+    "cap3-initm1": {
+      "log_std_min": -5.0,
+      "log_std_max": 3.0,
+      "initial_log_std": -1.0
+    },
+    "uncapped-initm1": {
+      "log_std_min": -5.0,
+      "log_std_max": Infinity,
+      "initial_log_std": -1.0
+    }
+  },
+  "control_actor_sigma": {
+    "log_std_min": -5.0,
+    "log_std_max": -1.0,
+    "initial_log_std": -1.0
+  },
+  "global_job_count": 10,
+  "per_host_job_count": 5,
+  "initial_parameters_exactly_equal_control": true,
+  "algorithm_file_sha256": {
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/algorithm.py": "215d4933c6e08649afc4999e6f9feca79828768a0ffaeac0f23986f239ff07cf",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/policy.py": "45841bd9ae641a35e33db1696aed9ca5096a4ccbc036b25f040b9e6c4cb283a9",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/distillation.py": "ff305a7462e33970e4b786101c0af335cf594a351f846a596997c6dc9f3912c9",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/semi_implicit.py": "2ac70268019f60f4a83dfd233e54a32c30e26f3289979c0a44214997250c7231",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/transport.py": "830a11be1950d03b42eb07731e2a107225e0d14134eef3884298122d765d0e15",
+    "analysis_tools/studies/20260918_nonstationary_nd/v5/diffusion/dime.py": "165c836cc9aa5d79c021a13b8b7eea0c12f1ba21838704820efe49742558c0ca",
+    "analysis_tools/experiments/20260921_gmm_trg_sweep/regulator.py": "b5e353f06ae7ada02c9b4ea8c0f7dc3f1195132ab5763400ee1e6740141b5dc7",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/latent.py": "aed75a7210a99d1ce706ee2d4b149d1f0f7ccb24281ed6001192dfe68018ec45",
+    "analysis_tools/experiments/20260920_truncated_mll/optiq_dime/box_gaussian.py": "a3e09688f03cda41f2bf14d9a8438e605399422b57b6be9d9b8ad1a04d4b6ef8"
+  }
+}

@@ -1,0 +1,212 @@
+{
+  "campaign": "antmaze-dense-noveld-off-main-s0-20260923",
+  "stage": "main",
+  "shard": 1,
+  "source": "/home/heechan/OptiQ-ops/sources/26336810f7ea4ca61210ea70c6aeeae9f7acaed0",
+  "source_commit": "26336810f7ea4ca61210ea70c6aeeae9f7acaed0",
+  "wandb_mode": "online",
+  "jobs": [
+    {
+      "id": "v2-dipo-s0",
+      "task": "v2",
+      "method": "dipo",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 3008256,
+      "final_eval_episodes": 100
+    },
+    {
+      "id": "v4-dipo-s0",
+      "task": "v4",
+      "method": "dipo",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 5008384,
+      "final_eval_episodes": 100
+    },
+    {
+      "id": "v2-optiq-s0",
+      "task": "v2",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 3008256,
+      "final_eval_episodes": 100
+    },
+    {
+      "id": "v4-optiq-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 5008384,
+      "final_eval_episodes": 100
+    },
+    {
+      "id": "v2-sac-s0",
+      "task": "v2",
+      "method": "sac",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 3008256,
+      "final_eval_episodes": 100
+    },
+    {
+      "id": "v4-sac-s0",
+      "task": "v4",
+      "method": "sac",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 5008384,
+      "final_eval_episodes": 100
+    },
+    {
+      "id": "v2-mfpo-s0",
+      "task": "v2",
+      "method": "mfpo",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 3008256,
+      "final_eval_episodes": 100
+    },
+    {
+      "id": "v4-mfpo-s0",
+      "task": "v4",
+      "method": "mfpo",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 5008384,
+      "final_eval_episodes": 100
+    }
+  ],
+  "probe_review": {
+    "source_commit": "26336810f7ea4ca61210ea70c6aeeae9f7acaed0",
+    "probe_source_commit": "c3366d15428b0d5cc46af0f9458450e28ee00c58",
+    "evaluation_source_commit": "3a40cb8fc385f16f00175a3967d73446093b2ce2",
+    "technical_validation_passed": true,
+    "completed_probe_count": 8,
+    "trajectories_reviewed": true,
+    "reviewed_at_utc": "2026-09-23T06:40:06.893939+00:00",
+    "approval": "User explicitly requested all 16 single-seed dense experiments; previous main hold is superseded.",
+    "scope": "OptiQ/SAC/DIPO/MFPO x v1/v2/v3/v4, seed0, dense nearest-goal distance, NovelD OFF.",
+    "training_budgets": {
+      "v1": 3008256,
+      "v2": 3008256,
+      "v3": 4008448,
+      "v4": 5008384
+    },
+    "probe_runs": [
+      {
+        "host": "vast-heechan-180",
+        "id": "v1-dipo-s0",
+        "steps": 328192,
+        "updates": 10000,
+        "rnd_updates": 0,
+        "training_successes": 0
+      },
+      {
+        "host": "vast-heechan-180",
+        "id": "v1-optiq-s0",
+        "steps": 328192,
+        "updates": 10000,
+        "rnd_updates": 0,
+        "training_successes": 0
+      },
+      {
+        "host": "vast-heechan-180",
+        "id": "v3-dipo-s0",
+        "steps": 328192,
+        "updates": 10000,
+        "rnd_updates": 0,
+        "training_successes": 0
+      },
+      {
+        "host": "vast-heechan-180",
+        "id": "v3-optiq-s0",
+        "steps": 328192,
+        "updates": 10000,
+        "rnd_updates": 0,
+        "training_successes": 0
+      },
+      {
+        "host": "vast-heechan-199",
+        "id": "v1-mfpo-s0",
+        "steps": 328192,
+        "updates": 10000,
+        "rnd_updates": 0,
+        "training_successes": 0
+      },
+      {
+        "host": "vast-heechan-199",
+        "id": "v1-sac-s0",
+        "steps": 328192,
+        "updates": 10000,
+        "rnd_updates": 0,
+        "training_successes": 0
+      },
+      {
+        "host": "vast-heechan-199",
+        "id": "v3-mfpo-s0",
+        "steps": 328192,
+        "updates": 10000,
+        "rnd_updates": 0,
+        "training_successes": 0
+      },
+      {
+        "host": "vast-heechan-199",
+        "id": "v3-sac-s0",
+        "steps": 328192,
+        "updates": 10000,
+        "rnd_updates": 0,
+        "training_successes": 0
+      }
+    ],
+    "archive_proofs": {
+      "vast-heechan-180": {
+        "verified": true,
+        "checkpoint_sha256": {
+          "v1-dipo-s0": "7d0db4164f8ae81c64cbbc7edbda1d03f7bcc0a84d9daa940c7838e092f47ae8",
+          "v1-optiq-s0": "798c08dbf5296ed584ed1d6b0b223402301d7a628c801941c9fb505606ea2a75",
+          "v3-dipo-s0": "8c21aacc251454a80ee6c2a24882b5ca9cf0e53a2d7605fce942712fe5809fe9",
+          "v3-optiq-s0": "f344dab09a6c15e1b997423de20bb5fab75cfade49d213cf96803061457b7a7d"
+        },
+        "source_commit": "c3366d15428b0d5cc46af0f9458450e28ee00c58",
+        "checkpoint_location": "retained on remote server; SHA256 recomputed",
+        "local_data": "config,proofs,training xy,successes,raw evaluation rollouts,logs"
+      },
+      "vast-heechan-199": {
+        "verified": true,
+        "checkpoint_sha256": {
+          "v1-mfpo-s0": "e3cda1e3d3cdd8adde3df8f07839fc5f4756b110c0c7c2407f49ca0ef194a312",
+          "v1-sac-s0": "debd576181b997d3bceb0bb73e4945bd43a06e8513008eaee5630f39849f99e6",
+          "v3-mfpo-s0": "5f26f9aa2019244b00a1c0ff770c1d871c45d563bac21ea9850398fc3b969117",
+          "v3-sac-s0": "f85ebb94824b52144afd93dad9b5a44dc2336f5b4dbdabc63cc96c4d4a2bf28f"
+        },
+        "source_commit": "c3366d15428b0d5cc46af0f9458450e28ee00c58",
+        "checkpoint_location": "retained on remote server; SHA256 recomputed",
+        "local_data": "config,proofs,training xy,successes,raw evaluation rollouts,logs"
+      }
+    },
+    "limitations": [
+      "The probes are technical/trajectory checks, not a success-performance gate; all eight had zero training successes at 328192 transitions.",
+      "Main source differs from probe source: randomized evaluation/reporting and approval documentation were added; each main job has a fresh exact-source preflight.",
+      "Main evaluation randomizes initial xy for all mazes; original probe v3 starts were fixed and have not been relabeled."
+    ]
+  },
+  "protocol": "antmaze_experiments/DENSE_OFF_PROTOCOL.md",
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 8,
+  "reward_profile": "dense",
+  "noveld_enabled": false,
+  "seed": 0,
+  "evaluation_starts": "xy uniform[-2,2] per episode, all mazes; training reset settings unchanged"
+}

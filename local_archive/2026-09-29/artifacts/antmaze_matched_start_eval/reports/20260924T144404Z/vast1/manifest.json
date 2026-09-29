@@ -1,0 +1,28 @@
+{
+  "evaluation_source": "061e9888e1f3d0e59b5037441fa146c1eff25e2a",
+  "source": "/home/heechan/OptiQ-ops/sources/061e9888e1f3d0e59b5037441fa146c1eff25e2a",
+  "host": "vast1",
+  "jobs": [
+    {
+      "id": "v2-optiq-progress100_geodesic-T1-s0",
+      "run": "/home/heechan/optiq-experiments/antmaze-optiq-progress100-2x2-T1-s0-20260924/runs/v2-optiq-progress100_geodesic-T1-s0",
+      "source_commit": "0751e86a547dc8f1d82e4861c2931cc6f9cf04b8",
+      "floor_step": 250112,
+      "task": "v2"
+    },
+    {
+      "id": "v2-optiq-progress100_geodesic_no_bonus-T1-s0",
+      "run": "/home/heechan/optiq-experiments/antmaze-optiq-progress100-2x2-T1-s0-20260924/runs/v2-optiq-progress100_geodesic_no_bonus-T1-s0",
+      "source_commit": "0751e86a547dc8f1d82e4861c2931cc6f9cf04b8",
+      "floor_step": 250112,
+      "task": "v2"
+    }
+  ],
+  "max_parallel": 2,
+  "episodes_intermediate": 40,
+  "episodes_final": 100,
+  "training_unchanged": true,
+  "failure_holds_pending": true,
+  "automatic_restart": false,
+  "project": "OptiQ/antmaze"
+}

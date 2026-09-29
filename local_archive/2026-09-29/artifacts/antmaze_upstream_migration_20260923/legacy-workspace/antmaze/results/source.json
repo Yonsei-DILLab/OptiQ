@@ -1,0 +1,25 @@
+{
+  "source_commit": "f47cedad3c757f37893fa6de0466882ebb9673e3",
+  "source": "/home/heechan/OptiQ-ops/sources/f47cedad3c757f37893fa6de0466882ebb9673e3",
+  "preflight": "/home/heechan/optiq-experiments/antmaze-multimodal-preflight-20260921",
+  "tasks": [
+    "v1",
+    "v4"
+  ],
+  "methods": [
+    "optiq",
+    "sac",
+    "meow",
+    "sql",
+    "mfpo",
+    "dipo"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "environment_steps": 100000,
+  "total_jobs": 48
+}

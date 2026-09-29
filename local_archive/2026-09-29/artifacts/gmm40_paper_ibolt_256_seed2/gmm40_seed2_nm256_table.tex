@@ -1,0 +1,17 @@
+\begin{table}[h]
+\centering
+\caption{GMM40 sampling quality after 100{,}000 actor updates (training seed 2). Each method contributes 10{,}000 final-policy samples. MMD uses the first 2{,}048 samples and the same independent ground-truth draw; ground truth is the reference, so its MMD entry is omitted.}
+\label{tab:gmm40_seed2_nm256}
+\footnotesize
+\resizebox{0.85\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+    \toprule
+    Algorithm & Ground truth & SAC & SQL & MFPO & DIPO & \textbf{iBOLT (ours)} \\
+    \midrule
+    MMD $\downarrow$ & -- & 0.8414 & 0.4947 & 0.0881 & 0.1332 & \textbf{0.0254} \\
+    Mode coverage $\uparrow$ & 40/40 & 1/40 & 7/40 & 36/40 & 38/40 & \textbf{40/40} \\
+    \bottomrule
+\end{tabular}%
+}
+\vspace{0.2em}
+\end{table}

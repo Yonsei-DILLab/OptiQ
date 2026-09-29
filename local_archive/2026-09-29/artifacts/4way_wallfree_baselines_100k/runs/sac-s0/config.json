@@ -1,0 +1,27 @@
+{
+  "task": "4way",
+  "method": "sac",
+  "output": "/home/heechan/optiq-experiments/4way-wallfree-100k-20260926/runs/sac-s0",
+  "seed": 0,
+  "steps": 100000,
+  "num_envs": 16,
+  "updates_per_collect": 16,
+  "batch_size": 256,
+  "warmup": 1024,
+  "eval_every": 20000,
+  "eval_episodes": 100,
+  "temperature": 3.0,
+  "source_commit": "f82c71a4251e1cc7e5b55646c9343241cdaa2cdb",
+  "agent": {
+    "algorithm": "Stable-Baselines3 SAC",
+    "network": [
+      256,
+      256
+    ],
+    "actor_lr": 0.0003,
+    "critic_lr": 0.0003,
+    "entropy": "automatic"
+  },
+  "task_mode": "existing wall-free symmetric four-goal",
+  "utd": 1.0
+}

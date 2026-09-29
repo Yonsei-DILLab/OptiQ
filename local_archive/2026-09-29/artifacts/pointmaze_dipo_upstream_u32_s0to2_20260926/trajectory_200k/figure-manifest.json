@@ -1,0 +1,181 @@
+{
+  "report_commit": "f41d6c723afcc20a017135ba4aa588f113b61bf3",
+  "evaluation": "native DIPO: fresh Gaussian initial noise, reverse diffusion noise off",
+  "all_episodes_plotted": true,
+  "episodes_per_panel": 200,
+  "records": [
+    {
+      "host": "vast-heechan-6",
+      "campaign": "maze-dipo-upstream-u32-s0-1m-20260926",
+      "maze": "simple",
+      "seed": 0,
+      "name": "pm_simple-dipo-upstream-u32-s0",
+      "remote": "/home/heechan/optiq-experiments/maze-dipo-upstream-u32-s0-1m-20260926/runs/pm_simple-dipo-upstream-u32-s0",
+      "sha256": {
+        "config.json": "b64fd02e4fd99caaf2faba237c39d7474b03de7e7c5053a23d8d72145c80fd22",
+        "evaluations/000200704_summary.json": "2408ae05e73f3fc2062c2cf4fbc5e1083d66a46829aa996ddb66d2986ba3ce52",
+        "evaluations/000200704_policy.npz": "f4bee12b5913ec978b9541e5406a29e2caeb71f3e429eb735e34b599381bdb51"
+      },
+      "source_commit": "5f4b809d0e95899eef2435dd80cac2da48058931",
+      "steps": 200704,
+      "updates": 3008,
+      "success": 0.0,
+      "goal_counts": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "host": "vast-heechan-46",
+      "campaign": "pointmaze-dipo-upstream-u32-s0to2-1m-20260926",
+      "maze": "medium",
+      "seed": 0,
+      "name": "pm_medium-dipo-upstream-u32-s0",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_medium-dipo-upstream-u32-s0",
+      "sha256": {
+        "config.json": "1f64c2f623fdd0ac66614578b0fef5503b81e2b846edd00844335e379c980f08",
+        "evaluations/000200704_summary.json": "06addcad3554c48aff57224e1ecb44e5196ca873cfbc6e9d6eeeacc112f736c1",
+        "evaluations/000200704_policy.npz": "a0247e7559b055efeb9c1475ed1860caf55b6322e34afbfed34d90ef4117d58b"
+      },
+      "source_commit": "041738202b5e6bcf765a9a807e917afd2778608a",
+      "steps": 200704,
+      "updates": 3008,
+      "success": 0.0,
+      "goal_counts": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "host": "vast-heechan-46",
+      "campaign": "pointmaze-dipo-upstream-u32-s0to2-1m-20260926",
+      "maze": "medium",
+      "seed": 1,
+      "name": "pm_medium-dipo-upstream-u32-s1",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_medium-dipo-upstream-u32-s1",
+      "sha256": {
+        "config.json": "3f010b4e41e17b016350a8c560a2d1c7d4d4e6040901c5deecfb792ec79a9164",
+        "evaluations/000200704_summary.json": "1999e0d19bdfc29a16afbe72fd53c71b881666c815b57f132bd0375f0364cbb4",
+        "evaluations/000200704_policy.npz": "6ad24a5a8466195c1b7f1681b75d7d508e18f5ad6ad135bcb53899580f1ac7c9"
+      },
+      "source_commit": "041738202b5e6bcf765a9a807e917afd2778608a",
+      "steps": 200704,
+      "updates": 3008,
+      "success": 1.0,
+      "goal_counts": [
+        200,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "host": "vast-heechan-199",
+      "campaign": "pointmaze-dipo-upstream-u32-s0to2-1m-20260926",
+      "maze": "medium",
+      "seed": 2,
+      "name": "pm_medium-dipo-upstream-u32-s2",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_medium-dipo-upstream-u32-s2",
+      "sha256": {
+        "config.json": "85d2c80515150b36e81f155db26f99cb24f60f6bd59a40c778bb0a29c6dee671",
+        "evaluations/000200704_summary.json": "cccdbda3213d7ae04b1e0abe00d1a6307e99c219fec8ce44b524be125f37e886",
+        "evaluations/000200704_policy.npz": "e031a5ee357a2332097c71b15caa499cf24ffa31eaa4c9e5e1738170e43ec69f"
+      },
+      "source_commit": "041738202b5e6bcf765a9a807e917afd2778608a",
+      "steps": 200704,
+      "updates": 3008,
+      "success": 0.0,
+      "goal_counts": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "host": "vast-heechan-46",
+      "campaign": "pointmaze-dipo-upstream-u32-s0to2-1m-20260926",
+      "maze": "hard",
+      "seed": 0,
+      "name": "pm_hard-dipo-upstream-u32-s0",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_hard-dipo-upstream-u32-s0",
+      "sha256": {
+        "config.json": "a8529241b36f40a6bab6505ee456934b1048795b9465f227d415d563ce32f7bd",
+        "evaluations/000200704_summary.json": "7fde36a3032e9fc44bd1f687fc2be6cc9dd0bd7e20598b22b1c96dcfb4498f26",
+        "evaluations/000200704_policy.npz": "062e61157dc8c7b4e216f83354059090efd6878d52b5126ae08b77b4541df243"
+      },
+      "source_commit": "041738202b5e6bcf765a9a807e917afd2778608a",
+      "steps": 200704,
+      "updates": 3008,
+      "success": 0.0,
+      "goal_counts": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "host": "vast-heechan-46",
+      "campaign": "pointmaze-dipo-upstream-u32-s0to2-1m-20260926",
+      "maze": "hard",
+      "seed": 1,
+      "name": "pm_hard-dipo-upstream-u32-s1",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_hard-dipo-upstream-u32-s1",
+      "sha256": {
+        "config.json": "bb7cfd250480b5940169942630051b6bc48f3db6051723ca41ea8b2dfaff37bc",
+        "evaluations/000200704_summary.json": "44458e2061f1fb5523d5eac52fd3df5523b16c1efbbe7d1fde6c82be7cfdbe8d",
+        "evaluations/000200704_policy.npz": "c9205810992e61c2028d69b08687da201964c14823704d7419226de54a755cc4"
+      },
+      "source_commit": "041738202b5e6bcf765a9a807e917afd2778608a",
+      "steps": 200704,
+      "updates": 3008,
+      "success": 0.0,
+      "goal_counts": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "host": "vast-heechan-199",
+      "campaign": "pointmaze-dipo-upstream-u32-s0to2-1m-20260926",
+      "maze": "hard",
+      "seed": 2,
+      "name": "pm_hard-dipo-upstream-u32-s2",
+      "remote": "/home/heechan/optiq-experiments/pointmaze-dipo-upstream-u32-s0to2-1m-20260926/runs/pm_hard-dipo-upstream-u32-s2",
+      "sha256": {
+        "config.json": "04e722f3e0fd527c6a1107ba5ae44ab93032078920475b7e108791d4afdc6321",
+        "evaluations/000200704_summary.json": "0db52f6c8f3bbca4ee7a47971a6be4b7828c00f666fd3a683ed97186a71981c9",
+        "evaluations/000200704_policy.npz": "6b342f7900baf02f54d372acbdd9558ce0efe4b0a1c62b163382a938281443df"
+      },
+      "source_commit": "041738202b5e6bcf765a9a807e917afd2778608a",
+      "steps": 200704,
+      "updates": 3008,
+      "success": 1.0,
+      "goal_counts": [
+        0,
+        0,
+        200,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

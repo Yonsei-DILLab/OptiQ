@@ -1,0 +1,61 @@
+{
+  "task": "pm_simple",
+  "method": "meow",
+  "output": "/home/heechan/optiq-experiments/pointmaze-simple-entropy-grid-1m-20260926/runs/pm_simple-meow-alpha3-s0",
+  "seed": 0,
+  "steps": 1000192,
+  "num_envs": 256,
+  "updates_per_collect": 16,
+  "batch_size": 4096,
+  "warmup": 8192,
+  "eval_every": 200000,
+  "eval_episodes": 200,
+  "final_eval_episodes": 500,
+  "render_each_eval": true,
+  "temperature": 3.0,
+  "optiq_eval_mode": "mu_only",
+  "sql_particles": 16,
+  "meow_alpha": 3.0,
+  "meow_device": "auto",
+  "mfpo_target_entropy_per_dim": -0.5,
+  "entropy_diagnostics": true,
+  "source_commit": "caf133d3ed4bdc8e4f48c029e75ed8f6450144ac",
+  "agent": {
+    "algorithm": "MEOW CleanRL flow Q regression",
+    "upstream_commit": "b786d27aa9b03e4242ee8904ff884b21fe65e2f7",
+    "alpha": 3.0,
+    "sigma_min": -5.0,
+    "sigma_max": -0.3,
+    "device": "cuda",
+    "q_lr": 0.001,
+    "tau": 0.005,
+    "grad_clip": 30,
+    "evaluation_policy": "direct flow sample"
+  },
+  "task_mode": "original DrAC multi-goal PointMaze sparse +100",
+  "geometry": {
+    "goal_positions": [
+      [
+        -4.0,
+        4.0
+      ],
+      [
+        4.0,
+        4.0
+      ],
+      [
+        -4.0,
+        -4.0
+      ],
+      [
+        4.0,
+        -4.0
+      ]
+    ],
+    "horizon": 150,
+    "reward": "100 on reaching any goal, 0 otherwise",
+    "obstacle": "original upstream latent wall cells enabled at evaluation only",
+    "removal": "half goals removed, five-trial expected success"
+  },
+  "utd": 0.0625
+}

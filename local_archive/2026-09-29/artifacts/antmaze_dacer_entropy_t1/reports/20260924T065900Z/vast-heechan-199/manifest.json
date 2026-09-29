@@ -1,0 +1,268 @@
+{
+  "campaign": "antmaze-dense-dacer-entropy-T1-s0-20260924",
+  "shard": 1,
+  "host": "vast-heechan-199",
+  "source": "/home/heechan/OptiQ-ops/sources/4a33d13f0a8de3be508537fd38879ac8ef8018c0",
+  "source_commit": "4a33d13f0a8de3be508537fd38879ac8ef8018c0",
+  "jobs": [
+    {
+      "id": "v3-optiq-H-1-T1-s0",
+      "task": "v3",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 4008448,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer_target_entropy_per_dim": -1.0
+    },
+    {
+      "id": "v1-optiq-H-0.8-T1-s0",
+      "task": "v1",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 3008256,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer_target_entropy_per_dim": -0.8
+    },
+    {
+      "id": "v4-optiq-H-0.8-T1-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 5008384,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer_target_entropy_per_dim": -0.8
+    },
+    {
+      "id": "v3-optiq-H-0.5-T1-s0",
+      "task": "v3",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 4008448,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer_target_entropy_per_dim": -0.5
+    },
+    {
+      "id": "v1-optiq-H-0.3-T1-s0",
+      "task": "v1",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 3008256,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer_target_entropy_per_dim": -0.3
+    },
+    {
+      "id": "v4-optiq-H-0.3-T1-s0",
+      "task": "v4",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 5008384,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer_target_entropy_per_dim": -0.3
+    },
+    {
+      "id": "v3-optiq-H-0.1-T1-s0",
+      "task": "v3",
+      "method": "optiq",
+      "reward_profile": "dense",
+      "noveld": "off",
+      "eval_starts": "random",
+      "steps": 4008448,
+      "interim_eval_episodes": 40,
+      "final_eval_episodes": 100,
+      "temperature": 1.0,
+      "save_intermediate_policy": true,
+      "optiq_profile": {
+        "actor_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "critic_hidden_dims": [
+          256,
+          256,
+          256
+        ],
+        "actor_lr": 0.0003,
+        "critic_lr": 0.0005
+      },
+      "dacer_target_entropy_per_dim": -0.1
+    }
+  ],
+  "wandb_mode": "online",
+  "wandb_entity": "OptiQ",
+  "wandb_project": "antmaze",
+  "protocol": "antmaze_experiments/DACER_ENTROPY_PROTOCOL.md",
+  "seed": 0,
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_vector_step": 8,
+  "reward_profile": "dense",
+  "noveld_enabled": false,
+  "noveld_coefficient": 0.0,
+  "reward": "negative Euclidean distance from next xy to nearest goal; no sparse bonus",
+  "evaluation_starts": "xy uniform[-2,2] per episode; native training resets unchanged",
+  "interim_eval_episodes": 40,
+  "final_eval_episodes": 100,
+  "optiq_temperature": 1.0,
+  "optiq_actor_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "optiq_critic_hidden_dims": [
+    256,
+    256,
+    256
+  ],
+  "optiq_actor_lr": 0.0003,
+  "optiq_critic_lr": 0.0005,
+  "log_std_min": -5.0,
+  "log_std_max": -1.0,
+  "initial_log_std": -1.0,
+  "optiq_tau": 0.005,
+  "parent_source": "05fc113aeb093f9f83208ca540dd2aadf8d934bb",
+  "fresh_training": true,
+  "resume_cancelled_jobs": false,
+  "backfill_seconds": 2,
+  "failure_holds_pending": true,
+  "automatic_restart": false,
+  "dacer_target_entropy_per_dim": [
+    -1.0,
+    -0.8,
+    -0.5,
+    -0.3,
+    -0.1
+  ],
+  "dacer_target_entropy": [
+    -8.0,
+    -6.4,
+    -4.0,
+    -2.4,
+    -0.8
+  ],
+  "dacer_action_dim": 8,
+  "dacer_enabled": true,
+  "dacer_behavior_only": true,
+  "comparison_campaign": "antmaze-optiq-dense-off-T1-s0-20260924",
+  "comparison_source": "7af193833466f5bc41853948d6f417fc6aaa6803",
+  "comparison_target_entropy_per_dim": -0.9,
+  "changed_learning_setting": "Only DACER target_entropy_per_dim; fixed temperature1",
+  "warmup_transitions": 8192,
+  "base_total_budgets_preserved": true,
+  "priority": "independent per-slot backfill in manifest order",
+  "source_dependencies": {}
+}

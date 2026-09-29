@@ -1,0 +1,356 @@
+{
+  "source": "/home/heechan/OptiQ-ops/sources/f47cedad3c757f37893fa6de0466882ebb9673e3",
+  "source_commit": "f47cedad3c757f37893fa6de0466882ebb9673e3",
+  "smoke": false,
+  "gpus": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "jobs": [
+    {
+      "id": "v1-optiq-s0",
+      "task": "v1",
+      "method": "optiq",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v1-sac-s0",
+      "task": "v1",
+      "method": "sac",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v1-meow-s0",
+      "task": "v1",
+      "method": "meow",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v1-sql-s0",
+      "task": "v1",
+      "method": "sql",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v1-mfpo-s0",
+      "task": "v1",
+      "method": "mfpo",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v1-dipo-s0",
+      "task": "v1",
+      "method": "dipo",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v4-optiq-s0",
+      "task": "v4",
+      "method": "optiq",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v4-sac-s0",
+      "task": "v4",
+      "method": "sac",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v4-meow-s0",
+      "task": "v4",
+      "method": "meow",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v4-sql-s0",
+      "task": "v4",
+      "method": "sql",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v4-mfpo-s0",
+      "task": "v4",
+      "method": "mfpo",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v4-dipo-s0",
+      "task": "v4",
+      "method": "dipo",
+      "seed": 0,
+      "status": "pending"
+    },
+    {
+      "id": "v1-optiq-s1",
+      "task": "v1",
+      "method": "optiq",
+      "seed": 1,
+      "status": "pending"
+    },
+    {
+      "id": "v1-sac-s1",
+      "task": "v1",
+      "method": "sac",
+      "seed": 1,
+      "status": "pending"
+    },
+    {
+      "id": "v1-meow-s1",
+      "task": "v1",
+      "method": "meow",
+      "seed": 1,
+      "status": "pending"
+    },
+    {
+      "id": "v1-sql-s1",
+      "task": "v1",
+      "method": "sql",
+      "seed": 1,
+      "status": "pending"
+    },
+    {
+      "id": "v1-mfpo-s1",
+      "task": "v1",
+      "method": "mfpo",
+      "seed": 1,
+      "status": "pending"
+    },
+    {
+      "id": "v1-dipo-s1",
+      "task": "v1",
+      "method": "dipo",
+      "seed": 1,
+      "status": "pending"
+    },
+    {
+      "id": "v4-optiq-s1",
+      "task": "v4",
+      "method": "optiq",
+      "seed": 1,
+      "status": "pending"
+    },
+    {
+      "id": "v4-sac-s1",
+      "task": "v4",
+      "method": "sac",
+      "seed": 1,
+      "status": "pending"
+    },
+    {
+      "id": "v4-meow-s1",
+      "task": "v4",
+      "method": "meow",
+      "seed": 1,
+      "status": "pending"
+    },
+    {
+      "id": "v4-sql-s1",
+      "task": "v4",
+      "method": "sql",
+      "seed": 1,
+      "status": "pending"
+    },
+    {
+      "id": "v4-mfpo-s1",
+      "task": "v4",
+      "method": "mfpo",
+      "seed": 1,
+      "status": "pending"
+    },
+    {
+      "id": "v4-dipo-s1",
+      "task": "v4",
+      "method": "dipo",
+      "seed": 1,
+      "status": "pending"
+    },
+    {
+      "id": "v1-optiq-s2",
+      "task": "v1",
+      "method": "optiq",
+      "seed": 2,
+      "status": "pending"
+    },
+    {
+      "id": "v1-sac-s2",
+      "task": "v1",
+      "method": "sac",
+      "seed": 2,
+      "status": "pending"
+    },
+    {
+      "id": "v1-meow-s2",
+      "task": "v1",
+      "method": "meow",
+      "seed": 2,
+      "status": "pending"
+    },
+    {
+      "id": "v1-sql-s2",
+      "task": "v1",
+      "method": "sql",
+      "seed": 2,
+      "status": "pending"
+    },
+    {
+      "id": "v1-mfpo-s2",
+      "task": "v1",
+      "method": "mfpo",
+      "seed": 2,
+      "status": "pending"
+    },
+    {
+      "id": "v1-dipo-s2",
+      "task": "v1",
+      "method": "dipo",
+      "seed": 2,
+      "status": "pending"
+    },
+    {
+      "id": "v4-optiq-s2",
+      "task": "v4",
+      "method": "optiq",
+      "seed": 2,
+      "status": "pending"
+    },
+    {
+      "id": "v4-sac-s2",
+      "task": "v4",
+      "method": "sac",
+      "seed": 2,
+      "status": "pending"
+    },
+    {
+      "id": "v4-meow-s2",
+      "task": "v4",
+      "method": "meow",
+      "seed": 2,
+      "status": "pending"
+    },
+    {
+      "id": "v4-sql-s2",
+      "task": "v4",
+      "method": "sql",
+      "seed": 2,
+      "status": "pending"
+    },
+    {
+      "id": "v4-mfpo-s2",
+      "task": "v4",
+      "method": "mfpo",
+      "seed": 2,
+      "status": "pending"
+    },
+    {
+      "id": "v4-dipo-s2",
+      "task": "v4",
+      "method": "dipo",
+      "seed": 2,
+      "status": "pending"
+    },
+    {
+      "id": "v1-optiq-s3",
+      "task": "v1",
+      "method": "optiq",
+      "seed": 3,
+      "status": "pending"
+    },
+    {
+      "id": "v1-sac-s3",
+      "task": "v1",
+      "method": "sac",
+      "seed": 3,
+      "status": "pending"
+    },
+    {
+      "id": "v1-meow-s3",
+      "task": "v1",
+      "method": "meow",
+      "seed": 3,
+      "status": "pending"
+    },
+    {
+      "id": "v1-sql-s3",
+      "task": "v1",
+      "method": "sql",
+      "seed": 3,
+      "status": "pending"
+    },
+    {
+      "id": "v1-mfpo-s3",
+      "task": "v1",
+      "method": "mfpo",
+      "seed": 3,
+      "status": "pending"
+    },
+    {
+      "id": "v1-dipo-s3",
+      "task": "v1",
+      "method": "dipo",
+      "seed": 3,
+      "status": "pending"
+    },
+    {
+      "id": "v4-optiq-s3",
+      "task": "v4",
+      "method": "optiq",
+      "seed": 3,
+      "status": "pending"
+    },
+    {
+      "id": "v4-sac-s3",
+      "task": "v4",
+      "method": "sac",
+      "seed": 3,
+      "status": "pending"
+    },
+    {
+      "id": "v4-meow-s3",
+      "task": "v4",
+      "method": "meow",
+      "seed": 3,
+      "status": "pending"
+    },
+    {
+      "id": "v4-sql-s3",
+      "task": "v4",
+      "method": "sql",
+      "seed": 3,
+      "status": "pending"
+    },
+    {
+      "id": "v4-mfpo-s3",
+      "task": "v4",
+      "method": "mfpo",
+      "seed": 3,
+      "status": "pending"
+    },
+    {
+      "id": "v4-dipo-s3",
+      "task": "v4",
+      "method": "dipo",
+      "seed": 3,
+      "status": "pending"
+    }
+  ],
+  "project": "OptiQ/gmm-trg",
+  "group": "antmaze-multimodal-100k-20260921",
+  "tasks": [
+    "v1",
+    "v4"
+  ],
+  "budget": 100000
+}

@@ -1,0 +1,109 @@
+{
+  "random_start": {
+    "step": 100096,
+    "random_start": true,
+    "panels": {
+      "v3-native": {
+        "routes": {
+          "right": 29,
+          "left": 10,
+          "uncommitted": 1
+        },
+        "success_rate": 0.0,
+        "mean_return": 1252.596568257383,
+        "identical_initial_full_state": false,
+        "raw_rollouts": "raw/random-start/v3/runs/v3-optiq-utd1-basic-euclidean-random-starts-s0/evaluations/0000100096/native-natural/rollouts.npz",
+        "raw_sha256": "92d34b4d89d6214a07f0a85785a70ff8047f91084f3c5a846656240293c99355"
+      },
+      "v3-policy": {
+        "routes": {
+          "right": 30,
+          "left": 10
+        },
+        "success_rate": 0.0,
+        "mean_return": 1254.2957610609903,
+        "identical_initial_full_state": false,
+        "raw_rollouts": "raw/random-start/v3/runs/v3-optiq-utd1-basic-euclidean-random-starts-s0/evaluations/0000100096/policy-natural/rollouts.npz",
+        "raw_sha256": "4c711cba6035853e17f50f74ad1efa35bacebc504dbe194c753c27f81e6ec4df"
+      },
+      "v4-native": {
+        "routes": {
+          "lower": 15,
+          "upper": 25
+        },
+        "success_rate": 0.0,
+        "mean_return": 1012.8358102378006,
+        "identical_initial_full_state": false,
+        "raw_rollouts": "raw/random-start/v4/runs/v4-optiq-utd1-basic-euclidean-random-starts-s0/evaluations/0000100096/native-natural/rollouts.npz",
+        "raw_sha256": "42d202100e77b7e0f71042e354c83902bebc4d529a4a6cdb38ecee37d538a73a"
+      },
+      "v4-policy": {
+        "routes": {
+          "lower": 14,
+          "upper": 25,
+          "uncommitted": 1
+        },
+        "success_rate": 0.0,
+        "mean_return": 967.3449906556123,
+        "identical_initial_full_state": false,
+        "raw_rollouts": "raw/random-start/v4/runs/v4-optiq-utd1-basic-euclidean-random-starts-s0/evaluations/0000100096/policy-natural/rollouts.npz",
+        "raw_sha256": "fe12a02e0c56a2ba2300e3543b62739d5661ff3344ed7cc9ded5a74a187ce1d8"
+      }
+    }
+  },
+  "fixed_start": {
+    "step": 100096,
+    "random_start": false,
+    "panels": {
+      "v3-native": {
+        "routes": {
+          "right": 38,
+          "uncommitted": 2
+        },
+        "success_rate": 0.0,
+        "mean_return": 1302.9911880120064,
+        "identical_initial_full_state": true,
+        "raw_rollouts": "raw/fixed-nm128/runs/v3-optiq-utd1-euclidean-NM128-s0/evaluations/0000100096/native-fixed/rollouts.npz",
+        "raw_sha256": "edc4697bea7de1a73cbe1b9d10efce3f0d5cdde69d0025c555cc4a4cdc6c06a1"
+      },
+      "v3-policy": {
+        "routes": {
+          "right": 39,
+          "uncommitted": 1
+        },
+        "success_rate": 0.0,
+        "mean_return": 1324.1190523082341,
+        "identical_initial_full_state": true,
+        "raw_rollouts": "raw/fixed-nm128/runs/v3-optiq-utd1-euclidean-NM128-s0/evaluations/0000100096/policy-fixed/rollouts.npz",
+        "raw_sha256": "5e1ad6ad725626a52de5edb696a553bc809d1bc5d2dadaf47f3eaeea6830556f"
+      },
+      "v4-native": {
+        "routes": {
+          "lower": 4,
+          "upper": 36
+        },
+        "success_rate": 0.0,
+        "mean_return": 676.290125467485,
+        "identical_initial_full_state": true,
+        "raw_rollouts": "raw/fixed-nm128/runs/v4-optiq-utd1-euclidean-NM128-s0/evaluations/0000100096/native-fixed/rollouts.npz",
+        "raw_sha256": "f87c3c89e084d6a8c5f3ee5acfaf7b165736e682dda4a38f2c316d5ebe5e4635"
+      },
+      "v4-policy": {
+        "routes": {
+          "lower": 6,
+          "upper": 34
+        },
+        "success_rate": 0.0,
+        "mean_return": 609.2858156122833,
+        "identical_initial_full_state": true,
+        "raw_rollouts": "raw/fixed-nm128/runs/v4-optiq-utd1-euclidean-NM128-s0/evaluations/0000100096/policy-fixed/rollouts.npz",
+        "raw_sha256": "7bf66670151bc8c8393fd568f4d9c40909203b5cbc3361cd3bcf4f0e69af3f6c"
+      }
+    }
+  },
+  "figures": [
+    "random_start_nm64_100k.png",
+    "fixed_start_nm128_100k.png"
+  ],
+  "report_source": "post-hoc figure script; no frozen training source modified"
+}

@@ -1,0 +1,208 @@
+{
+  "profile": "ddiffpg-routefast",
+  "method": "sac",
+  "task": "v1",
+  "seed": 0,
+  "smoke": false,
+  "source_commit": "69c684f72a4aeb543328d2f98f40bb03be625f22",
+  "source_root": "/home/heechan/OptiQ-ops/sources/69c684f72a4aeb543328d2f98f40bb03be625f22",
+  "steps": 100000,
+  "warmup": 8192,
+  "batch_size": 256,
+  "num_envs": 8,
+  "updates_per_round": 8,
+  "utd": 1.0,
+  "expected_updates": 91808,
+  "native": {
+    "policy": "MlpPolicy",
+    "learning_rate": 0.0003,
+    "buffer_size": 1000000,
+    "learning_starts": 5000,
+    "batch_size": 256,
+    "tau": 0.005,
+    "gamma": 0.99,
+    "train_freq": 1,
+    "gradient_steps": 1,
+    "ent_coef": "auto",
+    "policy_kwargs": {
+      "net_arch": [
+        256,
+        256
+      ],
+      "use_sde": false
+    },
+    "device": "cuda"
+  },
+  "intrinsic": {
+    "type": "noveld",
+    "coefficient": 0.01,
+    "novelty_discount": 0.5,
+    "normalize": false,
+    "positional_encoding": true,
+    "frequency_bands": 10,
+    "learning_rate": 0.0001,
+    "gradient_clip": 1.0,
+    "upstream_commit": "7edd06c4799abbab0f8fa534c21deb56253b018e"
+  },
+  "overrides": "DDiffPG NovelD + obstacle-aware progress + backward reset curriculum + 8env/batch256/UTD1; native learners retained",
+  "assistance": {
+    "wall_clearance": 0.6,
+    "distance_resolution": 0.25,
+    "progress_coefficient": 10.0,
+    "healthy_reward": 0.1,
+    "control_coefficient": 0.05,
+    "step_cost": 0.01,
+    "success_bonus": 10.0,
+    "fall_penalty": 5.0,
+    "fall_termination_training_only": true,
+    "curriculum_full_start_probabilities": [
+      0.2,
+      0.75,
+      1.0
+    ],
+    "curriculum_boundaries": [
+      60000,
+      80000
+    ],
+    "curriculum_expansion_steps": 60000
+  },
+  "environment": {
+    "task": "v1",
+    "map": [
+      [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        "g",
+        1,
+        "r",
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    ],
+    "scale": 4.0,
+    "walls": [
+      [
+        -12.0,
+        -8.0
+      ],
+      [
+        -8.0,
+        -8.0
+      ],
+      [
+        -4.0,
+        -8.0
+      ],
+      [
+        0.0,
+        -8.0
+      ],
+      [
+        4.0,
+        -8.0
+      ],
+      [
+        -12.0,
+        -4.0
+      ],
+      [
+        4.0,
+        -4.0
+      ],
+      [
+        -12.0,
+        0.0
+      ],
+      [
+        -4.0,
+        0.0
+      ],
+      [
+        4.0,
+        0.0
+      ],
+      [
+        -12.0,
+        4.0
+      ],
+      [
+        4.0,
+        4.0
+      ],
+      [
+        -12.0,
+        8.0
+      ],
+      [
+        -8.0,
+        8.0
+      ],
+      [
+        -4.0,
+        8.0
+      ],
+      [
+        0.0,
+        8.0
+      ],
+      [
+        4.0,
+        8.0
+      ]
+    ],
+    "goals": [
+      [
+        -8.0,
+        0.0
+      ]
+    ],
+    "start": [
+      0.0,
+      0.0
+    ],
+    "horizon": 500
+  },
+  "xml_sha256": "cfd330592e96d1ad41505d4eee60f155305d3964679e215892f524c8bb1a3336",
+  "reward": "train=10*(geodesic_before-geodesic_after)+.1*healthy-.05*sum(action^2)-.01+10*success-5*fall+NovelD; eval=-Euclidean distance",
+  "collection_workers": 8,
+  "dacer_entropy_batch_size": 256,
+  "eval_interval": 10000,
+  "checkpoint_interval": 50000,
+  "trajectory_episodes_per_reset_mode": 100,
+  "packages": {
+    "mujoco": "3.3.7",
+    "gymnasium": "1.2.3",
+    "jax": "0.4.33",
+    "flax": "0.9.0",
+    "optax": "0.1.7",
+    "torch": "2.7.1+cu128",
+    "numpy": "1.26.4",
+    "wandb": "0.29.0"
+  }
+}
