@@ -8457,5 +8457,85 @@
     "virtual environments",
     "generated logs",
     "files above 10 MiB"
+  ],
+  "temporary_source_files": [
+    {
+      "path": "/private/tmp/optiq-maze-report-source-9c8fb2d/maze_source_manifest.json",
+      "archive_path": "private_tmp/optiq-maze-report-source-9c8fb2d/maze_source_manifest.json",
+      "bytes": 8554,
+      "blob": "557b904db9bb3441ad4f0a1393af491e472ff400"
+    },
+    {
+      "path": "/private/tmp/optiq-maze-report-source-9e8dfa7/maze_source_manifest.json",
+      "archive_path": "private_tmp/optiq-maze-report-source-9e8dfa7/maze_source_manifest.json",
+      "bytes": 8554,
+      "blob": "3d3f885eddc92354ffd69be51c2760c76e7423fb"
+    },
+    {
+      "path": "/private/tmp/optiq-maze-source-67469ca/maze_source_manifest.json",
+      "archive_path": "private_tmp/optiq-maze-source-67469ca/maze_source_manifest.json",
+      "bytes": 8554,
+      "blob": "3910e7540652c6c85dba873209b8132823eb4bf2"
+    },
+    {
+      "path": "/private/tmp/optiq-maze-source-ef6da72/maze_source_manifest.json",
+      "archive_path": "private_tmp/optiq-maze-source-ef6da72/maze_source_manifest.json",
+      "bytes": 8554,
+      "blob": "834737bffedb223b02eb5c654294d2261825b392"
+    },
+    {
+      "path": "/private/tmp/optiq-maze-source-fcfe76e/maze_source_manifest.json",
+      "archive_path": "private_tmp/optiq-maze-source-fcfe76e/maze_source_manifest.json",
+      "bytes": 8554,
+      "blob": "bc7fa9edaed79f968b964d02c429c7f4d11da5b5"
+    },
+    {
+      "path": "/private/tmp/optiq-nway-source-973eca4a432cf027a5c725a372aafb86b9ed6c83/maze_source_manifest.json",
+      "archive_path": "private_tmp/optiq-nway-source-973eca4a432cf027a5c725a372aafb86b9ed6c83/maze_source_manifest.json",
+      "bytes": 303530,
+      "blob": "119c9c98e7460e1c0bc00062d8927e22c36467fe"
+    },
+    {
+      "path": "/private/tmp/optiq-official-dipo-4b46c1b-source/maze_source_manifest.json",
+      "archive_path": "private_tmp/optiq-official-dipo-4b46c1b-source/maze_source_manifest.json",
+      "bytes": 319363,
+      "blob": "6bb35e46808a0edadc603177a5a9969b13324007"
+    },
+    {
+      "path": "/private/tmp/optiq-paper-pointmaze-source-c2d08d0/maze_source_manifest.json",
+      "archive_path": "private_tmp/optiq-paper-pointmaze-source-c2d08d0/maze_source_manifest.json",
+      "bytes": 305796,
+      "blob": "37f313d4d3e1decec4acd2f2ad8e439f51268b43"
+    },
+    {
+      "path": "/private/tmp/optiq-papermaze-source-d069b8f/maze_source_manifest.json",
+      "archive_path": "private_tmp/optiq-papermaze-source-d069b8f/maze_source_manifest.json",
+      "bytes": 306012,
+      "blob": "36a838c3bf72e40fa83387ab5ecbb64e2c9017a7"
+    },
+    {
+      "path": "/private/tmp/optiq-pointmaze-grid-source-74f0de2e8cf9752ab78b44434f9688d412c1b7b5/maze_source_manifest.json",
+      "archive_path": "private_tmp/optiq-pointmaze-grid-source-74f0de2e8cf9752ab78b44434f9688d412c1b7b5/maze_source_manifest.json",
+      "bytes": 310847,
+      "blob": "bab8999fa9fa5d53b86f20fdcb81165f8f57f1d1"
+    },
+    {
+      "path": "/private/tmp/optiq-pointmaze-source-d710cc668a61e69b52f0b71bbe724d6a85c499fb/maze_source_manifest.json",
+      "archive_path": "private_tmp/optiq-pointmaze-source-d710cc668a61e69b52f0b71bbe724d6a85c499fb/maze_source_manifest.json",
+      "bytes": 310082,
+      "blob": "5ac1889e5830cede8041b01db31378628127cb84"
+    },
+    {
+      "path": "/private/tmp/optiq-way-grid-source-3f54c1e/maze_source_manifest.json",
+      "archive_path": "private_tmp/optiq-way-grid-source-3f54c1e/maze_source_manifest.json",
+      "bytes": 311191,
+      "blob": "abf53e2f90b23f870cf929231d4f2b1b844e5477"
+    },
+    {
+      "path": "/private/tmp/optiq-way-grid-source-cc662f4/maze_source_manifest.json",
+      "archive_path": "private_tmp/optiq-way-grid-source-cc662f4/maze_source_manifest.json",
+      "bytes": 312950,
+      "blob": "f2011a520ee76f443a859b24c624a69b5c968b93"
+    }
   ]
 }

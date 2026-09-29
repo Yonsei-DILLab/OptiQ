@@ -1,0 +1,83 @@
+{
+  "source_commit": "9e8dfa7b6fc8e6e7c65329b119b4514248dd9ad6",
+  "dependencies": {
+    "gmm40-baseline/MFPO": {
+      "commit": "d8b3977d29d4ef2d315e871337e5826f2eb79eb2",
+      "exported_paths": [
+        "configs",
+        "jaxrl5"
+      ]
+    },
+    "gmm40-baseline/meow": {
+      "commit": "b786d27aa9b03e4242ee8904ff884b21fe65e2f7",
+      "exported_paths": [
+        "cleanrl/cleanrl"
+      ]
+    }
+  },
+  "sha256": {
+    "gmm40-baseline/MFPO/configs/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "gmm40-baseline/MFPO/configs/mfpo_config.py": "cc5f552a5c6397cb7b563fdbd774694aaa18aa6648404cafd81a11dcf9110f9f",
+    "gmm40-baseline/MFPO/jaxrl5/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "gmm40-baseline/MFPO/jaxrl5/agents/__init__.py": "68896237300b15c42cdd66856866beac8eafd070cd2b2347326138b7232f3b10",
+    "gmm40-baseline/MFPO/jaxrl5/agents/agent.py": "38cdfa470c4f78161e3011a77d5ba80c86c88ff2c8ab7fdcf04ceeaee05cbb63",
+    "gmm40-baseline/MFPO/jaxrl5/agents/mean_flow_learner.py": "44dd4e154ae3caef9951873d2f0882750a56ce2c48b83230df3f104725c1bdfd",
+    "gmm40-baseline/MFPO/jaxrl5/data/__init__.py": "b765fd1e1a72afb7b5e867deda9cbcc8b0dfcfe7980a9dfeafffe0013a30366c",
+    "gmm40-baseline/MFPO/jaxrl5/data/dataset.py": "8481b0e653273fbe37c462aea1d963c352e3e733dd5375dab7aa308882e67938",
+    "gmm40-baseline/MFPO/jaxrl5/data/replay_buffer.py": "3366bf8b872c19e0610bb9e2bc5e138f832622dce4bdf9fb0adc56409dbe4196",
+    "gmm40-baseline/MFPO/jaxrl5/evaluation.py": "e384bb87dd2c8848a2f527dd801fd47d2e9406f6dc8444b529ab44aab0ac29db",
+    "gmm40-baseline/MFPO/jaxrl5/networks/__init__.py": "6998c6727dfdf123f8e7bcb6c7756d2888e324b0bb87cc47c69bd02dcf8270f8",
+    "gmm40-baseline/MFPO/jaxrl5/networks/mean_flow.py": "c93b582e2c9a82157970432aaa630bd50641d0b49496af1f72074390fc93e5a6",
+    "gmm40-baseline/MFPO/jaxrl5/networks/mlp.py": "23f4135ce93cae09f772c7d62d78cb1810943a4055e79e7bb5651057de3925e0",
+    "gmm40-baseline/MFPO/jaxrl5/networks/state_action_value.py": "13e629e5df2f84d504a2b8e732a46ad32bca2f13f37b6b2a7b4e0821bc68a041",
+    "gmm40-baseline/MFPO/jaxrl5/networks/temperature.py": "1c8e688f24f79abf8e83ba9b237122cfa39c825d26689985d1e12ea5c08ff51d",
+    "gmm40-baseline/MFPO/jaxrl5/normalization.py": "05a3438bcd1b8b7cffe9c07d91a7ce777c5b583e6dd2402d3f709facb9c23e4c",
+    "gmm40-baseline/MFPO/jaxrl5/types.py": "79c2193a906cb34950df2896775837d8e946fcc8d0cf0ee68cda6598bc5d8727",
+    "gmm40-baseline/MFPO/jaxrl5/wrappers/__init__.py": "4fa2f20acb9fa60900a3f2532909e4e93984bc9c6a9a0bf226f453411f8c4474",
+    "gmm40-baseline/MFPO/jaxrl5/wrappers/frame_stack.py": "3f742ffbe538e4ec120836681da491d2e70125cf8d572106fda518c4d31c5a44",
+    "gmm40-baseline/MFPO/jaxrl5/wrappers/pixels.py": "ce6f3c4c06cbe34a505629d7208b837d7ac5927decd3b65cbe31f2128c685ad4",
+    "gmm40-baseline/MFPO/jaxrl5/wrappers/repeat_action.py": "ceaf0b18769f59619e79576736ac3779a7a4fbb3b2c803882caeb49c17e16917",
+    "gmm40-baseline/MFPO/jaxrl5/wrappers/single_precision.py": "1644e60891a530e611000a361cb2445da2c04b70f9ea7c56239f8c1e77472074",
+    "gmm40-baseline/MFPO/jaxrl5/wrappers/universal_seed.py": "13bd895a8e3f36ff93834bf3cffdbf95564c9aebfbf25d6c166e97e8104301bb",
+    "gmm40-baseline/MFPO/jaxrl5/wrappers/wandb_video.py": "19e399ba93d63cac30e5aed9734170a96aac05998c1d3deed138aa4b0ccfa509",
+    "gmm40-baseline/meow/cleanrl/cleanrl/c51.py": "6d755d704f867562d47b8dd111dc3de1496c5768b1f0c9094b338ca055041377",
+    "gmm40-baseline/meow/cleanrl/cleanrl/c51_atari.py": "67aca379615c1192d85d8c8d281bc5830f27717395784588b89371a5fc9ffdd2",
+    "gmm40-baseline/meow/cleanrl/cleanrl/c51_atari_jax.py": "c2e3c288abee8d233ac4735fa511692a855a7354b73b240e511b78f55fdcb7fa",
+    "gmm40-baseline/meow/cleanrl/cleanrl/c51_jax.py": "7befbd527dccf0244b5e94ccfb9519d92cc4f22644d2cd3a6d2dd7ec5a1f12f1",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ddpg_continuous_action.py": "ba8fc9c0be709e0958184e58c8f84e5b30bbdcc538eaed32a0a5108240a66192",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ddpg_continuous_action_jax.py": "c05343f1e7b7f2335e3607e88c5fb52b516bc8ea7c741a650ba319016eaa2056",
+    "gmm40-baseline/meow/cleanrl/cleanrl/dqn.py": "ca549a36486018a34fdf258bfb1b1b70e0ad59b1c2d0a88ab29144446f8ae209",
+    "gmm40-baseline/meow/cleanrl/cleanrl/dqn_atari.py": "bba96337a34a4e010252e82602924b0e72fe20fa4ff06b57102ab2da3c359090",
+    "gmm40-baseline/meow/cleanrl/cleanrl/dqn_atari_jax.py": "a8c239b2360223af0580092d6d70a77090053c19e6c7a090eca89edfb817be02",
+    "gmm40-baseline/meow/cleanrl/cleanrl/dqn_jax.py": "3c55caa956408f35aa66b00917c381d240680f8f5f722560d3ca63422f5ec0dd",
+    "gmm40-baseline/meow/cleanrl/cleanrl/meow_continuous_action.py": "36b9bfec0cd11b6d6edd783c83160532ce624601aed113c0d624c760335419b1",
+    "gmm40-baseline/meow/cleanrl/cleanrl/nf/LICENSE": "5d7d55d52ccea08cbfc42a5b5f167f2909cd17b5ce66fe07d751455ad7556423",
+    "gmm40-baseline/meow/cleanrl/cleanrl/nf/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "gmm40-baseline/meow/cleanrl/cleanrl/nf/distributions.py": "9efc0495c6f135f19f1a758d77c004b0266dda9d5e4b1546c0cc89b082a73366",
+    "gmm40-baseline/meow/cleanrl/cleanrl/nf/flows.py": "d121f953c9349f33bcb1d8c8abc87f5cb25c917fed8461234f09e9127de5653d",
+    "gmm40-baseline/meow/cleanrl/cleanrl/nf/nets.py": "42d31f76f0959a17e1c816fb01e3d34a64a31e27b88339903d13fd7a282e1ae7",
+    "gmm40-baseline/meow/cleanrl/cleanrl/nf/transforms.py": "429cddbaad7d6a1af3c8c51672f9a505ae0737813ce0b6e7e6f356e4e2558d66",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ppg_procgen.py": "d7205bb21f134955af9a3ba81b14418f72b506c1374e0eee6e52bbf2ba4be852",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ppo.py": "d8dfbb7ac0b21e747b77d6e6673e566db4d6cdacc83bcebcd19cf87ad0e459ae",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ppo_atari.py": "be925df7ef500d6cdcdff27ecf87f9593b2ab73df2bd71382ee10f164cc3b103",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ppo_atari_envpool.py": "d1672d9822929ef21c1ea0b63e853f330387892550b924abf32d6f755d6a97c8",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ppo_atari_envpool_xla_jax.py": "a6963d31e4cec1e7c6e12391b65e19624e5f1dc6a9302cbbffc79d8c96e8af41",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ppo_atari_envpool_xla_jax_scan.py": "e8c083b3730b49c1a80c3d103a8f5434150354a776fc3a11d095f31c6e33fef4",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ppo_atari_lstm.py": "253f2a763fc0c656fb611ccb77278999cbbde118c0dd94ff38decee57cc78d01",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ppo_atari_multigpu.py": "441ab71da86c78cb8c494fe850d5bfef60366be6dcf4a6d66240977a21a51ce4",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ppo_continuous_action.py": "326dd8678bf9cc51abec833eb551ef2409a3804d604b689e1f0a084eca41f655",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ppo_continuous_action_isaacgym/isaacgym/poetry.lock": "f7dae70ed00a6378e8317845d9a00ab00c6fe600285c7622cff27be33215aa69",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ppo_continuous_action_isaacgym/isaacgym/pyproject.toml": "82ce399e1bc5bb51b3fea5a5161132277cf1b20d2a11aed95a81f14cd45b25fe",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ppo_continuous_action_isaacgym/ppo_continuous_action_isaacgym.py": "8b0892e42b98b01fe1f4980aa8dbffd2afea50f5614a50097edc447d9b3191bb",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ppo_pettingzoo_ma_atari.py": "b027dcb0f2b9f5c1a899ecef920cb3370d99ae96023c9a41e064d1a647ac0a85",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ppo_procgen.py": "3ab0116c2c525dde1d2a541dc4a11abc3bcc564615ebcb434ca7ad5e6bea56d0",
+    "gmm40-baseline/meow/cleanrl/cleanrl/ppo_rnd_envpool.py": "d6ec2fb0f2f1e3f78624b001f02abbe5fc46a645e2f88b2ff644609e3d1e5560",
+    "gmm40-baseline/meow/cleanrl/cleanrl/qdagger_dqn_atari_impalacnn.py": "3fcbc5f8095e2babebb20090cc712de79702c0e40ea446b939b0760b0a3c0ce1",
+    "gmm40-baseline/meow/cleanrl/cleanrl/qdagger_dqn_atari_jax_impalacnn.py": "72012b179d1270cc7bd3a83f82cb7b3af0d06f93cc33231aecbf82c43c1d24e6",
+    "gmm40-baseline/meow/cleanrl/cleanrl/rpo_continuous_action.py": "a6876a9b02e2610807d02ca17b7b0aa8557a2578fd54ebc5c77353c2d7931a05",
+    "gmm40-baseline/meow/cleanrl/cleanrl/sac_atari.py": "3eabe1ed6bb4adf1ab97691bf1011f032643f7e73e1cde577d34c33f578029a0",
+    "gmm40-baseline/meow/cleanrl/cleanrl/sac_continuous_action.py": "c3b0bad8cd7407779be08a37c4419029866471735d4d11bd8587ef95d775d905",
+    "gmm40-baseline/meow/cleanrl/cleanrl/td3_continuous_action.py": "dd1242af30b2c6d5a5a0a58f378e492563d2fbcadc3dbced4e48bb84d1efe4c1",
+    "gmm40-baseline/meow/cleanrl/cleanrl/td3_continuous_action_jax.py": "640199ba5c42369520f46bb6ecf086d9aa0df1d6638a978633c286f54cb7d8e3"
+  }
+}
