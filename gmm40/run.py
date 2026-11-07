@@ -45,6 +45,8 @@ def main():
     parser.add_argument('--steps', type=int, default=100000)
     parser.add_argument('--batch', type=int, default=256)
     parser.add_argument('--eval-samples', type=int, default=10000)
+    parser.add_argument('--log-std-max', type=float, default=-3.5,
+                        help='Actor log-sigma upper bound; lower bound -5 and initial value -4 stay fixed')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--resume', type=Path)
     parser.add_argument('--wandb', action='store_true')
@@ -60,7 +62,7 @@ def main():
     config = dict(seed=args.seed, n=args.nm, m=args.nm, batch=args.batch,
                   hidden_dims=[256,256,256], activation='GELU', learning_rate=.0003,
                   temperature=1., density_beta=1., latent_dim=2,
-                  mean_output_init_scale=16., log_std_min=-5., log_std_max=-3.5,
+                  mean_output_init_scale=16., log_std_min=-5., log_std_max=args.log_std_max,
                   initial_log_std=-4., teacher_std_floor=None if args.no_proposal_floor else .05,
                   steps=args.steps, eval_samples=args.eval_samples, dacer=False)
     if args.resume:
@@ -69,7 +71,8 @@ def main():
             if previous[key] != config[key]:
                 parser.error(f'Resume configuration mismatch: {key}')
     agent = GMM40Learner(target, seed=args.seed, n=args.nm, m=args.nm, batch=args.batch,
-                        teacher_std_floor=config['teacher_std_floor'])
+                        teacher_std_floor=config['teacher_std_floor'],
+                        log_std_max=config['log_std_max'])
     if args.resume:
         agent.restore(args.resume)
     if agent.updates > args.steps:

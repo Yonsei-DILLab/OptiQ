@@ -4,6 +4,7 @@ set -euo pipefail
 gpu="${1:?GPU index required}"
 seed="${2:?Random seed required}"
 output="${3:?New output directory required}"
+log_std_max="${4:--3.5}"
 [[ "$gpu" =~ ^[0-9]+$ && "$seed" =~ ^[0-9]+$ ]] || exit 2
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 source scripts/activate-experiments.sh
@@ -18,4 +19,5 @@ if [[ -e "$output" ]]; then
 fi
 python -u -m gmm40.run --seed "$seed" --nm 256 --steps 100000 \
     --batch 256 --eval-samples 10000 --no-proposal-floor \
+    --log-std-max "$log_std_max" \
     --output "$output" 2>&1 | tee -a "${output}.log"

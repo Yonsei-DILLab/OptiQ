@@ -91,3 +91,10 @@ For a managed run, `scripts/run-gmm40-no-floor.sh GPU SEED OUTPUT` fixes the
 `OUTPUT.log`. Run one process per GPU; the cluster campaign uses seeds 0..4.
 Every run records the Git revision, package versions and GPU backend in
 `config.json` under `runtime`.
+
+For the paired upper-scale ablation, add `--log-std-max -3.0` while keeping
+`--no-proposal-floor` and seeds 0..4. The lower bound -5 and initial value -4
+remain fixed. This changes the conditional sigma ceiling from exp(-3.5)
+(0.03020) to exp(-3.0) (0.04979). Use separate output directories for the two
+profiles. The managed wrapper accepts the optional upper bound as its fourth
+argument: `scripts/run-gmm40-no-floor.sh GPU SEED OUTPUT -3.0`.

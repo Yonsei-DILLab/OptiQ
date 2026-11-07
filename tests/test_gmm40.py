@@ -70,6 +70,18 @@ def test_proposal_without_floor_uses_actor_scales_for_sampling_and_density():
     np.testing.assert_array_equal(gradient,jnp.ones_like(ls))
 
 
+def test_wider_actor_scale_bounds_without_proposal_floor():
+    agent=GMM40Learner(Target(),n=16,m=16,batch=2,teacher_std_floor=None,log_std_max=-3.)
+    from flax.core import unfreeze
+    params=unfreeze(agent.state.params)
+    params['log_std']['kernel']=jnp.zeros_like(params['log_std']['kernel'])
+    for bias,expected in [([-3.25,0.],[-3.25,-3.]),([-6.,-3.25],[-5.,-3.25])]:
+        params['log_std']['bias']=jnp.asarray(bias)
+        _,ls=agent.actor.apply({'params':params},jnp.zeros((1,1)),jnp.zeros((1,2)))
+        np.testing.assert_array_equal(ls,jnp.asarray([expected]))
+        np.testing.assert_array_equal(Proposal(jnp.zeros_like(ls),ls,None).effective_log_std(),ls)
+
+
 def test_gmm40_evaluation_protocol():
     assert evaluation_steps(100000)==[0,100,500,1000,2500,5000]+list(range(10000,100001,10000))
     target=Target()
