@@ -11,6 +11,8 @@ from gmm40.target import Target
 from gmm40.learner import GMM40Learner, Proposal
 from gmm40.metrics import metrics
 from gmm40.run import evaluation_steps
+from ibolt.policy import SemiImplicitActor
+from ibolt.box_gaussian import mixture_log_prob
 
 
 def test_paper_target_and_density():
@@ -29,6 +31,7 @@ def test_paper_target_and_density():
 
 def test_gmm40_update_and_checkpoint(tmp_path):
     agent=GMM40Learner(Target(),seed=0,n=16,m=16,batch=2)
+    assert agent.teacher_std_floor is None
     assert sum(p.size for p in jax.tree_util.tree_leaves(agent.state.params))==133636
     mu,ls=agent.actor.apply({'params':agent.state.params},jnp.zeros((16,1)),jnp.ones((16,2)))
     np.testing.assert_allclose(ls,-4.)
@@ -51,6 +54,34 @@ def test_gmm40_update_and_checkpoint(tmp_path):
     for a,b in zip(jax.tree_util.tree_leaves(agent.state),jax.tree_util.tree_leaves(restored.state)):
         np.testing.assert_array_equal(a,b)
     np.testing.assert_array_equal(agent.key,restored.key)
+
+
+def test_gmm40_hidden_initialization_preserves_output_heads():
+    agent=GMM40Learner(Target(),seed=1,n=16,m=16,batch=2)
+    _,init=jax.random.split(jax.random.PRNGKey(1))
+    shared=SemiImplicitActor(2,(256,256,256),-5.,-3.5,-4.,mean_output_init_scale=16.)
+    original=shared.init(init,jnp.zeros((1,1)),jnp.zeros((1,2)))['params']
+    params=agent.state.params
+    for head in ('mu','log_std'):
+        for field in ('kernel','bias'):
+            np.testing.assert_array_equal(original[head][field],params[head][field])
+    for name in ('Dense_0','Dense_1','Dense_2'):
+        weights=np.asarray(params[name]['kernel'])
+        gram=weights@weights.T if weights.shape[0]<=weights.shape[1] else weights.T@weights
+        np.testing.assert_allclose(gram,2*np.eye(len(gram)),atol=3e-6)
+        np.testing.assert_array_equal(params[name]['bias'],0)
+
+
+def test_proposal_without_floor_uses_actor_scales():
+    mu=jnp.array([[[.1,-.2],[.3,.4]]])
+    ls=jnp.array([[[-5.,-4.],[-3.5,-5.]]])
+    proposal=Proposal(mu,ls,None)
+    np.testing.assert_array_equal(proposal.effective_log_std(),ls)
+    key=jax.random.PRNGKey(17)
+    actions,_,_=proposal.sample(key,3,'exact')
+    expected,_,_=Proposal(mu,ls,1e-12).sample(key,3,'exact')
+    np.testing.assert_array_equal(actions,expected)
+    np.testing.assert_array_equal(proposal.log_prob(actions),mixture_log_prob(actions,mu,ls))
 
 
 def test_gmm40_evaluation_protocol():

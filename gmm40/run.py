@@ -58,14 +58,15 @@ def main():
                   hidden_dims=[256,256,256], activation='GELU', learning_rate=.0003,
                   temperature=1., density_beta=1., latent_dim=2,
                   mean_output_init_scale=16., log_std_min=-5., log_std_max=-3.5,
-                  initial_log_std=-4., teacher_std_floor=.05,
+                  initial_log_std=-4., teacher_std_floor=None, hidden_init='orthogonal_sqrt2',
                   steps=args.steps, eval_samples=args.eval_samples, dacer=False)
     if args.resume:
         previous = json.loads((args.resume.parent.parent/'config.json').read_text())
         for key in config.keys()-{'steps'}:
-            if previous[key] != config[key]:
+            if previous.get(key) != config[key]:
                 parser.error(f'Resume configuration mismatch: {key}')
-    agent = GMM40Learner(target, seed=args.seed, n=args.nm, m=args.nm, batch=args.batch)
+    agent = GMM40Learner(target, seed=args.seed, n=args.nm, m=args.nm, batch=args.batch,
+                        teacher_std_floor=config['teacher_std_floor'])
     if args.resume:
         agent.restore(args.resume)
     if agent.updates > args.steps:

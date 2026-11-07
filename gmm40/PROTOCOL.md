@@ -10,18 +10,20 @@ Training queries only Q(x) = log p_GMM40(x), never ground-truth samples.
 | Network | 256 x 3, GELU; 133,636 parameters |
 | Paper comparison | N=M=256 |
 | Sample-count ablation | N=M in {64,128,256,512} |
-| Update budget / seeds | 100,000 actor updates / 0,1,2,3 |
+| Update budget / seeds | 100,000 actor updates / 0,1,2,3,4 |
 | Batch / Adam learning rate | 256 independent clouds / 3e-4 |
 | Temperature / density correction | 1 / 1 |
+| Hidden-layer initializer | orthogonal, gain sqrt(2); zero biases |
 | Mean-head initializer | variance scale 16, fan-average uniform |
+| Log-scale head initializer | zero weights, bias -4 |
 | Actor log-sigma bounds / initial | [-5,-3.5] / -4 |
-| Teacher-only sigma floor | 0.05 |
+| Teacher-only sigma floor | disabled (None) |
 | Evaluation | 10,000 full-policy and 10,000 mean-only samples |
 
 Actions live in [-1,1]^2 and physical coordinates are x=40a. Centers are
-tanh-bounded; conditionals are box-truncated Gaussians. The proposal floor is
-used consistently in candidate sampling and proposal density, not in the actor
-likelihood or full-policy sampling. Candidates and importance weights are
+tanh-bounded; conditionals are box-truncated Gaussians. Proposal sampling and
+proposal density use the actor scales directly, without a standard-deviation
+floor. Candidates and importance weights are
 stop-gradient targets. The objective is direct marginal NLL, without transport.
 The physical-coordinate Jacobian contributes a constant that cancels in weights.
 
@@ -44,7 +46,7 @@ bandwidths {1,2,5,10,20} in physical coordinates. Coverage counts nearest target
 components within 3 sigma, with occupancy at least max(10, 10% of reference
 occupancy adjusted for sample count). This is component coverage, not an exact
 count of density local maxima. Other retained metrics include sliced W2 and
-high-density fraction. Aggregate four training seeds with sample standard
+high-density fraction. Aggregate five training seeds with sample standard
 deviation; do not pool N/M settings or full-policy and mean-only results.
 
 Equal optimizer budgets are not equal query or compute budgets:
@@ -58,7 +60,7 @@ From the repository root, after installing the shared requirements:
 
 ```bash
 python -m gmm40.run --seed 0 --nm 256 --output outputs/gmm40-N256-s0
-# Repeat seeds 0..3; ablation changes --nm to 64, 128, 256, or 512.
+# Repeat seeds 0..4; ablation changes --nm to 64, 128, 256, or 512.
 # Optional tracking, without a hardcoded account:
 python -m gmm40.run --seed 1 --nm 256 --output outputs/gmm40-N256-s1 --wandb
 ```
