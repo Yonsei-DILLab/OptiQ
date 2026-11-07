@@ -1,0 +1,82 @@
+"""CPU-only status, budget aggregation, and explicit preflight gate."""
+import argparse
+import csv
+import json
+import time
+from pathlib import Path
+from common import now, tasks, verify_source, write
+
+
+def report(root, gate=False):
+    commit = verify_source(root)
+    counts = {}
+    rows = []
+    history_path = root/'HISTORY_ROOTS.json'
+    history = json.loads(history_path.read_text()) if history_path.exists() else []
+    roots = list(dict.fromkeys([root] + [(root/entry).resolve() for entry in history]))
+    for phase in ['pilot','reuse','train']:
+        planned = tasks(phase)
+        complete = sum((root/'runtime'/phase/t['id']/'COMPLETE.json').exists() for t in planned)
+        counts[phase] = dict(planned=len(planned), complete=complete)
+    begins = [p for archive in roots for p in (archive/'runtime').glob('*/*/attempts/*/BEGIN.json')]
+    for begin in begins:
+        end = begin.with_name('END.json')
+        latest = begin.with_name('CURRENT.json')
+        d = json.loads((end if end.exists() else latest if latest.exists() else begin).read_text())
+        timing = begin.parents[2]/f'timing_{d["attempt_id"]}.json'
+        seconds = json.loads(timing.read_text())['seconds'] if timing.exists() else {}
+        row = {k:d.get(k) for k in ['id','phase','target','method','n','m','L','seed','attempt_id','source_commit','job_id','gpu_index','start_utc','end_utc','exit_code','allocated_gpu_hours','peak_memory_mib','energy_kwh_estimate']}
+        row.update(gpu_model=d['gpu'].get('model'), gpu_uuid=d['gpu'].get('uuid'),
+                   timing_status='finished' if end.exists() else 'last_heartbeat_lower_bound',
+                   synchronized_training_gpu_hours=seconds['training']/3600 if 'training' in seconds else d.get('synchronized_training_gpu_hours'),
+                   compile_seconds=seconds.get('compile',0), evaluation_seconds=seconds.get('evaluation',0),
+                   validation_seconds=seconds.get('validation',0))
+        rows.append(row)
+    if rows:
+        tmp = root/'gpu_budget.csv.tmp'
+        with tmp.open('w', newline='') as f:
+            writer=csv.DictWriter(f,fieldnames=list(rows[0]));writer.writeheader();writer.writerows(rows)
+        tmp.replace(root/'gpu_budget.csv')
+    allocations = [json.loads(p.read_text()) for archive in roots for p in (archive/'allocations').glob('*.json')]
+    reserved = sum(x.get('allocated_gpu_hours',(time.time()-x['start_epoch'])/3600) for x in allocations)
+    attempt_hours = sum(x.get('allocated_gpu_hours') or 0 for x in rows)
+    summary = dict(utc=now(), source_commit=commit, counts=counts,
+                   worker_reserved_gpu_hours=reserved, attempt_gpu_hours=attempt_hours,
+                   synchronized_training_gpu_hours=sum(x['synchronized_training_gpu_hours'] or 0 for x in rows),
+                   attempts_without_separate_training_timer=sum(x['synchronized_training_gpu_hours'] is None for x in rows),
+                   current_revision_attempt_gpu_hours=sum((x.get('allocated_gpu_hours') or 0) for x in rows if x['source_commit']==commit),
+                   current_revision_production_training_gpu_hours=sum((x['synchronized_training_gpu_hours'] or 0) for x in rows if x['source_commit']==commit and x['phase']=='train'),
+                   history_roots=[str(x) for x in roots[1:]],
+                   note='Includes prior pilots and diagnostics. Worker reservation includes between-task idle time; do not add it to overlapping attempt hours. Running attempts use last heartbeat. Rental charges outside worker reservations are not inferred; synchronized time excludes explicitly untimed diagnostics.')
+    write(root/'CAMPAIGN_STATUS.json', summary)
+    if gate:
+        assert counts['pilot']['complete']==len(tasks('pilot')) and counts['reuse']['complete']==len(tasks('reuse')), counts
+        prior_file=root/'VALIDATION_INPUTS.json'
+        prior=json.loads(prior_file.read_text()) if prior_file.exists() else {}
+        allowed={commit}|set(prior.get('verified_prior_source_commits',[]))
+        # Every successful full-shape pilot includes restore/RNG/finite checks.
+        for task in tasks('pilot'):
+            done=json.loads((root/'runtime/pilot'/task['id']/'COMPLETE.json').read_text())
+            assert done['checkpoint_restore_passed'] and done['source_commit'] in allowed
+            folder=root/'runtime/pilot'/task['id']
+            run=json.loads((folder/'RUN.json').read_text())
+            restore=json.loads((folder/'RESTORE_VALIDATION.json').read_text())
+            assert run['config_sha256']==task['config_sha256']
+            assert restore['checkpoint_contents_exact'] and all(x['passed'] for x in restore['leaves'])
+            assert restore['rtol']<=1e-5 and restore['atol']<=1e-6
+        for task in tasks('reuse'):
+            done=json.loads((root/'runtime/reuse'/task['id']/'COMPLETE.json').read_text())
+            assert done['reuse_validated'] and done['sample_count']==1048576
+            assert done['evaluation_commit'] in allowed
+            assert task['method']=='forward' and done['origin']['method']=='forward'
+            assert done['origin']['config_numerically_matched']
+        write(root/'VALIDATION.json', dict(status='passed',source_commit=commit,utc=now(),
+              full_shape_pilots=len(tasks('pilot')),restored_and_reevaluated_forward_runs=len(tasks('reuse')),
+              new_training_runs=len(tasks('train')),reverse_L=131072,
+              accepted_validation_source_commits=sorted(allowed),prior_validation=prior))
+    print(json.dumps(summary,indent=2))
+
+
+if __name__=='__main__':
+    p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--gate',action='store_true')
+    a=p.parse_args();report(a.root.resolve(),a.gate)

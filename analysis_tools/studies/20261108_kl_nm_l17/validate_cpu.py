@@ -1,0 +1,71 @@
+"""Validate task coverage and resume accounting without allocating a GPU."""
+import ast
+import contextlib
+import io
+import json
+import tempfile
+import hashlib
+from pathlib import Path
+from common import SOURCE, file_sha, tasks, write
+from report import report
+
+
+def main():
+    for path in SOURCE.rglob('*.py'):
+        ast.parse(path.read_text())
+    declared = json.loads((SOURCE/'TASKS.json').read_text())
+    assert declared == {p:[{k:v for k,v in t.items() if k!='config'} for t in tasks(p)]
+                        for p in ['pilot','reuse','train']}
+    runs=tasks('reuse')+tasks('train')
+    assert len(runs)==108 and len({t['id'] for t in runs})==108
+    assert len(tasks('pilot'))==6 and len(tasks('reuse'))==10 and len(tasks('train'))==98
+    assert all(t['method']=='forward' and t['L']==0 for t in tasks('reuse'))
+    assert sum(t['method']=='reverse' for t in tasks('train'))==54
+    assert sum(t['method']=='forward' for t in tasks('train'))==44
+    assert all(t['L']==131072 for t in runs if t['method']=='reverse')
+    for case in ['t00_reference','n00_spike_ramp']:
+        for method in ['forward','reverse']:
+            got={(t['n'],t['m'],t['seed']) for t in runs if t['target']==case and t['method']==method}
+            assert got=={(n,m,s) for n in [32,128,512] for m in [32,128,512] for s in [0,1,2]}
+    archived=json.loads((SOURCE/'ARCHIVED_KERNEL_HASHES.json').read_text())
+    adapted={'experiments/kl_mode_missing_search_1d/core.py','experiments/kl_six_highL_1d/core.py'}
+    for name,sha in archived['files'].items():
+        if name in adapted:
+            body=(SOURCE/name).read_text()
+            assert '(1024,131072,1048576)' in body
+            assert hashlib.sha256(body.replace('(1024,131072,1048576)','(1024,1048576)').encode()).hexdigest()==sha
+        else:
+            assert file_sha(SOURCE/name)==sha
+    assert archived['files']['experiments/kl_mode_missing_search_1d/core.py']=='3ec41bb4d357f80841de38f6b7a2adc285fa6656f2f06fdd5ef85afe2e9c9574'
+    # A failed attempt plus a successful resume must both count once, while
+    # overlapping worker reservation is reported separately, not added twice.
+    with tempfile.TemporaryDirectory() as d:
+        root=Path(d);write(root/'SOURCE_MANIFEST.json',dict(commit='cpu-fixture',files={}))
+        task=tasks('train')[0];out=root/'runtime/train'/task['id']
+        for i,hours in enumerate([.25,.5]):
+            aid=str(i);attempt=out/'attempts'/aid
+            data=dict(task,attempt_id=aid,source_commit='cpu-fixture',gpu={'model':'fixture','uuid':'fixture'},
+                      allocated_gpu_hours=hours,exit_code=1 if i==0 else 0)
+            write(attempt/'BEGIN.json',data);write(attempt/'END.json',data)
+            write(out/f'timing_{aid}.json',dict(seconds={'training':hours*1800}))
+        write(root/'allocations/fixture.json',dict(allocated_gpu_hours=.8,start_epoch=0))
+        with contextlib.redirect_stdout(io.StringIO()):report(root)
+        result=json.loads((root/'CAMPAIGN_STATUS.json').read_text())
+        assert result['attempt_gpu_hours']==.75
+        assert result['synchronized_training_gpu_hours']==.375
+        assert result['worker_reserved_gpu_hours']==.8
+        history=root/'prior'
+        write(root/'HISTORY_ROOTS.json',['prior'])
+        old=history/'runtime/diagnostic/old/attempts/old'
+        old_data=dict(task,id='old',phase='diagnostic',attempt_id='old',source_commit='old-source',
+                      gpu={'model':'fixture','uuid':'fixture'},allocated_gpu_hours=.1,exit_code=0)
+        write(old/'BEGIN.json',old_data);write(old/'END.json',old_data)
+        write(history/'allocations/old.json',dict(allocated_gpu_hours=.1,start_epoch=0))
+        with contextlib.redirect_stdout(io.StringIO()):report(root)
+        result=json.loads((root/'CAMPAIGN_STATUS.json').read_text())
+        assert abs(result['attempt_gpu_hours']-.85)<1e-12
+        assert result['attempts_without_separate_training_timer']==1
+    print('PASS: syntax, only L-allowlist kernel changes, 54 fresh L17 RKL + 44 FKL + 10 FKL reuse, failure/resume accounting')
+
+
+if __name__=='__main__':main()
