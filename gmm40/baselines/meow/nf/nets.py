@@ -15,7 +15,7 @@ class MLP(nn.Module):
     ):
         super().__init__()
         net = nn.ModuleList([])
-        
+
         for k in range(len(layers) - 2):
             # Linear
             net.append(nn.Linear(layers[k], layers[k + 1]))
@@ -35,7 +35,7 @@ class MLP(nn.Module):
             # Dropout
             if dropout_rate is not None:
                 net.append(nn.Dropout(p=dropout_rate))
-        
+
         net.append(nn.Linear(layers[-2], layers[-1]))
 
         # Set Initial values
@@ -51,7 +51,7 @@ class MLP(nn.Module):
 
     def forward(self, x):
         return self.net(x)
-    
+
 class Swish(nn.Module):
   def __init__(self, dim=-1):
     """

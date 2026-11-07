@@ -44,7 +44,7 @@ class BaseDistribution(nn.Module):
         """
         z, _ = self.forward(num_samples, **kwargs)
         return z
-    
+
 class ConditionalDiagLinearGaussian(BaseDistribution):
     """
     Conditional multivariate Gaussian distribution with diagonal
@@ -84,7 +84,7 @@ class ConditionalDiagLinearGaussian(BaseDistribution):
 
     def forward(self, z, context):
         return self.get_mean_std(z, context)
-    
+
     @torch.jit.export
     def log_prob(self, z, context):
         mean, std = self.get_mean_std(z, context)
@@ -93,7 +93,7 @@ class ConditionalDiagLinearGaussian(BaseDistribution):
             list(range(1, self.n_dim + 1)),
         )
         return log_p
-    
+
     @torch.jit.export
     def get_qv(self, z, context):
         mean, std = self.get_mean_std(z, context)
@@ -101,7 +101,7 @@ class ConditionalDiagLinearGaussian(BaseDistribution):
                        list(range(1, self.n_dim + 1)))
         v = self.const - torch.sum(torch.log(std), list(range(1, self.n_dim + 1)))
         return q, -v
-    
+
     @torch.jit.ignore
     def sample(self, num_samples=1, context=None):
         eps = torch.randn((num_samples,) + self.shape, dtype=context.dtype, device=context.device)

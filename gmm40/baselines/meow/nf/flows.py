@@ -90,7 +90,7 @@ class CondScaling(Flow):
     def forward(self, z, context):
         log_det = torch.zeros(z.shape[0], device=z.device)
         return z, log_det
-    
+
     @torch.jit.export
     def inverse(self, z, context):
         log_det = torch.zeros(z.shape[0], device=z.device)
@@ -108,7 +108,7 @@ class CondScaling(Flow):
             q = s1[:, 0]
             v = s1[:, 0]
         return z, q, v
-    
+
 class Scaling(Flow):
     '''
     Transformation: z_ = z * exp(s) / exp(s)
@@ -123,7 +123,7 @@ class Scaling(Flow):
     def forward(self, z, context):
         log_det = torch.zeros(z.shape[0], device=z.device)
         return z, log_det
-    
+
     @torch.jit.export
     def inverse(self, z, context):
         log_det = torch.zeros(z.shape[0], device=z.device)

@@ -25,15 +25,15 @@ class Clip(flows.Flow):
 
     def forward(self, z_):
         # (Generation direaction) output must be [-1, 1] (this is defined according to the env.)
-        z_ = torch.clamp(z_, -1, 1) 
+        z_ = torch.clamp(z_, -1, 1)
         return z_, torch.zeros(z_.shape[0], device=z_.device)
-    
+
     @torch.jit.export
     def inverse(self, z):
         # (Density estimation direction) input must be [-1+esp, 1-esp] (prevent NAN outputs after preprocessing operation.)
-        z = torch.clamp(z, -1+self.eps, 1-self.eps) 
+        z = torch.clamp(z, -1+self.eps, 1-self.eps)
         return z, torch.zeros(z.shape[0], device=z.device)
-    
+
 class Preprocessing(flows.Flow):
     def __init__(self):
         super().__init__()
@@ -54,7 +54,7 @@ class Preprocessing(flows.Flow):
             z, log_d = flow.inverse(z)
             log_det += log_d
         return z, log_det
-    
+
     @torch.jit.export
     def get_qv(self, z, context):
         z_, q = self.inverse(z, context)
