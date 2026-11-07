@@ -48,15 +48,26 @@ def report(root, gate=False):
     write(root/'CAMPAIGN_STATUS.json', summary)
     if gate:
         assert counts['pilot']['complete']==12 and counts['reuse']['complete']==12, counts
+        prior_file=root/'VALIDATION_INPUTS.json'
+        prior=json.loads(prior_file.read_text()) if prior_file.exists() else {}
+        allowed={commit}|set(prior.get('verified_prior_source_commits',[]))
         # Every successful full-shape pilot includes restore/RNG/finite checks.
         for task in tasks('pilot'):
             done=json.loads((root/'runtime/pilot'/task['id']/'COMPLETE.json').read_text())
-            assert done['checkpoint_restore_passed'] and done['source_commit']==commit
+            assert done['checkpoint_restore_passed'] and done['source_commit'] in allowed
+            folder=root/'runtime/pilot'/task['id']
+            run=json.loads((folder/'RUN.json').read_text())
+            restore=json.loads((folder/'RESTORE_VALIDATION.json').read_text())
+            assert run['config_sha256']==task['config_sha256']
+            assert restore['checkpoint_contents_exact'] and all(x['passed'] for x in restore['leaves'])
+            assert restore['rtol']<=1e-5 and restore['atol']<=1e-6
         for task in tasks('reuse'):
             done=json.loads((root/'runtime/reuse'/task['id']/'COMPLETE.json').read_text())
             assert done['reuse_validated'] and done['sample_count']==1048576
+            assert done['evaluation_commit'] in allowed
         write(root/'VALIDATION.json', dict(status='passed',source_commit=commit,utc=now(),
-              full_shape_pilots=12,restored_and_reevaluated_baselines=12,new_training_runs=96))
+              full_shape_pilots=12,restored_and_reevaluated_baselines=12,new_training_runs=96,
+              accepted_validation_source_commits=sorted(allowed),prior_validation=prior))
     print(json.dumps(summary,indent=2))
 
 

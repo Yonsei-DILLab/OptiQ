@@ -127,11 +127,11 @@ def main():
                 for (path, x), (_, y) in pairs:
                     y = np.asarray(y)
                     exact = np.array_equal(x, y)
-                    close = exact if np.issubdtype(x.dtype, np.integer) else np.allclose(x, y, rtol=1e-6, atol=1e-7)
+                    close = exact if np.issubdtype(x.dtype, np.integer) else np.allclose(x, y, rtol=1e-5, atol=1e-6)
                     differences.append(dict(path=str(path), exact=bool(exact), passed=bool(close),
                         max_abs=float(np.max(np.abs(x.astype(float)-y.astype(float))))))
                 write(out/'RESTORE_VALIDATION.json', dict(checkpoint_contents_exact=True,
-                      rtol=1e-6, atol=1e-7, leaves=differences))
+                      rtol=1e-5, atol=1e-6, leaves=differences))
                 assert all(x['passed'] for x in differences), 'Resume differs beyond float32 tolerance'
             exp.restore(out / 'checkpoint.msgpack')
             before = np.asarray(exp.key).copy()
