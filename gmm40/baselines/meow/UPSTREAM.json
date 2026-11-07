@@ -1,0 +1,52 @@
+{
+  "repository": "https://github.com/ChienFeng-hub/meow",
+  "commit": "b786d27aa9b03e4242ee8904ff884b21fe65e2f7",
+  "source_profile": "toy",
+  "changes": [
+    "modules/policy.py: nf imports changed to relative imports only"
+  ],
+  "files": [
+    {
+      "upstream_path": "toy/modules/policy.py",
+      "local_path": "policy.py",
+      "upstream_sha256": "acb6a3698f473b3d26f745e9ffe1b81a63265ab4caae8587ce4594af5576d8e0",
+      "local_sha256": "f50a8eb57a460de861c487b5edc97afcad7d0e3e34fc1d57b1755d8abffee3c0"
+    },
+    {
+      "upstream_path": "toy/nf/nets.py",
+      "local_path": "nf/nets.py",
+      "upstream_sha256": "42d31f76f0959a17e1c816fb01e3d34a64a31e27b88339903d13fd7a282e1ae7",
+      "local_sha256": "42d31f76f0959a17e1c816fb01e3d34a64a31e27b88339903d13fd7a282e1ae7"
+    },
+    {
+      "upstream_path": "toy/nf/flows.py",
+      "local_path": "nf/flows.py",
+      "upstream_sha256": "d121f953c9349f33bcb1d8c8abc87f5cb25c917fed8461234f09e9127de5653d",
+      "local_sha256": "d121f953c9349f33bcb1d8c8abc87f5cb25c917fed8461234f09e9127de5653d"
+    },
+    {
+      "upstream_path": "toy/nf/distributions.py",
+      "local_path": "nf/distributions.py",
+      "upstream_sha256": "9efc0495c6f135f19f1a758d77c004b0266dda9d5e4b1546c0cc89b082a73366",
+      "local_sha256": "9efc0495c6f135f19f1a758d77c004b0266dda9d5e4b1546c0cc89b082a73366"
+    },
+    {
+      "upstream_path": "toy/nf/transforms.py",
+      "local_path": "nf/transforms.py",
+      "upstream_sha256": "429cddbaad7d6a1af3c8c51672f9a505ae0737813ce0b6e7e6f356e4e2558d66",
+      "local_sha256": "429cddbaad7d6a1af3c8c51672f9a505ae0737813ce0b6e7e6f356e4e2558d66"
+    },
+    {
+      "upstream_path": "toy/nf/LICENSE",
+      "local_path": "nf/LICENSE",
+      "upstream_sha256": "5d7d55d52ccea08cbfc42a5b5f167f2909cd17b5ce66fe07d751455ad7556423",
+      "local_sha256": "5d7d55d52ccea08cbfc42a5b5f167f2909cd17b5ce66fe07d751455ad7556423"
+    },
+    {
+      "upstream_path": "LICENSE",
+      "local_path": "LICENSE",
+      "upstream_sha256": "3c932f44ab53b441c547d239397aa0ceb94611f5ad2a2c4e5685a998ec64023b",
+      "local_sha256": "3c932f44ab53b441c547d239397aa0ceb94611f5ad2a2c4e5685a998ec64023b"
+    }
+  ]
+}
