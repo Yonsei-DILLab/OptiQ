@@ -23,6 +23,10 @@ The pinned JAX/CUDA stack matches the training implementation. GPU architecture
 and driver compatibility must be checked separately (particularly newer GPU
 architectures). CPU validation can use the base requirements without CUDA.
 
+For RTX 50-series (Blackwell) GPUs, use the separately pinned
+[rebuttal environment](REBUTTAL_SETUP.md) and `scripts/setup-blackwell.sh`.
+It uses a newer numerical stack; record that profile when reporting results.
+
 ## Train
 
 ```bash
