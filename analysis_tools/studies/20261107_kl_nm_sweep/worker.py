@@ -133,7 +133,7 @@ def work(root, phase, gpu, commit):
                 continue
             failures = [p for p in (out/'attempts').glob('*/END.json')
                         if json.loads(p.read_text())['exit_code'] not in (0,75)]
-            if len(failures) >= 2:
+            if failures:
                 continue
             attempt(root, task, index, gpu, commit)
 

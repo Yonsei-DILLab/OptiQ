@@ -11,11 +11,15 @@ def report(root, gate=False):
     commit = verify_source(root)
     counts = {}
     rows = []
+    history_path = root/'HISTORY_ROOTS.json'
+    history = json.loads(history_path.read_text()) if history_path.exists() else []
+    roots = list(dict.fromkeys([root] + [(root/entry).resolve() for entry in history]))
     for phase in ['pilot','reuse','train']:
         planned = tasks(phase)
         complete = sum((root/'runtime'/phase/t['id']/'COMPLETE.json').exists() for t in planned)
         counts[phase] = dict(planned=len(planned), complete=complete)
-    for begin in (root/'runtime').glob('*/*/attempts/*/BEGIN.json'):
+    begins = [p for archive in roots for p in (archive/'runtime').glob('*/*/attempts/*/BEGIN.json')]
+    for begin in begins:
         end = begin.with_name('END.json')
         latest = begin.with_name('CURRENT.json')
         d = json.loads((end if end.exists() else latest if latest.exists() else begin).read_text())
@@ -24,7 +28,7 @@ def report(root, gate=False):
         row = {k:d.get(k) for k in ['id','phase','target','method','n','m','L','seed','attempt_id','source_commit','job_id','gpu_index','start_utc','end_utc','exit_code','allocated_gpu_hours','peak_memory_mib','energy_kwh_estimate']}
         row.update(gpu_model=d['gpu'].get('model'), gpu_uuid=d['gpu'].get('uuid'),
                    timing_status='finished' if end.exists() else 'last_heartbeat_lower_bound',
-                   synchronized_training_gpu_hours=seconds.get('training',0)/3600,
+                   synchronized_training_gpu_hours=seconds['training']/3600 if 'training' in seconds else d.get('synchronized_training_gpu_hours'),
                    compile_seconds=seconds.get('compile',0), evaluation_seconds=seconds.get('evaluation',0))
         rows.append(row)
     if rows:
@@ -32,13 +36,15 @@ def report(root, gate=False):
         with tmp.open('w', newline='') as f:
             writer=csv.DictWriter(f,fieldnames=list(rows[0]));writer.writeheader();writer.writerows(rows)
         tmp.replace(root/'gpu_budget.csv')
-    allocations = [json.loads(p.read_text()) for p in (root/'allocations').glob('*.json')]
+    allocations = [json.loads(p.read_text()) for archive in roots for p in (archive/'allocations').glob('*.json')]
     reserved = sum(x.get('allocated_gpu_hours',(time.time()-x['start_epoch'])/3600) for x in allocations)
     attempt_hours = sum(x.get('allocated_gpu_hours') or 0 for x in rows)
     summary = dict(utc=now(), source_commit=commit, counts=counts,
                    worker_reserved_gpu_hours=reserved, attempt_gpu_hours=attempt_hours,
-                   synchronized_training_gpu_hours=sum(x['synchronized_training_gpu_hours'] for x in rows),
-                   note='Worker reservation includes between-task idle time; do not add it to overlapping attempt hours. Running attempts use last heartbeat. Rental charges outside worker reservations are not inferred.')
+                   synchronized_training_gpu_hours=sum(x['synchronized_training_gpu_hours'] or 0 for x in rows),
+                   attempts_without_separate_training_timer=sum(x['synchronized_training_gpu_hours'] is None for x in rows),
+                   history_roots=[str(x) for x in roots[1:]],
+                   note='Includes prior pilots and diagnostics. Worker reservation includes between-task idle time; do not add it to overlapping attempt hours. Running attempts use last heartbeat. Rental charges outside worker reservations are not inferred; synchronized time excludes explicitly untimed diagnostics.')
     write(root/'CAMPAIGN_STATUS.json', summary)
     if gate:
         assert counts['pilot']['complete']==12 and counts['reuse']['complete']==12, counts

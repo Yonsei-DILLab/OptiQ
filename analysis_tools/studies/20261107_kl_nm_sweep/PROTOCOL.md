@@ -351,8 +351,10 @@ separate questions about GMM40 baseline tuning or online-control baselines.
   1M actions with independent evaluation RNG before marking reuse valid.
 - Twelve timing/correctness pilots: both targets and both methods at
   (32,32), (128,128), (512,512), seed 0, at true RKL L=1048576. Each compiles
-  the original block shape, advances four blocks, then checks exact checkpoint
-  resume across one extra block twice. All pilot GPU time is accounted for.
+  the original block shape, advances four blocks, then checks checkpoint
+  resume across one extra block twice. Saved contents and integer/RNG states
+  must be exact; subsequent floating-point leaves must agree at rtol=1e-6,
+  atol=1e-7. All pilot GPU time is accounted for.
 - Pilot source arrays cover baseline and extreme shapes; the full grid still
   consists of nine pairs and runs irrespective of pilot quality metrics.
 - GPU training gate requires all 12 pilots and all 12 baseline restorations/
@@ -378,3 +380,22 @@ separate questions about GMM40 baseline tuning or online-control baselines.
 - dildata pulls the campaign every 180 seconds over an existing backup key
   whose public key is restricted on this new host to read-only rsync of this
   campaign directory. No private key transfer or general shell access is used.
+
+### Preflight correction before production
+
+Initial preflight source 0bf53e40810ceef15b9cfe922e1b066849b91151 used an
+overly strict byte-identical continuation check. Diagnostic source
+c5155f6f951a291cbb1468efdb6bfe59fd2cbc27 verified exact checkpoint contents
+and RNG, while repeating the same GPU-resident RKL state without any restore
+also varied at float32 precision (largest observed optimizer-state difference
+about 1.05e-7; parameter difference below 7.5e-9). Thus continuation uses
+the explicit tolerance above; the archived numerical kernels are unchanged.
+Failed pilots are not automatically retried. An explicitly resumed pilot
+starts fresh, and its bounded step loop cannot overrun its pilot budget.
+
+Keep the original source/runtime immutable. Corrected execution lives in
+runtime root revisions/v2 under the original campaign root. HISTORY_ROOTS.json
+includes the original campaign's attempts and reservations in all new budget
+reports, including failed, paused, and diagnostic GPU work. The original
+read-only backup root covers both revisions. No production training used the
+initial validation wrapper.

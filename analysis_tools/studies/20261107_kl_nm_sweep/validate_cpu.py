@@ -41,6 +41,17 @@ def main():
         assert result['attempt_gpu_hours']==.75
         assert result['synchronized_training_gpu_hours']==.375
         assert result['worker_reserved_gpu_hours']==.8
+        history=root/'prior'
+        write(root/'HISTORY_ROOTS.json',['prior'])
+        old=history/'runtime/diagnostic/old/attempts/old'
+        old_data=dict(task,id='old',phase='diagnostic',attempt_id='old',source_commit='old-source',
+                      gpu={'model':'fixture','uuid':'fixture'},allocated_gpu_hours=.1,exit_code=0)
+        write(old/'BEGIN.json',old_data);write(old/'END.json',old_data)
+        write(history/'allocations/old.json',dict(allocated_gpu_hours=.1,start_epoch=0))
+        with contextlib.redirect_stdout(io.StringIO()):report(root)
+        result=json.loads((root/'CAMPAIGN_STATUS.json').read_text())
+        assert abs(result['attempt_gpu_hours']-.85)<1e-12
+        assert result['attempts_without_separate_training_timer']==1
     print('PASS: syntax, immutable archived kernels, full factorial task coverage, failure/resume cost accounting')
 
 
