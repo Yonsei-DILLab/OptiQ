@@ -9,6 +9,7 @@ import numpy as np
 from .learner import GMM40Learner
 from .target import Target
 from .metrics import metrics
+from ibolt.runtime import provenance
 
 
 def evaluation_steps(total):
@@ -50,6 +51,8 @@ def main():
     parser.add_argument('--wandb-mode', choices=['offline','online'], default='offline')
     parser.add_argument('--project', default='ibolt-gmm40')
     parser.add_argument('--no-plots', action='store_true')
+    parser.add_argument('--no-proposal-floor', action='store_true',
+                        help='Use actor scales directly in proposal sampling and density')
     args = parser.parse_args()
     if args.steps < 1 or args.batch < 1 or args.eval_samples < 40:
         parser.error('steps/batch must be positive; eval-samples must be at least 40')
@@ -58,14 +61,15 @@ def main():
                   hidden_dims=[256,256,256], activation='GELU', learning_rate=.0003,
                   temperature=1., density_beta=1., latent_dim=2,
                   mean_output_init_scale=16., log_std_min=-5., log_std_max=-3.5,
-                  initial_log_std=-4., teacher_std_floor=.05,
+                  initial_log_std=-4., teacher_std_floor=None if args.no_proposal_floor else .05,
                   steps=args.steps, eval_samples=args.eval_samples, dacer=False)
     if args.resume:
         previous = json.loads((args.resume.parent.parent/'config.json').read_text())
         for key in config.keys()-{'steps'}:
             if previous[key] != config[key]:
                 parser.error(f'Resume configuration mismatch: {key}')
-    agent = GMM40Learner(target, seed=args.seed, n=args.nm, m=args.nm, batch=args.batch)
+    agent = GMM40Learner(target, seed=args.seed, n=args.nm, m=args.nm, batch=args.batch,
+                        teacher_std_floor=config['teacher_std_floor'])
     if args.resume:
         agent.restore(args.resume)
     if agent.updates > args.steps:
@@ -76,6 +80,7 @@ def main():
     checkpoints.mkdir()
     config['parameters'] = sum(p.size for p in jax.tree_util.tree_leaves(agent.state.params))
     config['backend'] = jax.default_backend()
+    config['runtime'] = provenance()
     config['target'] = target.metadata
     save_json(args.output/'config.json', config)
     reference = target.sample(args.eval_samples, 20260917, bounded=True)

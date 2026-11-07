@@ -69,3 +69,25 @@ validation only; changing them does not reproduce the paper protocol.
 Existing output directories are never overwritten. `--resume` restores the
 GMM40 actor optimizer, RNG, and update count; use a new output directory and the
 same settings. MuJoCo checkpoint semantics are separate.
+
+## Rebuttal: proposal floor disabled, five seeds
+
+Use seeds 0,1,2,3,4 with the following command, changing `--seed` and the output
+directory for each run:
+
+```bash
+python -m gmm40.run --seed 0 --nm 256 --no-proposal-floor \
+  --output outputs/gmm40-no-floor-N256-s0
+```
+
+This variant uses the actor log-sigma directly for BOTH proposal sampling and
+proposal density. `config.json` records `teacher_std_floor: null`. Actor bounds
+[-5,-3.5], initialization -4, and the remaining 100K-update protocol are unchanged.
+The original floor-enabled profile above remains the default. Aggregate this
+variant over its five seeds separately from the original four-seed profile.
+
+For a managed run, `scripts/run-gmm40-no-floor.sh GPU SEED OUTPUT` fixes the
+100K-update, batch-256, 10K-evaluation profile, requires CUDA, and writes a sibling
+`OUTPUT.log`. Run one process per GPU; the cluster campaign uses seeds 0..4.
+Every run records the Git revision, package versions and GPU backend in
+`config.json` under `runtime`.

@@ -14,9 +14,11 @@ from ibolt.distillation import direct_gmm_nll
 class Proposal(NamedTuple):
     means: jax.Array
     log_std: jax.Array
-    minimum_std: float
+    minimum_std: float | None
 
     def effective_log_std(self):
+        if self.minimum_std is None:
+            return self.log_std
         return jnp.maximum(self.log_std, jnp.log(self.minimum_std))
 
     def sample(self, key, repeats, mode):
@@ -46,11 +48,11 @@ class GMM40Learner:
         if not (math.isfinite(log_std_max) and math.isfinite(initial_log_std)
                 and -5. < log_std_max and -5. <= initial_log_std <= log_std_max):
             raise ValueError('TRG requires -5 < log_std_max and initial log std within bounds')
-        if not math.isfinite(teacher_std_floor) or teacher_std_floor <= 0:
-            raise ValueError('Teacher std floor must be positive and finite')
+        if teacher_std_floor is not None and (not math.isfinite(teacher_std_floor) or teacher_std_floor <= 0):
+            raise ValueError('Teacher std floor must be None or positive and finite')
         if not math.isfinite(mean_output_init_scale) or mean_output_init_scale <= 0:
             raise ValueError('Mean initialization variance scale must be positive and finite')
-        self.teacher_std_floor = float(teacher_std_floor)
+        self.teacher_std_floor = None if teacher_std_floor is None else float(teacher_std_floor)
         self.target, self.n, self.m, self.batch = target, n, m, batch
         self.temperature = temperature
         # GMM40-specific initialization and bounds, separate from MuJoCo.
