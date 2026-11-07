@@ -89,3 +89,25 @@ def test_gmm40_evaluation_protocol():
     result=metrics(reference,target,reference,target.sample(256,20260917,bounded=False))
     assert result['sliced_wasserstein2']==0 and 0<=result['mode_coverage']<=40
     assert np.isfinite(result['mmd2']) and result['outside_fraction']==0
+
+
+@pytest.mark.parametrize('initializer,gain', [('orthogonal',1.),('orthogonal_sqrt2',2.**.5)])
+def test_hidden_orthogonal_initialization_preserves_heads_and_scale(initializer,gain):
+    kwargs=dict(seed=1,n=16,m=16,batch=2,teacher_std_floor=None)
+    baseline=GMM40Learner(Target(),**kwargs)
+    candidate=GMM40Learner(Target(),hidden_init=initializer,**kwargs)
+    old,new=baseline.state.params,candidate.state.params
+    for head in ('mu','log_std'):
+        for name in ('kernel','bias'):
+            np.testing.assert_array_equal(old[head][name],new[head][name])
+    for name in ('Dense_0','Dense_1','Dense_2'):
+        w=np.asarray(new[name]['kernel'])
+        gram=w@w.T if w.shape[0]<=w.shape[1] else w.T@w
+        np.testing.assert_allclose(gram,gain**2*np.eye(len(gram)),atol=3e-6)
+        np.testing.assert_array_equal(new[name]['bias'],0)
+        assert not np.array_equal(old[name]['kernel'],w)
+    _,ls=candidate.actor.apply({'params':new},jnp.zeros((16,1)),jnp.ones((16,2)))
+    np.testing.assert_array_equal(ls,np.full((16,2),-4.))
+    info=candidate.advance(2)
+    assert all(np.isfinite(v) for v in info.values())
+    assert np.exp(-5)-1e-7 <= info['sigma_min'] <= info['sigma_max'] <= np.exp(-3.5)+1e-7

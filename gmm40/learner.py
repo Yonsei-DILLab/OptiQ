@@ -40,7 +40,7 @@ class GMM40Learner:
     def __init__(self, target, seed=0, n=256, m=256, batch=256,
                  hidden_dims=(256,256,256), temperature=1.,
                  log_std_max=-3.5, initial_log_std=-4., teacher_std_floor=.05,
-                 mean_output_init_scale=16.):
+                 mean_output_init_scale=16., hidden_init='xavier_uniform'):
         if n <= 0 or m <= 0 or m % n or batch <= 0:
             raise ValueError('TRG requires positive batch/N/M and M divisible by N')
         if not math.isfinite(temperature) or temperature <= 0:
@@ -57,7 +57,7 @@ class GMM40Learner:
         self.temperature = temperature
         # GMM40-specific initialization and bounds, separate from MuJoCo.
         self.actor = Actor(2, tuple(hidden_dims), -5., log_std_max, initial_log_std,
-                           mean_output_init_scale=mean_output_init_scale)
+                           mean_output_init_scale=mean_output_init_scale, hidden_init=hidden_init)
         self.key, init = jax.random.split(jax.random.PRNGKey(seed))
         params = self.actor.init(init, jnp.zeros((1,1)), jnp.zeros((1,2)))['params']
         self.state = TrainState.create(apply_fn=self.actor.apply, params=params, tx=optax.adam(3e-4))

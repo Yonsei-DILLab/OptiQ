@@ -31,12 +31,20 @@ class SemiImplicitActor(nn.Module):
     initial_log_std: float
     mean_output_init_scale: float = 1.0e-4
     log_std_output_init_scale: float = 0.0
+    hidden_init: str = "xavier_uniform"
 
     @nn.compact
     def __call__(self, observations, latents):
         x = jnp.concatenate((observations, latents), axis=-1)
+        if self.hidden_init == "xavier_uniform":
+            hidden_kernel_init = kernel_init()
+        elif self.hidden_init in ("orthogonal", "orthogonal_sqrt2"):
+            gain = 1.0 if self.hidden_init == "orthogonal" else 2.0**0.5
+            hidden_kernel_init = nn.initializers.orthogonal(scale=gain)
+        else:
+            raise ValueError(f"Unknown hidden initializer: {self.hidden_init}")
         for width in self.hidden_dims:
-            x = nn.gelu(nn.Dense(width, kernel_init=kernel_init())(x))
+            x = nn.gelu(nn.Dense(width, kernel_init=hidden_kernel_init)(x))
         mu = nn.Dense(self.action_dim, kernel_init=kernel_init(self.mean_output_init_scale), name="mu")(x)
         raw_log_std = nn.Dense(
             self.action_dim, kernel_init=kernel_init(self.log_std_output_init_scale),

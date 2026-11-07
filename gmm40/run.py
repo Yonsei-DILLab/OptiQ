@@ -47,6 +47,8 @@ def main():
     parser.add_argument('--eval-samples', type=int, default=10000)
     parser.add_argument('--log-std-max', type=float, default=-3.5,
                         help='Actor log-sigma upper bound; lower bound -5 and initial value -4 stay fixed')
+    parser.add_argument('--hidden-init', choices=['xavier_uniform', 'orthogonal', 'orthogonal_sqrt2'], default='xavier_uniform',
+                        help='Hidden-layer kernels only; output-head initializers remain fixed')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--resume', type=Path)
     parser.add_argument('--wandb', action='store_true')
@@ -64,15 +66,17 @@ def main():
                   temperature=1., density_beta=1., latent_dim=2,
                   mean_output_init_scale=16., log_std_min=-5., log_std_max=args.log_std_max,
                   initial_log_std=-4., teacher_std_floor=None if args.no_proposal_floor else .05,
+                  hidden_init=args.hidden_init,
                   steps=args.steps, eval_samples=args.eval_samples, dacer=False)
     if args.resume:
         previous = json.loads((args.resume.parent.parent/'config.json').read_text())
+        previous.setdefault('hidden_init', 'xavier_uniform')
         for key in config.keys()-{'steps'}:
             if previous[key] != config[key]:
                 parser.error(f'Resume configuration mismatch: {key}')
     agent = GMM40Learner(target, seed=args.seed, n=args.nm, m=args.nm, batch=args.batch,
                         teacher_std_floor=config['teacher_std_floor'],
-                        log_std_max=config['log_std_max'])
+                        log_std_max=config['log_std_max'], hidden_init=config['hidden_init'])
     if args.resume:
         agent.restore(args.resume)
     if agent.updates > args.steps:
