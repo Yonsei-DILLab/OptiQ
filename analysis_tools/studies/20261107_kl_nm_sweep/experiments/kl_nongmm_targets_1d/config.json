@@ -1,0 +1,456 @@
+{
+  "n": 128,
+  "m": 128,
+  "batch": 32,
+  "temperature": 0.25,
+  "learning_rate": 0.0003,
+  "hidden_dims": [
+    256,
+    256
+  ],
+  "log_std_min": -5.0,
+  "log_std_max": -1.0,
+  "initial_log_std": -1.0,
+  "teacher_std_floor": 0.006737946999085467,
+  "density_chunk": 256,
+  "action_bound": 10.0,
+  "target_width": 1.0,
+  "train_block": 100,
+  "checkpoint_interval": 1000,
+  "study": "20260925_kl_nongmm_targets",
+  "steps": 100000,
+  "mean_output_init_scale": 3.0,
+  "seeds": [
+    0,
+    1
+  ],
+  "validation_seeds": [
+    2,
+    3
+  ],
+  "reverse_L": 1024,
+  "eval_samples": 32768,
+  "final_eval_samples": 262144,
+  "histogram_bins": 512,
+  "eval_steps": [
+    0,
+    1000,
+    10000,
+    25000,
+    50000,
+    75000,
+    100000
+  ],
+  "allow_large_L": false,
+  "cases": [
+    {
+      "id": "n00_spike_ramp",
+      "family": "spike_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -4.25,
+          "width": 0.1
+        },
+        {
+          "kind": "shelf",
+          "left": 0.5,
+          "right": 8,
+          "edge_left": 0.6,
+          "edge_right": 0.08,
+          "tilt": 0.2
+        }
+      ],
+      "shape_masses": [
+        0.2,
+        0.8
+      ],
+      "target_centers": [
+        -4.25,
+        7.7
+      ],
+      "expected_modes": 2,
+      "core_intervals": [
+        [
+          -4.5,
+          -4
+        ],
+        [
+          3,
+          7.7
+        ]
+      ]
+    },
+    {
+      "id": "n01_spike_ramp_equal",
+      "family": "spike_ramp_equal",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -4.25,
+          "width": 0.1
+        },
+        {
+          "kind": "shelf",
+          "left": 0.5,
+          "right": 8,
+          "edge_left": 0.6,
+          "edge_right": 0.08,
+          "tilt": 0.2
+        }
+      ],
+      "shape_masses": [
+        0.5,
+        0.5
+      ],
+      "target_centers": [
+        -4.25,
+        7.7
+      ],
+      "expected_modes": 2,
+      "core_intervals": [
+        [
+          -4.5,
+          -4
+        ],
+        [
+          3,
+          7.7
+        ]
+      ]
+    },
+    {
+      "id": "n02_three_plateaus",
+      "family": "three_plateaus",
+      "shapes": [
+        {
+          "kind": "shelf",
+          "left": -6,
+          "right": -3,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        },
+        {
+          "kind": "shelf",
+          "left": -1,
+          "right": 1,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        },
+        {
+          "kind": "shelf",
+          "left": 3,
+          "right": 6,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        }
+      ],
+      "shape_masses": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "target_centers": [
+        -4.5,
+        0,
+        4.5
+      ],
+      "expected_modes": 3,
+      "core_intervals": [
+        [
+          -5.5,
+          -3.5
+        ],
+        [
+          -0.7,
+          0.7
+        ],
+        [
+          3.5,
+          5.5
+        ]
+      ]
+    },
+    {
+      "id": "n03_skew_shelves",
+      "family": "skew_shelves",
+      "shapes": [
+        {
+          "kind": "shelf",
+          "left": -6,
+          "right": -3,
+          "edge_left": 0.15,
+          "edge_right": 0.08,
+          "tilt": 0.8
+        },
+        {
+          "kind": "shelf",
+          "left": -1,
+          "right": 1,
+          "edge_left": 0.08,
+          "edge_right": 0.15,
+          "tilt": -0.8
+        },
+        {
+          "kind": "shelf",
+          "left": 3,
+          "right": 6,
+          "edge_left": 0.15,
+          "edge_right": 0.08,
+          "tilt": 0.8
+        }
+      ],
+      "shape_masses": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "target_centers": [
+        -3.3,
+        -0.7,
+        5.7
+      ],
+      "expected_modes": 3,
+      "core_intervals": [
+        [
+          -5.5,
+          -3.3
+        ],
+        [
+          -0.7,
+          0.7
+        ],
+        [
+          3.5,
+          5.7
+        ]
+      ]
+    },
+    {
+      "id": "n04_spike_two_shelves",
+      "family": "spike_two_shelves",
+      "shapes": [
+        {
+          "kind": "shelf",
+          "left": -6,
+          "right": -3,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        },
+        {
+          "kind": "logistic",
+          "center": 0,
+          "width": 0.12
+        },
+        {
+          "kind": "shelf",
+          "left": 3,
+          "right": 6.5,
+          "edge_left": 0.25,
+          "edge_right": 0.06,
+          "tilt": 0
+        }
+      ],
+      "shape_masses": [
+        0.2,
+        0.4,
+        0.4
+      ],
+      "target_centers": [
+        -4.5,
+        0,
+        5
+      ],
+      "expected_modes": 3,
+      "core_intervals": [
+        [
+          -5.5,
+          -3.5
+        ],
+        [
+          -0.25,
+          0.25
+        ],
+        [
+          3.5,
+          6
+        ]
+      ]
+    },
+    {
+      "id": "n05_four_plateaus",
+      "family": "four_plateaus",
+      "shapes": [
+        {
+          "kind": "shelf",
+          "left": -7,
+          "right": -5,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        },
+        {
+          "kind": "shelf",
+          "left": -3,
+          "right": -1,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        },
+        {
+          "kind": "shelf",
+          "left": 1,
+          "right": 3,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        },
+        {
+          "kind": "shelf",
+          "left": 5,
+          "right": 7,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        }
+      ],
+      "shape_masses": [
+        0.15,
+        0.35,
+        0.35,
+        0.15
+      ],
+      "target_centers": [
+        -6,
+        -2,
+        2,
+        6
+      ],
+      "expected_modes": 4,
+      "core_intervals": [
+        [
+          -6.75,
+          -5.25
+        ],
+        [
+          -2.75,
+          -1.25
+        ],
+        [
+          1.25,
+          2.75
+        ],
+        [
+          5.25,
+          6.75
+        ]
+      ]
+    },
+    {
+      "id": "n06_ripple_shelf",
+      "family": "ripple_shelf",
+      "shapes": [
+        {
+          "kind": "shelf",
+          "left": -6.4,
+          "right": 6.4,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0,
+          "ripple": 0.9,
+          "frequency": 2.0943951023931953,
+          "phase_center": 0
+        }
+      ],
+      "shape_masses": [
+        1.0
+      ],
+      "target_centers": [
+        -6,
+        -3,
+        0,
+        3,
+        6
+      ],
+      "expected_modes": 5,
+      "core_intervals": [
+        [
+          -6.3,
+          -5.7
+        ],
+        [
+          -3.35,
+          -2.65
+        ],
+        [
+          -0.35,
+          0.35
+        ],
+        [
+          2.65,
+          3.35
+        ],
+        [
+          5.7,
+          6.3
+        ]
+      ]
+    },
+    {
+      "id": "n07_spike_flat_ramp",
+      "family": "spike_flat_ramp",
+      "shapes": [
+        {
+          "kind": "logistic",
+          "center": -5,
+          "width": 0.13
+        },
+        {
+          "kind": "shelf",
+          "left": -1,
+          "right": 1,
+          "edge_left": 0.12,
+          "edge_right": 0.12,
+          "tilt": 0
+        },
+        {
+          "kind": "shelf",
+          "left": 3,
+          "right": 7,
+          "edge_left": 0.25,
+          "edge_right": 0.05,
+          "tilt": 0.4
+        }
+      ],
+      "shape_masses": [
+        0.25,
+        0.3,
+        0.45
+      ],
+      "target_centers": [
+        -5,
+        0,
+        6.8
+      ],
+      "expected_modes": 3,
+      "core_intervals": [
+        [
+          -5.25,
+          -4.75
+        ],
+        [
+          -0.75,
+          0.75
+        ],
+        [
+          4,
+          6.8
+        ]
+      ]
+    }
+  ]
+}
