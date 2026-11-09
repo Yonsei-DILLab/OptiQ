@@ -1,0 +1,8 @@
+20 episodes per run, same episode seeds; mean ± std over seeds of per-run means; fall = return < 2500
+iBOLT z0                   n=10    4831 ±  542   median-run  5069  min-run  3717  falls  8.5%
+iBOLT k1                   n=10    4964 ±  316   median-run  4945  min-run  4386  falls  6.0%
+iBOLT k4                   n=10    5184 ±  178   median-run  5239  min-run  4786  falls  1.5%
+iBOLT k16                  n=10    5207 ±  148   median-run  5223  min-run  4986  falls  1.0%
+iBOLT k64                  n=10    5228 ±   87   median-run  5239  min-run  5037  falls  0.0%
+Gamid-PG TD3 (final 1M)    n= 5    4811 ±  431   median-run  4719  min-run  4327  falls  8.0%
+AEAP (final 1M)            n= 5    5197 ±  231   median-run  5112  min-run  4934  falls  1.0%

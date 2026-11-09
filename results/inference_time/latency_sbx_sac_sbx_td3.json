@@ -1,0 +1,41 @@
+[
+  {
+    "method": "sbx_sac",
+    "mode": "deterministic",
+    "predict_mean": 0.2949446602200624,
+    "predict_seed_std": 0.014042321426799023,
+    "predict_call_std": 0.02213351227002343,
+    "predict_p95": 0.32464204559801146,
+    "forward_mean": 0.09848861424834468,
+    "forward_seed_std": 0.0036392005628014725,
+    "forward_call_std": 0.008040779338370347,
+    "compile_first": 202.09366001654416,
+    "jax": "0.10.2"
+  },
+  {
+    "method": "sbx_sac",
+    "mode": "stochastic",
+    "predict_mean": 0.5241845215030481,
+    "predict_seed_std": 0.007350624995871409,
+    "predict_call_std": 0.06670177833150678,
+    "predict_p95": 0.5475170066347346,
+    "forward_mean": 0.10340754833305255,
+    "forward_seed_std": 0.002220870260842206,
+    "forward_call_std": 0.007483993368785775,
+    "compile_first": 257.8830920101609,
+    "jax": "0.10.2"
+  },
+  {
+    "method": "sbx_td3",
+    "mode": "deterministic",
+    "predict_mean": 0.28196056964807215,
+    "predict_seed_std": 0.004954617052287644,
+    "predict_call_std": 0.03551525775744247,
+    "predict_p95": 0.30258249025791883,
+    "forward_mean": 0.09465735823614523,
+    "forward_seed_std": 0.00283790603382638,
+    "forward_call_std": 0.007600791945868244,
+    "compile_first": 84.82388200354762,
+    "jax": "0.10.2"
+  }
+]

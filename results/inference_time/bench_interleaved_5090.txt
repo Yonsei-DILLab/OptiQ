@@ -1,0 +1,20 @@
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+28 passed, 13 warnings in 65.51s (0:01:05)
+jax 0.4.33  NVIDIA GeForce RTX 5090  Humanoid-v4  batch 1
+
+[1] latency per action, 5 seeds x 30 interleaved blocks x 100 calls
+                      ms (mean ± std over seeds)    vs iBOLT zero z (± s.e.)
+iBOLT zero z                  0.208 ± 0.012      +0.0000 ± 0.0000
+iBOLT stochastic z            0.228 ± 0.012      +0.0192 ± 0.0004
+iBOLT z+sigma                 0.230 ± 0.013      +0.0212 ± 0.0003
+SAC deterministic             0.211 ± 0.012      +0.0031 ± 0.0003
+SAC stochastic                0.217 ± 0.013      +0.0089 ± 0.0004
+TD3 deterministic             0.210 ± 0.012      +0.0018 ± 0.0005
+
+[2] device-only compute: 2000 sequential actions in one jitted scan, 20 repeats
+iBOLT zero z           3.83 ± 0.03 µs/action
+iBOLT stochastic z     7.55 ± 0.03 µs/action
+iBOLT z+sigma          8.77 ± 0.02 µs/action
+SAC deterministic      3.81 ± 0.01 µs/action
+SAC stochastic         6.31 ± 0.02 µs/action
+TD3 deterministic      3.83 ± 0.02 µs/action

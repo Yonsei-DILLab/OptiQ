@@ -1,7 +1,16 @@
-"""Two independent scalar Q networks used by the gmm-trg configuration."""
+"""Twin scalar Q networks.
+
+`Critic`/`VectorCritic`: the plain GELU MLP used by the paper configuration.
+`CrossQCritic`/`CrossQVectorCritic`: the CrossQ critic (Bhatt et al., ICLR 2024)
+following SBX (araffin/sbx, MIT license, `sbx/crossq/policies.py` and
+`sbx/common/jax_layers.py`): BatchRenorm on the input and after every hidden
+activation, ReLU. The learner removes the target network for this critic.
+"""
 from collections.abc import Sequence
 import flax.linen as nn
+import jax
 import jax.numpy as jnp
+
 
 class Critic(nn.Module):
     net_arch: Sequence[int]
@@ -21,3 +30,85 @@ class VectorCritic(nn.Module):
             split_rngs={'params':True,'dropout':True,'batch_stats':True},
             in_axes=None,out_axes=0,axis_size=self.n_critics)
         return ensemble(net_arch=self.net_arch)(obs,action,train)
+
+
+class BatchRenorm(nn.Module):
+    """Batch Renormalization (Ioffe, 2017) with the SBX CrossQ semantics.
+
+    Training: minibatch statistics during warmup, then r/d-renormalized statistics;
+    running averages are updated on every training call.
+    Evaluation (use_running_average=True): running statistics only.
+    """
+    use_running_average: bool = False
+    momentum: float = 0.99
+    epsilon: float = 0.001
+    warmup_steps: int = 100_000
+    r_max: float = 3.0
+    d_max: float = 5.0
+
+    @nn.compact
+    def __call__(self, x):
+        features = x.shape[-1]
+        axes = tuple(range(x.ndim - 1))
+        ra_mean = self.variable('batch_stats', 'mean', lambda: jnp.zeros((features,), jnp.float32))
+        ra_var = self.variable('batch_stats', 'var', lambda: jnp.ones((features,), jnp.float32))
+        steps = self.variable('batch_stats', 'steps', lambda: jnp.zeros((), jnp.int32))
+        scale = self.param('scale', nn.initializers.ones, (features,))
+        bias = self.param('bias', nn.initializers.zeros, (features,))
+        if self.use_running_average:
+            mean, var = ra_mean.value, ra_var.value
+        else:
+            batch_mean = x.mean(axis=axes)
+            batch_var = jnp.maximum((x * x).mean(axis=axes) - batch_mean * batch_mean, 0.)
+            if self.is_initializing():
+                mean, var = batch_mean, batch_var
+            else:
+                std = jnp.sqrt(batch_var + self.epsilon)
+                ra_std = jnp.sqrt(ra_var.value + self.epsilon)
+                r = jnp.clip(jax.lax.stop_gradient(std / ra_std), 1. / self.r_max, self.r_max)
+                d = jnp.clip(jax.lax.stop_gradient((batch_mean - ra_mean.value) / ra_std),
+                             -self.d_max, self.d_max)
+                # sqrt(batch_var) with a finite gradient at batch_var = 0. A feature that is
+                # constant within the batch (dead unit, or float32 cancellation in
+                # E[x^2]-E[x]^2 for a near-constant feature) gives batch_var = 0; plain
+                # sqrt then has an infinite derivative, and inf * 0 makes the whole gradient
+                # NaN, even during warmup (warm = 0 multiplies, it does not stop the NaN).
+                # Forward values are unchanged.
+                positive = batch_var > 0.
+                sqrt_var = jnp.where(positive, jnp.sqrt(jnp.where(positive, batch_var, 1.)), 0.)
+                affine_mean = batch_mean - d * sqrt_var / r
+                affine_var = batch_var / (r ** 2)
+                warm = (steps.value >= self.warmup_steps).astype(x.dtype)
+                mean = warm * affine_mean + (1. - warm) * batch_mean
+                var = warm * affine_var + (1. - warm) * batch_var
+                ra_mean.value = self.momentum * ra_mean.value + (1. - self.momentum) * batch_mean
+                ra_var.value = self.momentum * ra_var.value + (1. - self.momentum) * batch_var
+                steps.value = steps.value + 1
+        return (x - mean) * jax.lax.rsqrt(var + self.epsilon) * scale + bias
+
+
+class CrossQCritic(nn.Module):
+    net_arch: Sequence[int]
+    momentum: float = 0.99
+    warmup_steps: int = 100_000
+    @nn.compact
+    def __call__(self, obs, action, train=True):
+        norm = lambda: BatchRenorm(use_running_average=not train, momentum=self.momentum,
+                                   warmup_steps=self.warmup_steps)
+        x = norm()(jnp.concatenate((obs, action), axis=-1))
+        for width in self.net_arch:
+            x = norm()(nn.relu(nn.Dense(width)(x)))
+        return nn.Dense(1)(x)
+
+class CrossQVectorCritic(nn.Module):
+    net_arch: Sequence[int]
+    n_critics: int = 2
+    momentum: float = 0.99
+    warmup_steps: int = 100_000
+    @nn.compact
+    def __call__(self, obs, action, train=True):
+        ensemble = nn.vmap(CrossQCritic,variable_axes={'params':0,'batch_stats':0},
+            split_rngs={'params':True,'dropout':True,'batch_stats':True},
+            in_axes=None,out_axes=0,axis_size=self.n_critics)
+        return ensemble(net_arch=self.net_arch, momentum=self.momentum,
+                        warmup_steps=self.warmup_steps)(obs,action,train)

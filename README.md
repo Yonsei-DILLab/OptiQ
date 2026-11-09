@@ -69,10 +69,13 @@ likelihood**; this version does not use OT, hard assignments or conditional-row
 NLL. The `ibolt` package implements the learner directly; the public entry point
 selects only direct mixture likelihood.
 
-Both evaluation modes are logged every 5K steps, with 10 episodes per mode:
+Three evaluation modes are logged every 5K steps, with 10 episodes per mode
+(the same paired reset seeds in every mode):
 `eval/zero_z/mean_reward` uses z=0 and the center action;
 `eval/stochastic_z/mean_reward` draws z independently at each action and also
-uses only the center. Neither adds conditional Gaussian or external noise.
+uses only the center; `eval/stochastic_z_sigma/mean_reward` draws z at each
+action and then samples the box-truncated conditional Gaussian with its sigma
+(the full policy). No mode adds external (DACER) noise.
 Do not combine these metrics when aggregating results.
 
 Logging keeps evaluation returns/lengths, actor and critic losses, current Q,

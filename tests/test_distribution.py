@@ -71,6 +71,30 @@ def test_actor_and_policy_sampling():
     centers,_=model.apply({'params':altered},obs,z)
     np.testing.assert_allclose(centers,np.broadcast_to(np.tanh([.5,2.]),(32,2)),atol=1e-6)
 
+def test_predict_single_dispatch_matches_reset_noise_path():
+    import gymnasium as gym
+    cfg=train.compose_config(['benchmark=hopper'])
+    env=gym.make(cfg.env_name)
+    pol=IBOLTPolicy(env.observation_space,env.action_space,cfg=cfg)
+    pol.build(jax.random.PRNGKey(0),None,3e-4)
+    obs=env.reset(seed=0)[0][None].astype(np.float32)
+    for mu_only in (False,True):
+        pol.evaluation_mu_only=mu_only
+        pol.key=jax.random.PRNGKey(7)
+        got=[np.asarray(pol._predict(obs)) for _ in range(3)]
+        key=jax.random.PRNGKey(7);want=[]
+        for _ in range(3):  # previous implementation: reset_noise() then sample_action()
+            key,noise_key=jax.random.split(key)
+            want.append(np.asarray(IBOLTPolicy.sample_action(pol.actor_state,obs,noise_key,
+                sample_conditional_noise=not mu_only)))
+        np.testing.assert_array_equal(np.stack(got),np.stack(want))
+        np.testing.assert_array_equal(pol.key,key)
+    before=np.asarray(pol.key)
+    centers=pol._predict(obs,deterministic=True)
+    np.testing.assert_array_equal(pol.key,before)
+    np.testing.assert_allclose(centers,IBOLTPolicy.sample_action(pol.actor_state,obs,pol.key,deterministic=True))
+    env.close()
+
 @pytest.mark.parametrize('task',['humanoid','ant','halfcheetah','walker2d','hopper'])
 def test_environment_update(task,tmp_path,monkeypatch):
     import copy
@@ -104,11 +128,13 @@ def test_environment_update(task,tmp_path,monkeypatch):
                    'train/current_q_values','train/actor_std_mean','train/actor_std_min',
                    'train/actor_std_max','rollout/ep_rew_mean','rollout/ep_len_mean',
                    'time/fps','time/time_elapsed'}
-        allowed.update(f'eval/{mode}/{metric}' for mode in ['zero_z','stochastic_z']
+        modes = ['zero_z','stochastic_z','stochastic_z_sigma']
+        allowed.update(f'eval/{mode}/{metric}' for mode in modes
                        for metric in ['mean_reward','std_reward','mean_ep_length'])
         assert columns <= allowed
         assert {'train/actor_loss','train/actor_std_min','train/actor_std_max'} <= columns
-        for mode in ['zero_z','stochastic_z']:
+        assert {f'eval/{mode}/mean_reward' for mode in modes} <= columns
+        for mode in modes:
             with np.load(cb.directory/f'evaluations_{mode}.npz') as saved:
                 assert set(saved.files)=={'timesteps','results','ep_lengths','env_seeds','policy_seeds'}
     finally:

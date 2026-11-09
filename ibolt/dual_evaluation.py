@@ -1,4 +1,5 @@
-"""Paired zero-latent and stochastic-latent conditional-mean evaluations."""
+"""Paired policy evaluations: zero-latent center, stochastic-latent center,
+and the full stochastic policy (stochastic latent plus conditional sigma)."""
 import jax
 import numpy as np
 from pathlib import Path
@@ -9,13 +10,19 @@ from stable_baselines3.common.vec_env import sync_envs_normalization
 
 
 class DualMuEvalCallback(EvalCallback):
-    """Both modes use epsilon=0; each episode receives a paired reset seed.
+    """Three modes; each episode receives the same paired reset seed in every mode.
 
+    zero_z:             z=0, center action tanh(mu(s,0)) (paper's evaluation).
+    stochastic_z:       z~N(0,I) per action, center action only.
+    stochastic_z_sigma: z~N(0,I) per action, then a box-truncated Gaussian draw
+                        with the conditional sigma (the full policy, as in
+                        collection but without DACER behavior noise).
+    No external exploration noise is added in any mode.
     Evaluation RNG is independent of collection and restored even on failure.
     MuJoCo evaluation records returns and episode lengths, not success metrics.
     """
 
-    MODES = ("zero_z", "stochastic_z")
+    MODES = ("zero_z", "stochastic_z", "stochastic_z_sigma")
 
     def __init__(self, eval_env, cfg, directory):
         self.directory = Path(directory)
@@ -41,8 +48,8 @@ class DualMuEvalCallback(EvalCallback):
         policy_seeds = rng.integers(0, 2**30, self.n_eval_episodes)
         current = {}
         try:
-            policy.evaluation_mu_only = True
             for mode in self.MODES:
+                policy.evaluation_mu_only = (mode != "stochastic_z_sigma")
                 rewards, lengths = [], []
                 for env_seed, policy_seed in zip(env_seeds, policy_seeds):
                     self.eval_env.seed(int(env_seed))

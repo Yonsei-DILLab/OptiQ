@@ -21,14 +21,17 @@ class IBOLT(JaxLearner):
                                       data.dones, data.rewards)]
         arrays[3], arrays[4] = arrays[3].ravel(), arrays[4].ravel()
         a = self.cfg.alg.actor
+        delay = int(a.get('policy_delay', 1))  # CrossQ/TD3-style: one actor update per `delay` critic updates
         for i in range(gradient_steps):
             obs, actions, next_obs, dones, rewards = [x[i*batch_size:(i+1)*batch_size] for x in arrays]
-            update_actor = self.num_timesteps > a.learning_starts
+            update_actor = (self.num_timesteps > a.learning_starts
+                            and (self._n_updates + i + 1) % delay == 0)
             self.policy.qf_state, self.policy.actor_state, metrics, self.key = self._step(
                 self.gamma, self.tau, self.policy.actor_state, self.policy.qf_state,
                 obs, actions, next_obs, dones, rewards, self.key,
                 int(a.num_policy_samples), int(a.proposals_per_policy_sample),
-                float(a.temperature), float(a.density_correction_beta), update_actor)
+                float(a.temperature), float(a.density_correction_beta), update_actor,
+                self.cfg.alg.critic.get('type', 'default') == 'crossq')
         self._n_updates += gradient_steps
         if self.model_save_path and (self.num_timesteps % self.save_every_n_steps == 0
                                    or self.num_timesteps == self.learning_starts + 1):
@@ -53,11 +56,16 @@ class IBOLT(JaxLearner):
         self.logger.dump(self.num_timesteps)
 
     @classmethod
-    @partial(jax.jit, static_argnames=['cls','n','repeats','do_actor'])
+    @partial(jax.jit, static_argnames=['cls','n','repeats','do_actor','crossq'])
     def _step(cls,gamma,tau,actor,critic,obs,actions,next_obs,dones,rewards,key,
-              n,repeats,temperature,beta,do_actor):
-        critic,metrics,key = cls.update_critic(gamma,actor,critic,obs,actions,next_obs,dones,rewards,key)
-        critic = cls.soft_update(tau,critic)
+              n,repeats,temperature,beta,do_actor,crossq=False):
+        if crossq:
+            # CrossQ: no target network, so no Polyak update.
+            critic,metrics,key = cls.update_critic_crossq(gamma,actor,critic,obs,actions,
+                                                          next_obs,dones,rewards,key)
+        else:
+            critic,metrics,key = cls.update_critic(gamma,actor,critic,obs,actions,next_obs,dones,rewards,key)
+            critic = cls.soft_update(tau,critic)
         if do_actor:
             actor,actor_metrics,key = cls.update_actor(actor,critic,obs,key,n,repeats,
                                                       temperature,beta)
@@ -85,6 +93,27 @@ class IBOLT(JaxLearner):
         return critic, dict(critic_loss=loss,current_q_values=current), key
 
     @staticmethod
+    @jax.jit
+    def update_critic_crossq(gamma, actor, critic, obs, actions, next_obs, dones, rewards, key):
+        """CrossQ TD update: one joint BatchRenorm forward pass over (s,a) and (s',a'),
+        bootstrapping from the live critic (no target network), as in SBX CrossQ.
+        The backup is the same plain TD target as update_critic (no entropy term)."""
+        key, actor_key, _, _, current_key, _ = jax.random.split(key, 6)
+        next_actions = jax.lax.stop_gradient(IBOLTPolicy.sample_action(actor, next_obs, actor_key))
+        def loss_fn(params):
+            q, updates = critic.apply_fn({'params':params,'batch_stats':critic.batch_stats},
+                jnp.concatenate([obs, next_obs], axis=0), jnp.concatenate([actions, next_actions], axis=0),
+                rngs={'dropout':current_key}, mutable=['batch_stats'], train=True)
+            current, next_q = jnp.split(q[...,0], 2, axis=1)
+            target = jax.lax.stop_gradient(rewards + (1-dones)*gamma*next_q.min(axis=0))
+            loss = ((current-target[None])**2).mean(axis=1).sum()
+            return loss, (updates, current.min(axis=0).mean())
+        (loss,(updates,current)), grads = jax.value_and_grad(loss_fn,has_aux=True)(critic.params)
+        critic = critic.apply_gradients(grads=grads)
+        critic = critic.replace(batch_stats=updates['batch_stats'])
+        return critic, dict(critic_loss=loss,current_q_values=current), key
+
+    @staticmethod
     @partial(jax.jit, static_argnames=['n','repeats'])
     def update_actor(actor, critic, observations, key, n, repeats, temperature, beta):
         key, latent_key, proposal_key, dropout_key = jax.random.split(key,4)
@@ -93,8 +122,14 @@ class IBOLT(JaxLearner):
         z_key, _ = jax.random.split(latent_key)
         z = jax.random.normal(z_key,(batch,n,dim),dtype=observations.dtype)
         obs = jnp.broadcast_to(observations[:,None],(batch,n,obs_dim)).reshape(batch*n,obs_dim)
+        bn = hasattr(actor, 'batch_stats')
         def loss_fn(params):
-            mu, log_std = actor.apply_fn({'params':params},obs,z.reshape(batch*n,dim))
+            if bn:  # CrossQ-style actor: batch statistics, running averages updated
+                (mu, log_std), bn_updates = actor.apply_fn({'params':params,'batch_stats':actor.batch_stats},
+                    obs, z.reshape(batch*n,dim), train=True, mutable=['batch_stats'])
+            else:
+                mu, log_std = actor.apply_fn({'params':params},obs,z.reshape(batch*n,dim))
+                bn_updates = None
             mu, log_std = mu.reshape(batch,n,dim), log_std.reshape(batch,n,dim)
             means, scales = jax.lax.stop_gradient(mu), jax.lax.stop_gradient(log_std)
             # Preserve the reference floor (an identity at the allowed bounds).
@@ -115,6 +150,9 @@ class IBOLT(JaxLearner):
             std = jnp.exp(log_std)
             metrics = dict(actor_loss=loss,actor_std_mean=std.mean(),actor_std_min=std.min(),
                 actor_std_max=std.max())
-            return loss, metrics
-        (_,metrics), grads = jax.value_and_grad(loss_fn,has_aux=True)(actor.params)
-        return actor.apply_gradients(grads=grads), metrics, key
+            return loss, (metrics, bn_updates)
+        (_,(metrics,bn_updates)), grads = jax.value_and_grad(loss_fn,has_aux=True)(actor.params)
+        actor = actor.apply_gradients(grads=grads)
+        if bn:
+            actor = actor.replace(batch_stats=bn_updates['batch_stats'])
+        return actor, metrics, key

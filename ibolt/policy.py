@@ -12,7 +12,7 @@ from flax.training.train_state import TrainState
 from gymnasium import spaces
 
 from stable_baselines3.common.policies import BasePolicy
-from models.critic import VectorCritic
+from models.critic import BatchRenorm, CrossQVectorCritic, VectorCritic
 
 from .box_gaussian import sample_box
 
@@ -32,10 +32,17 @@ class SemiImplicitActor(nn.Module):
     mean_output_init_scale: float = 1.0e-4
     log_std_output_init_scale: float = 0.0
     hidden_init: str = "xavier_uniform"
+    # CrossQ-style actor (SBX CrossQ Actor): BatchRenorm on the input and after every hidden
+    # activation; running statistics at action time (train=False), batch statistics in the update.
+    batch_renorm: bool = False
+    bn_momentum: float = 0.99
+    bn_warmup_steps: int = 100_000
 
     @nn.compact
-    def __call__(self, observations, latents):
-        x = jnp.concatenate((observations, latents), axis=-1)
+    def __call__(self, observations, latents, train=False):
+        norm = lambda y: (BatchRenorm(use_running_average=not train, momentum=self.bn_momentum,
+                                      warmup_steps=self.bn_warmup_steps)(y) if self.batch_renorm else y)
+        x = norm(jnp.concatenate((observations, latents), axis=-1))
         if self.hidden_init == "xavier_uniform":
             hidden_kernel_init = kernel_init()
         elif self.hidden_init in ("orthogonal", "orthogonal_sqrt2"):
@@ -44,7 +51,7 @@ class SemiImplicitActor(nn.Module):
         else:
             raise ValueError(f"Unknown hidden initializer: {self.hidden_init}")
         for width in self.hidden_dims:
-            x = nn.gelu(nn.Dense(width, kernel_init=hidden_kernel_init)(x))
+            x = norm(nn.gelu(nn.Dense(width, kernel_init=hidden_kernel_init)(x)))
         mu = nn.Dense(self.action_dim, kernel_init=kernel_init(self.mean_output_init_scale), name="mu")(x)
         raw_log_std = nn.Dense(
             self.action_dim, kernel_init=kernel_init(self.log_std_output_init_scale),
@@ -58,6 +65,18 @@ class CriticState(TrainState):
     target_params: dict
     batch_stats: dict
     target_batch_stats: dict
+
+
+class ActorBNState(TrainState):
+    """Actor optimizer state plus BatchRenorm running statistics (CrossQ-style actor only)."""
+    batch_stats: dict
+
+
+def actor_variables(actor_state):
+    """Flax variables for an actor apply; plain TrainState actors have parameters only."""
+    if hasattr(actor_state, "batch_stats"):
+        return {"params": actor_state.params, "batch_stats": actor_state.batch_stats}
+    return {"params": actor_state.params}
 
 
 class IBOLTPolicy(BasePolicy):
@@ -97,10 +116,19 @@ class IBOLTPolicy(BasePolicy):
         action = jnp.zeros((1, action_dim), dtype=jnp.float32)
         latent = jnp.zeros_like(action)
 
-        self.qf = VectorCritic(
-            net_arch=self.cfg.alg.critic.hs,
-            n_critics=self.cfg.alg.critic.n_critics,
-        )
+        critic_cfg = self.cfg.alg.critic
+        if critic_cfg.get("type", "default") == "crossq":
+            self.qf = CrossQVectorCritic(
+                net_arch=tuple(critic_cfg.hs),
+                n_critics=critic_cfg.n_critics,
+                momentum=float(critic_cfg.bn_momentum),
+                warmup_steps=int(critic_cfg.renorm_warmup_steps),
+            )
+        else:
+            self.qf = VectorCritic(
+                net_arch=critic_cfg.hs,
+                n_critics=critic_cfg.n_critics,
+            )
         qf_variables = self.qf.init(
             {"params": qf_key, "dropout": dropout_key, "batch_stats": bn_key},
             obs,
@@ -127,18 +155,29 @@ class IBOLTPolicy(BasePolicy):
             log_std_min=actor_cfg.log_std_min, log_std_max=actor_cfg.log_std_max,
             initial_log_std=actor_cfg.initial_log_std,
             mean_output_init_scale=actor_cfg.mean_output_init_scale,
-            log_std_output_init_scale=actor_cfg.log_std_output_init_scale)
-        actor_params = self.actor_model.init(actor_key, obs, latent)["params"]
+            log_std_output_init_scale=actor_cfg.log_std_output_init_scale,
+            batch_renorm=bool(actor_cfg.get("batch_renorm", False)),
+            bn_momentum=float(actor_cfg.get("bn_momentum", 0.99)),
+            bn_warmup_steps=int(actor_cfg.get("renorm_warmup_steps", 100_000)))
+        actor_variables_init = self.actor_model.init(actor_key, obs, latent)
         actor_tx = optax.adam(
             learning_rate=self.cfg.alg.optimizer.lr_actor,
             b1=self.cfg.alg.optimizer.actor_b1,
             b2=self.cfg.alg.optimizer.actor_b2,
         )
-        self.actor_state = TrainState.create(
-            apply_fn=self.actor_model.apply,
-            params=actor_params,
-            tx=actor_tx,
-        )
+        if self.actor_model.batch_renorm:
+            self.actor_state = ActorBNState.create(
+                apply_fn=self.actor_model.apply,
+                params=actor_variables_init["params"],
+                batch_stats=actor_variables_init["batch_stats"],
+                tx=actor_tx,
+            )
+        else:
+            self.actor_state = TrainState.create(
+                apply_fn=self.actor_model.apply,
+                params=actor_variables_init["params"],
+                tx=actor_tx,
+            )
         return key
 
     @staticmethod
@@ -154,18 +193,35 @@ class IBOLTPolicy(BasePolicy):
         shape = (observations.shape[0], actor_state.params['mu']['bias'].shape[0])
         z = (jnp.zeros(shape,dtype=observations.dtype) if deterministic else
              jax.random.normal(latent_key,shape,dtype=observations.dtype))
-        mu, log_std = actor_state.apply_fn({'params':actor_state.params},observations,z)
+        mu, log_std = actor_state.apply_fn(actor_variables(actor_state),observations,z)
         if deterministic or not sample_conditional_noise:
             return mu
         return sample_box(noise_key,mu,log_std)
 
+    @staticmethod
+    @partial(jax.jit, static_argnames=["sample_conditional_noise"])
+    def _act_and_advance(actor_state, observations, key, sample_conditional_noise=True):
+        """Key split and stochastic action in one dispatch (same key stream as reset_noise)."""
+        key, noise_key = jax.random.split(key)
+        action = IBOLTPolicy.sample_action(
+            actor_state, observations, noise_key, deterministic=False,
+            sample_conditional_noise=sample_conditional_noise)
+        return action, key
+
     def _predict(self, observation: np.ndarray, deterministic: bool = False):
-        self.reset_noise()
-        return self.sample_action(
+        # One device dispatch per action. z = 0 needs no randomness, so the key
+        # is left untouched; stochastic modes split the key inside the jitted
+        # call, giving exactly the actions and key stream of reset_noise()
+        # followed by sample_action(), without the separate split dispatch.
+        # The per-action noise key is consumed inside the call and not returned
+        # (nothing reads policy.noise_key after an action; predict_critic draws
+        # its own via reset_noise()).
+        if deterministic:
+            return self.sample_action(self.actor_state, observation, self.key, deterministic=True)
+        action, self.key = self._act_and_advance(
             self.actor_state,
             observation,
-            self.noise_key,
-            deterministic=deterministic,
+            self.key,
             # Evaluation callbacks may disable only the conditional Gaussian
             # draw while retaining a fresh stochastic latent z. Collection and
             # TD calls never set this flag and therefore keep the full policy.
@@ -173,6 +229,7 @@ class IBOLTPolicy(BasePolicy):
                 getattr(self, "evaluation_mu_only", False)
             ),
         )
+        return action
 
     def predict(self, observation, state=None, episode_start=None, deterministic=False):
         """Bridge flat MuJoCo observations to JAX without a Torch forward pass."""

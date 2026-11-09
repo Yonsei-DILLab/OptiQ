@@ -31,7 +31,11 @@ def validate_config(cfg):
         raise ValueError('Training must extend past warmup.')
     if cfg.alg.critic.n_critics != 2:
         raise ValueError('This configuration requires two scalar critics.')
-    if a.log_std_min != -5 or a.log_std_max != -1:
+    if a.get('custom_log_std_bounds', False):
+        # Ablation: other upper bounds. The lower bound stays -5, the floor update_actor applies to log sigma.
+        if a.log_std_min != -5 or not a.log_std_min < a.log_std_max:
+            raise ValueError('Custom log-scale bounds need log_std_min = -5 < log_std_max.')
+    elif a.log_std_min != -5 or a.log_std_max != -1:
         raise ValueError('This release retains the gmm-trg scale bounds [-5,-1].')
 
 def run(cfg):
@@ -46,7 +50,7 @@ def run(cfg):
     config['runtime'] = provenance()
     config['protocol'] = dict(distribution='box-truncated Gaussian mixture with tanh centers',
         objective='density-corrected value-weighted marginal NLL', ot=False,
-        evaluation='zero-z and resampled-z centers, no conditional or external noise')
+        evaluation='zero-z center, resampled-z center, and resampled-z with conditional sigma; no external noise')
     (output / 'config.json').write_text(json.dumps(config, indent=2))
     tracking = model = callbacks = None
     success = False

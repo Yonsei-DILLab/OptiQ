@@ -1,0 +1,16 @@
+== seeds 0-9 (original)
+mean over the last 100K steps per run, mean ± std (ddof=1) over seeds; 10 evaluation episodes per point
+task          n      z=0 (paper)         z~N(0,I)   z~N(0,I)+sigma
+hopper       10      3260 ±  262      3136 ±  374      2796 ±  554
+walker2d     10      4427 ±  370      4336 ±  332      4252 ±  317
+halfcheetah  10     10170 ± 1771      9922 ± 1671      9404 ± 1631
+ant          10      4950 ±  824      4654 ±  836      4096 ±  918
+humanoid     10      4863 ±  403      4896 ±  336      4929 ±  319
+== seeds 0-4 duplicates
+mean over the last 100K steps per run, mean ± std (ddof=1) over seeds; 10 evaluation episodes per point
+task          n      z=0 (paper)         z~N(0,I)   z~N(0,I)+sigma
+hopper        5      3244 ±  248      3165 ±  197      2527 ±  566
+walker2d      5      4425 ±  309      4392 ±  300      4410 ±  185
+halfcheetah   5      9764 ± 1996      9550 ± 1930      8978 ± 1919
+ant           5      5415 ±   98      5075 ±  135      4455 ±  233
+humanoid      5      5013 ±  305      4792 ±  337      4932 ±  209
