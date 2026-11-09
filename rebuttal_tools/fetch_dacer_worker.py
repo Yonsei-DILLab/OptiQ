@@ -8,6 +8,7 @@ from .fetch_wide_utd1_worker import atomic
 
 TARGETS=(-.9,.5,.75,1.)
 NOISE_SCALES=(.1,.3,1.)
+ALLOWED_NOISE_SCALES=NOISE_SCALES+(2.,3.)
 
 
 def leaves(value,prefix=''):
@@ -49,7 +50,7 @@ def verify_saved_configuration(spec,smoke=False):
 
 def run(spec,smoke=False):
     assert spec['task']=='pick-and-place' and spec['method']=='ibolt' and spec['temperature']==.25
-    assert spec['target_entropy_per_dim'] in TARGETS and spec['noise_scale'] in NOISE_SCALES
+    assert spec['target_entropy_per_dim'] in TARGETS and spec['noise_scale'] in ALLOWED_NOISE_SCALES
     import train
     from omegaconf import OmegaConf
     from fetch_rebuttal import run as native

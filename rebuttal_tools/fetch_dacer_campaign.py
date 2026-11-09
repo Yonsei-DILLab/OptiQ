@@ -50,21 +50,22 @@ def score_job(job):
         final100_height=heights[1000000]['modes']['stochastic_z'])
 
 
-def choose_parameters(jobs):
-    assert len(jobs)==24 and all(j['status']=='completed' for j in jobs)
+def choose_parameters(jobs,profiles=None):
+    profiles=profiles or [(h,l) for h in TARGETS for l in NOISE_SCALES]
+    assert len(jobs)==2*len(profiles) and all(j['status']=='completed' for j in jobs)
+    assert {(j['target_entropy_per_dim'],j['noise_scale']) for j in jobs}==set(map(tuple,profiles))
     scores=[]
-    for target in TARGETS:
-        for noise in NOISE_SCALES:
-            selected=[j for j in jobs if (j['target_entropy_per_dim'],j['noise_scale'])==(target,noise)]
-            assert sorted(j['seed'] for j in selected)==[0,1]
-            seeds=[score_job(j) for j in sorted(selected,key=lambda j:j['seed'])]
-            n=sum(r['air_episodes'] for r in seeds);hits=sum(r['air_successes'] for r in seeds)
-            # Final 100-episode scores remain unavailable to the selection key.
-            scores.append(dict(target_entropy_per_dim=target,noise_scale=noise,
-                last5_success=statistics.mean(r['last5_success'] for r in seeds),
-                auc=statistics.mean(r['auc'] for r in seeds),air_success_rate=hits/n if n else 0.,
-                air_successes=hits,air_episodes=n,
-                seeds=[{k:v for k,v in r.items() if not k.startswith('final100')} for r in seeds]))
+    for target,noise in profiles:
+        selected=[j for j in jobs if (j['target_entropy_per_dim'],j['noise_scale'])==(target,noise)]
+        assert sorted(j['seed'] for j in selected)==[0,1]
+        seeds=[score_job(j) for j in sorted(selected,key=lambda j:j['seed'])]
+        n=sum(r['air_episodes'] for r in seeds);hits=sum(r['air_successes'] for r in seeds)
+        # Final 100-episode scores remain unavailable to the selection key.
+        scores.append(dict(target_entropy_per_dim=target,noise_scale=noise,
+            last5_success=statistics.mean(r['last5_success'] for r in seeds),
+            auc=statistics.mean(r['auc'] for r in seeds),air_success_rate=hits/n if n else 0.,
+            air_successes=hits,air_episodes=n,
+            seeds=[{k:v for k,v in r.items() if not k.startswith('final100')} for r in seeds]))
     best=max(scores,key=lambda r:(r['last5_success'],r['air_success_rate'],r['auc'],
         -abs(r['target_entropy_per_dim']+.9),-abs(math.log(r['noise_scale']/.1))))
     return dict(parameters={k:best[k] for k in ('target_entropy_per_dim','noise_scale')},
@@ -105,6 +106,7 @@ def compare_to_sac(jobs,reference,selection):
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--plan',type=Path,required=True);args=parser.parse_args()
     path=args.plan.resolve();folder=path.parent;plan=json.loads(path.read_text())
+    profiles=plan.get('parameter_grid',[(h,l) for h in TARGETS for l in NOISE_SCALES])
     lock=(folder/'controller.lock').open('a');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     from fetch_rebuttal.campaign import environment,gpu_memory,memory_available_mib,process_live
     children={};stopping=False
@@ -124,7 +126,7 @@ def main():
         job.update(status='initializing',pid=child.pid,start_ticks=info['start_ticks'],started_unix=time.time())
         children[child.pid]=child;print('Started '+job['id']+' GPU'+str(job['gpu']),flush=True);return child
     def preflight_gpu(gpu):
-        result={};cases=[(h,l) for h in TARGETS for l in NOISE_SCALES]
+        result={};cases=profiles
         for index in range(gpu,len(cases),4):
             target,noise=cases[index];job=job_spec(plan,target,noise,100+index,'preflight')
             job.update(id='preflight-'+job['id'],gpu=gpu,cpus=plan['cpu_lanes'][gpu],output=str(folder/'preflights'/str(index)))
@@ -145,7 +147,7 @@ def main():
         plan.update(controller_pid=os.getpid(),status='validating_gpu');atomic(path,plan)
         if not plan.get('preflights_passed'):
             with ThreadPoolExecutor(max_workers=4) as pool:groups=list(pool.map(preflight_gpu,range(4)))
-            plan['preflights']={k:v for group in groups for k,v in group.items()};assert len(plan['preflights'])==12
+            plan['preflights']={k:v for group in groups for k,v in group.items()};assert len(plan['preflights'])==len(profiles)
             plan['preflights_passed']=True;atomic(folder/'gpu-preflight-verification.json',dict(passed=True,cases=plan['preflights']))
         plan['status']='running'
         while True:
@@ -166,11 +168,11 @@ def main():
                     if job['progress'].get('updates',0)>0:job['status']='running'
             for pid,child in list(children.items()):
                 if child.poll() is not None:child.wait();del children[pid]
-            search=[j for j in plan['jobs'] if j['phase']=='search'];assert len(search)==24
+            search=[j for j in plan['jobs'] if j['phase']=='search'];assert len(search)==2*len(profiles)
             if not plan.get('selection'):
                 if any(j['status']=='failed' for j in search):plan['selection_blocked']='A search seed failed; no partial-grid selection.'
                 elif all(j['status']=='completed' for j in search):
-                    selection=choose_parameters(search);plan['selection']=selection;atomic(folder/'dacer-selection.json',selection)
+                    selection=choose_parameters(search,profiles);plan['selection']=selection;atomic(folder/'dacer-selection.json',selection)
                     c=selection['parameters']
                     if (c['target_entropy_per_dim'],c['noise_scale'])==(-.9,.1):
                         plan['jobs']+=plan['confirmation_reuse_candidates'];selection['confirmation_reused']=True
@@ -206,10 +208,12 @@ def main():
             time.sleep(10)
     except BaseException as error:
         # Existing control PIDs belong to the original campaign, never this process tree.
+        owned={j['pid'] for j in plan['jobs'] if not j['external'] and j['status'] in ('initializing','running') and process_live(j)}
         for pid,child in children.items():
-            if child.poll() is None:
-                try:os.kill(pid,signal.SIGTERM)
-                except ProcessLookupError:pass
+            if child.poll() is None:owned.add(pid)
+        for pid in owned:
+            try:os.kill(pid,signal.SIGTERM)
+            except ProcessLookupError:pass
         plan.update(status='stopped' if stopping else 'controller_error',error=repr(error));atomic(path,plan);raise
 
 
