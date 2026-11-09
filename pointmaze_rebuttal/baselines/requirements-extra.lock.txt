@@ -1,0 +1,9 @@
+contextlib2==21.6.0
+docstring-parser==0.16
+gym==0.23.1
+gym-notices==0.0.8
+ml-collections==0.1.1
+shtab==1.7.2
+six==1.17.0
+typeguard==4.4.4
+tyro==0.8.14

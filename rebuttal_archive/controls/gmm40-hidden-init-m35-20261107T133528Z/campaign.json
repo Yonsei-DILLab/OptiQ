@@ -1,0 +1,133 @@
+{
+  "campaign": "gmm40-hidden-init-m35-20261107T133528Z",
+  "root": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z",
+  "jobs": [
+    {
+      "host": "ibolt-server-1",
+      "gpu": 0,
+      "hidden_init": "orthogonal",
+      "seed": 0,
+      "output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal/seed-0",
+      "program": "ibolt-hidden-20261107t133528z-orthogonal-s0"
+    },
+    {
+      "host": "ibolt-server-1",
+      "gpu": 1,
+      "hidden_init": "orthogonal",
+      "seed": 1,
+      "output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal/seed-1",
+      "program": "ibolt-hidden-20261107t133528z-orthogonal-s1"
+    },
+    {
+      "host": "ibolt-server-1",
+      "gpu": 2,
+      "hidden_init": "orthogonal",
+      "seed": 2,
+      "output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal/seed-2",
+      "program": "ibolt-hidden-20261107t133528z-orthogonal-s2"
+    },
+    {
+      "host": "ibolt-server-1",
+      "gpu": 3,
+      "hidden_init": "orthogonal_sqrt2",
+      "seed": 0,
+      "output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2/seed-0",
+      "program": "ibolt-hidden-20261107t133528z-orthogonal_sqrt2-s0"
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 0,
+      "hidden_init": "orthogonal",
+      "seed": 3,
+      "output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal/seed-3",
+      "program": "ibolt-hidden-20261107t133528z-orthogonal-s3"
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 1,
+      "hidden_init": "orthogonal",
+      "seed": 4,
+      "output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal/seed-4",
+      "program": "ibolt-hidden-20261107t133528z-orthogonal-s4"
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 2,
+      "hidden_init": "orthogonal_sqrt2",
+      "seed": 1,
+      "output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2/seed-1",
+      "program": "ibolt-hidden-20261107t133528z-orthogonal_sqrt2-s1"
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 3,
+      "hidden_init": "orthogonal_sqrt2",
+      "seed": 2,
+      "output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2/seed-2",
+      "program": "ibolt-hidden-20261107t133528z-orthogonal_sqrt2-s2"
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 0,
+      "hidden_init": "orthogonal_sqrt2",
+      "seed": 3,
+      "output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2/seed-3",
+      "program": "ibolt-hidden-20261107t133528z-orthogonal_sqrt2-s3"
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 1,
+      "hidden_init": "orthogonal_sqrt2",
+      "seed": 4,
+      "output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2/seed-4",
+      "program": "ibolt-hidden-20261107t133528z-orthogonal_sqrt2-s4"
+    }
+  ],
+  "revision": "c2b5e5963e98d8275478893d59542e8e5a08d09c",
+  "state": "completed",
+  "success_criterion": {
+    "all_seeds_coverage": 40,
+    "seed_count": 5,
+    "mean_mmd_min": 0.021,
+    "mean_mmd_max": 0.031
+  },
+  "settings": {
+    "log_std_min": -5,
+    "log_std_max": -3.5,
+    "initial_log_std": -4,
+    "teacher_std_floor": null,
+    "n": 256,
+    "m": 256,
+    "batch": 256,
+    "steps": 100000,
+    "eval_samples": 10000,
+    "mean_output_init_scale": 16
+  },
+  "tests": "25 passed on CPU; both initializer variants also run successfully on CUDA",
+  "selected_hidden_init": "orthogonal_sqrt2",
+  "results": {
+    "orthogonal": {
+      "mean_mmd": 0.022682258431051816,
+      "sd_mmd": 0.010282215028853535,
+      "coverage": [
+        40,
+        40,
+        40,
+        40,
+        40
+      ]
+    },
+    "orthogonal_sqrt2": {
+      "mean_mmd": 0.02815410684171656,
+      "sd_mmd": 0.0031168043059566133,
+      "coverage": [
+        40,
+        40,
+        40,
+        40,
+        40
+      ]
+    }
+  },
+  "validation": "25 tests passed. All ten runs completed 100000 updates. Original MMD and coverage recomputed from saved samples and matched; configs identical to baseline except hidden_init and runtime revision. Package versions and target/reference unchanged."
+}

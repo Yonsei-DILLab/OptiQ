@@ -1,0 +1,8 @@
+# Preserve hash-pinned third-party sources and archived source snapshots byte-for-byte.
+fetch_rebuttal/baselines/vendor/** -text -whitespace
+fetch_rebuttal/vendor/** -text -whitespace
+pointmaze_rebuttal/baselines/vendor/** -text -whitespace
+pointmaze_rebuttal/vendor/** -text -whitespace
+pointmaze_rebuttal/ibolt_core/** -text -whitespace
+pointmaze_rebuttal/envs/drac_upstream/** -text -whitespace
+rebuttal_archive/** -text -whitespace

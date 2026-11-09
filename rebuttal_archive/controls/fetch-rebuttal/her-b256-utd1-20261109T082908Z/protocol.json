@@ -1,0 +1,101 @@
+{
+  "campaign": "her-b256-utd1-20261109T082908Z",
+  "restart": "fresh initialization, no previous non-HER checkpoints loaded",
+  "methods": [
+    "iBOLT+HER",
+    "SAC+HER",
+    "IDAC(semi-implicit)+HER",
+    "IDAC-noDGN+HER",
+    "MFPO+HER",
+    "MEOW+HER"
+  ],
+  "baseline_seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "batch_size": 256,
+  "utd": 1,
+  "training_steps": 1000000,
+  "warmup": 5000,
+  "replay_capacity": 1000000,
+  "task_order": [
+    "pick-and-place",
+    "push",
+    "slide",
+    "reach"
+  ],
+  "scheduling": "Parallel seeds per method, independent next-task launch only after that method completes all five seeds",
+  "her": {
+    "strategy": "future",
+    "n_sampled_goal": 4,
+    "relabel_fraction": 0.8,
+    "relabeled_samples_per_batch": 204,
+    "sampled_from": "completed episodes only; inclusive current-to-future next achieved goals within the same episode",
+    "reward": "recompute with the original environment compute_reward",
+    "storage": "raw observations and true physical next observations; metadata preserved for episode boundaries and future goals",
+    "timeout": "bootstrap at the 50-step time limit; relabeled successes do not create terminal states"
+  },
+  "observation_normalization": {
+    "enabled": true,
+    "clip_obs": 5.0,
+    "epsilon": 1e-08,
+    "reward_normalization": false,
+    "order": "relabel raw desired goals and rewards first, normalize both observations with current training statistics afterward",
+    "evaluation": "original desired goals, no HER relabeling; frozen training normalization statistics"
+  },
+  "ibolt": {
+    "temperature_grid": [
+      0.05,
+      0.1,
+      0.25,
+      0.5,
+      1.0,
+      5.0,
+      10.0
+    ],
+    "sweep_seeds": [
+      0,
+      1
+    ],
+    "final_seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "per_task_sweep": true,
+    "overlap": "reuse selected sweep seeds 0/1; append fresh seeds 2/3/4"
+  },
+  "evaluation": {
+    "interval_steps": 5000,
+    "interim_episodes": 10,
+    "final_episodes": 100,
+    "primary": "final-step is_success; additionally report new success excluding initial-success episodes"
+  },
+  "checkpoints": {
+    "interval_steps": 100000,
+    "normalization_saved": true,
+    "replay_saved_at_end": true,
+    "her_metadata_saved": true
+  },
+  "planned_initial_jobs": 39,
+  "planned_total_runs_including_sweeps": 168,
+  "previous_experiments": "Stopped 39 batch-2048 non-HER Fetch runs and cancelled 117 follow-up jobs; existing results/checkpoints preserved",
+  "scope": "Fetch only; PointMaze and GMM untouched",
+  "validation": {
+    "cpu_checks_on_both_servers": "all four Fetch tasks: no cross-episode sampling, ring-buffer overwrite, reward recomputation, raw-state preservation, normalization, timeout masking, native/SB3/IDAC interface consistency and serialization passed",
+    "gpu_preflights": "See gpu-preflights-host1.json and gpu-preflights-host2.json"
+  },
+  "launch_verification": {
+    "verified_processes": 39,
+    "running": 34,
+    "initializing": 5,
+    "failed": 0,
+    "actual_gpu_preflight_methods": 6,
+    "batch_and_her_flags_verified": true
+  }
+}

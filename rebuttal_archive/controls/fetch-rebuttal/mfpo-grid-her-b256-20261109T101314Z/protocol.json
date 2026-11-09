@@ -1,0 +1,66 @@
+{
+  "campaign": "mfpo-grid-her-b256-20261109T101314Z",
+  "task": "pick-and-place",
+  "target_entropy_coeff": [
+    -0.5,
+    -0.25,
+    0.0
+  ],
+  "target_entropy": [
+    -2.0,
+    -1.0,
+    0.0
+  ],
+  "initial_temperature": [
+    0.01,
+    0.1,
+    1.0
+  ],
+  "sweep_seeds": [
+    0,
+    1
+  ],
+  "grid_runs": 18,
+  "steps": 1000000,
+  "batch_size": 256,
+  "utd": 1,
+  "her": "future n=4 (204/256 relabeled)",
+  "observation_normalization": true,
+  "reward_normalization": false,
+  "selection": "Mean final-step success across seeds 0/1 and the last 10 pre-final evaluations (950K..995K); ties: new final success, success AUC, proximity to author defaults. Final 100-episode evaluation excluded from tuning.",
+  "selected_rerun_seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "selected_rerun_fresh_initialization": true,
+  "selection_seed_overlap": "Rerun seeds 0/1 overlap tuning seeds; not independent validation.",
+  "followup_order": [
+    "pick-and-place",
+    "push",
+    "slide",
+    "reach"
+  ],
+  "followup_parameters": "Transfer PickAndPlace-selected MFPO hyperparameters unchanged; no additional sweeps.",
+  "common_settings": "All other original HER batch256 settings and pinned vendor implementation unchanged.",
+  "other_methods": "Adopt running host2 PIDs and preserve frozen sources/commands; host1 unchanged.",
+  "previous_mfpo": "Preserve checkpoints and evaluations; stop default MFPO runs and supersede its follow-up queue only after GPU preflights pass.",
+  "failure_policy": "Block affected method chain; no automatic hidden changes or seed substitution.",
+  "validation": "Pinned upstream vendor hashes unchanged; scheduler selection/gating and dashboard cohort aggregation checked locally. GPU preflights execute four real updates for each of the nine settings before handoff.",
+  "initialization_admission": {
+    "max_per_gpu": 5,
+    "per_job_gpu_reserve_mib": 2048,
+    "gpu_headroom_mib": 3072,
+    "host_memory_headroom_mib": 4096
+  },
+  "launch_verified": {
+    "grid_processes": 18,
+    "gpu_preflight_settings": 9,
+    "other_host2_training_pids_preserved": 15,
+    "previous_mfpo_training_stopped": 5,
+    "previous_mfpo_followups_superseded": 15,
+    "initializing_at_verification": true
+  }
+}

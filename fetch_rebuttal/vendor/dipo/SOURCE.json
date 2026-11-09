@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/BellmanTimeHut/DIPO",
+  "revision": "c6d8d1b39d6cea22e7d779e08111dbf974dbb4fc",
+  "files": {
+    "LICENSE": "c3246e0d3068c9bc1426d05d2713ecfa95c32c0933cf6d97181a66948bc15c1d",
+    "agent/DiPo.py": "20abc64370babb465bc13d401a0f7f307101faf17a9ce9fdd6f82bdd353bbf5d",
+    "agent/diffusion.py": "6aa4a8ee3b424bbf0aa7c19d3483f0434ac7b2d18088e9c8cd48272b387f03c3",
+    "agent/helpers.py": "7728a8c15949958076432cd51d68a24599d6736d91718d04adbbb23402474be0",
+    "agent/model.py": "42bb2136074b39f8d1d99594e78bcd4542575022504ba5f0ef695993c050be4d",
+    "agent/replay_memory.py": "c808b0c5d9f136eaeb0a8b00faa3fd68fa1bd39b04bfe6e79e05bd136ae11c0d",
+    "agent/vae.py": "d626d8f40c1275ede05875f02721fc657c3c985c5d5699c6afd2f1e8fcf04125"
+  }
+}

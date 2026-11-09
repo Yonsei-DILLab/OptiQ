@@ -1,0 +1,158 @@
+{
+  "campaign": "gmm40-baselines-queue-20261107T152416Z",
+  "root": "/workspace/iBOLT/outputs/gmm40-baselines-queue-20261107T152416Z",
+  "code_root": "/workspace/iBOLT-runs/gmm40-baselines-queue-20261107T152416Z-code",
+  "revision": "6eff3ddee16a6ea96fe8093ae91f96c085c22abd",
+  "state": "registered",
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "methods": [
+    "meow",
+    "td3"
+  ],
+  "actor_updates": 100000,
+  "jobs": [
+    {
+      "id": "meow-s0",
+      "host": "ibolt-server-1",
+      "gpu": 0,
+      "baseline": "meow",
+      "seed": 0,
+      "actor_updates": 100000,
+      "output": "/workspace/iBOLT/outputs/gmm40-baselines-queue-20261107T152416Z/meow/seed-0",
+      "program": "ibolt-gmm40-queued-20261108-meow-s0"
+    },
+    {
+      "id": "meow-s1",
+      "host": "ibolt-server-1",
+      "gpu": 1,
+      "baseline": "meow",
+      "seed": 1,
+      "actor_updates": 100000,
+      "output": "/workspace/iBOLT/outputs/gmm40-baselines-queue-20261107T152416Z/meow/seed-1",
+      "program": "ibolt-gmm40-queued-20261108-meow-s1"
+    },
+    {
+      "id": "meow-s2",
+      "host": "ibolt-server-1",
+      "gpu": 2,
+      "baseline": "meow",
+      "seed": 2,
+      "actor_updates": 100000,
+      "output": "/workspace/iBOLT/outputs/gmm40-baselines-queue-20261107T152416Z/meow/seed-2",
+      "program": "ibolt-gmm40-queued-20261108-meow-s2"
+    },
+    {
+      "id": "td3-s0",
+      "host": "ibolt-server-1",
+      "gpu": 3,
+      "baseline": "td3",
+      "seed": 0,
+      "actor_updates": 100000,
+      "output": "/workspace/iBOLT/outputs/gmm40-baselines-queue-20261107T152416Z/td3/seed-0",
+      "program": "ibolt-gmm40-queued-20261108-td3-s0"
+    },
+    {
+      "id": "td3-s3",
+      "host": "ibolt-server-1",
+      "gpu": 3,
+      "baseline": "td3",
+      "seed": 3,
+      "actor_updates": 100000,
+      "output": "/workspace/iBOLT/outputs/gmm40-baselines-queue-20261107T152416Z/td3/seed-3",
+      "program": "ibolt-gmm40-queued-20261108-td3-s3"
+    },
+    {
+      "id": "meow-s3",
+      "host": "ibolt-server-2",
+      "gpu": 0,
+      "baseline": "meow",
+      "seed": 3,
+      "actor_updates": 100000,
+      "output": "/workspace/iBOLT/outputs/gmm40-baselines-queue-20261107T152416Z/meow/seed-3",
+      "program": "ibolt-gmm40-queued-20261108-meow-s3"
+    },
+    {
+      "id": "meow-s4",
+      "host": "ibolt-server-2",
+      "gpu": 1,
+      "baseline": "meow",
+      "seed": 4,
+      "actor_updates": 100000,
+      "output": "/workspace/iBOLT/outputs/gmm40-baselines-queue-20261107T152416Z/meow/seed-4",
+      "program": "ibolt-gmm40-queued-20261108-meow-s4"
+    },
+    {
+      "id": "td3-s1",
+      "host": "ibolt-server-2",
+      "gpu": 2,
+      "baseline": "td3",
+      "seed": 1,
+      "actor_updates": 100000,
+      "output": "/workspace/iBOLT/outputs/gmm40-baselines-queue-20261107T152416Z/td3/seed-1",
+      "program": "ibolt-gmm40-queued-20261108-td3-s1"
+    },
+    {
+      "id": "td3-s2",
+      "host": "ibolt-server-2",
+      "gpu": 3,
+      "baseline": "td3",
+      "seed": 2,
+      "actor_updates": 100000,
+      "output": "/workspace/iBOLT/outputs/gmm40-baselines-queue-20261107T152416Z/td3/seed-2",
+      "program": "ibolt-gmm40-queued-20261108-td3-s2"
+    },
+    {
+      "id": "td3-s4",
+      "host": "ibolt-server-2",
+      "gpu": 2,
+      "baseline": "td3",
+      "seed": 4,
+      "actor_updates": 100000,
+      "output": "/workspace/iBOLT/outputs/gmm40-baselines-queue-20261107T152416Z/td3/seed-4",
+      "program": "ibolt-gmm40-queued-20261108-td3-s4"
+    }
+  ],
+  "nodes": [
+    {
+      "host": "ibolt-server-1",
+      "controller": "ibolt-gmm40-queue-20261108-host1",
+      "config": "/workspace/iBOLT/outputs/gmm40-baselines-queue-20261107T152416Z/queue-config-ibolt-server-1.json",
+      "state": "/workspace/iBOLT/outputs/gmm40-baselines-queue-20261107T152416Z/queue-state-ibolt-server-1.json",
+      "prerequisites": [
+        {
+          "program": "pointmaze-utd1-b256-20261107T151408Z-medium",
+          "manifest": "/workspace/iBOLT/outputs/pointmaze-rebuttal/utd1-b256-20261107T151408Z/medium/campaign.json",
+          "expected_jobs": 5
+        }
+      ]
+    },
+    {
+      "host": "ibolt-server-2",
+      "controller": "ibolt-gmm40-queue-20261108-host2",
+      "config": "/workspace/iBOLT/outputs/gmm40-baselines-queue-20261107T152416Z/queue-config-ibolt-server-2.json",
+      "state": "/workspace/iBOLT/outputs/gmm40-baselines-queue-20261107T152416Z/queue-state-ibolt-server-2.json",
+      "prerequisites": [
+        {
+          "program": "pointmaze-utd1-b256-20261107T151408Z-hard",
+          "manifest": "/workspace/iBOLT/outputs/pointmaze-rebuttal/utd1-b256-20261107T151408Z/hard/campaign.json",
+          "expected_jobs": 5
+        }
+      ]
+    }
+  ],
+  "registration_verification": {
+    "controllers_running": 2,
+    "jobs_queued": 10,
+    "training_jobs_started": 0,
+    "existing_gpu_processes_unchanged": true,
+    "prerequisites": "Each host's complete five-seed upstream campaign must finish successfully before dispatch",
+    "gpu_gate": "No compute processes, memory <=256 MiB and utilization <=5%, observed twice 30 seconds apart; one training job per GPU",
+    "source_pinned": true
+  }
+}

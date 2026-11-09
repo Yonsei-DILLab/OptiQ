@@ -1,0 +1,13 @@
+{
+  "profile": "dipo-upstream-u32",
+  "method": "dipo",
+  "steps": 1001472,
+  "num_envs": 2048,
+  "batch_size": 4096,
+  "updates_per_collect": 32,
+  "warmup": 8192,
+  "eval_every": 200000,
+  "eval_episodes": 200,
+  "final_episodes": 500,
+  "replay_capacity": 1000000
+}

@@ -1,0 +1,261 @@
+{
+  "campaign": "gmm40-anonymous-repro-20261107T140259Z",
+  "root": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z",
+  "code": "/workspace/iBOLT-runs/gmm40-anonymous-repro-20261107T140259Z",
+  "revision": "5463d8de179625631bf6e3f25e53acecfcec184c",
+  "baseline_revision": "c2b5e5963e98d8275478893d59542e8e5a08d09c",
+  "baseline": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2",
+  "state": "completed",
+  "settings": {
+    "n": 256,
+    "m": 256,
+    "batch": 256,
+    "steps": 100000,
+    "eval_samples": 10000,
+    "teacher_std_floor": null,
+    "log_std_min": -5,
+    "log_std_max": -3.5,
+    "initial_log_std": -4,
+    "hidden_init": "orthogonal_sqrt2"
+  },
+  "jobs": [
+    {
+      "host": "ibolt-server-1",
+      "gpu": 3,
+      "seed": 0,
+      "role": "same_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/same_gpu/seed-0",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2/seed-0",
+      "program": "ibolt-repro-20261107t140259z-same_gpu-s0",
+      "round": 1
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 2,
+      "seed": 1,
+      "role": "same_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/same_gpu/seed-1",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2/seed-1",
+      "program": "ibolt-repro-20261107t140259z-same_gpu-s1",
+      "round": 1
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 3,
+      "seed": 2,
+      "role": "same_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/same_gpu/seed-2",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2/seed-2",
+      "program": "ibolt-repro-20261107t140259z-same_gpu-s2",
+      "round": 1
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 0,
+      "seed": 3,
+      "role": "same_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/same_gpu/seed-3",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2/seed-3",
+      "program": "ibolt-repro-20261107t140259z-same_gpu-s3",
+      "round": 1
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 1,
+      "seed": 4,
+      "role": "same_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/same_gpu/seed-4",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2/seed-4",
+      "program": "ibolt-repro-20261107t140259z-same_gpu-s4",
+      "round": 1
+    },
+    {
+      "host": "ibolt-server-1",
+      "gpu": 0,
+      "seed": 0,
+      "role": "other_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/other_gpu/seed-0",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2/seed-0",
+      "program": "ibolt-repro-20261107t140259z-other_gpu-s0",
+      "round": 1
+    },
+    {
+      "host": "ibolt-server-1",
+      "gpu": 1,
+      "seed": 1,
+      "role": "other_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/other_gpu/seed-1",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2/seed-1",
+      "program": "ibolt-repro-20261107t140259z-other_gpu-s1",
+      "round": 1
+    },
+    {
+      "host": "ibolt-server-1",
+      "gpu": 2,
+      "seed": 2,
+      "role": "other_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/other_gpu/seed-2",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2/seed-2",
+      "program": "ibolt-repro-20261107t140259z-other_gpu-s2",
+      "round": 1
+    },
+    {
+      "host": "ibolt-server-1",
+      "gpu": 3,
+      "seed": 0,
+      "role": "repeat_same_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/repeat_same_gpu/seed-0",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/same_gpu/seed-0",
+      "program": "ibolt-repro-20261107t140259z-r2-same_gpu-s0",
+      "round": 2
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 2,
+      "seed": 1,
+      "role": "repeat_same_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/repeat_same_gpu/seed-1",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/same_gpu/seed-1",
+      "program": "ibolt-repro-20261107t140259z-r2-same_gpu-s1",
+      "round": 2
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 3,
+      "seed": 2,
+      "role": "repeat_same_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/repeat_same_gpu/seed-2",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/same_gpu/seed-2",
+      "program": "ibolt-repro-20261107t140259z-r2-same_gpu-s2",
+      "round": 2
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 0,
+      "seed": 3,
+      "role": "repeat_same_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/repeat_same_gpu/seed-3",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/same_gpu/seed-3",
+      "program": "ibolt-repro-20261107t140259z-r2-same_gpu-s3",
+      "round": 2
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 1,
+      "seed": 4,
+      "role": "repeat_same_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/repeat_same_gpu/seed-4",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/same_gpu/seed-4",
+      "program": "ibolt-repro-20261107t140259z-r2-same_gpu-s4",
+      "round": 2
+    },
+    {
+      "host": "ibolt-server-1",
+      "gpu": 0,
+      "seed": 0,
+      "role": "repeat_other_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/repeat_other_gpu/seed-0",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/other_gpu/seed-0",
+      "program": "ibolt-repro-20261107t140259z-r2-other_gpu-s0",
+      "round": 2
+    },
+    {
+      "host": "ibolt-server-1",
+      "gpu": 1,
+      "seed": 1,
+      "role": "repeat_other_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/repeat_other_gpu/seed-1",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/other_gpu/seed-1",
+      "program": "ibolt-repro-20261107t140259z-r2-other_gpu-s1",
+      "round": 2
+    },
+    {
+      "host": "ibolt-server-1",
+      "gpu": 2,
+      "seed": 2,
+      "role": "repeat_other_gpu",
+      "output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/repeat_other_gpu/seed-2",
+      "baseline_output": "/workspace/iBOLT/outputs/gmm40-anonymous-repro-20261107T140259Z/other_gpu/seed-2",
+      "program": "ibolt-repro-20261107t140259z-r2-other_gpu-s2",
+      "round": 2
+    }
+  ],
+  "comparison_design": "Two independent full 100K runs of published revision on each same physical GPU (five primary seeds and three additional GPU placements). Earlier c2b5e59 experiment is a separate profile-transfer comparison.",
+  "results": {
+    "published_revision": "5463d8de179625631bf6e3f25e53acecfcec184c",
+    "complete_primary_pairs": true,
+    "complete_all_pairs": true,
+    "primary_same_commit_same_gpu": {
+      "comparisons": 5,
+      "initial_checkpoints_identical": 5,
+      "final_checkpoints_identical": 4,
+      "full_policy_sample_arrays_identical": 3,
+      "full_policy_metric_dicts_identical": 3,
+      "max_abs_mmd_difference": 0.021773051516828356
+    },
+    "all_same_commit_same_gpu": {
+      "comparisons": 8,
+      "initial_checkpoints_identical": 8,
+      "final_checkpoints_identical": 7,
+      "full_policy_sample_arrays_identical": 5,
+      "full_policy_metric_dicts_identical": 5,
+      "max_abs_mmd_difference": 0.021773051516828356
+    },
+    "different_gpu_same_commit": {
+      "comparisons": 3,
+      "initial_checkpoints_identical": 3,
+      "final_checkpoints_identical": 1,
+      "full_policy_sample_arrays_identical": 0,
+      "full_policy_metric_dicts_identical": 0,
+      "max_abs_mmd_difference": 0.010636906819902953
+    },
+    "profile_transfer_different_commits": {
+      "comparisons": 5,
+      "initial_checkpoints_identical": 5,
+      "final_checkpoints_identical": 4,
+      "full_policy_sample_arrays_identical": 4,
+      "full_policy_metric_dicts_identical": 4,
+      "max_abs_mmd_difference": 0.021773051516828356
+    },
+    "first_published_run": {
+      "mean_mmd": 0.023799496538350888,
+      "sample_sd_mmd": 0.011096535544480618,
+      "coverage": [
+        40,
+        40,
+        40,
+        40,
+        40
+      ]
+    },
+    "second_published_run": {
+      "mean_mmd": 0.0281542020948422,
+      "sample_sd_mmd": 0.0031169963576229928,
+      "coverage": [
+        40,
+        40,
+        40,
+        40,
+        40
+      ]
+    },
+    "environment_verification": [
+      {
+        "host": "ibolt-server-1",
+        "source_and_packages_and_gpu_driver_unchanged": true,
+        "packages": 115,
+        "gpus": "0, GPU-6d511f33-5e9e-b232-1a8b-b23ef5351e54, NVIDIA GeForce RTX 5090, 580.178.04\n1, GPU-512e364c-2b4f-8574-b598-a36650d60b89, NVIDIA GeForce RTX 5090, 580.178.04\n2, GPU-1b94048f-fcc2-aad5-b2b6-e2e7ebd7ae02, NVIDIA GeForce RTX 5090, 580.178.04\n3, GPU-50ef29d7-4457-e856-11f1-ddab875a3960, NVIDIA GeForce RTX 5090, 580.178.04\n",
+        "source_archive_sha256": "4b3f7d12595fbd75b5cef2231098896553d4602c5053256290a2c5c79a9cd8fe",
+        "source_files_verified": 18
+      },
+      {
+        "host": "ibolt-server-2",
+        "source_and_packages_and_gpu_driver_unchanged": true,
+        "packages": 115,
+        "gpus": "0, GPU-ac60866d-7a9b-16a5-d341-f15943ea50cd, NVIDIA GeForce RTX 5090, 580.173.02\n1, GPU-e421be02-cc40-b6e4-c1cb-af3f2302614e, NVIDIA GeForce RTX 5090, 580.173.02\n2, GPU-d1c0c181-c40f-0c28-7ea3-5e6df168d15a, NVIDIA GeForce RTX 5090, 580.173.02\n3, GPU-2184d8b1-1b00-5462-18cf-7c25fab3f75e, NVIDIA GeForce RTX 5090, 580.173.02\n",
+        "source_archive_sha256": "4b3f7d12595fbd75b5cef2231098896553d4602c5053256290a2c5c79a9cd8fe",
+        "source_files_verified": 18
+      }
+    ]
+  }
+}

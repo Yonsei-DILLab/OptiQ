@@ -1,0 +1,95 @@
+{
+  "repository": "https://github.com/Yonsei-DILLab/OptiQ",
+  "revision": "1c8d7a453d4de4c79ee60844ffdf8d0140f109a8",
+  "files": {
+    "ibolt_core/__init__.py": {
+      "source": "ibolt/__init__.py",
+      "sha256": "0c7a04e9237d89f5b86d9e58f6f621451ac8d7061c14060c0eb84a1e9d56fd8c"
+    },
+    "ibolt_core/algorithm.py": {
+      "source": "ibolt/algorithm.py",
+      "sha256": "ca7bfab22aa1451e8ec8433f0c241e003929ba4455c122e7f11f19a82ab0914d"
+    },
+    "ibolt_core/box_gaussian.py": {
+      "source": "ibolt/box_gaussian.py",
+      "sha256": "a3e09688f03cda41f2bf14d9a8438e605399422b57b6be9d9b8ad1a04d4b6ef8"
+    },
+    "ibolt_core/distillation.py": {
+      "source": "ibolt/distillation.py",
+      "sha256": "7e99d7e61afc48534573da6b19f1c1dfbb70623f507a08d2b4dcf1fe198528a8"
+    },
+    "ibolt_core/learner.py": {
+      "source": "ibolt/learner.py",
+      "sha256": "0ca1afa59f42e6d2ed2ac000858de03d3edaefc07341895f6be03fb131ef2df2"
+    },
+    "ibolt_core/policy.py": {
+      "source": "ibolt/policy.py",
+      "sha256": "34e4afc34991b022bf4ae44090fd98f8f8770a8bb0196eaeed282887ab17507a"
+    },
+    "ibolt_core/runtime.py": {
+      "source": "ibolt/runtime.py",
+      "sha256": "90c2f054135e241c8bb95ecb754c7f38c1abeb40b54d69ad44450f86c01809b0"
+    },
+    "ibolt_core/critic.py": {
+      "source": "models/critic.py",
+      "sha256": "8352a7016e68d8d2c88b21a964167ccd36079ba303032bdf16f9ab2e6b5d4c6b"
+    },
+    "profiles/ibolt-learner.yaml": {
+      "source": "configs/train.yaml",
+      "sha256": "d0ab92ad7e810d1b5df5c387b70c5aa5446107d2ef7905bfdd034100d03bedd3"
+    },
+    "envs/batch.py": {
+      "source": "pointmaze/batch.py",
+      "sha256": "68e4c40522252c03da2fa5224ea3d233767631658276e4d1dcf4db037db6518b"
+    },
+    "envs/drac_paper.py": {
+      "source": "pointmaze/drac_paper.py",
+      "sha256": "52049a99c6082b42bac578940769fff9ccb964e1f8bd8a2c832fb14f45589f8f"
+    },
+    "envs/metrics.py": {
+      "source": "pointmaze/metrics.py",
+      "sha256": "1ceee99f0d4296a28692e1b83f024c2557ddbf245ca5d92d99d3fa068b2236ee"
+    },
+    "envs/drac_upstream/LICENSE": {
+      "source": "pointmaze/drac_upstream/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    "envs/drac_upstream/README.md": {
+      "source": "pointmaze/drac_upstream/README.md",
+      "sha256": "caa594dd34263bbbedeb932e2e562a1f9d9deadb95d0ccc781019d99295b8caa"
+    },
+    "envs/drac_upstream/envs/__init__.py": {
+      "source": "pointmaze/drac_upstream/envs/__init__.py",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    "envs/drac_upstream/envs/mgmaze/assets/point.xml": {
+      "source": "pointmaze/drac_upstream/envs/mgmaze/assets/point.xml",
+      "sha256": "d7b6895a8e72f6d437adfa67fccda0d8c9487ec034587ade76c2d971c8f46027"
+    },
+    "envs/drac_upstream/envs/mgmaze/maps.py": {
+      "source": "pointmaze/drac_upstream/envs/mgmaze/maps.py",
+      "sha256": "bf5e80a59b59008eeb720dff1800966af8b6dfa27dffd54b61c254d4af68ed8b"
+    },
+    "envs/drac_upstream/envs/mgmaze/maze.py": {
+      "source": "pointmaze/drac_upstream/envs/mgmaze/maze.py",
+      "sha256": "47ce001150c109f61a3b7a4caf269ecd4f1cbf6cd789072d1bc7aea4004b1547"
+    },
+    "envs/drac_upstream/envs/mgmaze/point.py": {
+      "source": "pointmaze/drac_upstream/envs/mgmaze/point.py",
+      "sha256": "943eba88a828523381b98321165a322095897cbab796753c24630cbe1e553535"
+    },
+    "envs/drac_upstream/envs/mgmaze/point_maze.py": {
+      "source": "pointmaze/drac_upstream/envs/mgmaze/point_maze.py",
+      "sha256": "8df6443600a7d076e50f7952e2fff643d85d04dd199c220367cff1d2b31d84ac"
+    },
+    "envs/drac_upstream/envs/mgmaze/utils/mujoco_utils.py": {
+      "source": "pointmaze/drac_upstream/envs/mgmaze/utils/mujoco_utils.py",
+      "sha256": "66ccc17dee5da893b88c101cfcffe1b2122f6fa72d64b35568ce37e1b0630dfc"
+    },
+    "envs/replay.py": {
+      "source": "pointmaze/replay.py",
+      "sha256": "1857c6ae7bba2d0349a0cdf53fc76482eb785b399315bfd5f0eb8aa739775468"
+    }
+  },
+  "adaptation": "ibolt_core/policy.py imports its local .critic; all other frozen source bytes are unchanged"
+}

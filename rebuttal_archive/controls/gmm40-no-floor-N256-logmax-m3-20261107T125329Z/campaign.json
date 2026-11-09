@@ -1,0 +1,94 @@
+{
+  "campaign": "gmm40-no-floor-N256-logmax-m3-20261107T125329Z",
+  "created_utc": "2026-11-07 12:53:29 UTC",
+  "state": "completed",
+  "revision": "3efcd14a69821a26ee489ccd204cb87da38c789f",
+  "settings": {
+    "n": 256,
+    "m": 256,
+    "batch": 256,
+    "actor_updates": 100000,
+    "eval_samples": 10000,
+    "teacher_std_floor": null,
+    "temperature": 1,
+    "density_beta": 1,
+    "log_std_min": -5,
+    "log_std_max": -3,
+    "initial_log_std": -4
+  },
+  "comparison": {
+    "baseline_campaign": "gmm40-no-floor-N256-20261107T123651Z",
+    "baseline_revision": "aa79a7ac662a6aa0da5df6623cdd838be55cfbaa",
+    "changed_setting": "log_std_max",
+    "baseline_value": -3.5,
+    "current_value": -3
+  },
+  "jobs": [
+    {
+      "seed": 0,
+      "host": "ibolt-server-1",
+      "gpu": 0,
+      "program": "ibolt-gmm40-nofloor-logmax-m3-20261107t125329z-s0",
+      "output": "/workspace/iBOLT/outputs/gmm40-no-floor-N256-logmax-m3-20261107T125329Z/seed-0",
+      "log": "/workspace/iBOLT/outputs/gmm40-no-floor-N256-logmax-m3-20261107T125329Z/seed-0.log",
+      "initial_checkpoint_matches_baseline": true,
+      "initial_checkpoint_sha256": "13dc6854ce63c90c9b71a74c925fbcffbecc060173ac92a5689bd8bd7a5f9aa0",
+      "completed": true,
+      "actor_updates": 100000,
+      "final_checkpoint": "/workspace/iBOLT/outputs/gmm40-no-floor-N256-logmax-m3-20261107T125329Z/seed-0/checkpoints/step_0100000.bin"
+    },
+    {
+      "seed": 1,
+      "host": "ibolt-server-1",
+      "gpu": 1,
+      "program": "ibolt-gmm40-nofloor-logmax-m3-20261107t125329z-s1",
+      "output": "/workspace/iBOLT/outputs/gmm40-no-floor-N256-logmax-m3-20261107T125329Z/seed-1",
+      "log": "/workspace/iBOLT/outputs/gmm40-no-floor-N256-logmax-m3-20261107T125329Z/seed-1.log",
+      "initial_checkpoint_matches_baseline": true,
+      "initial_checkpoint_sha256": "4d80abf97c3cace700e39e5e9df39f0e4f6b67b4c10c6a66951feed9aced4f8a",
+      "completed": true,
+      "actor_updates": 100000,
+      "final_checkpoint": "/workspace/iBOLT/outputs/gmm40-no-floor-N256-logmax-m3-20261107T125329Z/seed-1/checkpoints/step_0100000.bin"
+    },
+    {
+      "seed": 2,
+      "host": "ibolt-server-1",
+      "gpu": 2,
+      "program": "ibolt-gmm40-nofloor-logmax-m3-20261107t125329z-s2",
+      "output": "/workspace/iBOLT/outputs/gmm40-no-floor-N256-logmax-m3-20261107T125329Z/seed-2",
+      "log": "/workspace/iBOLT/outputs/gmm40-no-floor-N256-logmax-m3-20261107T125329Z/seed-2.log",
+      "initial_checkpoint_matches_baseline": true,
+      "initial_checkpoint_sha256": "6d9d85d88bf80bf91610b50b25e29c05c2a753ead13fc14d4e66e6fcc7f9f116",
+      "completed": true,
+      "actor_updates": 100000,
+      "final_checkpoint": "/workspace/iBOLT/outputs/gmm40-no-floor-N256-logmax-m3-20261107T125329Z/seed-2/checkpoints/step_0100000.bin"
+    },
+    {
+      "seed": 3,
+      "host": "ibolt-server-2",
+      "gpu": 0,
+      "program": "ibolt-gmm40-nofloor-logmax-m3-20261107t125329z-s3",
+      "output": "/workspace/iBOLT/outputs/gmm40-no-floor-N256-logmax-m3-20261107T125329Z/seed-3",
+      "log": "/workspace/iBOLT/outputs/gmm40-no-floor-N256-logmax-m3-20261107T125329Z/seed-3.log",
+      "initial_checkpoint_matches_baseline": true,
+      "initial_checkpoint_sha256": "c63f5fa4fa175bc7002d5c74e0685295896da7323e8ad437aa1d257496b88533",
+      "completed": true,
+      "actor_updates": 100000,
+      "final_checkpoint": "/workspace/iBOLT/outputs/gmm40-no-floor-N256-logmax-m3-20261107T125329Z/seed-3/checkpoints/step_0100000.bin"
+    },
+    {
+      "seed": 4,
+      "host": "ibolt-server-2",
+      "gpu": 1,
+      "program": "ibolt-gmm40-nofloor-logmax-m3-20261107t125329z-s4",
+      "output": "/workspace/iBOLT/outputs/gmm40-no-floor-N256-logmax-m3-20261107T125329Z/seed-4",
+      "log": "/workspace/iBOLT/outputs/gmm40-no-floor-N256-logmax-m3-20261107T125329Z/seed-4.log",
+      "initial_checkpoint_matches_baseline": true,
+      "initial_checkpoint_sha256": "e1c42f17e89a67d42298709181d881dcfc57480fefcd67911e72e6a00d457feb",
+      "completed": true,
+      "actor_updates": 100000,
+      "final_checkpoint": "/workspace/iBOLT/outputs/gmm40-no-floor-N256-logmax-m3-20261107T125329Z/seed-4/checkpoints/step_0100000.bin"
+    }
+  ],
+  "completion_observed_utc": "2026-11-07T13:03:03.429187+00:00"
+}

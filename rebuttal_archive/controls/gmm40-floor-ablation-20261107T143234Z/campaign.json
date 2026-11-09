@@ -1,0 +1,239 @@
+{
+  "campaign": "gmm40-floor-ablation-20261107T143234Z",
+  "root": "/workspace/iBOLT/outputs/gmm40-floor-ablation-20261107T143234Z",
+  "code": "/workspace/iBOLT-runs/gmm40-floor-ablation-20261107T143234Z",
+  "revision": "c2b5e5963e98d8275478893d59542e8e5a08d09c",
+  "baseline_root": "/workspace/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2",
+  "baseline_local": "/Users/yunheechan/Desktop/\ucf54\ub529/iBOLT/outputs/gmm40-hidden-init-m35-20261107T133528Z/orthogonal_sqrt2",
+  "state": "completed",
+  "settings": {
+    "n": 256,
+    "m": 256,
+    "batch": 256,
+    "steps": 100000,
+    "eval_samples": 10000,
+    "hidden_init": "orthogonal_sqrt2",
+    "log_std_min": -5,
+    "log_std_max": -3.5,
+    "initial_log_std": -4,
+    "mean_output_init_scale": 16
+  },
+  "jobs": [
+    {
+      "host": "ibolt-server-1",
+      "gpu": 3,
+      "seed": 0,
+      "role": "floor_on",
+      "teacher_std_floor": 0.05,
+      "output": "/workspace/iBOLT/outputs/gmm40-floor-ablation-20261107T143234Z/floor_on/seed-0",
+      "program": "ibolt-floor-20261107t143234z-floor_on-s0"
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 2,
+      "seed": 1,
+      "role": "floor_on",
+      "teacher_std_floor": 0.05,
+      "output": "/workspace/iBOLT/outputs/gmm40-floor-ablation-20261107T143234Z/floor_on/seed-1",
+      "program": "ibolt-floor-20261107t143234z-floor_on-s1"
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 3,
+      "seed": 2,
+      "role": "floor_on",
+      "teacher_std_floor": 0.05,
+      "output": "/workspace/iBOLT/outputs/gmm40-floor-ablation-20261107T143234Z/floor_on/seed-2",
+      "program": "ibolt-floor-20261107t143234z-floor_on-s2"
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 0,
+      "seed": 3,
+      "role": "floor_on",
+      "teacher_std_floor": 0.05,
+      "output": "/workspace/iBOLT/outputs/gmm40-floor-ablation-20261107T143234Z/floor_on/seed-3",
+      "program": "ibolt-floor-20261107t143234z-floor_on-s3"
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 1,
+      "seed": 4,
+      "role": "floor_on",
+      "teacher_std_floor": 0.05,
+      "output": "/workspace/iBOLT/outputs/gmm40-floor-ablation-20261107T143234Z/floor_on/seed-4",
+      "program": "ibolt-floor-20261107t143234z-floor_on-s4"
+    },
+    {
+      "host": "ibolt-server-1",
+      "gpu": 0,
+      "seed": 0,
+      "role": "floor_off_check",
+      "teacher_std_floor": null,
+      "output": "/workspace/iBOLT/outputs/gmm40-floor-ablation-20261107T143234Z/floor_off_check/seed-0",
+      "program": "ibolt-floor-20261107t143234z-floor_off_check-s0"
+    },
+    {
+      "host": "ibolt-server-1",
+      "gpu": 1,
+      "seed": 1,
+      "role": "floor_off_check",
+      "teacher_std_floor": null,
+      "output": "/workspace/iBOLT/outputs/gmm40-floor-ablation-20261107T143234Z/floor_off_check/seed-1",
+      "program": "ibolt-floor-20261107t143234z-floor_off_check-s1"
+    },
+    {
+      "host": "ibolt-server-1",
+      "gpu": 2,
+      "seed": 2,
+      "role": "floor_off_check",
+      "teacher_std_floor": null,
+      "output": "/workspace/iBOLT/outputs/gmm40-floor-ablation-20261107T143234Z/floor_off_check/seed-2",
+      "program": "ibolt-floor-20261107t143234z-floor_off_check-s2"
+    }
+  ],
+  "design": "Floor ON seeds 0-4 compared with the pre-specified five-seed floor-OFF cohort from identical source revision and initialization. Three additional floor-OFF runs are supplementary reproducibility checks, not pooled into the primary five-seed statistics.",
+  "results": {
+    "source_revision": "c2b5e5963e98d8275478893d59542e8e5a08d09c",
+    "settings": {
+      "n": 256,
+      "m": 256,
+      "batch": 256,
+      "steps": 100000,
+      "eval_samples": 10000,
+      "hidden_init": "orthogonal_sqrt2",
+      "log_std_min": -5,
+      "log_std_max": -3.5,
+      "initial_log_std": -4,
+      "mean_output_init_scale": 16
+    },
+    "baseline_floor_off": {
+      "full_policy": {
+        "mmd": {
+          "mean": 0.02815410684171656,
+          "sample_sd": 0.0031168043059566133
+        },
+        "sliced_wasserstein2": {
+          "mean": 0.9384513361910521,
+          "sample_sd": 0.11630694522764864
+        },
+        "mode_coverage": {
+          "mean": 40.0,
+          "sample_sd": 0.0
+        },
+        "high_density_fraction": {
+          "mean": 0.8815,
+          "sample_sd": 0.015342261893215085
+        },
+        "mode_mass_tv": {
+          "mean": 0.055935044071039164,
+          "sample_sd": 0.005246129764653033
+        },
+        "histogram_js": {
+          "mean": 0.10614927165974412,
+          "sample_sd": 0.005592244551580732
+        }
+      },
+      "mu_only": {
+        "mmd": {
+          "mean": 0.03395265825804366,
+          "sample_sd": 0.0012294721062141858
+        },
+        "sliced_wasserstein2": {
+          "mean": 0.983265370802421,
+          "sample_sd": 0.11865163274899375
+        },
+        "mode_coverage": {
+          "mean": 40.0,
+          "sample_sd": 0.0
+        },
+        "high_density_fraction": {
+          "mean": 0.89984,
+          "sample_sd": 0.018082809516222844
+        },
+        "mode_mass_tv": {
+          "mean": 0.06268419196369934,
+          "sample_sd": 0.006606395733156619
+        },
+        "histogram_js": {
+          "mean": 0.20285368853473326,
+          "sample_sd": 0.005910933775000872
+        }
+      }
+    },
+    "floor_on_seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "floor_on_complete": true,
+    "additional_floor_off_checks_complete": true,
+    "floor_on": {
+      "full_policy": {
+        "mmd": {
+          "mean": 0.027564836808051413,
+          "sample_sd": 0.0057150782149169126
+        },
+        "sliced_wasserstein2": {
+          "mean": 0.9682341700996083,
+          "sample_sd": 0.220833098403455
+        },
+        "mode_coverage": {
+          "mean": 40.0,
+          "sample_sd": 0.0
+        },
+        "high_density_fraction": {
+          "mean": 0.87198,
+          "sample_sd": 0.015690188016719245
+        },
+        "mode_mass_tv": {
+          "mean": 0.05399970527479973,
+          "sample_sd": 0.00467275949321102
+        },
+        "histogram_js": {
+          "mean": 0.1095342950978004,
+          "sample_sd": 0.008834144991543672
+        }
+      },
+      "mu_only": {
+        "mmd": {
+          "mean": 0.0325252856718744,
+          "sample_sd": 0.0037032406919348913
+        },
+        "sliced_wasserstein2": {
+          "mean": 0.9978618358668656,
+          "sample_sd": 0.21496334162459416
+        },
+        "mode_coverage": {
+          "mean": 40.0,
+          "sample_sd": 0.0
+        },
+        "high_density_fraction": {
+          "mean": 0.89512,
+          "sample_sd": 0.014660218279411812
+        },
+        "mode_mass_tv": {
+          "mean": 0.05950051093986428,
+          "sample_sd": 0.009322110456703435
+        },
+        "histogram_js": {
+          "mean": 0.2007281063785967,
+          "sample_sd": 0.005652804109011084
+        }
+      }
+    },
+    "paired_mmd_difference_on_minus_off": {
+      "mean": -0.0005892700336651464,
+      "sample_sd": 0.005767842383693942,
+      "per_seed": [
+        -0.004590212076755602,
+        0.004310855478784535,
+        0.006958993870181496,
+        -0.004367300855752477,
+        -0.005258686584783685
+      ]
+    }
+  }
+}

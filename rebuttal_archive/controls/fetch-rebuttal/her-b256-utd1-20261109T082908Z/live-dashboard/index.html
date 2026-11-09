@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Fetch · Live experiments</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/analytics.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <div class="eyebrow">EXPERIMENT MONITOR <span class="live-pill"><i></i>LIVE</span></div>
+      <h1>Fetch learning curves<span>.</span></h1>
+      <p class="subtitle">실제 목표 평가로 보는 학습 추세</p>
+    </div>
+    <div class="connection">
+      <div id="connection-state" aria-live="polite">두 서버 연결 중</div>
+      <div id="last-update">첫 데이터 수집 중…</div>
+      <button id="refresh" type="button">지금 새로고침 <span aria-hidden="true">↻</span></button>
+    </div>
+  </header>
+  <div class="protocol"><span>Future HER · n=4</span><span>Batch 256</span><span>UTD 1</span><span>Observation norm</span><span>1M transitions / run</span><span>중간 10회 · 최종 100회 / 시드</span></div>
+  <div id="warning" class="warning" role="alert" hidden></div>
+  <section class="stats" aria-label="전체 실험 상태">
+    <div><span>학습 중</span><strong id="active-count">—</strong><small id="init-count">초기화 포함</small></div>
+    <div><span>완료 / 실패</span><strong><b id="done-count">—</b><em>/</em><b id="failed-count">—</b></strong><small>모든 환경의 실행 수</small></div>
+    <div><span>다음 환경 대기</span><strong id="waiting-count">—</strong><small>방법별 5시드 완료 후 자동 진행</small></div>
+  </section>
+  <section class="workspace" aria-label="학습 곡선">
+    <div class="toolbar">
+      <div class="tabs" role="tablist" aria-label="그래프 종류">
+        <button id="tab-compare" type="button" role="tab" aria-selected="true" class="selected">방법 비교</button>
+        <button id="tab-sweep" type="button" role="tab" aria-selected="false">iBOLT 온도 탐색</button>
+        <button id="tab-mfpo" type="button" role="tab" aria-selected="false">MFPO 탐색</button>
+      </div>
+      <label class="auto"><input id="auto" type="checkbox" checked> 자동 갱신 · 30초</label>
+    </div>
+    <div class="controls">
+      <label>환경<select id="task"><option value="pick-and-place">PickAndPlace</option><option value="push">Push</option><option value="slide">Slide</option><option value="reach">Reach</option></select></label>
+      <label>평가 지표<select id="metric"><option value="final">최종 성공률</option><option value="new_final">신규 최종 성공률</option><option value="any">도중 목표 도달률</option><option value="new_any">신규 도중 도달률</option><option value="return_">평균 에피소드 보상</option></select></label>
+      <label id="temp-control">비교할 iBOLT 온도<select id="temperature"><option value="0.05">T = 0.05</option><option value="0.1">T = 0.1</option><option value="0.25" selected>T = 0.25</option><option value="0.5">T = 0.5</option><option value="1">T = 1</option><option value="5">T = 5</option><option value="10">T = 10</option></select></label>
+      <label id="cohort-control">iBOLT 시드<select id="cohort"><option value="sweep">탐색 · seed 0, 1</option><option value="final" disabled>온도 선택 후 · 5시드</option></select></label>
+      <label>평활화<select id="smooth"><option value="1">없음</option><option value="3">최근 3회 이동평균</option><option value="5">최근 5회 이동평균</option></select></label>
+    </div>
+    <div class="plot-heading"><div><h2 id="chart-title">최종 성공률</h2><p id="chart-description">모든 지정 시드의 평가가 있는 같은 step에서 평균을 계산해요.</p></div><label class="band-control"><input id="band" type="checkbox"> 시드 표준편차</label></div>
+    <div id="legend" class="legend" aria-label="표시할 실험"></div>
+    <div id="chart" class="chart" role="group" aria-label="학습 진행에 따른 평가 지표">
+      <svg id="plot" role="img" aria-label="데이터를 수집하고 있습니다"></svg>
+      <div id="empty" class="empty" hidden><strong>아직 이 환경의 평가가 없어요.</strong><span>각 방법의 이전 환경 5시드가 완료되면 자동으로 시작돼요.</span></div>
+      <div id="tooltip" class="tooltip" hidden></div>
+    </div>
+    <div class="plot-footer"><p id="metric-note"></p><p id="seed-note">iBOLT 탐색은 2시드, baseline은 5시드 · 확정 비교 전 중간 결과</p></div>
+  </section>
+  <section class="table-panel" aria-labelledby="summary-title">
+    <div class="section-title"><h2 id="summary-title">실험 요약</h2><span>공통 평가 step 기준 · 평활화 전 값</span></div>
+    <div class="table-scroll"><table><thead><tr><th>방법</th><th>시드</th><th>학습 진행</th><th id="value-heading">최종 성공률</th><th title="평가 횟수가 바뀌면 이동평균을 초기화합니다">동일 평가 횟수 최근 5회</th><th>평가 step</th><th>상태</th></tr></thead><tbody id="summary"></tbody></table></div>
+  </section>
+  <details class="runs-panel"><summary>시드별 실행 상태 <span id="run-total"></span></summary><div class="table-scroll"><table><thead><tr><th>실행</th><th>시드</th><th>Step</th><th>진행률</th><th>최종 성공률</th><th>서버 / GPU</th><th>상태</th></tr></thead><tbody id="runs"></tbody></table></div></details>
+  <footer><span id="hosts">Server 1 · Server 2</span><span>HER로 재라벨링한 학습 보상이 아닌, 원래 목표의 평가 로그입니다.</span></footer>
+</main>
+</body>
+</html>

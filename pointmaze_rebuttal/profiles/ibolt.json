@@ -1,0 +1,14 @@
+{
+  "profile": "ibolt-t5",
+  "method": "ibolt",
+  "steps": 1000192,
+  "num_envs": 256,
+  "batch_size": 4096,
+  "updates_per_collect": 16,
+  "warmup": 8192,
+  "eval_every": 200000,
+  "eval_episodes": 200,
+  "final_episodes": 500,
+  "replay_capacity": 1000000,
+  "temperature": 5.0
+}

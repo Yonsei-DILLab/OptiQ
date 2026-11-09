@@ -1,0 +1,75 @@
+{
+  "campaign": "obsnorm-b2048-utd1-20261109T063017Z",
+  "created_utc": "2026-11-09T06:35:12.946959+00:00",
+  "authorized_protocol": {
+    "tasks_in_order": [
+      "pick-and-place",
+      "push",
+      "slide",
+      "reach"
+    ],
+    "baselines": [
+      "sac",
+      "idac (semi-implicit actor)",
+      "idac-nodgn",
+      "mfpo",
+      "meow"
+    ],
+    "baseline_seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "batch_size": 2048,
+    "utd": 1,
+    "transitions": 1000000,
+    "warmup": 5000,
+    "her": false,
+    "reward_normalization": false,
+    "observation_normalization": {
+      "implementation": "SB3 VecNormalize",
+      "clip_obs": 5.0,
+      "epsilon": 1e-08,
+      "input": "observation + desired_goal, each dimension normalized",
+      "evaluation": "frozen training statistics",
+      "replay": "raw states; sampled states normalized using current statistics",
+      "checkpoint": "normalizer pickle and human-readable mean/variance/count alongside every policy checkpoint"
+    },
+    "ibolt_temperature_grid": [
+      0.05,
+      0.1,
+      0.25,
+      0.5,
+      1,
+      5,
+      10
+    ],
+    "ibolt_sweep_seeds": [
+      0,
+      1
+    ],
+    "ibolt_selected_seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "ibolt_selection_overlap": "Selected sweep seeds 0/1 reused; add fresh seeds 2/3/4. Report tuning overlap.",
+    "scheduling": "Parallel seeds within a task; independent next-task release per method only after all five seeds complete. iBOLT repeats sweep in every task. Memory admission controls initialization."
+  },
+  "initial_pick_and_place_runs": 39,
+  "full_baseline_runs": 100,
+  "full_ibolt_runs_including_sweeps": 68,
+  "total_planned_runs": 168,
+  "validation": [
+    "Per-method sequence and failed-seed barrier tests passed",
+    "All four task observation dimensions, raw replay, sampled normalization, timeout bootstrapping and normalization save/load passed on both hosts",
+    "All six methods passed four actual GPU optimizer updates at batch 2048",
+    "Pinned vendor and root algorithm source preserved"
+  ],
+  "previous_fetch_campaigns": "stopped; historical outputs and checkpoints preserved",
+  "pointmaze_and_gmm": "unchanged"
+}

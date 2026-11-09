@@ -9,3 +9,8 @@ wandb/
 *.npz
 *.log
 .DS_Store
+.playwright-mcp/
+tmp/
+._*
+rebuttal_archive/**/data-cache.json
+rebuttal_archive/**/data-cache.tmp

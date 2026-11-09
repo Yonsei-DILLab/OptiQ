@@ -1,0 +1,24 @@
+{
+  "campaign": "gmm40-baselines-smoke-20261108",
+  "root": "/workspace/iBOLT/outputs/gmm40-baselines-smoke-20261108",
+  "revision": "6eff3dd",
+  "actor_updates": 100,
+  "jobs": [
+    {
+      "host": "ibolt-server-1",
+      "gpu": 0,
+      "baseline": "meow",
+      "seed": 0,
+      "output": "/workspace/iBOLT/outputs/gmm40-baselines-smoke-20261108/meow-seed-0",
+      "program": "ibolt-baselines-smoke-20261108-meow"
+    },
+    {
+      "host": "ibolt-server-2",
+      "gpu": 0,
+      "baseline": "td3",
+      "seed": 0,
+      "output": "/workspace/iBOLT/outputs/gmm40-baselines-smoke-20261108/td3-seed-0",
+      "program": "ibolt-baselines-smoke-20261108-td3"
+    }
+  ]
+}

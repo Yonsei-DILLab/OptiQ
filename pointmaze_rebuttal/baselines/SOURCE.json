@@ -1,0 +1,64 @@
+{
+  "repository": "https://github.com/Yonsei-DILLab/OptiQ",
+  "revision": "f41d6c723afcc20a017135ba4aa588f113b61bf3",
+  "legacy_agents_original_sha256": "16666f68f24a426ab351457299a2c25eee13df3f134c655e2496c7a4a70fe98c",
+  "adaptations": [
+    "Extract SpaceOnlyEnv/SAC/TD3/SQL/MEOW/MFPO classes only",
+    "Replay and SQL imports use private copies",
+    "MFPO and MEOW vendor paths are private",
+    "CPU diagnostic device option and CPU-safe SAC RNG context; CUDA learning logic unchanged"
+  ],
+  "sql_jax_sha256": "18cc4c9bbda27f89cb5de03be6ce470c579b5b29285bc3c43384ce4820421057",
+  "vendors": {
+    "mfpo": {
+      "repository": "https://github.com/dongxiaoyi-xyz/MFPO",
+      "revision": "d8b3977d29d4ef2d315e871337e5826f2eb79eb2",
+      "files": {
+        "README.md": "5a5d309382238f4267223c8000390683093f4b82c95f483b19de806a659a7bc3",
+        "configs/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "configs/mfpo_config.py": "cc5f552a5c6397cb7b563fdbd774694aaa18aa6648404cafd81a11dcf9110f9f",
+        "jaxrl5/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "jaxrl5/agents/__init__.py": "68896237300b15c42cdd66856866beac8eafd070cd2b2347326138b7232f3b10",
+        "jaxrl5/agents/agent.py": "38cdfa470c4f78161e3011a77d5ba80c86c88ff2c8ab7fdcf04ceeaee05cbb63",
+        "jaxrl5/agents/mean_flow_learner.py": "44dd4e154ae3caef9951873d2f0882750a56ce2c48b83230df3f104725c1bdfd",
+        "jaxrl5/data/__init__.py": "b765fd1e1a72afb7b5e867deda9cbcc8b0dfcfe7980a9dfeafffe0013a30366c",
+        "jaxrl5/data/dataset.py": "8481b0e653273fbe37c462aea1d963c352e3e733dd5375dab7aa308882e67938",
+        "jaxrl5/data/replay_buffer.py": "3366bf8b872c19e0610bb9e2bc5e138f832622dce4bdf9fb0adc56409dbe4196",
+        "jaxrl5/evaluation.py": "e384bb87dd2c8848a2f527dd801fd47d2e9406f6dc8444b529ab44aab0ac29db",
+        "jaxrl5/networks/__init__.py": "6998c6727dfdf123f8e7bcb6c7756d2888e324b0bb87cc47c69bd02dcf8270f8",
+        "jaxrl5/networks/mean_flow.py": "c93b582e2c9a82157970432aaa630bd50641d0b49496af1f72074390fc93e5a6",
+        "jaxrl5/networks/mlp.py": "23f4135ce93cae09f772c7d62d78cb1810943a4055e79e7bb5651057de3925e0",
+        "jaxrl5/networks/state_action_value.py": "13e629e5df2f84d504a2b8e732a46ad32bca2f13f37b6b2a7b4e0821bc68a041",
+        "jaxrl5/networks/temperature.py": "1c8e688f24f79abf8e83ba9b237122cfa39c825d26689985d1e12ea5c08ff51d",
+        "jaxrl5/normalization.py": "05a3438bcd1b8b7cffe9c07d91a7ce777c5b583e6dd2402d3f709facb9c23e4c",
+        "jaxrl5/types.py": "79c2193a906cb34950df2896775837d8e946fcc8d0cf0ee68cda6598bc5d8727",
+        "jaxrl5/wrappers/__init__.py": "4fa2f20acb9fa60900a3f2532909e4e93984bc9c6a9a0bf226f453411f8c4474",
+        "jaxrl5/wrappers/frame_stack.py": "3f742ffbe538e4ec120836681da491d2e70125cf8d572106fda518c4d31c5a44",
+        "jaxrl5/wrappers/pixels.py": "ce6f3c4c06cbe34a505629d7208b837d7ac5927decd3b65cbe31f2128c685ad4",
+        "jaxrl5/wrappers/repeat_action.py": "ceaf0b18769f59619e79576736ac3779a7a4fbb3b2c803882caeb49c17e16917",
+        "jaxrl5/wrappers/single_precision.py": "1644e60891a530e611000a361cb2445da2c04b70f9ea7c56239f8c1e77472074",
+        "jaxrl5/wrappers/universal_seed.py": "13bd895a8e3f36ff93834bf3cffdbf95564c9aebfbf25d6c166e97e8104301bb",
+        "jaxrl5/wrappers/wandb_video.py": "19e399ba93d63cac30e5aed9734170a96aac05998c1d3deed138aa4b0ccfa509",
+        "requirements.txt": "47d0062f0df3befecf4e480631a58bdbceb2a7e22e98bc779598569b8e0f2bb2",
+        "setup.py": "2e89b024fa8de1e2eded5c2425fbe5c5f5c0fe93f8f8075c77a354c7eebc74fe",
+        "train_online.py": "5e165afb68a927ef6c7941b70e25891a7e8650349be16f615780f7adf45133f0"
+      }
+    },
+    "meow": {
+      "repository": "https://github.com/ChienFeng-hub/meow",
+      "revision": "b786d27aa9b03e4242ee8904ff884b21fe65e2f7",
+      "files": {
+        "LICENSE": "3c932f44ab53b441c547d239397aa0ceb94611f5ad2a2c4e5685a998ec64023b",
+        "cleanrl/LICENSE": "66869219dc0d1b304a92edbcc6c92b0e9de6c46b03eed50b51a597914e6dd2fc",
+        "cleanrl/cleanrl/meow_continuous_action.py": "36b9bfec0cd11b6d6edd783c83160532ce624601aed113c0d624c760335419b1",
+        "cleanrl/cleanrl/nf/LICENSE": "5d7d55d52ccea08cbfc42a5b5f167f2909cd17b5ce66fe07d751455ad7556423",
+        "cleanrl/cleanrl/nf/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cleanrl/cleanrl/nf/distributions.py": "9efc0495c6f135f19f1a758d77c004b0266dda9d5e4b1546c0cc89b082a73366",
+        "cleanrl/cleanrl/nf/flows.py": "d121f953c9349f33bcb1d8c8abc87f5cb25c917fed8461234f09e9127de5653d",
+        "cleanrl/cleanrl/nf/nets.py": "42d31f76f0959a17e1c816fb01e3d34a64a31e27b88339903d13fd7a282e1ae7",
+        "cleanrl/cleanrl/nf/transforms.py": "429cddbaad7d6a1af3c8c51672f9a505ae0737813ce0b6e7e6f356e4e2558d66"
+      }
+    }
+  },
+  "legacy_agents_adapted_sha256": "98bbd8242a5abe35f0f9986667d1dacc7f1508eb56ed8f976b8da2847208e2ad"
+}

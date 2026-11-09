@@ -1,0 +1,50 @@
+{
+  "purpose": "Preserve distinct uncommitted server-root sources without overwriting current local sources or live experiment snapshots",
+  "files": [
+    {
+      "original": "/workspace/iBOLT/fetch_rebuttal/run.py",
+      "archived": "rebuttal_archive/server_roots/shared-before-push/fetch_rebuttal/run.py",
+      "sha256": "5d1a1c0caf370e1837634420d66ec9fefb27ff773993ff589108f7bee3bf79e5",
+      "hosts": [
+        "ibolt-server-1",
+        "ibolt-server-2"
+      ]
+    },
+    {
+      "original": "/workspace/iBOLT/fetch_rebuttal/SOURCE.json",
+      "archived": "rebuttal_archive/server_roots/shared-before-push/fetch_rebuttal/SOURCE.json",
+      "sha256": "517088090618e38bd99e6e1b18269254ed7e897ae0f946f9f414a86508aef4ec",
+      "hosts": [
+        "ibolt-server-1",
+        "ibolt-server-2"
+      ]
+    },
+    {
+      "original": "/workspace/iBOLT/fetch_rebuttal/baselines/native.py",
+      "archived": "rebuttal_archive/server_roots/shared-before-push/fetch_rebuttal/baselines/native.py",
+      "sha256": "0df25199e60fe41854ea78daf5aacdfbdbd309874e8f345867cba15b93689a61",
+      "hosts": [
+        "ibolt-server-1",
+        "ibolt-server-2"
+      ]
+    },
+    {
+      "original": "/workspace/iBOLT/fetch_rebuttal/baselines/replay.py",
+      "archived": "rebuttal_archive/server_roots/shared-before-push/fetch_rebuttal/baselines/replay.py",
+      "sha256": "1857c6ae7bba2d0349a0cdf53fc76482eb785b399315bfd5f0eb8aa739775468",
+      "hosts": [
+        "ibolt-server-1",
+        "ibolt-server-2"
+      ]
+    },
+    {
+      "original": "/workspace/iBOLT/pointmaze_rebuttal/AGENTS.md",
+      "archived": "rebuttal_archive/server_roots/shared-before-push/pointmaze_rebuttal/AGENTS.md",
+      "sha256": "9745de85ab0e7285e871cd8e1ec2b144d3cca65187423c213b24d78929780e0b",
+      "hosts": [
+        "ibolt-server-1",
+        "ibolt-server-2"
+      ]
+    }
+  ]
+}
