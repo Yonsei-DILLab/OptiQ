@@ -13,7 +13,19 @@ import time
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--campaign',required=True)
     parser.add_argument('--root',type=Path,default=Path('/workspace/heechan-fetch-dacer'))
-    parser.add_argument('--code',type=Path,required=True);args=parser.parse_args()
+    parser.add_argument('--code',type=Path,required=True)
+    parser.add_argument('--targets',type=float,nargs='+',choices=(-.9,.5,.75,1.),default=[-.9,.5])
+    parser.add_argument('--noise-scales',type=float,nargs='+',choices=(.1,.3,1.,2.,3.),default=[2.,3.])
+    parser.add_argument('--gpus',type=int,nargs='+',choices=range(4),default=[0,1,2,3])
+    parser.add_argument('--max-new-active',type=int,default=8)
+    parser.add_argument('--max-active-per-gpu',type=int)
+    parser.add_argument('--max-initializing-per-gpu',type=int,default=2)
+    parser.add_argument('--reserve-plan',type=Path,action='append',default=[])
+    parser.add_argument('--rationale',default='Test stronger initial random exploration with DACER alpha naturally decaying later, rather than only increasing its entropy floor.')
+    args=parser.parse_args()
+    assert len(set(args.targets))==len(args.targets) and len(set(args.noise_scales))==len(args.noise_scales)
+    assert len(set(args.gpus))==len(args.gpus) and args.max_new_active>=len(args.gpus)
+    if args.max_active_per_gpu is not None:assert args.max_active_per_gpu>0
     root=args.root.resolve();refs=root/'references';source=root/('source-'+args.campaign);source.mkdir(exist_ok=False)
     with tarfile.open(root/'fetch-her-frozen-source.tgz') as tar:tar.extractall(source,filter='data')
     native={str(p.relative_to(source)):hashlib.sha256(p.read_bytes()).hexdigest()
@@ -37,6 +49,14 @@ def main():
     def physical(cpu):
         p=Path(f'/sys/devices/system/cpu/cpu{cpu}/topology')
         return (p.joinpath('physical_package_id').read_text().strip(),p.joinpath('core_id').read_text().strip())
+    reservations=[]
+    for reservation in args.reserve_plan:
+        previous=json.loads(reservation.read_text())
+        cpus={cpu for lane in previous.get('cpu_lanes',[]) for cpu in lane}
+        # A live scheduler can reuse lanes whose current worker has completed.
+        cpus|={cpu for job in previous.get('original_gpu_processes',[]) for cpu in job.get('cpus',[])}
+        reserved|={physical(cpu) for cpu in cpus}
+        reservations.append(dict(plan=str(reservation),cpus=sorted(cpus)))
     for line in app_output.splitlines():
         if not line.strip().isdigit():continue
         pid=int(line.strip())
@@ -49,21 +69,24 @@ def main():
     for cpu in sorted(os.sched_getaffinity(0)):
         key=physical(cpu)
         if key not in reserved:available.setdefault(key,[]).append(cpu)
-    lanes=list(available.values())[:8];assert len(lanes)==8
+    lanes=list(available.values())[:args.max_new_active];assert len(lanes)==args.max_new_active
+    grid=[[target,noise] for target in args.targets for noise in args.noise_scales]
     plan=dict(campaign=args.campaign,host=3,folder=str(folder),source=str(source),python=str(root/'venv/bin/python'),
         source_manifest=str(manifestpath),jax_cache=str(folder/'jax-cache'),cpu_lanes=lanes,
         source_commit=subprocess.check_output(['git','-C',str(source),'rev-parse','HEAD'],text=True).strip(),native_files_verified=len(native),
         reference_learner_config=str(refs/'reference-learner.json'),reference_run_config=str(refs/'reference-run.json'),
         reference_parent_plan='Host4 frozen configuration copied into references; original jobs remain on host4.',
-        sac_reference=str(refs/'sac-reference.json'),parameter_grid=[[-.9,2.],[-.9,3.],[.5,2.],[.5,3.]],
+        sac_reference=str(refs/'sac-reference.json'),parameter_grid=grid,allowed_gpus=args.gpus,
         preflights_passed=False,selection=None,jobs=[],confirmation_reuse_candidates=[],original_gpu_processes=original,
-        created_unix=time.time(),status='waiting_environment',max_new_active=8,
-        gpu_reserve_mib=2048,gpu_headroom_mib=4096,host_reserve_mib=4096,host_headroom_mib=16384,max_initializing_per_gpu=2,
+        created_unix=time.time(),status='waiting_environment',max_new_active=args.max_new_active,
+        cpu_lane_reservations=reservations,
+        gpu_reserve_mib=2048,gpu_headroom_mib=4096,host_reserve_mib=4096,host_headroom_mib=16384,max_initializing_per_gpu=args.max_initializing_per_gpu,
         config=dict(task='pick-and-place',method='ibolt',temperature=.25,log_std_min=-5,log_std_max=1,initial_log_std=-1,
             num_envs=1,utd=1,batch_size=256,HER=True,normalize_observations=True,steps=1000000,warmup=5000,expected_updates=995000),
-        rationale='Test stronger initial random exploration with DACER alpha naturally decaying later, rather than only increasing its entropy floor.',
+        rationale=args.rationale,
         global_selection_rule='Compare cohort leaders using only seeds0/1 pre-final last5, high-air tie-break and AUC. Additional seeds2/3/4 remain confirmation, not a selection criterion.',
-        scope=dict(search_configurations=4,search_runs=8,new_search_runs=8,search_seeds=[0,1],additional_seeds=[2,3,4]))
+        scope=dict(search_configurations=len(grid),search_runs=2*len(grid),new_search_runs=2*len(grid),search_seeds=[0,1],additional_seeds=[2,3,4]))
+    if args.max_active_per_gpu is not None:plan['max_active_per_gpu']=args.max_active_per_gpu
     sys.path.insert(0,str(source));from rebuttal_tools.fetch_dacer_campaign import job_spec
     for target,noise in plan['parameter_grid']:
         for seed in (0,1):plan['jobs'].append(job_spec(plan,target,noise,seed))
@@ -92,7 +115,7 @@ environment=PYTHONPATH="{source}",OMP_NUM_THREADS="1",OPENBLAS_NUM_THREADS="1",M
 '''
     subprocess.run(['sudo','-n','tee','/etc/supervisor/conf.d/'+program+'.conf'],input=config,text=True,stdout=subprocess.DEVNULL,check=True)
     for command in (['reread'],['add',program],['start',program]):subprocess.run(['sudo','-n','supervisorctl',*command],check=True,stdout=subprocess.DEVNULL)
-    print(json.dumps(dict(program=program,source_commit=plan['source_commit'],plan=str(path),jobs=8,native_files_verified=len(native))),flush=True)
+    print(json.dumps(dict(program=program,source_commit=plan['source_commit'],plan=str(path),jobs=len(plan['jobs']),native_files_verified=len(native))),flush=True)
 
 
 if __name__=='__main__':main()

@@ -83,7 +83,7 @@ def summarize_pair(jobs,cap=None):
 
 
 def summarize(hosts,sac):
-    jobs=[dict(job,host=host['host']) for host in hosts for job in host['jobs']]
+    jobs=[dict(job,host=host['host'],cohort=host.get('cohort')) for host in hosts for job in host['jobs']]
     search=[j for j in jobs if j['phase']=='search'];profiles=sorted({(j['target_entropy_per_dim'],j['noise_scale']) for j in search})
     groups={p:[j for j in search if (j['target_entropy_per_dim'],j['noise_scale'])==p] for p in profiles}
     summaries={p:summarize_pair(group) for p,group in groups.items()}
@@ -125,17 +125,24 @@ def main():
     extra=Path(Path('/tmp/ibolt-fetch-dacer-strong-path').read_text().strip())
     specs=[(4,'/workspace/heechan-fetch-sigma/outputs/'+main_folder.name),
            (3,'/workspace/heechan-fetch-dacer/outputs/'+extra.name)]
+    specs=[dict(host=host,base=base,filename=f'host{host}.json',cohort='main' if host==4 else 'strong') for host,base in specs]
+    registry=main_folder/'cohort-registry.json'
+    if registry.exists():specs=json.loads(registry.read_text())['cohorts']
+    assert len({s['filename'] for s in specs})==len(specs)
+    assert len({s['cohort'] for s in specs})==len(specs)
+    assert all(Path(s['filename']).name==s['filename'] for s in specs)
     output=args.output or main_folder/'global-monitor';output.mkdir(exist_ok=True)
     def collect(spec):
-        host,base=spec;blob=base64.b64encode(zlib.compress(('BASE='+repr(base)+'\n'+QUERY).encode())).decode()
+        host,base=spec['host'],spec['base'];blob=base64.b64encode(zlib.compress(('BASE='+repr(base)+'\n'+QUERY).encode())).decode()
         command='python3 -c '+shlex.quote('import zlib,base64;exec(zlib.decompress(base64.b64decode('+repr(blob)+')))')
         r=subprocess.run(['ssh','-o','BatchMode=yes','-o','ConnectTimeout=8','-o','ControlMaster=no','-o','ControlPath=none',
             f'ibolt-server-{host}',command],capture_output=True,text=True,timeout=45);r.check_returncode()
-        d=json.loads(r.stdout);d['host']=host;(output/f'host{host}.json').write_text(json.dumps(d,indent=2)+'\n');return d
-    with ThreadPoolExecutor(max_workers=2) as pool:hosts=list(pool.map(collect,specs))
+        d=json.loads(r.stdout);d.update(host=host,cohort=spec['cohort']);(output/spec['filename']).write_text(json.dumps(d,indent=2)+'\n');return d
+    with ThreadPoolExecutor(max_workers=len(specs)) as pool:hosts=list(pool.map(collect,specs))
     report=summarize(hosts,json.loads((main_folder/'sac-reference.json').read_text()))
     (output/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
-    print('CONTROLLERS',[(h['host'],h['status'],h['controller_live'],h['controller_pid']) for h in hosts])
+    (output/'cohorts.json').write_text(json.dumps(dict(checked_unix=time.time(),cohorts=specs),indent=2)+'\n')
+    print('CONTROLLERS',[(h['host'],h['cohort'],h['status'],h['controller_live'],h['controller_pid']) for h in hosts])
     print('SEARCH',report['search_runs'],'LIVE',report['live_training_processes'],'COUNTS',report['counts'],
           'MATCHED_BUDGET',report['matched_interim_budget'],'LARGE_ADVANTAGE',report['large_advantage_verified'])
     for p in report['profiles']:

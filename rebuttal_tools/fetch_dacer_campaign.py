@@ -107,6 +107,9 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--plan',type=Path,required=True);args=parser.parse_args()
     path=args.plan.resolve();folder=path.parent;plan=json.loads(path.read_text())
     profiles=plan.get('parameter_grid',[(h,l) for h in TARGETS for l in NOISE_SCALES])
+    allowed_gpus=plan.get('allowed_gpus',[0,1,2,3])
+    assert allowed_gpus and len(set(allowed_gpus))==len(allowed_gpus)
+    assert set(allowed_gpus)<=set(range(4)) and len(plan['cpu_lanes'])>=len(allowed_gpus)
     lock=(folder/'controller.lock').open('a');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     from fetch_rebuttal.campaign import environment,gpu_memory,memory_available_mib,process_live
     children={};stopping=False
@@ -127,9 +130,10 @@ def main():
         children[child.pid]=child;print('Started '+job['id']+' GPU'+str(job['gpu']),flush=True);return child
     def preflight_gpu(gpu):
         result={};cases=profiles
-        for index in range(gpu,len(cases),4):
+        lane_index=allowed_gpus.index(gpu)
+        for index in range(lane_index,len(cases),len(allowed_gpus)):
             target,noise=cases[index];job=job_spec(plan,target,noise,100+index,'preflight')
-            job.update(id='preflight-'+job['id'],gpu=gpu,cpus=plan['cpu_lanes'][gpu],output=str(folder/'preflights'/str(index)))
+            job.update(id='preflight-'+job['id'],gpu=gpu,cpus=plan['cpu_lanes'][lane_index],output=str(folder/'preflights'/str(index)))
             child=start(job,True)
             if child.wait()!=0:raise RuntimeError('GPU preflight failed: '+job['id'])
             done=json.loads((Path(job['output'])/'dacer-verified-completion.json').read_text())
@@ -146,7 +150,7 @@ def main():
     try:
         plan.update(controller_pid=os.getpid(),status='validating_gpu');atomic(path,plan)
         if not plan.get('preflights_passed'):
-            with ThreadPoolExecutor(max_workers=4) as pool:groups=list(pool.map(preflight_gpu,range(4)))
+            with ThreadPoolExecutor(max_workers=len(allowed_gpus)) as pool:groups=list(pool.map(preflight_gpu,allowed_gpus))
             plan['preflights']={k:v for group in groups for k,v in group.items()};assert len(plan['preflights'])==len(profiles)
             plan['preflights_passed']=True;atomic(folder/'gpu-preflight-verification.json',dict(passed=True,cases=plan['preflights']))
         plan['status']='running'
@@ -189,7 +193,9 @@ def main():
                     job['waiting_reason']='host memory reservation';continue
                 choices=[]
                 for gpu,(used,total) in memory.items():
+                    if gpu not in allowed_gpus:continue
                     own=[j for j in active if j['gpu']==gpu];deficit=sum(max(0,plan['gpu_reserve_mib']-apps.get(j['pid'],0)) for j in own)
+                    if len(own)>=plan.get('max_active_per_gpu',plan['max_new_active']):continue
                     projected=used+deficit+plan['gpu_reserve_mib']
                     if projected<=total-plan['gpu_headroom_mib'] and sum(j['status']=='initializing' for j in own)<plan['max_initializing_per_gpu']:
                         choices.append((projected/total,gpu))
