@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import pwd
+import shlex
 import shutil
 import subprocess
 import sys
@@ -22,6 +23,7 @@ def main():
     parser.add_argument('--python', required=True)
     parser.add_argument('--controller', type=Path, required=True)
     parser.add_argument('--old-folder', type=Path)
+    parser.add_argument('--wait-ready-file', type=Path)
     args = parser.parse_args()
     source = args.source.resolve()
     revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip()
@@ -89,10 +91,17 @@ def main():
     controller = folder/'controller.py'
     shutil.copyfile(args.controller, controller)
     plan['controller_sha256'] = hashlib.sha256(controller.read_bytes()).hexdigest()
+    launch = [args.python, '-u', str(controller), '--plan', str(folder/'plan.json')]
+    if args.wait_ready_file:
+        wrapper = folder/'wait-and-run.sh'
+        wrapper.write_text('#!/bin/bash\nset -eu\nwhile [ ! -f '+shlex.quote(str(args.wait_ready_file))+
+            ' ]; do sleep 5; done\nexec '+shlex.join(launch)+'\n')
+        launch = ['/bin/bash', str(wrapper)]
+        plan.update(status='waiting_environment', environment_ready_file=str(args.wait_ready_file))
     atomic_json(folder/'plan.json', plan)
     program = plan['campaign']+f'-host{args.host}'
     config = f'''[program:{program}]
-command={args.python} -u {controller} --plan {folder}/plan.json
+command={shlex.join(launch)}
 directory={source}
 user={pwd.getpwuid(os.getuid()).pw_name}
 autostart=false
