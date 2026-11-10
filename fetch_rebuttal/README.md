@@ -1,4 +1,46 @@
-# Fetch PickAndPlace rebuttal campaign
+# Fetch rebuttal experiments
+
+## Current Slide HER validation
+
+The initial campaign below is historical. It does not describe the current HER
+validation, current architectures, or current server allocation. Use each run's
+frozen source manifest and resolved configuration to identify its protocol.
+
+The corrected SAC/iBOLT entry point for new frozen snapshots is:
+
+```sh
+python -m rebuttal_tools.fetch_her_correction_worker --spec /path/to/run-spec.json
+```
+
+The spec must identify the frozen source, its SHA-256 manifest, method parameter,
+seed, output directory, and allocated GPU/CPUs. Include the correction worker and
+normalizer in that manifest. Existing frozen snapshots are not changed in place.
+The adapter preserves the legacy worker on disk and replaces only its experiment
+harness in memory; actor, critic, replay, and exploration learner code stay pinned.
+
+The corrected normalizer updates observation/goal statistics using HER-sampled
+completed episodes, applies a standard-deviation floor of 0.01, clips raw inputs
+to +/-200 and normalized inputs to +/-5, and leaves rewards unchanged. Evaluation
+freezes statistics. Stored replay coordinates and HER reward calculations remain
+in raw environment units.
+
+The optional spec value `collection_schedule: "episode_frozen"` collects 50 vector
+steps before training. It requires `fetch_her_episode_collection.py` in the source
+manifest, preserves native 32-update calls and the total UTD, and caps the final
+rollout to the exact transition budget.
+
+Current validation uses Slide pilot seeds 5/6, vec256, batch256, UTD1/8, 5M
+transitions, sparse -1/0 rewards, the original 50-step horizon, and the 5cm success
+criterion. iBOLT uses T=0.25, logstd[-5,1], initial logstd=-1; SAC retains automatic
+alpha and target entropy -4. Primary iBOLT evaluation uses fresh stochastic z and
+conditional means only. Zero-z results are recorded separately.
+
+Both methods have passed real GPU optimizer preflights and shown intermediate
+success improvements. Stable final performance is still under validation. These
+corrections have not been applied to MFPO/MEOW or to historical runs; results from
+different HER/normalization protocols must not be combined as one comparison.
+
+## Historical initial PickAndPlace campaign
 
 User scope: FetchPickAndPlace-v4 only. Other Fetch tasks are not launched.
 Dedicated non-anonymous package and Python overlay; original running experiments
