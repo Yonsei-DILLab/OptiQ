@@ -11,7 +11,8 @@ import time
 import zlib
 
 QUERY=r'''
-import pathlib,json,time,os,subprocess
+import pathlib,json,time,os,subprocess,hashlib
+CACHED=globals().get('CACHED',{})
 base=pathlib.Path(BASE);plan=json.loads((base/'plan.json').read_text());rows=[]
 def live(pid,start=None):
  try:
@@ -26,10 +27,14 @@ for job in plan['jobs']:
   if p.exists():row[key]=json.loads(p.read_text())
  marker=out/('verified-completion.json' if job.get('external') else 'dacer-verified-completion.json')
  row['verified_complete']=marker.exists()
- row['evaluations']=[];p=out/'evaluations.jsonl'
- if p.exists():
+ histories={name:(out/name).read_bytes() if (out/name).exists() else b'' for name in ('evaluations.jsonl','height-evaluations.jsonl')}
+ row['history_sha256']={name:hashlib.sha256(data).hexdigest() for name,data in histories.items()}
+ if row['verified_complete'] and CACHED.get(job['id'])==row['history_sha256']:
+  row['history_unchanged']=True;rows.append(row);continue
+ row['evaluations']=[]
+ if histories['evaluations.jsonl']:
   values={}
-  for line in p.read_text().splitlines():
+  for line in histories['evaluations.jsonl'].decode().splitlines():
    if not line.strip():continue
    try:r=json.loads(line)
    except ValueError:continue
@@ -38,10 +43,10 @@ for job in plan['jobs']:
    if r['steps']==1000000 and (not row['verified_complete'] or r['updates']!=995000):continue
    v=r[r['primary_mode']];values[r['steps']]=dict(step=r['steps'],episodes=v['episodes'],success=v['success_rate'],new_success=v['new_final_success_count']/v['episodes'])
   row['evaluations']=[values[k] for k in sorted(values)]
- row['heights']=[];p=out/'height-evaluations.jsonl'
- if p.exists():
+ row['heights']=[]
+ if histories['height-evaluations.jsonl']:
   values={}
-  for line in p.read_text().splitlines():
+  for line in histories['height-evaluations.jsonl'].decode().splitlines():
    if not line.strip():continue
    try:r=json.loads(line)
    except ValueError:continue
@@ -138,11 +143,25 @@ def main():
     assert all(Path(s['filename']).name==s['filename'] for s in specs)
     output=args.output or main_folder/'global-monitor';output.mkdir(exist_ok=True)
     def collect(spec):
-        host,base=spec['host'],spec['base'];blob=base64.b64encode(zlib.compress(('BASE='+repr(base)+'\n'+QUERY).encode())).decode()
+        host,base=spec['host'],spec['base'];snapshot=output/spec['filename']
+        previous=json.loads(snapshot.read_text()) if snapshot.exists() else {}
+        cached={j['id']:j for j in previous.get('jobs',[]) if j['verified_complete'] and j.get('history_sha256')}
+        fingerprints={key:row['history_sha256'] for key,row in cached.items()}
+        blob=base64.b64encode(zlib.compress(('BASE='+repr(base)+'\nCACHED='+repr(fingerprints)+'\n'+QUERY).encode())).decode()
         command='python3 -c '+shlex.quote('import zlib,base64;exec(zlib.decompress(base64.b64decode('+repr(blob)+')))')
-        r=subprocess.run(['ssh','-o','BatchMode=yes','-o','ConnectTimeout=8','-o','ControlMaster=no','-o','ControlPath=none',
-            f'ibolt-server-{host}',command],capture_output=True,text=True,timeout=45);r.check_returncode()
-        d=json.loads(r.stdout);d.update(host=host,cohort=spec['cohort']);(output/spec['filename']).write_text(json.dumps(d,indent=2)+'\n');return d
+        try:
+            r=subprocess.run(['ssh','-o','BatchMode=yes','-o','ConnectTimeout=8','-o','ControlMaster=no','-o','ControlPath=none',
+                f'ibolt-server-{host}',command],capture_output=True,text=True,timeout=45)
+        except subprocess.TimeoutExpired:
+            raise RuntimeError(f'Read-only status query timed out: host{host}/{spec["cohort"]}; re-observe the same learner PIDs.') from None
+        if r.returncode:raise RuntimeError(f'Status query failed: host{host}/{spec["cohort"]}: {r.stderr[-400:]}')
+        d=json.loads(r.stdout)
+        for row in d['jobs']:
+            if row.get('history_unchanged'):
+                prior=cached[row['id']];assert row['verified_complete'] and prior['history_sha256']==row['history_sha256']
+                row.update(evaluations=prior['evaluations'],heights=prior['heights'])
+        d.update(host=host,cohort=spec['cohort'],history_cache_hits=sum(bool(j.get('history_unchanged')) for j in d['jobs']),status_response_bytes=len(r.stdout.encode()))
+        snapshot.write_text(json.dumps(d,indent=2)+'\n');return d
     with ThreadPoolExecutor(max_workers=len(specs)) as pool:hosts=list(pool.map(collect,specs))
     report=summarize(hosts,json.loads((main_folder/'sac-reference.json').read_text()))
     (output/'summary.json').write_text(json.dumps(report,indent=2)+'\n')
