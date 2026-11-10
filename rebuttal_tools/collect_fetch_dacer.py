@@ -33,6 +33,9 @@ for job in plan['jobs']:
    if not line.strip():continue
    try:r=json.loads(line)
    except ValueError:continue
+   # The callback evaluates before the last learner update. Its temporary
+   # 1M record is replaced after training; do not expose it as final evidence.
+   if r['steps']==1000000 and (not row['verified_complete'] or r['updates']!=995000):continue
    v=r[r['primary_mode']];values[r['steps']]=dict(step=r['steps'],episodes=v['episodes'],success=v['success_rate'],new_success=v['new_final_success_count']/v['episodes'])
   row['evaluations']=[values[k] for k in sorted(values)]
  row['heights']=[];p=out/'height-evaluations.jsonl'
@@ -40,8 +43,10 @@ for job in plan['jobs']:
   values={}
   for line in p.read_text().splitlines():
    if not line.strip():continue
-   try:r=json.loads(line);values[r['steps']]=dict(step=r['steps'],**r['modes']['stochastic_z'])
+   try:r=json.loads(line)
    except ValueError:continue
+   if r['steps']==1000000 and (not row['verified_complete'] or r['updates']!=995000):continue
+   values[r['steps']]=dict(step=r['steps'],**r['modes']['stochastic_z'])
   row['heights']=[values[k] for k in sorted(values)]
  rows.append(row)
 pid=plan.get('controller_pid');cmd=''
