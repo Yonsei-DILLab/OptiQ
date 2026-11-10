@@ -50,9 +50,10 @@ def main():
             JAX_COMPILATION_CACHE_DIR=str(folder/'jax-cache'),MPLCONFIGDIR=str(folder/'mpl-cache'))
     def spawn(job,smoke=False):
         spec={k:job[k] for k in ('id','variant','seed','source','source_manifest','worker_cpus','output')}
+        spec.update({k:job[k] for k in plan.get('extra_spec_fields',[])})
         specpath=folder/'specs'/(job['id']+'.json');atomic(specpath,spec)
         command=['taskset','-c',','.join(map(str,job['learner_cpus'])),plan['python'],'-u','-m',
-            'rebuttal_tools.fetch_sigma_vector_worker','--spec',str(specpath)]
+            plan.get('worker_module','rebuttal_tools.fetch_sigma_vector_worker'),'--spec',str(specpath)]
         if smoke:command+=['--smoke']
         with (folder/'logs'/(job['id']+'.log')).open('x') as stream:
             child=subprocess.Popen(command,cwd=plan['source'],env=env(job['gpu']),
@@ -65,8 +66,9 @@ def main():
         for job in jobs:
             if job['status'] not in ('initializing','running'):continue
             out=Path(job['output']);job['peak_gpu_mib']=max(job.get('peak_gpu_mib',0),apps.get(job['pid'],0))
-            if (out/'completed.json').exists():
-                result=json.loads((out/'completed.json').read_text())
+            marker=out/plan.get('completion_marker','completed.json')
+            if marker.exists():
+                result=json.loads(marker.read_text())
                 assert result['updates']==(64 if preflight else 123424) and result['observed_utd']==.125
                 job.update(status='completed',result=result,finished_unix=time.time())
             elif (out/'failure.json').exists() or identity(job['pid'])!=job['start_ticks']:
