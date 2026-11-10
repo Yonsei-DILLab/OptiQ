@@ -15,12 +15,13 @@ def main():
     parser.add_argument('--root',type=Path,default=Path('/workspace/heechan-fetch-dacer'))
     parser.add_argument('--code',type=Path,required=True)
     parser.add_argument('--targets',type=float,nargs='+',choices=(-.9,.5,.75,1.),default=[-.9,.5])
-    parser.add_argument('--noise-scales',type=float,nargs='+',choices=(.1,.3,1.,2.,3.),default=[2.,3.])
+    parser.add_argument('--noise-scales',type=float,nargs='+',choices=(.1,.3,1.,2.,3.,5.,10.),default=[2.,3.])
     parser.add_argument('--gpus',type=int,nargs='+',choices=range(4),default=[0,1,2,3])
     parser.add_argument('--max-new-active',type=int,default=8)
     parser.add_argument('--max-active-per-gpu',type=int)
     parser.add_argument('--max-initializing-per-gpu',type=int,default=2)
     parser.add_argument('--reserve-plan',type=Path,action='append',default=[])
+    parser.add_argument('--expect-alpha-decay',action='store_true')
     parser.add_argument('--rationale',default='Test stronger initial random exploration with DACER alpha naturally decaying later, rather than only increasing its entropy floor.')
     args=parser.parse_args()
     assert len(set(args.targets))==len(args.targets) and len(set(args.noise_scales))==len(args.noise_scales)
@@ -84,6 +85,7 @@ def main():
         config=dict(task='pick-and-place',method='ibolt',temperature=.25,log_std_min=-5,log_std_max=1,initial_log_std=-1,
             num_envs=1,utd=1,batch_size=256,HER=True,normalize_observations=True,steps=1000000,warmup=5000,expected_updates=995000),
         rationale=args.rationale,
+        expected_alpha_direction='decrease' if args.expect_alpha_decay else None,
         global_selection_rule='Compare cohort leaders using only seeds0/1 pre-final last5, high-air tie-break and AUC. Additional seeds2/3/4 remain confirmation, not a selection criterion.',
         scope=dict(search_configurations=len(grid),search_runs=2*len(grid),new_search_runs=2*len(grid),search_seeds=[0,1],additional_seeds=[2,3,4]))
     if args.max_active_per_gpu is not None:plan['max_active_per_gpu']=args.max_active_per_gpu

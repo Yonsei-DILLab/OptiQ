@@ -138,6 +138,8 @@ def main():
             if child.wait()!=0:raise RuntimeError('GPU preflight failed: '+job['id'])
             done=json.loads((Path(job['output'])/'dacer-verified-completion.json').read_text())
             assert done['updates']==4 and done['runtime']['backend']=='gpu' and done['alpha_update_direction_verified']
+            if plan.get('expected_alpha_direction')=='decrease':
+                assert done['regulator']['alpha']<.27,('Expected an annealing exploration regime',job['id'])
             job.update(status='completed',result=done);result[str(index)]=job
         return result
     def applications():
