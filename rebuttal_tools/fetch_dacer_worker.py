@@ -8,7 +8,7 @@ from .fetch_wide_utd1_worker import atomic
 
 TARGETS=(-.9,.5,.75,1.)
 NOISE_SCALES=(.1,.3,1.)
-ALLOWED_NOISE_SCALES=NOISE_SCALES+(2.,3.,5.,10.)
+ALLOWED_NOISE_SCALES=NOISE_SCALES+(0.,2.,3.,5.,10.)
 
 
 def leaves(value,prefix=''):

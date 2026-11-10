@@ -15,7 +15,7 @@ def main():
     parser.add_argument('--root',type=Path,default=Path('/workspace/heechan-fetch-dacer'))
     parser.add_argument('--code',type=Path,required=True)
     parser.add_argument('--targets',type=float,nargs='+',choices=(-.9,.5,.75,1.),default=[-.9,.5])
-    parser.add_argument('--noise-scales',type=float,nargs='+',choices=(.1,.3,1.,2.,3.,5.,10.),default=[2.,3.])
+    parser.add_argument('--noise-scales',type=float,nargs='+',choices=(0.,.1,.3,1.,2.,3.,5.,10.),default=[2.,3.])
     parser.add_argument('--gpus',type=int,nargs='+',choices=range(4),default=[0,1,2,3])
     parser.add_argument('--max-new-active',type=int,default=8)
     parser.add_argument('--max-active-per-gpu',type=int)

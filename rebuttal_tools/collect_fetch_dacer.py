@@ -110,7 +110,7 @@ def summarize(hosts,sac):
     if not result['all_search_complete']:return result
     assert all(s['evaluation_count']==5 and s['common_step']==995000 for s in summaries.values())
     chosen=max(profiles,key=lambda p:(summaries[p]['last5_success']['mean'],summaries[p]['air_success_rate'],
-        summaries[p]['auc']['mean'],-abs(p[0]+.9),-abs(__import__('math').log(p[1]/.1))))
+        summaries[p]['auc']['mean'],-abs(p[0]+.9),-abs(__import__('math').log(p[1]/.1)) if p[1]>0 else -float('inf')))
     result['selected_parameters']=dict(target_entropy_per_dim=chosen[0],noise_scale=chosen[1])
     group=sorted([j for j in jobs if (j['target_entropy_per_dim'],j['noise_scale'])==chosen],key=lambda r:r['seed'])
     result['selected_seed_count']=len(group)

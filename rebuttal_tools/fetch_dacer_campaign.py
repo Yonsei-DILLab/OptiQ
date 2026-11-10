@@ -67,7 +67,7 @@ def choose_parameters(jobs,profiles=None):
             air_successes=hits,air_episodes=n,
             seeds=[{k:v for k,v in r.items() if not k.startswith('final100')} for r in seeds]))
     best=max(scores,key=lambda r:(r['last5_success'],r['air_success_rate'],r['auc'],
-        -abs(r['target_entropy_per_dim']+.9),-abs(math.log(r['noise_scale']/.1))))
+        -abs(r['target_entropy_per_dim']+.9),-abs(math.log(r['noise_scale']/.1)) if r['noise_scale']>0 else -math.inf))
     return dict(parameters={k:best[k] for k in ('target_entropy_per_dim','noise_scale')},
         selected_unix=time.time(),scores=scores,selection_seeds=[0,1],additional_seeds=[2,3,4],
         evidence_of_high_air_success=best['air_successes']>0,
