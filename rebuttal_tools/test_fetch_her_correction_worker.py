@@ -41,6 +41,15 @@ class CorrectionAdapterTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             corrected_worker_source(source.replace('vec = VecNormalize(', 'vec = OtherNormalize('))
 
+    def test_full_training_replay_only_changes_main_run_capacity(self):
+        source = (ROOT / 'rebuttal_tools/fetch_suite_5m_worker.py').read_text()
+        corrected = corrected_worker_source(source)
+        retained = corrected_worker_source(source, retain_full_training_replay=True)
+        self.assertIn('replay_capacity=25600 if smoke else 1000000,', corrected)
+        self.assertEqual(retained, corrected.replace(
+            'replay_capacity=25600 if smoke else 1000000,',
+            'replay_capacity=25600 if smoke else total,', 1))
+
     def test_launch_from_a_different_source_snapshot_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaisesRegex(AssertionError, 'frozen source snapshot'):
