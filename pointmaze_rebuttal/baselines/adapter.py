@@ -48,6 +48,32 @@ class Agent:
         cls = dict(sac=SAC, td3=TD3, sql=SQL, mfpo=MFPO, meow=MEOW)[self.method]
         self.native = cls(config['seed'], output, config['steps'], 4,
                           batch_size=config['batch_size'], **kwargs)
+        if self.method == 'mfpo':
+            # User-requested matched architecture; keep pinned vendor bytes intact.
+            from .legacy_agents import SpaceOnlyEnv
+            from flax.traverse_util import flatten_dict
+            self.native.config.update(actor_hidden_dims=(256,256),
+                critic_hidden_dims=(256,256),actor_layer_norm=False,
+                critic_layer_norm=False)
+            descriptor = SpaceOnlyEnv(4)
+            descriptor.observation_space.seed(config['seed'])
+            descriptor.action_space.seed(config['seed'])
+            settings = {k:v for k,v in self.native.config.items() if k != 'upstream_commit'}
+            self.native.agent = type(self.native.agent).create(config['seed'],
+                descriptor.observation_space,descriptor.action_space,**settings)
+            learner = self.native.agent
+            actor = learner.actor.params['MLP_0']
+            critic = learner.critic_1.params['MLP_0']
+            assert [actor[f'Dense_{i}']['kernel'].shape[-1] for i in range(2)] == [256,256]
+            assert len([k for k in actor if k.startswith('Dense_')]) == 3
+            assert len([k for k in critic if k.startswith('Dense_')]) == 2
+            assert [critic[f'Dense_{i}']['kernel'].shape[-1] for i in range(2)] == [256,256]
+            for state in (learner.actor,learner.critic_1,learner.critic_2,learner.logp_mvel):
+                assert not any('LayerNorm' in '/'.join(map(str,key)) for key in flatten_dict(state.params))
+            (output/'architecture-audit.json').write_text(json.dumps(dict(
+                actor_hidden_dims=[256,256],critic_hidden_dims=[256,256],
+                actor_layer_norm=False,critic_layer_norm=False,
+                actual_parameter_shapes_verified=True),indent=2)+'\n')
         # Allocate the requested replay shape, including bounded smoke validation.
         from ..envs.replay import Replay
         old = self.native.replay

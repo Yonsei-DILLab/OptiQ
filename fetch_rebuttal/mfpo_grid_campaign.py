@@ -21,6 +21,13 @@ INITIAL_TEMPERATURES = (.01, .1, 1.)
 ACTIVE = ('initializing', 'running')
 
 
+def worker_environment(plan,source,gpu):
+    env=environment(source,gpu)
+    if plan.get('extra_pythonpath'):
+        env['PYTHONPATH']+=os.pathsep+plan['extra_pythonpath']
+    return env
+
+
 def name(task, coeff, initial, seed, phase):
     return f'{task}-mfpo-{phase}-H{coeff:g}-A{initial:g}-s{seed}'
 
@@ -64,7 +71,7 @@ def preflight(plan, folder, job, gpu, cpus):
     if not (output/'completed.json').exists():
         with (folder/'logs'/('preflight-'+key+'.log')).open('a') as stream:
             subprocess.run(['taskset', '-c', ','.join(map(str, cpus))]+command(probe,plan['python'],True),
-                cwd=job['source'],env=environment(job['source'],gpu),stdin=subprocess.DEVNULL,
+                cwd=job['source'],env=worker_environment(plan,job['source'],gpu),stdin=subprocess.DEVNULL,
                 stdout=stream,stderr=subprocess.STDOUT,check=True)
     result=json.loads((output/'completed.json').read_text())
     cfg=json.loads((output/'config.json').read_text())
@@ -165,6 +172,15 @@ def main():
     signal.signal(signal.SIGTERM,shutdown);signal.signal(signal.SIGINT,shutdown)
     children={}
     try:
+        # Historical matched-budget reruns wait behind the current full suite.
+        while plan.get('start_after_plan'):
+            dependency=json.loads(Path(plan['start_after_plan']).read_text())
+            jobs=dependency['jobs']
+            if len(jobs)==20 and all(j['status']=='completed' and
+                (Path(j['output'])/'verified-completion.json').exists() for j in jobs):
+                break
+            plan.update(status='waiting_for_current_5m_suite',checked_unix=time.time())
+            save_json(path,plan);time.sleep(10)
         validate_grid(plan,folder);plan['status']='running'
         while True:
             for job in plan['jobs']:
@@ -199,18 +215,23 @@ def main():
             active=[j for j in plan['jobs'] if j['status'] in ACTIVE]
             for job in plan['jobs']:
                 if job['status']!='queued':continue
+                if len(active)>=plan.get('max_active',len(plan['jobs'])):
+                    job['waiting_reason']='campaign concurrency limit';continue
                 gpu=job['gpu'];used,total=memory[gpu]
                 pending=sum(plan['reserves_mib'][j['method']] for j in active if j['gpu']==gpu and j['status']=='initializing')
                 if used+pending+plan['reserves_mib'][job['method']]>total-plan['gpu_headroom_mib'] or available<plan['host_reserve_mib']:
                     job['waiting_reason']='memory headroom';continue
                 if sum(j['status']=='initializing' and j['gpu']==gpu for j in active)>=plan['max_initializing_per_gpu']:
                     job['waiting_reason']='initialization admission';continue
-                cpu=min(plan['cpu_lanes'],key=lambda c:sum(j.get('cpus')==c for j in active))
+                free=[c for c in plan['cpu_lanes'] if not any(j.get('cpus')==c for j in active)]
+                if not free:
+                    job['waiting_reason']='dedicated CPU lanes';continue
+                cpu=free[0]
                 source=job.get('source',plan['source'])
                 cmd=['taskset','-c',','.join(map(str,cpu))]+command(job,plan['python'])
                 logfolder=Path(job.get('log_folder',str(folder/'logs')));logfolder.mkdir(exist_ok=True)
                 with (logfolder/(job['id']+'.log')).open('x') as stream:
-                    child=subprocess.Popen(cmd,cwd=source,env=environment(source,gpu),stdin=subprocess.DEVNULL,
+                    child=subprocess.Popen(cmd,cwd=source,env=worker_environment(plan,source,gpu),stdin=subprocess.DEVNULL,
                         stdout=stream,stderr=subprocess.STDOUT)
                 fields=Path(f'/proc/{child.pid}/stat').read_text().rsplit(')',1)[1].split()
                 job.update(status='initializing',pid=child.pid,start_ticks=int(fields[19]),started_unix=time.time(),

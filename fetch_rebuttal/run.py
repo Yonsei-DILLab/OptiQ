@@ -51,6 +51,29 @@ class Baseline:
             self.native = dict(sac=SAC, td3=TD3, sql=SQL, mfpo=MFPO, meow=MEOW)[method](
                 config['seed'], folder, config['steps'], config['observation_dim'],
                 batch_size=config['batch_size'], action_dim=config['action_dim'], **kwargs)
+            if method == 'mfpo':
+                # Matched rebuttal architecture; preserve pinned upstream files.
+                from .baselines.native import SpaceOnlyEnv
+                from flax.traverse_util import flatten_dict
+                self.native.config.update(actor_hidden_dims=(256,256),
+                    critic_hidden_dims=(256,256),actor_layer_norm=False,
+                    critic_layer_norm=False)
+                descriptor = SpaceOnlyEnv(config['observation_dim'],config['action_dim'])
+                descriptor.observation_space.seed(config['seed'])
+                descriptor.action_space.seed(config['seed'])
+                training = {k:v for k,v in self.native.config.items() if k!='upstream_commit'}
+                self.native.agent = type(self.native.agent).create(config['seed'],
+                    descriptor.observation_space,descriptor.action_space,**training)
+                learner = self.native.agent
+                for state,hidden_count in ((learner.actor,3),(learner.critic_1,2),(learner.critic_2,2)):
+                    mlp = state.params['MLP_0']
+                    assert len([k for k in mlp if k.startswith('Dense_')])==hidden_count
+                    assert [mlp[f'Dense_{i}']['kernel'].shape[-1] for i in range(2)]==[256,256]
+                for state in (learner.actor,learner.critic_1,learner.critic_2,learner.logp_mvel):
+                    assert not any('LayerNorm' in '/'.join(map(str,k)) for k in flatten_dict(state.params))
+                save_json(folder/'architecture-audit.json',dict(actor_hidden_dims=[256,256],
+                    critic_hidden_dims=[256,256],actor_layer_norm=False,critic_layer_norm=False,
+                    actual_parameter_shapes_verified=True))
             self.native.replay = Replay(capacity=config['replay_capacity'],
                 observation_dim=config['observation_dim'], action_dim=config['action_dim'],
                 seed=config['seed'], device=device if method in ('sac', 'td3') else 'cpu')

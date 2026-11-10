@@ -54,6 +54,7 @@ def run(spec, smoke=False):
         final_episodes=2 if smoke else 100, checkpoint_every=100000,
         expected_updates=expected, smoke=smoke,
         diffusion_steps=100, action_gradient_steps=20,
+        actor_hidden_dims=[256,256],critic_hidden_dims=[256,256],layer_norm=False,
         worker_cpus=spec['worker_cpus'], source_manifest=spec['source_manifest'])
     vec = env = agent = None
     started = time.time()

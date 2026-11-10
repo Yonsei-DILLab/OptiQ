@@ -10,6 +10,39 @@ class DIPOReplayBuffer(VectorHERReplayBuffer):
         return result
 
 
+def match_hidden_layers(native):
+    """Use two hidden layers without editing the pinned diffusion/critic code."""
+    import torch
+    assert native.updates == native.agent.step == 0
+    for actor in (native.agent.actor, native.agent.actor_target):
+        modules = list(actor.model.layer.children())
+        assert len(modules)==7
+        actor.model.layer = torch.nn.Sequential(*modules[:4],modules[-1])
+    for critic in (native.agent.critic,native.agent.critic_target):
+        for name in ('q1_model','q2_model'):
+            modules = list(getattr(critic,name).children())
+            assert len(modules)==7
+            setattr(critic,name,torch.nn.Sequential(*modules[:4],modules[-1]))
+    for optimizer_name,model_name in [('actor_optimizer','actor'),('critic_optimizer','critic')]:
+        old = getattr(native.agent,optimizer_name)
+        assert not old.state
+        setattr(native.agent,optimizer_name,type(old)(getattr(native.agent,model_name).parameters(),**dict(old.defaults)))
+    native.config.update(network='256x2 Mish; original time embedding 32',
+        actor_hidden_dims=[256,256],critic_hidden_dims=[256,256],
+        actor_layer_norm=False,critic_layer_norm=False)
+    for actor in (native.agent.actor,native.agent.actor_target):
+        linear=[m for m in actor.model.layer if isinstance(m,torch.nn.Linear)]
+        assert [m.out_features for m in linear[:-1]]==[256,256]
+        assert not any(isinstance(m,torch.nn.LayerNorm) for m in actor.modules())
+    for critic in (native.agent.critic,native.agent.critic_target):
+        for name in ('q1_model','q2_model'):
+            linear=[m for m in getattr(critic,name) if isinstance(m,torch.nn.Linear)]
+            assert [m.out_features for m in linear[:-1]]==[256,256]
+    for name,model_name in [('actor_optimizer','actor'),('critic_optimizer','critic')]:
+        optimized={id(p) for group in getattr(native.agent,name).param_groups for p in group['params']}
+        assert optimized=={id(p) for p in getattr(native.agent,model_name).parameters()}
+
+
 def bind_replay(native, replay, normalizer):
     import torch
     from fetch_rebuttal.dipo import upstream
@@ -51,6 +84,7 @@ class DIPOView:
     def __init__(self, config, output, replay, normalizer):
         from fetch_rebuttal.dipo import Agent
         self.native = Agent(config, output, device='cuda')
+        match_hidden_layers(self.native)
         self.normalizer = normalizer
         bind_replay(self.native, replay, normalizer)
         self.config = self.native.config

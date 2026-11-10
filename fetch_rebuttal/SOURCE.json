@@ -83,11 +83,12 @@
     "No vendor optimizer or algorithm source edits",
     "Optional common SB3 observation-only normalization; raw replay, normalized minibatches and frozen evaluation statistics; checkpoint RMS sidecars.",
     "Optional shared future HER for every Fetch learner; completed-episode sampling, environment reward recomputation, raw goal relabeling before normalization, native optimizer updates preserved.",
-    "Explicit MFPO target entropy coefficient and initial temperature, scalar learner diagnostics, isolated 2-seed grid and fresh selected 5-seed reruns; pinned vendor unchanged."
+    "Explicit MFPO target entropy coefficient and initial temperature, scalar learner diagnostics, isolated 2-seed grid and fresh selected 5-seed reruns; pinned vendor unchanged.",
+    "User-requested matched MFPO actor/critic 256x2 with LayerNorm off, applied by private constructor override before any training; vendor/native source bytes unchanged."
   ],
   "inherited_private_boundary": "No anonymous export of these adapters or derived work",
   "files": {
-    "run.py": "caacea22ed6eca587f18e0cd65d3e074109d8a0a0d8f45483f9aee73dfd39658",
+    "run.py": "ad9f3b9669b5ad336d3682563cf51cef3f32f1066050be45ca4ab4ef33424571",
     "dipo.py": "3228816eb170618d6b463ed078b1481ce1cc1acd005449bb98075029e8cc4b70",
     "env.py": "cc8031f778c1defa26ccdb2d679d6d1ae452804fc07f102c9248a3c6db956d17",
     "idac.py": "605b37d9c04a086db3115073d5d53440c4a869f2a6c14959ddca84b45aa430a8",
@@ -161,7 +162,7 @@
     "her.py": "f2ae220af2d4537ba6c85670c025dbb21e47c598ebaf9d54e57f5f2244a55a72",
     "her_campaign.py": "02ce59d407e4f964fb0db55d9c27502d34356ffe6521193082bdbed4fb383f25",
     "check_her.py": "a45dd7b813ad169e5a45edc1e2cb242e86017c1ba361f536ae4d0011c7a974a2",
-    "mfpo_grid_campaign.py": "a7c79667c83939543546c92b4396e38a97b23486a82edf29d17cf8f08c2e8168"
+    "mfpo_grid_campaign.py": "08bd0b081f069f0a3b11b11f0d40ffaa032fab137aeb7eaaa5f960e2f20c95d4"
   },
   "idac": {
     "repository": "https://github.com/zhougroup/IDAC",

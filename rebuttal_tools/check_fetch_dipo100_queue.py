@@ -64,7 +64,7 @@ def check_adapter(task):
     import torch
     from gymnasium import spaces
     from fetch_rebuttal.dipo import Agent
-    from rebuttal_tools.fetch_dipo100_adapter import DIPOReplayBuffer,bind_replay
+    from rebuttal_tools.fetch_dipo100_adapter import DIPOReplayBuffer,bind_replay,match_hidden_layers
     dim = 13 if task=='reach' else 28
     offset = 0 if task=='reach' else 3
     def reward(achieved,desired,infos):
@@ -89,6 +89,7 @@ def check_adapter(task):
         def normalize_reward(self,r):return r
     with tempfile.TemporaryDirectory() as folder:
         native = Agent(dict(seed=17,batch_size=256,replay_capacity=256,observation_dim=dim,action_dim=4),Path(folder),device='cpu')
+        match_hidden_layers(native)
         bind_replay(native,replay,Normalizer())
         assert native.agent.actor.n_timesteps==native.agent.actor_target.n_timesteps==100
         assert native.agent.action_gradient_steps==20
@@ -111,6 +112,7 @@ def check_adapter(task):
         assert native.updates==native.agent.step==0, 'Reservation validation trained DiPo early'
         native.assert_finite()
     return dict(passed=True,task=task,diffusion_steps=100,learner_updates=0,
+        actor_hidden_dims=[256,256],critic_hidden_dims=[256,256],layer_norm=False,
         checks=['Native 100 reverse steps observed','HER in actor and critic batches',
             'Normalized goal input','Gamma and timeout masks','Original action-bank replacement preserved'])
 

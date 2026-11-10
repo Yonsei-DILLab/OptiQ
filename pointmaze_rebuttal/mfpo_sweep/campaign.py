@@ -36,7 +36,8 @@ def make_plan(maze,folder,source,python):
         selection_seeds=list(SWEEP_SEEDS),final_seeds=list(FINAL_SEEDS),
         fixed=dict(steps=STEPS,warmup=8192,num_envs=256,utd=1,batch_size=256,
             actor_lr=3e-4,critic_lr=3e-4,logp_lr=3e-4,temp_lr=3e-4,
-            actor_hidden_dims=[256,256,256],critic_hidden_dims=[256,256,256],
+            actor_hidden_dims=[256,256],critic_hidden_dims=[256,256],
+            actor_layer_norm=False,critic_layer_norm=False,
             T=2,vel1_samples_num=16,vel2_samples_num=32,div_samples_num=2,
             eval_candidate_num=10,v_min=-1600,v_max=1600,atoms_num=101),
         evaluation=dict(primary='official 10-candidate target-Q selection',
@@ -77,7 +78,7 @@ def resources():
 
 
 def environment(plan,gpu):
-    return dict(os.environ,PYTHONPATH=plan['source'],CUDA_VISIBLE_DEVICES=str(gpu),
+    return dict(os.environ,PYTHONPATH=os.pathsep.join(filter(None,(plan['source'],plan.get('extra_pythonpath')))),CUDA_VISIBLE_DEVICES=str(gpu),
         XLA_PYTHON_CLIENT_PREALLOCATE='false',MUJOCO_GL='egl',WANDB_MODE='offline',
         OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1',MKL_NUM_THREADS='1',
         TF_NUM_INTRAOP_THREADS='1',TF_NUM_INTEROP_THREADS='1',
@@ -239,6 +240,8 @@ def main():
             active=[j for j in plan['jobs'] if j['status'] in ('initializing','running')]
             for j in plan['jobs']:
                 if j['status']!='queued':continue
+                if len(active)>=plan.get('max_active',len(plan['cpu_lanes'])):
+                    j['waiting_reason']='campaign concurrency limit';continue
                 gpu=gpus[j['gpu']]
                 same=[x for x in active if x['gpu']==j['gpu']]
                 pending=sum(max(0,plan['gpu_reserve_mib']-apps.get(x['pid'],0)) for x in same)

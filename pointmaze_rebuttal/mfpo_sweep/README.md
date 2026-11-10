@@ -13,11 +13,13 @@ Medium and Hard each run a full Cartesian grid:
 Common settings are the existing PointMaze matched profile: 1,000,192 transitions
 including8192 random warmup; vector environments256; batch256; UTD1;992000
 updates; replay1M. Actor/critic/log-density/temperature Adam learning rates all
-remain3e-4. Networks remain native256×3, layer normalization, T2, policy/Gaussian
+remain3e-4. The user-requested architecture is256×2 with actor and critic
+LayerNorm disabled. Keep T2, policy/Gaussian
 proposals16/32, divergence samples2, distributional support[-1600,1600],101 atoms.
-The native pinned MFPO vendor and baseline adapter bytes remain unchanged.
-Only target entropy and the initial temperature scalar are overridden; optimizer
-initial states and the actor/critic/log-density RNG/initialization are retained.
+The pinned MFPO vendor and legacy adapter bytes remain unchanged. A private
+constructor override applies the architecture before training and verifies actual
+parameter shapes. Within this architecture, only target entropy and the initial
+temperature scalar vary; the scalar override preserves all other learner state.
 
 Primary evaluation uses the author's fixed10-candidate target-Q selection;
 secondary evaluation uses one direct sample for comparison to previous PointMaze

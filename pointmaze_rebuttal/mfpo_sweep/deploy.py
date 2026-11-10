@@ -14,6 +14,10 @@ def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--maze',choices=('medium','hard'),required=True)
     parser.add_argument('--campaign',required=True)
+    parser.add_argument('--python',type=Path)
+    parser.add_argument('--max-active',type=int,default=4)
+    parser.add_argument('--extra-pythonpath',default='')
+    parser.add_argument('--default-five-seeds',action='store_true')
     args=parser.parse_args()
     assert_work_branch()
     folder=ROOT/'outputs/pointmaze-rebuttal'/args.campaign/args.maze
@@ -21,8 +25,16 @@ def main():
     source=folder/'source';source.mkdir()
     shutil.copytree(ROOT/'pointmaze_rebuttal',source/'pointmaze_rebuttal',
         ignore=shutil.ignore_patterns('__pycache__','*.pyc','.git'))
-    python=ROOT/'.venv/bin/python'
+    python=args.python or ROOT/'.venv/bin/python'
     plan=make_plan(args.maze,folder,source,python)
+    if args.default_five_seeds:
+        baseline=[]
+        for seed in range(5):
+            name=f'{args.maze}-mfpo-default-H-0.5-a0.01-s{seed}'
+            baseline.append(dict(id=name,maze=args.maze,coefficient=-.5,
+                temperature=.01,seed=seed,phase='default-five-seed',gpu=seed%4,
+                status='queued',output=str(folder/'runs'/name)))
+        plan['jobs']=baseline+plan['jobs']
     blocked=set()
     pids=subprocess.check_output(['nvidia-smi','--query-compute-apps=pid',
         '--format=csv,noheader,nounits'],text=True)
@@ -43,7 +55,9 @@ def main():
         if group not in seen and not (set(group)&blocked):seen.add(group);groups.append(group)
     lanes=[list(groups[i]+groups[i+1]) for i in range(0,len(groups)-1,2)]
     if len(lanes)<4:raise RuntimeError('Not enough free physical cores for four GPU lanes')
-    plan.update(cpu_lanes=lanes,excluded_existing_gpu_cpus=sorted(blocked),
+    if args.max_active<1:raise ValueError('Positive concurrency required')
+    plan.update(cpu_lanes=lanes,max_active=args.max_active,extra_pythonpath=args.extra_pythonpath,
+        excluded_existing_gpu_cpus=sorted(blocked),
         source_hashes=source_hashes(source),
         root_revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip())
     (folder/'plan.json').write_text(json.dumps(plan,indent=2)+'\n')
@@ -64,7 +78,7 @@ redirect_stderr=true
 stdout_logfile={folder}/controller.log
 stdout_logfile_maxbytes=20MB
 stdout_logfile_backups=2
-environment=PYTHONPATH="{source}",OMP_NUM_THREADS="1",OPENBLAS_NUM_THREADS="1",MKL_NUM_THREADS="1"
+environment=PYTHONPATH="{os.pathsep.join(filter(None,(str(source),args.extra_pythonpath)))}",OMP_NUM_THREADS="1",OPENBLAS_NUM_THREADS="1",MKL_NUM_THREADS="1"
 '''
     subprocess.run(['sudo','-n','tee','/etc/supervisor/conf.d/'+program+'.conf'],input=conf,
         text=True,stdout=subprocess.DEVNULL,check=True)
