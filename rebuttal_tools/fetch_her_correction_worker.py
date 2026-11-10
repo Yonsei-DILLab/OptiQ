@@ -65,7 +65,15 @@ def main():
     args = parser.parse_args()
     spec = json.loads(args.spec.read_text())
     sys.path.insert(0, str(Path(spec['source']).resolve()))
-    install_corrected_worker(spec)
+    module = install_corrected_worker(spec)
+    original_atomic = module.atomic
+
+    def record_recipe(path, data):
+        if path.name in ('config.json', 'verified-completion.json', 'native-config.json', 'sac-config.json'):
+            data = dict(data, parameter_selection='HER normalization correction; method parameter value recorded in entropy_search')
+        original_atomic(path, data)
+
+    module.atomic = record_recipe
     from rebuttal_tools.fetch_entropy_worker import install
     install(spec).run(spec, args.smoke)
 
