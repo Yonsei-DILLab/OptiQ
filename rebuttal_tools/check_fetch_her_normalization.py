@@ -39,6 +39,12 @@ class EpisodeProbe(gym.Env):
 
 
 def run():
+    defaults = HERGoalNormalize(DummyVecEnv([lambda: EpisodeProbe(0)]),
+                                task='slide', stats_seed=5)
+    try:
+        assert defaults.norm_obs and not defaults.norm_reward
+    finally:
+        defaults.close()
     env = HERGoalNormalize(DummyVecEnv([lambda i=i: EpisodeProbe(i) for i in range(4)]),
                            task='slide', stats_seed=5, norm_obs=True, norm_reward=False,
                            clip_obs=5., epsilon=1e-8)

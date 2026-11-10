@@ -13,8 +13,9 @@ from stable_baselines3.common.vec_env import VecNormalize
 class HERGoalNormalize(VecNormalize):
     def __init__(self, venv, *, task, stats_seed, replay_k=4,
                  min_std=0.01, raw_clip=200.0, **kwargs):
+        kwargs.setdefault('norm_reward', False)
         assert kwargs.get('norm_obs', True)
-        assert not kwargs.get('norm_reward', False)
+        assert not kwargs['norm_reward']
         super().__init__(venv, **kwargs)
         assert not isinstance(self.obs_rms, dict)
         self.task = task
