@@ -48,6 +48,11 @@ def install_corrected_worker(spec):
         assert hashlib.sha256((root / relative).read_bytes()).hexdigest() == manifest[relative]
     assert hashlib.sha256(source_path.read_bytes()).hexdigest() == manifest[str(source_path.relative_to(root))]
     source = corrected_worker_source(source_path.read_text())
+    if spec.get('collection_schedule') == 'episode_frozen':
+        relative = 'rebuttal_tools/fetch_her_episode_collection.py'
+        assert hashlib.sha256((root / relative).read_bytes()).hexdigest() == manifest[relative]
+        from rebuttal_tools.fetch_her_episode_collection import episodic_worker_source
+        source = episodic_worker_source(source)
     name = 'rebuttal_tools.fetch_suite_5m_worker'
     assert name not in sys.modules, 'Use a fresh process for each corrected run'
     module = types.ModuleType(name)
