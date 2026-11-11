@@ -12,7 +12,7 @@ import sys
 import types
 
 
-def corrected_worker_source(source, *, retain_full_training_replay=False):
+def corrected_worker_source(source, *, retain_full_training_replay=False, ibolt_gamma=None):
     replacements = [
         ('from fetch_rebuttal.normalization import normalized_ibolt_class, save_normalizer',
          'from rebuttal_tools.fetch_her_normalization import HERGoalNormalize, normalized_ibolt_class, save_normalizer'),
@@ -33,6 +33,20 @@ def corrected_worker_source(source, *, retain_full_training_replay=False):
         replacements.append(
             ('replay_capacity=25600 if smoke else 1000000,',
              'replay_capacity=25600 if smoke else total,'))
+    if ibolt_gamma is not None:
+        gamma = float(ibolt_gamma)
+        if not 0 < gamma < 1:
+            raise ValueError('iBOLT gamma must be between zero and one')
+        replacements.extend([
+            ('            cfg.total_steps=total; cfg.output_root=str(output); cfg.require_gpu=True',
+             '            cfg.total_steps=total; cfg.output_root=str(output); cfg.require_gpu=True\n'
+             f'            cfg.alg.gamma = {gamma!r}'),
+            ("'alg.utd','alg.buffer_size','env_name'",
+             "'alg.utd','alg.buffer_size','alg.gamma','env_name'"),
+            ('            view=IBOLTView(model)',
+             '            assert model.gamma == cfg.alg.gamma\n'
+             '            view=IBOLTView(model)'),
+        ])
     for needle, replacement in replacements:
         if source.count(needle) != 1:
             raise ValueError('Unexpected frozen worker version: ' + needle[:80])
@@ -43,6 +57,9 @@ def corrected_worker_source(source, *, retain_full_training_replay=False):
 
 def install_corrected_worker(spec):
     assert spec['method'] in ('ibolt', 'sac')
+    gamma = spec.get('ibolt_gamma')
+    if gamma is not None and spec['method'] != 'ibolt':
+        raise ValueError('ibolt_gamma applies to iBOLT runs')
     root = Path(spec['source']).resolve()
     assert Path(__file__).resolve().parent.parent == root, 'Launch from the frozen source snapshot'
     source_path = root / 'rebuttal_tools/fetch_suite_5m_worker.py'
@@ -53,7 +70,8 @@ def install_corrected_worker(spec):
     assert hashlib.sha256(source_path.read_bytes()).hexdigest() == manifest[str(source_path.relative_to(root))]
     source = corrected_worker_source(
         source_path.read_text(),
-        retain_full_training_replay=spec.get('retain_full_training_replay', False))
+        retain_full_training_replay=spec.get('retain_full_training_replay', False),
+        ibolt_gamma=gamma)
     if spec.get('collection_schedule') == 'episode_frozen':
         relative = 'rebuttal_tools/fetch_her_episode_collection.py'
         assert hashlib.sha256((root / relative).read_bytes()).hexdigest() == manifest[relative]
@@ -78,15 +96,23 @@ def main():
     sys.path.insert(0, str(Path(spec['source']).resolve()))
     module = install_corrected_worker(spec)
     original_atomic = module.atomic
+    common_changes = []
+    recipe_changes = []
+    if spec.get('retain_full_training_replay', False):
+        common_changes.append('replay_capacity')
+        recipe_changes.append('full training replay retention')
+    if spec.get('ibolt_gamma') is not None:
+        common_changes.append('gamma')
+        recipe_changes.append('iBOLT gamma ' + str(spec['ibolt_gamma']))
 
     def record_recipe(path, data):
         if path.name in ('config.json', 'verified-completion.json', 'native-config.json', 'sac-config.json'):
             data = dict(data, parameter_selection='HER normalization correction; method parameter value recorded in entropy_search')
-            if spec.get('retain_full_training_replay', False):
-                data['parameter_selection'] = 'HER normalization with full training replay retention'
+            if common_changes:
+                data['parameter_selection'] = 'HER normalization with ' + ' and '.join(recipe_changes)
                 data['entropy_search'] = dict(
                     data['entropy_search'], common_settings_unchanged=False,
-                    changed_common_setting='replay_capacity')
+                    changed_common_setting=', '.join(common_changes))
         original_atomic(path, data)
 
     module.atomic = record_recipe

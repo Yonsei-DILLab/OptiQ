@@ -50,6 +50,18 @@ class CorrectionAdapterTests(unittest.TestCase):
             'replay_capacity=25600 if smoke else 1000000,',
             'replay_capacity=25600 if smoke else total,', 1))
 
+    def test_ibolt_gamma_uses_the_existing_learner_configuration(self):
+        source = (ROOT / 'rebuttal_tools/fetch_suite_5m_worker.py').read_text()
+        default = corrected_worker_source(source)
+        changed = corrected_worker_source(source, ibolt_gamma=0.98)
+        self.assertNotIn('cfg.alg.gamma =', default)
+        self.assertIn('cfg.alg.gamma = 0.98', changed)
+        self.assertIn('assert model.gamma == cfg.alg.gamma', changed)
+        self.assertIn("'alg.buffer_size','alg.gamma','env_name'", changed)
+        self.assertIn('replay_capacity=25600 if smoke else 1000000,', changed)
+        with self.assertRaisesRegex(ValueError, 'between zero and one'):
+            corrected_worker_source(source, ibolt_gamma=1.0)
+
     def test_launch_from_a_different_source_snapshot_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaisesRegex(AssertionError, 'frozen source snapshot'):
