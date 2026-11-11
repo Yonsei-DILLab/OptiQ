@@ -62,6 +62,14 @@ class CorrectionAdapterTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'between zero and one'):
             corrected_worker_source(source, ibolt_gamma=1.0)
 
+    def test_relative_goals_select_only_the_fetch_normalizer(self):
+        source = (ROOT / 'rebuttal_tools/fetch_suite_5m_worker.py').read_text()
+        relative = corrected_worker_source(source, relative_goals=True)
+        self.assertIn('vec = HERRelativeGoalNormalize(GroupedFetchVecEnv(', relative)
+        self.assertIn('reward unchanged. Goal input is desired minus achieved', relative)
+        self.assertNotIn('cfg.alg.gamma =', relative)
+        self.assertIn('replay_capacity=25600 if smoke else 1000000,', relative)
+
     def test_launch_from_a_different_source_snapshot_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaisesRegex(AssertionError, 'frozen source snapshot'):

@@ -12,14 +12,22 @@ import sys
 import types
 
 
-def corrected_worker_source(source, *, retain_full_training_replay=False, ibolt_gamma=None):
+def corrected_worker_source(source, *, retain_full_training_replay=False, ibolt_gamma=None,
+                            relative_goals=False):
+    normalizer_import = 'from rebuttal_tools.fetch_her_normalization import HERGoalNormalize, normalized_ibolt_class, save_normalizer'
+    normalizer = 'HERGoalNormalize'
+    recipe = 'Completed-episode HER statistics; std floor0.01; raw clip200; normalized clip5; reward unchanged'
+    if relative_goals:
+        normalizer_import += '\n    from rebuttal_tools.fetch_her_normalization import HERRelativeGoalNormalize'
+        normalizer = 'HERRelativeGoalNormalize'
+        recipe += '. Goal input is desired minus achieved in each observation'
     replacements = [
         ('from fetch_rebuttal.normalization import normalized_ibolt_class, save_normalizer',
-         'from rebuttal_tools.fetch_her_normalization import HERGoalNormalize, normalized_ibolt_class, save_normalizer'),
+         normalizer_import),
         ("vec = VecNormalize(GroupedFetchVecEnv(n_envs, spec['worker_cpus'], task=task), norm_obs=True,",
-         "vec = HERGoalNormalize(GroupedFetchVecEnv(n_envs, spec['worker_cpus'], task=task), task=task, stats_seed=seed, norm_obs=True,"),
+         f"vec = {normalizer}(GroupedFetchVecEnv(n_envs, spec['worker_cpus'], task=task), task=task, stats_seed=seed, norm_obs=True,"),
         ("    atomic(output/'config.json', settings)",
-         "    settings['normalization_recipe']='Completed-episode HER statistics; std floor0.01; raw clip200; normalized clip5; reward unchanged'\n"
+         f"    settings['normalization_recipe']={recipe!r}\n"
          "    atomic(output/'config.json', settings)"),
         ('her_replay_last_sample=model.replay_buffer.last))',
          'her_replay_last_sample=model.replay_buffer.last,\n'
@@ -71,7 +79,7 @@ def install_corrected_worker(spec):
     source = corrected_worker_source(
         source_path.read_text(),
         retain_full_training_replay=spec.get('retain_full_training_replay', False),
-        ibolt_gamma=gamma)
+        ibolt_gamma=gamma, relative_goals=spec.get('relative_goals', False))
     if spec.get('collection_schedule') == 'episode_frozen':
         relative = 'rebuttal_tools/fetch_her_episode_collection.py'
         assert hashlib.sha256((root / relative).read_bytes()).hexdigest() == manifest[relative]
@@ -104,6 +112,9 @@ def main():
     if spec.get('ibolt_gamma') is not None:
         common_changes.append('gamma')
         recipe_changes.append('iBOLT gamma ' + str(spec['ibolt_gamma']))
+    if spec.get('relative_goals', False):
+        common_changes.append('goal_coordinates')
+        recipe_changes.append('relative goal inputs')
 
     def record_recipe(path, data):
         if path.name in ('config.json', 'verified-completion.json', 'native-config.json', 'sac-config.json'):

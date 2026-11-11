@@ -31,10 +31,13 @@ class HERGoalNormalize(VecNormalize):
         self._episode_achieved = None
         self._previous_raw = None
 
+    def _normalization_input(self, obs):
+        return np.asarray(obs)
+
     def normalize_obs(self, obs):
         if not self.norm_obs:
             return np.array(obs, copy=True)
-        raw = np.clip(np.asarray(obs), -self.raw_clip, self.raw_clip)
+        raw = np.clip(self._normalization_input(obs), -self.raw_clip, self.raw_clip)
         std = np.maximum(np.sqrt(np.maximum(self.obs_rms.var, 0.0)), self.min_std)
         return np.clip((raw - self.obs_rms.mean) / std,
                        -self.clip_obs, self.clip_obs).astype(np.float32)
@@ -87,7 +90,8 @@ class HERGoalNormalize(VecNormalize):
         sampled = observations[episode, times].copy()
         original_goals = sampled[:, -3:].copy()
         sampled[her, -3:] = achieved[episode[her], future[her]]
-        self.obs_rms.update(np.clip(sampled, -self.raw_clip, self.raw_clip))
+        inputs = self._normalization_input(sampled)
+        self.obs_rms.update(np.clip(inputs, -self.raw_clip, self.raw_clip))
         self.completed_stats_episodes += len(completed)
         self.stats_transitions += count
         self.last_stats_audit = dict(
@@ -122,13 +126,28 @@ class HERGoalNormalize(VecNormalize):
         return self.normalize_obs(raw), rewards, dones, infos
 
 
+class HERRelativeGoalNormalize(HERGoalNormalize):
+    """Express the goal relative to the achieved position after raw HER relabeling."""
+
+    def _normalization_input(self, obs):
+        inputs = np.array(obs, copy=True)
+        inputs[..., -3:] -= inputs[..., self.achieved_slice]
+        return inputs
+
+    def unnormalize_obs(self, obs):
+        raw = super().unnormalize_obs(obs)
+        if self.norm_obs:
+            raw[..., -3:] += raw[..., self.achieved_slice]
+        return raw
+
+
 def save_normalizer(normalizer, folder, step):
     folder = Path(folder)
     normalizer.save(folder / f'normalizer_{step:09d}.pkl')
     rms = normalizer.obs_rms
     data = dict(steps=step, count=float(rms.count), mean=rms.mean.tolist(),
                 variance=rms.var.tolist(),
-                settings=dict(implementation='HERGoalNormalize', norm_obs=True,
+                settings=dict(implementation=type(normalizer).__name__, norm_obs=True,
                     norm_reward=False, clip_obs=normalizer.clip_obs,
                     raw_clip_obs=normalizer.raw_clip, min_std=normalizer.min_std,
                     statistics='Completed-episode observations and future-HER goals; frozen during evaluation',
@@ -137,6 +156,8 @@ def save_normalizer(normalizer, folder, step):
                 stats_transitions=normalizer.stats_transitions,
                 completed_stats_episodes=normalizer.completed_stats_episodes,
                 last_stats_audit=normalizer.last_stats_audit)
+    if isinstance(normalizer, HERRelativeGoalNormalize):
+        data['settings']['goal_coordinates'] = 'desired goal minus achieved goal in this observation'
     (folder / f'normalizer_{step:09d}.json').write_text(json.dumps(data, indent=2) + '\n')
 
 
