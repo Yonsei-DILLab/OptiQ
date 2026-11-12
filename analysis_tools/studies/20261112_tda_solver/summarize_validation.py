@@ -14,13 +14,18 @@ def main():
         old=next(a.runs.glob(f'validation-ca3f7e1-gpu*/{stem}_legacy'))
         new=next(a.runs.glob(f'validation-final-gpu*/{stem}_verified'))
         before=json.loads((old/'diagnosis.json').read_text());after=json.loads((new/'result.json').read_text())
+        prior=next(a.runs.glob(f'validation-ca3f7e1-gpu*/{stem}_verified/result.json'))
+        prior_run=json.loads(prior.read_text())
+        ascent_seconds=next(e['seconds'] for e in prior_run['events'] if e['stage']=='sample_ascent')
         mode=before['diagnostics'][1];graph=before['diagnostics'][2];fixed=after['events'][-1]
         row=dict(case,old_far=mode['far'],new_far=fixed['far'],old_modes=mode['modes'],new_modes=fixed['modes'],
                  old_negative=graph['negative_pairs'],new_negative=fixed['negative_pairs'],
                  old_min_persistence=graph['minimum_persistence'],new_min_persistence=fixed['minimum_persistence'],
                  old_endpoint_above_birth=mode['endpoint_above_assigned_mode_count'],
                  old_edge_above_birth=graph['edges_above_incident_births'],
-                 old_seconds=graph['seconds'],new_seconds=fixed['seconds'],new_counts=fixed['counts'])
+                 old_seconds=graph['seconds'],final_rebuild_seconds=fixed['seconds'],
+                 reused_ascent_seconds=ascent_seconds,final_reuses_converged_endpoints=True,
+                 new_counts=fixed['counts'])
         with np.load(old/'legacy_graph.npz') as x,np.load(new/'verified_graph.npz') as y:
             distance=np.max(abs(x['modes'][:,None]-y['modes'][None]),axis=-1)
             mapping=distance.argmin(1);row['max_old_mode_to_new_distance']=float(distance.min(1).max())
