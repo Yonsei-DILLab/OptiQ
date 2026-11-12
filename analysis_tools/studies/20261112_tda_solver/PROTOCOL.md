@@ -187,3 +187,11 @@ catalogs and graphs. Preserve the original endpoint archives and write derived
 metadata-bearing caches alongside the new results. Add a regression fixture
 for two converged approximations of one root. Gate the N/M pilot on these final
 six results, not the earlier unpolished candidate catalogs.
+
+The final six validations passed under source 215d04b, and the N/M pilot was
+launched from that immutable revision. Subsequent analysis-only additions do
+not change that source attribution. inspect_stopping.py examines the saved
+legacy endpoints with one fp32/fp64 EM step and continues a predetermined
+subset (16 largest density violations, first 16 far, first 16 overall) in fp64
+on CPU. This distinguishes premature stopping from the mode-catalog issue;
+it does not replace or filter the complete paired validation results.

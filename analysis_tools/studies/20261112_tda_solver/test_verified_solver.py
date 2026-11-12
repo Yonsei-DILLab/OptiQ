@@ -26,6 +26,11 @@ class VerificationTests(unittest.TestCase):
         m=Mixture([[-.7],[.5]],np.log([[.3],[.2]]))
         integral=quad(lambda v:math.exp(float(m.logp(torch.tensor([[v]],dtype=torch.float64))[0])),-1,1,epsabs=1e-10)[0]
         self.assertAlmostEqual(integral,1,places=9)
+        # D>1 is essential: the legacy normalization multiplied log(N) by D.
+        single=Mixture([[.2,-.3]],np.log([[.12,.25]]))
+        repeated=Mixture(np.repeat([[.2,-.3]],3,axis=0),np.log(np.repeat([[.12,.25]],3,axis=0)))
+        point=torch.tensor([[.1,.2],[-.5,.3]],dtype=torch.float64)
+        torch.testing.assert_close(single.logp(point),repeated.logp(point),atol=1e-11,rtol=1e-11)
 
     def test_unimodal_and_reject_nonstationary(self):
         mix=Mixture([[.2,-.3]],np.log([[.12,.25]]))
