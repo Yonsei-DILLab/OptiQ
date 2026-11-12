@@ -37,12 +37,14 @@ def evaluation_rng(model, seed):
     import torch
     py, np_state = random.getstate(), np.random.get_state()
     jax_key = model.jax_state.key if hasattr(model, 'jax_state') else None
-    devices = [torch.cuda.current_device()] if model.device.type == 'cuda' else []
+    devices = list(range(torch.cuda.device_count())) if torch.cuda.is_initialized() else []
     try:
         with torch.random.fork_rng(devices=devices):
             random.seed(seed)
             np.random.seed(seed)
-            torch.manual_seed(seed)
+            torch.random.default_generator.manual_seed(seed)
+            if devices:
+                torch.cuda.manual_seed_all(seed)
             if jax_key is not None:
                 import jax
                 model.jax_state = model.jax_state.replace(key=jax.random.PRNGKey(seed))
