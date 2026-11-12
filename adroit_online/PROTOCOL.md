@@ -302,3 +302,10 @@ exact53-leaf one-update comparison against the previous path, a fresh256-update
 CUDA13.2 memcheck including finite-state checks, and a fresh8,192-update stress.
 Only then start the full from-scratch retry. This changes execution timing only;
 it is isolated to the authorized process and does not mutate running snapshots.
+
+Synchronization also failed the instrumented diagnostic. Do not treat it as a
+verified fix or begin the full retry. Compare the same saved-checkpoint diagnostic
+on another available5090 GPU, retaining failed evidence, to separate device-local
+faults from software/runtime faults. Hardware-only exact integer arithmetic probes
+may use available diagnostic slots on GPUs0/1 and compare JAX/Torch against NumPy.
+These contain no RL learning and are not benchmark results. Keep all peers running.
