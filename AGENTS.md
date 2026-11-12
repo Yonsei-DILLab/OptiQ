@@ -38,6 +38,11 @@
   tasks x seeds4/5, preserving env256/UTD0.25/3M and all other scientific settings.
   Use a separate queue on the existing5090 servers, preserve the running Hammer
   T0.10 retry and baselines, and keep dilg-01 released. No additional temperatures.
+- Completion/return authorized 2026-11-13: monitor this campaign hourly; after
+  all work on the two5090 instances finishes, archive and verify the scientific
+  outputs and destroy Vast instances60326900 and60327673. Pending runs are part
+  of the campaign. Preserve all learning until completion and do not touch
+  dilg-01, dildata or other instances. This explicitly authorizes final return.
 
 ## 실험 전체 중지 및 프로토콜 확정 대기 — 사용자 지시, 2026-11-12
 

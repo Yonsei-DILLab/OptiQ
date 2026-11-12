@@ -40,7 +40,9 @@ for top in root.iterdir():
       (parts[0]=='preflight' and parts[1]=='temp001') or
       (parts[0]=='process-logs' and '-t001' in f.name)): continue
   s=f.stat()
-  if ('checkpoints' in f.parts or f.suffix in ('.zip','.pkl','.msgpack')) and now-s.st_mtime<90: continue
+  # Live append-only logs otherwise invalidate an entire large tar transfer.
+  # Defer all recently modified files; the final stable pass includes them.
+  if now-s.st_mtime<120: continue
   files[str(f.relative_to(root))]=[s.st_size,s.st_mtime_ns]
 print(json.dumps(files))
 ''' % (REMOTE_ROOT, cohort)
