@@ -291,3 +291,14 @@ driver/toolkit or alter training wheels. Package SHA256:
 8899b0126b75be7ff0df6b11b685312b180c5928f567c67f1e4962d4df6b4aad.
 Require that256-update memcheck to pass before full retry. Preserve all earlier
 failed diagnostics; no suppressed sanitizer errors or ignored nonzero exits.
+
+The current sanitizer reported zero memory errors but the256-update checkpoint
+finite-state assertion failed; this is NOT a passing diagnostic. Next isolate
+asynchronous dispatch/input lifetime by enabling the process-local
+`ADROIT_JAX_SYNCHRONIZE_UPDATES=1` adapter. It retains the complete update argument
+tree and blocks until each existing JIT update returns, without changing random
+draws, sampling, optimizer expressions, UTD or environment collection. Require an
+exact53-leaf one-update comparison against the previous path, a fresh256-update
+CUDA13.2 memcheck including finite-state checks, and a fresh8,192-update stress.
+Only then start the full from-scratch retry. This changes execution timing only;
+it is isolated to the authorized process and does not mutate running snapshots.

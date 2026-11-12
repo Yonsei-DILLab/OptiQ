@@ -1,5 +1,6 @@
 """Connect the unchanged repository iBOLT/DACER learner to online-only replay."""
 import copy
+import os
 import pickle
 from pathlib import Path
 
@@ -36,9 +37,18 @@ def create_model(c, env, output):
     atomic(Path(output) / 'ibolt-config.json', OmegaConf.to_container(cfg, resolve=True))
     # An empty model_save_path disables the learner's independent autosave
     # schedule. The common runner invokes the native serializer at paired steps.
-    return ExplorationIBOLT('MlpPolicy', env=env, cfg=cfg, model_save_path='',
-                            save_every_n_steps=c['checkpoint_every'],
-                            gradient_steps=c['gradient_steps'])
+    model = ExplorationIBOLT('MlpPolicy', env=env, cfg=cfg, model_save_path='',
+                             save_every_n_steps=c['checkpoint_every'],
+                             gradient_steps=c['gradient_steps'])
+    if os.environ.get('ADROIT_JAX_SYNCHRONIZE_UPDATES') == '1':
+        native_step = model._step
+        def synchronized_step(*args, **kwargs):
+            # Retain the complete input tree until this GPU update finishes.
+            # No new random draw, host numerical computation or optimizer edit.
+            jax.block_until_ready(args)
+            return jax.block_until_ready(native_step(*args, **kwargs))
+        model._step = synchronized_step
+    return model
 
 
 def rng_state(model):

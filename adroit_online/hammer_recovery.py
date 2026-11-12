@@ -120,11 +120,11 @@ def recovery(root):
     if state_file.exists():
         previous_diagnostic = json.loads(state_file.read_text())
         previous = previous_diagnostic['jobs'][NAME]
-        assert previous['phase'] == 'memcheck-safe' and previous['status'] == 'failed'
-        assert previous['source_commit'] == '7c21cf08d7bfb6dfb7e3d85929af49c1bba8dda2'
+        assert previous['phase'] == 'memcheck-13.2' and previous['status'] == 'failed'
+        assert previous['source_commit'] == 'd758b8b9bad6cb28efbb7d73dd54dfd17bacb0e8'
         assert not alive(previous) and not (root / 'runs' / ATTEMPT).exists()
         assert not (Path('/proc') / str(previous['controller_pid'])).exists()
-        history = root / 'recovery-sanitizer-12.8-failure.json'
+        history = root / 'recovery-async-failure.json'
         assert not history.exists()
         atomic(history, previous_diagnostic)
     q = json.loads((root / 'priority-queue-state.json').read_text())
@@ -152,7 +152,8 @@ def recovery(root):
                   source_commit=proof['commit'], gpu=gpu, cpus=cpus,
                   status='diagnostic', fresh_from_scratch=True, automatic_retry=False,
                   controller_pid=os.getpid(), started_unix=time.time(),
-                  runtime_environment={'XLA_FLAGS': XLA_FLAGS},
+                  runtime_environment={'XLA_FLAGS': XLA_FLAGS,
+                                       'ADROIT_JAX_SYNCHRONIZE_UPDATES': '1'},
                   previous_diagnostic=previous_diagnostic,
                   preserved_peers={s['pid']: s['start_ticks'] for s in peers})
     def save():
@@ -162,7 +163,7 @@ def recovery(root):
                XLA_PYTHON_CLIENT_PREALLOCATE='false', OMP_NUM_THREADS='1',
                OPENBLAS_NUM_THREADS='1', MKL_NUM_THREADS='1', NUMEXPR_NUM_THREADS='1',
                MUJOCO_GL='egl', PYTHONUNBUFFERED='1', JAX_TRACEBACK_FILTERING='off',
-               PYTHONFAULTHANDLER='1')
+               PYTHONFAULTHANDLER='1', ADROIT_JAX_SYNCHRONIZE_UPDATES='1')
     # Isolate the reproduced GEMM autotuner crash without changing shared wheels,
     # drivers or the numerical algorithm. Each diagnostic gets a fresh context.
     prefix = ['taskset', '-c', ','.join(map(str, cpus))]
@@ -207,17 +208,17 @@ def recovery(root):
     sanitizer = root / 'setup/sanitizer-13.2/extracted/usr/local/cuda-13.2/compute-sanitizer/compute-sanitizer'
     record['sanitizer'] = dict(package='cuda-sanitizer-13-2=13.2.87-1',
                                sha256=package_hash, path=str(sanitizer))
-    cases = [('memcheck-13.2', 4)]
+    cases = [('probe-sync', 0), ('memcheck-sync', 4), ('stress-sync', 128)]
     save()
     for label, blocks in cases:
         dest = root / 'preflight' / 'hammer-recovery' / label
         cmd = [*prefix]
-        if label == 'memcheck-13.2':
+        if label == 'memcheck-sync':
             cmd += [str(sanitizer), '--tool', 'memcheck',
                     '--error-exitcode', '86', '--target-processes', 'application-only']
         cmd += [sys.executable, '-m', 'adroit_online.hammer_recovery', '--diagnostic',
                 '--root', str(root), '--output', str(dest), '--blocks', str(blocks)]
-        if label == 'probe-safe':
+        if label == 'probe-sync':
             cmd += ['--probe']
         child_env = dict(env, XLA_FLAGS=XLA_FLAGS)
         with (root / 'process-logs' / ('hammer-recovery-' + label + '.log')).open('x') as log:
@@ -227,20 +228,17 @@ def recovery(root):
         if code or not (dest / 'passed.json').exists():
             record.update(status='failed', returncode=code, finished_unix=time.time()); save()
             raise RuntimeError(('Recovery diagnostic failed', label, code))
-        if label == 'probe-safe':
-            with np.load(folder / 'probe-cublas' / 'one-update.npz') as a, np.load(
-                    folder / 'probe-safe' / 'one-update.npz') as b:
+        if label == 'probe-sync':
+            with np.load(folder / 'probe-safe' / 'one-update.npz') as a, np.load(
+                    folder / 'probe-sync' / 'one-update.npz') as b:
                 assert a.files == b.files
                 differences = {}
                 for key in a.files:
-                    if np.issubdtype(a[key].dtype, np.integer):
-                        np.testing.assert_array_equal(a[key], b[key])
-                    else:
-                        np.testing.assert_allclose(a[key], b[key], rtol=1e-5, atol=5e-6)
+                    np.testing.assert_array_equal(a[key], b[key])
                     differences[key] = float(np.max(np.abs(a[key].astype(float) - b[key].astype(float))))
-            record['command_buffer_comparison'] = dict(passed=True, leaves=len(differences),
+            record['synchronization_comparison'] = dict(passed=True, leaves=len(differences),
                 max_absolute_difference=max(differences.values()))
-            atomic(folder / 'command-buffer-comparison.json', record['command_buffer_comparison'])
+            atomic(folder / 'synchronization-comparison.json', record['synchronization_comparison'])
     record['diagnostics_passed'] = ['probe-original', 'probe-cublas', 'probe-safe',
                                     'stress-safe', *[label for label, _ in cases]]
     cmd = [*prefix, sys.executable, '-m', 'adroit_online.run', '--method', 'ibolt',
