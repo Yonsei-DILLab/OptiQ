@@ -359,25 +359,26 @@ Reporting merges this queue with the existing cohorts, preserving the Hammer
 retry replacement rule. Archive the new cohort additionally to central
 `runs/adroit-online-20261112/temp001/shard{0,1}` with checkpoint hashes.
 
-## Hourly completion monitoring and instance return — 2026-11-13
+## Hourly completion monitoring and stop-only shutdown — 2026-11-13
 
-The user explicitly requested hourly monitoring and termination/return once the
-5090 experiments finish. Scope: Vast60326900 (175.155.64.205:19159, four5090s)
+The user requested hourly monitoring, then explicitly changed the final action
+to STOP ONLY: "다 되면 일단 반납하지말고 중지만 시켜놔". The earlier authorization
+to destroy/return is revoked. Scope: Vast60326900 (175.155.64.205:19159, four5090s)
 and60327673 (179.255.127.236:31020, four5090s). Each host has32 logical runs after
 merging the baseline/migration, T0.01 and Hammer recovery queues. The preserved
 failed Hammer attempt is history, not an additional logical completion target.
 Both instances must finish all64 logical runs, including pending SAC and iBOLT,
-before return. The16 completed dilg runs remain on central storage; no other
+before stopping. The16 completed dilg runs remain on central storage; no other
 instances or dilg workloads are shutdown targets.
 
 The read-only monitor runs every3,600 seconds in the active task, records both
 servers' observations, and exits only when completion gates pass. No recurring
 Codex automation is created. Unreachable servers, failed jobs, changed scope or
-unrelated GPU processes block return. Verify32 completed3,000,064-step runs per
+unrelated GPU processes block stopping. Verify32 completed3,000,064-step runs per
 host, expected update counts,1,000-episode final evaluations and final model/
 optimizer/replay files. Preserve all active learners and their original commits.
 
-Before destruction, finish a stable central archive and compare SHA256 manifests
+Before stopping, finish a stable central archive and compare SHA256 manifests
 for all scientific outputs, checkpoints, failed attempts, source snapshots and
 logs. Keep credentials/venvs out of the archive; preserve runtime version metadata.
 The older uncompressed backup relay may be replaced with the committed compressed
@@ -385,9 +386,10 @@ relay, preserving its inventory and all source/destination files. Defer files
 modified in the last120 seconds to avoid live logs invalidating large transfers.
 This changes archival operations only, not any running numerical source.
 
-Final destruction is a separate explicit operation after verified backup and a
-fresh identity/completion check. Reuse each instance's existing per-instance API
+Final STOP is a separate explicit operation after verified backup and a fresh
+identity/completion check. Preserve both instances and their disks; never issue
+DELETE/destroy/recycle. Reuse each instance's existing per-instance API
 authentication without printing credentials. Record provider responses and verify
-return; a lost SSH connection alone is not proof of deletion. Official references:
+stopped status; a lost SSH connection alone is not proof of stopping. References:
 https://vast.ai/developers/api and the Vast Docker environment documentation at
 https://github.com/vast-ai/docs/blob/main/guides/instances/docker-environment.mdx.

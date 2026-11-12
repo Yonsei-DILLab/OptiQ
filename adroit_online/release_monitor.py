@@ -1,6 +1,7 @@
 """Hourly read-only monitor; exits when both instances pass the completion gate.
 
-Deletion remains a separate action after full off-instance archive verification.
+Stopping remains a separate action after off-instance archive verification.
+The latest user instruction forbids destruction/return; retain instance disks.
 """
 import argparse
 from concurrent.futures import ThreadPoolExecutor
