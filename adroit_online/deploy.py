@@ -29,8 +29,9 @@ def main():
         subprocess.run(['git', 'archive', '--format=tar', '-o', str(archive), commit, *PATHS],
                        cwd=ROOT, check=True)
         source = temp / 'source'; source.mkdir()
-        with tarfile.open(archive) as t:
-            t.extractall(source, filter='data')
+        # The archive was generated locally from these committed repository paths.
+        # System tar also works on the deployment laptop's Python3.9 runtime.
+        subprocess.run(['tar', '-xf', str(archive), '-C', str(source)], check=True)
         files = {str(f.relative_to(source)): hashlib.sha256(f.read_bytes()).hexdigest()
                  for f in sorted(source.rglob('*')) if f.is_file()}
         provenance = dict(commit=commit, branch='heejoon-rebuttal', files=files)
