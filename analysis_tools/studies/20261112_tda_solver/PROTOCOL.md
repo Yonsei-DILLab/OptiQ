@@ -123,3 +123,10 @@ seeds, so batching did not explain restoration. Probe equivalent BatchRenorm
 arithmetic orders (left-associated, combined scale, division, affine) and a
 float64 reference. These are diagnostic implementations of the same real-valued
 equations; record every variant, do not select a changed policy to fit fixtures.
+
+The left-associated formula with JAX parameter/statistic leaves and one JIT
+graph reproduced all first-64-state fixture outputs exactly for all five
+seeds (zero maximum error). The prior reconstruction used NumPy leaves and
+an additional nested JIT boundary. Restore the Flax leaf types and one graph,
+retain the original formula, and expand the final gate to all 512 stored
+states per seed before generating the N=32768 mixtures. No gate relaxation.

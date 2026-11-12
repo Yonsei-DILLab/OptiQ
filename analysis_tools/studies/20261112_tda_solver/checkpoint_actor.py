@@ -26,10 +26,11 @@ def decode(code, data):
 
 def load_actor(path):
     tree = msgpack.unpackb(path.read_bytes(), ext_hook=decode, raw=False, strict_map_key=False)
-    return tree['params'], tree['batch_stats']
+    # Flax restoration produces JAX leaves. Keep arithmetic inside the same JIT
+    # graph; NumPy constants and nested JIT boundaries can change fp32 folding.
+    return tuple(jax.tree_util.tree_map(jnp.asarray,tree[key]) for key in ('params','batch_stats'))
 
 
-@jax.jit
 def forward(params, stats, obs, z):
     def norm(x, name):
         p, s = params[name], stats[name]
@@ -80,7 +81,7 @@ def main():
         path = locate(a.checkpoints, 'hopper', seed)
         params, stats = load_actor(path)
         with np.load(a.core / 'data' / f'hopper_s{seed}.npz') as f:
-            idx = np.array([0,8,16,48,128,224,384,504])
+            idx = np.arange(len(f['states']))
             obs, z = f['states'][idx], f['z']
             m, ls = evaluate(params, stats, obs, z)
             errors = dict(mu=float(np.max(abs(m-f['mu'][idx]))), log_std=float(np.max(abs(ls-f['log_std'][idx]))))
