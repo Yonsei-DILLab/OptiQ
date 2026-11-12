@@ -199,12 +199,13 @@ def run(depth,device,out,task=None,ent_coef='auto',actor_gradient_checker=None,f
             for key, values in zip(('actions', 'log_prob'), sampled[0], strict=True):
                 compare(key, info[key], values, stats)
             checked_critic_grad = info['critic_grad']
+            checked_actor_grad = info['actor_grad']
             for k in ['td_target','actor_grad','critic_grad','alpha_grad']:
                 if k not in info:
                     continue
                 try:
                     if k == 'actor_grad' and actor_gradient_checker is not None:
-                        actor_gradient_checker(info[k],captured[k],stats,state,reference,b,ec)
+                        checked_actor_grad = actor_gradient_checker(info[k],captured[k],stats,state,reference,b,ec)
                     else:
                         compare(k,info[k],captured[k],stats)
                 except AssertionError:
@@ -257,8 +258,10 @@ def run(depth,device,out,task=None,ent_coef='auto',actor_gradient_checker=None,f
             if reference.log_ent_coef is not None:
                 compare('log_alpha',actual.log_alpha,reference.log_ent_coef.detach().cpu().numpy(),stats)
             for field,opt,network,tree in [('actor_opt',reference.actor.optimizer,reference.actor,actor_tree),('critic_opt',reference.critic.optimizer,reference.critic,critic_tree)]:
-                tested = (reference_gradient_opts[field] if field == 'critic_opt'
-                          and checked_critic_grad is not info['critic_grad'] else getattr(actual, field))
+                reference_branch_checked = (
+                    (field == 'critic_opt' and checked_critic_grad is not info['critic_grad']) or
+                    (field == 'actor_opt' and checked_actor_grad is not info['actor_grad']))
+                tested = reference_gradient_opts[field] if reference_branch_checked else getattr(actual, field)
                 compare(field+'_first_moment',tested[0].mu,tree(network,moment_fn(opt,'exp_avg')),stats)
                 compare(field+'_second_moment',tested[0].nu,tree(network,moment_fn(opt,'exp_avg_sq')),stats)
             assert int(actual.updates)==reference._n_updates

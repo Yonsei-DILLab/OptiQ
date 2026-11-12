@@ -20,7 +20,7 @@ from .env import make_env
 def actor_gradient(actual, expected, stats, state, reference, batch, epsilon):
     try:
         check.compare('actor_grad', actual, expected, stats)
-        return
+        return actual
     except AssertionError:
         pass
     device = reference.device
@@ -92,6 +92,7 @@ def actor_gradient(actual, expected, stats, state, reference, batch, epsilon):
     check.compare_adroit_rounding('actor_grad_float32_branch_sensitivity', actual, expected,
                                   stats, abs_limit=1e-2, rms_limit=3e-4)
     stats['actor_gradient_branch_diagnostics'] = stats.get('actor_gradient_branch_diagnostics', 0) + 1
+    return torch_gradient
 
 
 def fused_parameters(label, actual, expected, stats):
