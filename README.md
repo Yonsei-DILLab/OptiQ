@@ -1,9 +1,18 @@
 # iBOLT
 
-Anonymous review snapshot of the MuJoCo implementation. This repository is
-self-contained: no private experiment folders, cluster paths, or W&B account
-are required. It contains implementation and reproduction settings, not
-pretrained checkpoints or benchmark results.
+This is the **non-anonymous `heechan-rebuttal` development branch**. It contains
+the MuJoCo implementation and the Fetch/Adroit rebuttal experiments, including
+historical operator scripts with cluster-specific paths. Follow [AGENTS.md](AGENTS.md)
+for execution scope and the strict separation from anonymous branches.
+
+- [Fetch F1 and Slide 20cm](fetch_rebuttal/README.md)
+- [Adroit A1 and verified expert demonstrations](adroit_rebuttal/PROTOCOL.md)
+- [Shared JAX SAC and CrossQ implementations](baselines/README.md)
+- [Frozen campaign source archive and hash verification](rebuttal_tools/campaign_snapshots/20261112/README.md)
+
+The MuJoCo commands below are the base implementation. Use the benchmark-specific
+protocol and frozen source when reproducing rebuttal runs. Training outputs,
+demonstration datasets, checkpoints and credentials remain outside Git.
 
 ## Installation
 

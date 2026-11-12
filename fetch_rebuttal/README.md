@@ -1,12 +1,33 @@
 # Fetch rebuttal experiments
 
-## Current Slide HER validation
+## Current Slide 20cm protocol
+
+The user changed the default Slide success radius to **0.20m on 2026-11-12**.
+`fetch_rebuttal.env.make_env('slide')` applies the same native distance threshold
+to training rewards, HER reward recomputation, and evaluation. Keep the original
+physics, goal distribution, sparse -1/0 reward values, and 50-step horizon.
+Label these results **FetchSlide-v4, 20cm**; do not mix them with the retired 5cm
+results or reuse the six previous 5cm temperature pilots.
+
+The current F1 campaign uses actor/critic 256x2, LayerNorm off, DACER on for iBOLT,
+vec256 with four collection workers, batch256, UTD1/8, and corrected HER
+normalization. Sweep iBOLT T={0.05,0.1,0.25,0.5,1} on seeds5/6 for5M, then select
+by the mean of the final five common regular evaluations (ties: lower T) and
+confirm on independent seeds0-4 for5M. JAX SAC uses seeds0-4 for5M and automatic
+entropy adjustment. All new Slide runs start from fresh initialization.
+
+The frozen iBOLT/JAX SAC entry points are `rebuttal_tools.fetch_suite_5m_worker`
+and `rebuttal_tools.fetch_jax_sac_worker`, respectively. The active protocol and
+source/archive verification receipts are under
+`outputs/fetch-adroit-f1-a1-temp-20261112/slide-20cm-20261112/`.
+
+## Previous 5cm Slide HER validation
 
 The initial campaign below is historical. It does not describe the current HER
 validation, current architectures, or current server allocation. Use each run's
 frozen source manifest and resolved configuration to identify its protocol.
 
-The corrected SAC/iBOLT entry point for new frozen snapshots is:
+The previous SAC/iBOLT correction entry point was:
 
 ```sh
 python -m rebuttal_tools.fetch_her_correction_worker --spec /path/to/run-spec.json
@@ -24,12 +45,17 @@ to +/-200 and normalized inputs to +/-5, and leaves rewards unchanged. Evaluatio
 freezes statistics. Stored replay coordinates and HER reward calculations remain
 in raw environment units.
 
-The optional spec value `collection_schedule: "episode_frozen"` collects 50 vector
-steps before training. It requires `fetch_her_episode_collection.py` in the source
-manifest, preserves native 32-update calls and the total UTD, and caps the final
-rollout to the exact transition budget.
+For the SAC benchmark baseline, use the default collection and update cadence:
+one vector step per collection block followed by 32 updates, with `gamma=0.99`.
+Apply the shared HER normalization described above.
 
-Current validation uses Slide pilot seeds 5/6, vec256, batch256, UTD1/8, 5M
+The optional spec value `collection_schedule: "episode_frozen"` is a collection
+ablation. It collects 50 vector steps before training and requires
+`fetch_her_episode_collection.py` in the source manifest. It preserves native
+32-update calls and the total UTD, and caps the final rollout to the exact
+transition budget. Label its SAC results as diagnostic in reports.
+
+That previous validation used Slide pilot seeds 5/6, vec256, batch256, UTD1/8, 5M
 transitions, sparse -1/0 rewards, the original 50-step horizon, and the 5cm success
 criterion. iBOLT uses T=0.25, logstd[-5,1], initial logstd=-1; SAC retains automatic
 alpha and target entropy -4. Primary iBOLT evaluation uses fresh stochastic z and

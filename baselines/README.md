@@ -1,4 +1,25 @@
-# CrossQ comparison
+# Baseline implementations
+
+## Shared JAX SAC
+
+`baselines/jax_sac.py:JaxSAC` is the implementation for new Fetch and Adroit SAC
+runs. Actor inference, twin-critic updates, Adam, automatic entropy adjustment,
+and Polyak targets run in JAX. SB3 supplies the reference initialization and
+collector/replay interfaces. Adroit additionally supports critic LayerNorm.
+
+Automatic entropy adjustment is the baseline. The explicit fixed-alpha=0
+ablation disables its optimizer while retaining stochastic policy collection;
+the zero coefficient uses a static mode and finite checkpoint placeholder,
+without evaluating log(0). Restore a training run from its JAX state sidecar,
+not just the SB3 inference zip.
+
+`rebuttal_tools/check_fetch_jax_sac.py` compares aligned noise/batches, losses,
+gradients, optimizer moments, target updates and serialization against SB3.
+It also supports the existing Adroit environment shapes. Recorded validation
+and frozen campaign sources are indexed in
+`rebuttal_tools/campaign_snapshots/20261112/README.md`.
+
+## CrossQ comparison
 
 Two runs per task and seed, under the same protocol as the main iBOLT results
 (Gymnasium v4, 1M interactions, 5K random warmup, evaluation every 5K steps with

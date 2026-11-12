@@ -31,7 +31,8 @@ class IBOLT(JaxLearner):
                 obs, actions, next_obs, dones, rewards, self.key,
                 int(a.num_policy_samples), int(a.proposals_per_policy_sample),
                 float(a.temperature), float(a.density_correction_beta), update_actor,
-                self.cfg.alg.critic.get('type', 'default') == 'crossq')
+                self.cfg.alg.critic.get('type', 'default') == 'crossq',
+                use_min_candidate_q=a.get('use_min_candidate_q', False))
         self._n_updates += gradient_steps
         if self.model_save_path and (self.num_timesteps % self.save_every_n_steps == 0
                                    or self.num_timesteps == self.learning_starts + 1):
@@ -56,9 +57,9 @@ class IBOLT(JaxLearner):
         self.logger.dump(self.num_timesteps)
 
     @classmethod
-    @partial(jax.jit, static_argnames=['cls','n','repeats','do_actor','crossq'])
+    @partial(jax.jit, static_argnames=['cls','n','repeats','do_actor','crossq','use_min_candidate_q'])
     def _step(cls,gamma,tau,actor,critic,obs,actions,next_obs,dones,rewards,key,
-              n,repeats,temperature,beta,do_actor,crossq=False):
+              n,repeats,temperature,beta,do_actor,crossq=False,use_min_candidate_q=False):
         if crossq:
             # CrossQ: no target network, so no Polyak update.
             critic,metrics,key = cls.update_critic_crossq(gamma,actor,critic,obs,actions,
@@ -68,7 +69,7 @@ class IBOLT(JaxLearner):
             critic = cls.soft_update(tau,critic)
         if do_actor:
             actor,actor_metrics,key = cls.update_actor(actor,critic,obs,key,n,repeats,
-                                                      temperature,beta)
+                                                      temperature,beta,use_min_candidate_q=use_min_candidate_q)
             metrics.update(actor_metrics)
         return critic,actor,metrics,key
 
@@ -114,8 +115,9 @@ class IBOLT(JaxLearner):
         return critic, dict(critic_loss=loss,current_q_values=current), key
 
     @staticmethod
-    @partial(jax.jit, static_argnames=['n','repeats'])
-    def update_actor(actor, critic, observations, key, n, repeats, temperature, beta):
+    @partial(jax.jit, static_argnames=['n','repeats','use_min_candidate_q'])
+    def update_actor(actor, critic, observations, key, n, repeats, temperature, beta,
+                     use_min_candidate_q=False):
         key, latent_key, proposal_key, dropout_key = jax.random.split(key,4)
         batch, obs_dim = observations.shape
         dim = actor.params['mu']['bias'].shape[0]
@@ -143,7 +145,9 @@ class IBOLT(JaxLearner):
             candidate_obs = jnp.broadcast_to(observations[:,None],(batch,m,obs_dim)).reshape(batch*m,obs_dim)
             values = critic.apply_fn({'params':critic.params,'batch_stats':critic.batch_stats},
                 candidate_obs,candidates.reshape(batch*m,dim),rngs={'dropout':dropout_key},train=False)
-            q = jax.lax.stop_gradient(values.reshape(2,batch,m,-1)[...,0].mean(axis=0))
+            twin_q = values.reshape(2,batch,m,-1)[...,0]
+            q = twin_q.min(axis=0) if use_min_candidate_q else twin_q.mean(axis=0)
+            q = jax.lax.stop_gradient(q)
             density = mixture_log_prob(candidates,means,scales)
             weights = jax.lax.stop_gradient(jax.nn.softmax(q/temperature-beta*density,axis=-1))
             loss, _ = direct_gmm_nll(mu,log_std,candidates,weights)

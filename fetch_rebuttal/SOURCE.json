@@ -88,12 +88,12 @@
   ],
   "inherited_private_boundary": "No anonymous export of these adapters or derived work",
   "files": {
-    "run.py": "ad9f3b9669b5ad336d3682563cf51cef3f32f1066050be45ca4ab4ef33424571",
+    "run.py": "b4e418003197b8c58e1a4aea4684ce5a87f77c9d3dcecdb82796794727dbb225",
     "dipo.py": "3228816eb170618d6b463ed078b1481ce1cc1acd005449bb98075029e8cc4b70",
-    "env.py": "cc8031f778c1defa26ccdb2d679d6d1ae452804fc07f102c9248a3c6db956d17",
+    "env.py": "d05077b25657a2da7668804e477827133f2c72177cb31be6313108813961bbc7",
     "idac.py": "605b37d9c04a086db3115073d5d53440c4a869f2a6c14959ddca84b45aa430a8",
     "__init__.py": "af527cdef95820d64882c10bf85866cfefc1b63ba409d74e3256a26401b16b5f",
-    "README.md": "c799cfd4a02e73668da3a19bccf59b57de90dc307deb92a31a6e3ffa522d411b",
+    "README.md": "d6bd7c3ca1934f291966f7113f33a6379202c3acc1881a92242d0d985453a57b",
     "campaign.py": "6d43cdf90f4f4b76947c5753590b65e013ea681a983d9f9c9928b8df7492fdad",
     "AGENTS.md": "2eead885035bbf48083101b6517c6640796618a54827f401f6d6e45e19928bbc",
     "baselines/sql_jax.py": "18cc4c9bbda27f89cb5de03be6ce470c579b5b29285bc3c43384ce4820421057",
@@ -180,5 +180,10 @@
       "utils/utils.py": "67c188ab9e2487db2923b8b5b85fe58cb40a0cbde09a0bf7bd2c25118ff27ba8",
       "utils/replay_buffer.py": "d2a7135795966e95793461d54c6c15b15ece101a95b026e0f0c199fa0e54f80a"
     }
+  },
+  "slide_distance_protocol": {
+    "distance_threshold_m": 0.2,
+    "requested_by_user": true,
+    "scope": "training, HER reward recomputation, evaluation; horizon and physics unchanged"
   }
 }

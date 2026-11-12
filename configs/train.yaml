@@ -27,6 +27,7 @@ alg:
     proposals_per_policy_sample: 1
     temperature: ${temperature}
     density_correction_beta: 1.0
+    use_min_candidate_q: false   # Score actor proposals with the lower twin Q instead of their mean.
     learning_starts: 5000
     log_std_min: -5.0
     log_std_max: -1.0

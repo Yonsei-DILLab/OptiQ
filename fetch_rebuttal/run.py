@@ -206,8 +206,8 @@ def evaluate(agent, task, episodes, seed, mode='policy'):
         with agent.evaluation_rng(seed):
             for episode in range(episodes):
                 obs, _ = env.reset(seed=seed + episode)
-                initial_success.append(float(np.linalg.norm(obs[3:6] - obs[-3:]) < .05)
-                    if task != 'reach' else float(np.linalg.norm(obs[:3] - obs[-3:]) < .05))
+                initial_success.append(float(np.linalg.norm(obs[3:6] - obs[-3:]) < env.unwrapped.distance_threshold)
+                    if task != 'reach' else float(np.linalg.norm(obs[:3] - obs[-3:]) < env.unwrapped.distance_threshold))
                 total, any_hit, length = 0., False, 0
                 while True:
                     action = agent.act(obs[None], mode=mode)[0]
@@ -227,7 +227,7 @@ def evaluate(agent, task, episodes, seed, mode='policy'):
         env.close()
         random.setstate(python_state)
         np.random.set_state(numpy_state)
-    return dict(episodes=episodes, success_rate=float(np.mean(final_success)),
+    return dict(episodes=episodes, distance_threshold_m=float(env.unwrapped.distance_threshold), success_rate=float(np.mean(final_success)),
                 any_success_rate=float(np.mean(any_success)), mean_return=float(np.mean(returns)),
                 returns=returns, final_success=final_success, any_success=any_success, lengths=lengths,
                 initial_success=initial_success,
@@ -404,7 +404,7 @@ def run_normalized_baseline(cfg, output, device):
         obs = env.reset()
         raw_obs = env.get_original_obs()
         goal_slice = slice(0, 3) if cfg['task'] == 'reach' else slice(3, 6)
-        initial_hit = bool(np.linalg.norm(raw_obs[0, goal_slice]-raw_obs[0, -3:]) < .05)
+        initial_hit = bool(np.linalg.norm(raw_obs[0, goal_slice]-raw_obs[0, -3:]) < float(env.get_attr('distance_threshold')[0]))
         for step in range(1, cfg['steps']+1):
             action = (rng.uniform(-1., 1., (1, 4)).astype(np.float32) if step <= cfg['warmup']
                       else agent.act(obs, mode='train'))
@@ -424,7 +424,7 @@ def run_normalized_baseline(cfg, output, device):
                 train_episodes += 1; train_any += int(episode_any); train_final += int(hit)
                 train_new_any += int(episode_any and not initial_hit)
                 episode_any = False
-                initial_hit = bool(np.linalg.norm(raw_obs[0, goal_slice]-raw_obs[0, -3:]) < .05)
+                initial_hit = bool(np.linalg.norm(raw_obs[0, goal_slice]-raw_obs[0, -3:]) < float(env.get_attr('distance_threshold')[0]))
             if step > cfg['warmup']:
                 learner_metrics = agent.update(step) or {}
             if step % 1000 == 0 or step == cfg['steps'] or step == cfg['warmup']+1:

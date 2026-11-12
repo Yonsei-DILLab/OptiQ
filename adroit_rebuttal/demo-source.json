@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/aravindr93/hand_dapg",
+  "revision": "9a1de23df6574e1b94e1da742e3326eb1f61c013",
+  "sha256": {
+    "pen-v0_demos.pickle": "84a6dae9fdac887b76460fb834eafd2bbeb4ef8bd4d6b05afb02f23698dde1d5",
+    "relocate-v0_demos.pickle": "1ad6bbe10e9550865279a44540745eccd22ef623aa0c2e95d2baf5678b3a3284",
+    "door-v0_demos.pickle": "d6ec9a090261f901e5c9bf10082799e30c8d34c3f28aef4026e492a1aefc96c3",
+    "hammer-v0_demos.pickle": "d3e517e717b1939696af5a599bec6554888ef9438a7214388fbd7c250895fd3f"
+  },
+  "action_pack_sha256": {
+    "door-dapg-actions.npz": "78acee05c3cb90d6c49c5529ef670cf3d2b939ee52c681b878a5495a1b084e28",
+    "hammer-dapg-actions.npz": "06b1dff19d3c1811fd4ac49b2d67d1bc1cb600103a4af04cfc0da1cdd7963287",
+    "pen-dapg-actions.npz": "e824e1af749ea748a626c6fa2bfdb3ca76ea711c1306cbb7ff75431d8888d762",
+    "relocate-dapg-actions.npz": "217fe23ec592cb6c7907e9f2340e2dc6997a429af8fea842de984610fb94d000"
+  }
+}

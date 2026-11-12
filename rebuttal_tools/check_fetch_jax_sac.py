@@ -1,0 +1,326 @@
+"""Independent numerical comparison against installed, unmodified SB3 SAC.train."""
+import argparse
+from collections import deque
+from pathlib import Path
+import json
+import types
+import hashlib
+import inspect
+
+import gymnasium as gym
+import numpy as np
+import torch
+import torch.nn.functional as F
+import jax
+import jax.numpy as jnp
+import optax
+from stable_baselines3 import SAC
+from stable_baselines3.common.logger import configure
+from stable_baselines3.common.type_aliases import ReplayBufferSamples
+from baselines.jax_sac import (JaxSAC,initial_state,export_actor,export_critic,
+    sample_actor,critic_values,sac_step,train_fixed_noise,ADAM,critic_parameter_tree,linear)
+
+
+class ShapeEnv(gym.Env):
+    observation_space=gym.spaces.Box(-np.inf,np.inf,(28,),np.float32)
+    action_space=gym.spaces.Box(-1.,1.,(4,),np.float32)
+    def reset(self,*,seed=None,options=None):super().reset(seed=seed);return np.zeros(28,np.float32),{}
+    def step(self,a):raise RuntimeError('No simulator calls in numeric test')
+
+
+def compare(label,actual,expected,stats,atol=3e-5,rtol=3e-4):
+    aa=jax.tree_util.tree_leaves(actual);bb=jax.tree_util.tree_leaves(expected)
+    assert len(aa)==len(bb),(label,len(aa),len(bb))
+    maximum=0.
+    for a,b in zip(aa,bb,strict=True):
+        a=np.asarray(a);b=np.asarray(b);assert a.shape==b.shape,(label,a.shape,b.shape)
+        assert np.isfinite(a).all() and np.isfinite(b).all(),label
+        maximum=max(maximum,float(np.max(np.abs(a-b))))
+        if not np.allclose(a,b,atol=atol,rtol=rtol):
+            raise AssertionError(f'{label}: max_abs={np.max(np.abs(a-b))}, scale={np.max(np.abs(b))}')
+    stats[label]=max(maximum,stats.get(label,0.))
+
+
+def compare_adroit_rounding(label, actual, expected, stats, abs_limit, rms_limit):
+    """Measure both peak and tensor RMS errors at float32 ReLU/Adam boundaries."""
+    max_error, max_rms = 0., 0.
+    for a, b in zip(jax.tree_util.tree_leaves(actual), jax.tree_util.tree_leaves(expected), strict=True):
+        a, b = np.asarray(a), np.asarray(b)
+        assert a.shape == b.shape and np.isfinite(a).all() and np.isfinite(b).all()
+        error = np.abs(a - b)
+        max_error = max(max_error, float(error.max()))
+        max_rms = max(max_rms, float(np.sqrt(np.mean(error**2))))
+    stats[label] = max(max_error, stats.get(label, 0.))
+    key = label + '_max_tensor_rms'
+    stats[key] = max(max_rms, stats.get(key, 0.))
+    assert max_error < abs_limit and max_rms < rms_limit, (label, max_error, max_rms)
+
+
+def critic_gradient_with_reference_masks(params, obs, actions, target, masks):
+    """Isolate roundoff that crosses zero before the critic's ReLUs."""
+    def loss(weights):
+        heads = []
+        for layers, head_masks in zip(weights, masks, strict=True):
+            x = jnp.concatenate((obs, actions), axis=-1)
+            for layer, mask in zip(layers[:-1], head_masks, strict=True):
+                x = linear(x, layer)
+                centered = x - x.mean(axis=-1, keepdims=True)
+                variance = jnp.square(centered).mean(axis=-1, keepdims=True)
+                x = centered * jax.lax.rsqrt(variance + 1e-6)
+                x = x * layer['norm']['weight'] + layer['norm']['bias']
+                x = jnp.where(mask, x, 0.)
+            heads.append(linear(x, layers[-1]))
+        return .5 * ((jnp.stack(heads) - target[None])**2).mean(axis=(1,2)).sum()
+    return jax.grad(loss)(params)
+
+
+def grad_layer(module):
+    return {k:getattr(module,k).grad.detach().cpu().numpy().copy() for k in ['weight','bias']}
+
+
+def actor_tree(actor,fn):
+    return dict(hidden=tuple(fn(m) for m in actor.latent_pi if isinstance(m,torch.nn.Linear)),mu=fn(actor.mu),log_std=fn(actor.log_std))
+
+
+def critic_tree(critic,fn):
+    return critic_parameter_tree(critic, fn)
+
+
+def moment_fn(optimizer,name):
+    def collect(m):
+        return {k:optimizer.state[getattr(m,k)][name].detach().cpu().numpy().copy() for k in ['weight','bias']}
+    return collect
+
+
+def make_model(cls,depth,seed,device,task=None,ent_coef='auto'):
+    if task is None:
+        env, policy, group_size = ShapeEnv(), 'MlpPolicy', 32
+    else:
+        from adroit_rebuttal.run import make_env
+        from adroit_rebuttal.sac_layernorm import LayerNormSACPolicy
+        env, policy, group_size = make_env(task), LayerNormSACPolicy, 64
+    model=cls(policy,env,seed=seed,device=device,learning_rate=3e-4,
+        batch_size=256,buffer_size=1024,learning_starts=12800,tau=.005,gamma=.99,
+        train_freq=1,gradient_steps=group_size,ent_coef=ent_coef,policy_kwargs=dict(net_arch=[256]*depth))
+    model.set_logger(configure(None,[]))
+    return model
+
+
+def aligned_state(reference, template):
+    """Compare each update at identical inputs, including nonzero Adam moments.
+
+    Chained float32 kernels can cross a ReLU boundary after tiny parameter
+    rounding differences. The separate fused32 check measures accumulated drift.
+    """
+    updates=reference._n_updates
+    def optimizer_state(old,optimizer,network,tree):
+        if not updates:return old
+        mu=tree(network,moment_fn(optimizer,'exp_avg'))
+        nu=tree(network,moment_fn(optimizer,'exp_avg_sq'))
+        return (old[0]._replace(count=jnp.int32(updates),
+                    mu=jax.tree_util.tree_map(jnp.asarray,mu),
+                    nu=jax.tree_util.tree_map(jnp.asarray,nu)),old[1])
+    alpha_opt=template.alpha_opt
+    if updates and reference.ent_coef_optimizer is not None:
+        values=reference.ent_coef_optimizer.state[reference.log_ent_coef]
+        alpha_opt=(alpha_opt[0]._replace(count=jnp.int32(updates),
+            mu=jnp.asarray(values['exp_avg'].detach().cpu().numpy().copy()),
+            nu=jnp.asarray(values['exp_avg_sq'].detach().cpu().numpy().copy())),alpha_opt[1])
+    log_alpha = (torch.zeros_like(reference.ent_coef_tensor) if template.zero_alpha else
+                 reference.log_ent_coef if reference.ent_coef_optimizer else reference.ent_coef_tensor.log())
+    return template.replace(actor=export_actor(reference.actor),critic=export_critic(reference.critic),
+        target=export_critic(reference.critic_target),log_alpha=jnp.asarray(log_alpha.detach().cpu().numpy().copy()),
+        actor_opt=optimizer_state(template.actor_opt,reference.actor.optimizer,reference.actor,actor_tree),
+        critic_opt=optimizer_state(template.critic_opt,reference.critic.optimizer,reference.critic,critic_tree),
+        alpha_opt=alpha_opt,updates=jnp.int32(updates))
+
+
+def run(depth,device,out,task=None,ent_coef='auto'):
+    seed=901+depth;rng=np.random.default_rng(seed);stats={}
+    reference=make_model(SAC,depth,seed,device,task,ent_coef)
+    adapter=make_model(JaxSAC,depth,seed,'cpu',task,ent_coef)
+    obs_dim = reference.observation_space.shape[0]
+    action_dim = reference.action_space.shape[0]
+    group_size = reference.gradient_steps
+    rewards = [-1.,0.] if task is None else [-.1,10.]
+    state=initial_state(reference)
+    compare('exact_initial_actor',state.actor,adapter.jax_state.actor,stats,0,0)
+    compare('exact_initial_critic',state.critic,adapter.jax_state.critic,stats,0,0)
+    compare('exact_initial_target',state.target,adapter.jax_state.target,stats,0,0)
+    batches=[];eps_current=[];eps_next=[]
+    for _ in range(16+group_size):
+        batches.append((rng.normal(size=(256,obs_dim)).astype('float32'),rng.uniform(-1,1,(256,action_dim)).astype('float32'),
+                        rng.normal(size=(256,obs_dim)).astype('float32'),rng.choice([0.,1.],(256,1),p=[.9,.1]).astype('float32'),
+                        rng.choice(rewards,(256,1)).astype('float32')))
+        eps_current.append(rng.normal(size=(256,action_dim)).astype('float32'));eps_next.append(rng.normal(size=(256,action_dim)).astype('float32'))
+    queue=deque();batch_queue=deque();captured={}
+    def fixed_sample(dist):
+        eps=torch.as_tensor(queue.popleft(),device=reference.device)
+        dist.gaussian_actions=dist.distribution.loc+dist.distribution.scale*eps
+        return torch.tanh(dist.gaussian_actions)
+    reference.actor.action_dist.sample=types.MethodType(fixed_sample,reference.actor.action_dist)
+    action_log_prob = reference.actor.action_log_prob
+    sampled = []
+    def record_action_log_prob(obs):
+        action, log_prob = action_log_prob(obs)
+        sampled.append((action.detach().cpu().numpy(), log_prob.detach().cpu().numpy()[:, None]))
+        return action, log_prob
+    reference.actor.action_log_prob = record_action_log_prob
+    relu_inputs = []
+    def capture_relu(_module, args):
+        relu_inputs.append(args[0].detach().cpu().numpy().copy())
+    relu_hooks = [m.register_forward_pre_hook(capture_relu) for q in reference.critic.q_networks
+                  for m in q if isinstance(m, torch.nn.ReLU)] if task else []
+    def sample(batch_size,env=None):
+        assert batch_size==256
+        b=batch_queue.popleft()
+        return ReplayBufferSamples(*(torch.as_tensor(x,device=reference.device) for x in b))
+    reference.replay_buffer.sample=sample
+    reference.actor.optimizer.register_step_pre_hook(lambda *args:captured.update(actor_grad=actor_tree(reference.actor,grad_layer)))
+    reference.critic.optimizer.register_step_pre_hook(lambda *args:captured.update(critic_grad=critic_tree(reference.critic,grad_layer)))
+    if reference.ent_coef_optimizer is not None:
+        reference.ent_coef_optimizer.register_step_pre_hook(lambda *args:captured.update(alpha_grad=reference.log_ent_coef.grad.detach().cpu().numpy().copy()))
+    original_mse=F.mse_loss
+    def record_mse(input,target,*args,**kwargs):
+        captured['td_target']=target.detach().cpu().numpy().copy()
+        return original_mse(input,target,*args,**kwargs)
+    F.mse_loss=record_mse
+    try:
+        for i in range(16):
+            print(json.dumps(dict(stage='single_update',depth=depth,step=i,errors_so_far=stats)),flush=True)
+            state=aligned_state(reference,state)
+            b=batches[i];ec=eps_current[i];en=eps_next[i]
+            queue.extend([ec,en]);batch_queue.append(b)
+            sampled.clear()
+            relu_inputs.clear()
+            actual,info=sac_step(state,tuple(map(jnp.asarray,b)),jnp.asarray(ec),jnp.asarray(en),diagnostics=True)
+            reference.train(gradient_steps=1,batch_size=256)
+            assert not queue and not batch_queue
+            for key, values in zip(('actions', 'log_prob'), sampled[0], strict=True):
+                compare(key, info[key], values, stats)
+            checked_critic_grad = info['critic_grad']
+            for k in ['td_target','actor_grad','critic_grad','alpha_grad']:
+                if k not in info:
+                    continue
+                try:
+                    compare(k,info[k],captured[k],stats)
+                except AssertionError:
+                    if task is None or k != 'critic_grad':
+                        raise
+                    assert len(relu_inputs) == 4 * depth
+                    masks = tuple(tuple(jnp.asarray(x > 0) for x in relu_inputs[start:start+depth])
+                                  for start in (0, depth))
+                    checked_critic_grad = critic_gradient_with_reference_masks(
+                        state.critic, jnp.asarray(b[0]), jnp.asarray(b[1]), jnp.asarray(captured['td_target']), masks)
+                    compare('critic_grad_at_reference_relu_masks', checked_critic_grad, captured[k], stats)
+                    compare_adroit_rounding('critic_grad_with_float32_mask_rounding', info[k], captured[k],
+                                            stats, 1e-2, 3e-4)
+            for k in ['actor_loss','critic_loss','ent_coef_loss','ent_coef']:
+                if k in info:compare(k,info[k],np.asarray(reference.logger.name_to_value['train/'+k]),stats)
+            if i==0:
+                details=[]
+                for (path,a),b,g,h in zip(jax.tree_util.tree_flatten_with_path(actual.actor)[0],jax.tree_util.tree_leaves(export_actor(reference.actor)),jax.tree_util.tree_leaves(info['actor_grad']),jax.tree_util.tree_leaves(captured['actor_grad']),strict=True):
+                    a,b,g,h=map(np.asarray,[a,b,g,h]);delta=np.abs(a-b);index=np.unravel_index(delta.argmax(),delta.shape)
+                    details.append(dict(path=str(path),max_abs=float(delta[index]),index=list(map(int,index)),jax_grad=float(g[index]),torch_grad=float(h[index]),rms=float(np.sqrt(np.mean(delta**2))),above_3e5=int((delta>3e-5).sum())))
+                print(json.dumps(dict(stage='first_actor_parameter_diagnostics',depth=depth,details=details)),flush=True)
+            # Verify the optimizer separately at exactly the same gradients.
+            # Near-zero gradients (~1e-9) on the first Adam step can amplify
+            # float32 kernel rounding into a ~1e-4 change in a few weights.
+            reference_gradient_opts = {}
+            for name in ['actor','critic']:
+                grad=jax.tree_util.tree_map(jnp.asarray,captured[name+'_grad'])
+                delta,opt_state=ADAM.update(grad,getattr(state,name+'_opt'),getattr(state,name))
+                reference_gradient_opts[name+'_opt'] = opt_state
+                same_gradient=optax.apply_updates(getattr(state,name),delta)
+                expected_params=export_actor(reference.actor) if name=='actor' else export_critic(reference.critic)
+                compare(name+'_adam_identical_gradient',same_gradient,expected_params,stats,atol=1e-7,rtol=1e-6)
+            if i==0:
+                for a,b,g,h in zip(jax.tree_util.tree_leaves(actual.actor),jax.tree_util.tree_leaves(export_actor(reference.actor)),jax.tree_util.tree_leaves(info['actor_grad']),jax.tree_util.tree_leaves(captured['actor_grad']),strict=True):
+                    a,b,g,h=map(np.asarray,[a,b,g,h]);delta=np.abs(a-b);rare=delta>3e-5
+                    assert np.sqrt(np.mean(delta**2)) < (1e-6 if task is None else 5e-6)
+                    assert np.all(np.abs(g[rare])<1e-7) and np.all(np.abs(h[rare])<1e-7)
+                compare('actor_parameters_first_adam_step',actual.actor,export_actor(reference.actor),stats,
+                        atol=1e-4 if task is None else 6e-4)
+            elif task is None:
+                compare('actor_parameters',actual.actor,export_actor(reference.actor),stats,atol=3e-5)
+            else:
+                compare_adroit_rounding('actor_parameters', actual.actor, export_actor(reference.actor),
+                                        stats, 6e-4, 1e-5)
+            if task is None:
+                compare('critic_parameters',actual.critic,export_critic(reference.critic),stats,atol=3e-5)
+            else:
+                compare_adroit_rounding('critic_parameters', actual.critic, export_critic(reference.critic), stats, 6e-4, 1e-5)
+            compare('target_parameters',actual.target,export_critic(reference.critic_target),stats,atol=3e-5)
+            if reference.log_ent_coef is not None:
+                compare('log_alpha',actual.log_alpha,reference.log_ent_coef.detach().cpu().numpy(),stats)
+            for field,opt,network,tree in [('actor_opt',reference.actor.optimizer,reference.actor,actor_tree),('critic_opt',reference.critic.optimizer,reference.critic,critic_tree)]:
+                tested = (reference_gradient_opts[field] if field == 'critic_opt'
+                          and checked_critic_grad is not info['critic_grad'] else getattr(actual, field))
+                compare(field+'_first_moment',tested[0].mu,tree(network,moment_fn(opt,'exp_avg')),stats)
+                compare(field+'_second_moment',tested[0].nu,tree(network,moment_fn(opt,'exp_avg_sq')),stats)
+            assert int(actual.updates)==reference._n_updates
+            state=actual
+        # The fused update group starts with nonzero Adam moments.
+        for hook in relu_hooks:
+            hook.remove()
+        state=aligned_state(reference,state)
+        group=tuple(jnp.asarray(np.stack([b[k] for b in batches[16:]])) for k in range(5))
+        updated,metrics=train_fixed_noise(state,group,jnp.asarray(eps_current[16:]),jnp.asarray(eps_next[16:]))
+        for i in range(16,16+group_size):batch_queue.append(batches[i]);queue.extend([eps_current[i],eps_next[i]])
+        reference.train(gradient_steps=group_size,batch_size=256)
+        assert not queue and not batch_queue
+        for name, actual, expected in (
+            ('actor', updated.actor, export_actor(reference.actor)),
+            ('critic', updated.critic, export_critic(reference.critic)),
+        ):
+            label = f'fused{group_size}_{name}'
+            if task is None:
+                compare(label, actual, expected, stats, atol=8e-5, rtol=8e-4)
+            else:
+                compare_adroit_rounding(label, actual, expected, stats, 5e-3, 3e-4)
+        compare(f'fused{group_size}_target',updated.target,export_critic(reference.critic_target),stats,atol=8e-5,rtol=8e-4)
+        if reference.log_ent_coef is not None:
+            compare(f'fused{group_size}_alpha',updated.log_alpha,reference.log_ent_coef.detach().cpu().numpy(),stats)
+        for k,v in metrics.items():compare(f'fused{group_size}_'+k,v.mean(),np.asarray(reference.logger.name_to_value['train/'+k]),stats,atol=8e-5,rtol=8e-4)
+        assert int(updated.updates)==reference._n_updates==16+group_size
+    finally:F.mse_loss=original_mse
+    adapter.jax_state=updated;adapter._n_updates=16+group_size;adapter.num_timesteps=13184
+    path=out/f"{task or 'fetch'}-depth{depth}-alpha{ent_coef}-restore.zip";adapter.save(path)
+    restored=JaxSAC.load(path,device='cpu')
+    assert restored.jax_state.zero_alpha == updated.zero_alpha
+    compare('exact_checkpoint_restore',restored.jax_state,updated,stats,0,0)
+    obs=batches[0][0]
+    before=adapter.jax_state.key.copy();a=adapter.predict(obs,deterministic=True)[0]
+    compare('evaluation_rng_frozen',adapter.jax_state.key,before,stats,0,0)
+    loaded=SAC.load(path,device='cpu');b=loaded.predict(obs,deterministic=True)[0]
+    compare('saved_zip_inference',a,b,stats)
+    adapter.logger.close();reference.logger.close()
+    reference.get_env().close();adapter.get_env().close()
+    return dict(task=task or 'fetch', depth=depth, passed=True, backend=jax.default_backend(),
+        torch_device=device, layer_norm=task is not None, entropy=ent_coef, action_dim=action_dim,
+        single_update_checks=16,fused_update_checks=group_size,checkpoint_restore=True,max_absolute_errors=stats,
+        first_step_float32_note='Identical-gradient Adam verified at atol1e-7. Float32 rounding can change the sign of outlier gradients below 1e-7.')
+
+
+def main():
+    parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path,required=True);parser.add_argument('--device',default='cpu')
+    parser.add_argument('--adroit-task',choices=('door','hammer','pen','relocate'))
+    parser.add_argument('--fixed-alpha',type=float);args=parser.parse_args()
+    args.output.mkdir(parents=True,exist_ok=True)
+    torch.set_num_threads(1);torch.set_num_interop_threads(1)
+    torch.backends.cuda.matmul.allow_tf32=False;torch.backends.cudnn.allow_tf32=False
+    results=[]
+    try:
+        for depth in [2,3]:
+            result=run(depth,args.device,args.output,args.adroit_task,args.fixed_alpha if args.fixed_alpha is not None else 'auto');results.append(result);print(json.dumps(result),flush=True)
+        module_path = Path(inspect.getfile(JaxSAC))
+        report=dict(passed=True,results=results,
+                    module_sha256=hashlib.sha256(module_path.read_bytes()).hexdigest(),
+                    sb3_train_sha256=hashlib.sha256(inspect.getsource(SAC.train).encode()).hexdigest())
+    except BaseException as error:
+        import traceback
+        report=dict(passed=False,results=results,error=repr(error),traceback=traceback.format_exc())
+        (args.output/'validation.json').write_text(json.dumps(report,indent=2)+'\n');raise
+    (args.output/'validation.json').write_text(json.dumps(report,indent=2)+'\n')
+
+if __name__=='__main__':main()

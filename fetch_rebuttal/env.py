@@ -1,4 +1,4 @@
-"""Goal-aware state input, unmodified sparse reward and time-limit semantics."""
+"""Goal-aware Fetch input; user-requested Slide success radius is 20 cm."""
 import gymnasium as gym
 import gymnasium_robotics
 import numpy as np
@@ -17,4 +17,9 @@ class CompactGoal(gym.ObservationWrapper):
 
 def make_env(task):
     gym.register_envs(gymnasium_robotics)
-    return CompactGoal(gym.make(TASKS[task], reward_type='sparse'))
+    env = gym.make(TASKS[task], reward_type='sparse')
+    if task == 'slide':
+        # FetchSlide fixes this constructor argument internally. Both sparse
+        # reward and success use this same attribute, including HER relabeling.
+        env.unwrapped.distance_threshold = 0.20
+    return CompactGoal(env)
