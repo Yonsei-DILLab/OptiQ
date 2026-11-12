@@ -1,0 +1,500 @@
+"""Single-environment Fetch runs using existing MuJoCo/native learners."""
+import argparse
+from contextlib import contextmanager
+from dataclasses import asdict, is_dataclass
+import hashlib
+import importlib.metadata
+import json
+import os
+from pathlib import Path
+import random
+import subprocess
+import time
+import traceback
+
+ROOT = Path(__file__).resolve().parents[1]
+METHODS = ('ibolt', 'sac', 'idac', 'idac-nodgn', 'mfpo', 'meow')
+
+def save_json(path, data):
+    path = Path(path)
+    temporary = path.with_suffix(path.suffix + '.tmp')
+    temporary.write_text(json.dumps(data, indent=2, allow_nan=False) + '\n')
+    temporary.replace(path)
+
+def guard():
+    branch = subprocess.check_output(['git', 'branch', '--show-current'], cwd=ROOT, text=True).strip()
+    if not branch or 'anonymous' in branch.lower():
+        raise RuntimeError('Fetch private adapters require a non-anonymous work branch')
+    manifest = json.loads((ROOT/'fetch_rebuttal/SOURCE.json').read_text())
+    for name, digest in manifest['files'].items():
+        if hashlib.sha256((ROOT/'fetch_rebuttal'/name).read_bytes()).hexdigest() != digest:
+            raise RuntimeError('Frozen experiment source changed: ' + name)
+    return branch
+
+class Baseline:
+    def __init__(self, method, config, folder, device):
+        import numpy as np
+        self.method = method
+        self.normalizer = None
+        self.her_replay = None
+        self.updates = 0
+        if method in ('idac', 'idac-nodgn'):
+            from .idac import Agent
+            self.native = Agent(config, folder, device=device)
+        else:
+            from .baselines.native import SAC, TD3, SQL, MFPO, MEOW
+            from .baselines.replay import Replay
+            kwargs = {'device': device} if method in ('sac', 'td3', 'meow') else {}
+            self.native = dict(sac=SAC, td3=TD3, sql=SQL, mfpo=MFPO, meow=MEOW)[method](
+                config['seed'], folder, config['steps'], config['observation_dim'],
+                batch_size=config['batch_size'], action_dim=config['action_dim'], **kwargs)
+            self.native.replay = Replay(capacity=config['replay_capacity'],
+                observation_dim=config['observation_dim'], action_dim=config['action_dim'],
+                seed=config['seed'], device=device if method in ('sac', 'td3') else 'cpu')
+            if method in ('sac', 'td3'):
+                self.native.model.replay_buffer = self.native.replay
+        cfg = self.native.config
+        self.config = asdict(cfg) if is_dataclass(cfg) else dict(cfg)
+        self.config['evaluation'] = {'sac': 'deterministic native actor', 'td3': 'deterministic native actor',
+            'idac': 'official semi-implicit sample_action, stochastic actor',
+            'idac-nodgn': 'same official semi-implicit sample_action, scalar twin-Q ablation',
+            'sql': 'native SVGD policy sample', 'dipo': 'native diffusion eval mode',
+            'mfpo': 'upstream eval_actions, candidate selection enabled, 10 candidates',
+            'meow': 'upstream deterministic flow sample'}[method]
+
+    def act(self, obs, mode='train'):
+        import numpy as np
+        if mode != 'train' and self.normalizer is not None:
+            obs = self.normalizer.normalize_obs(obs)
+        if mode != 'train' and self.method == 'sac':
+            return self.native.act(obs, mode='native')
+        if mode != 'train' and self.method == 'mfpo':
+            actions = []
+            for row in obs:
+                action, self.native.agent = self.native.agent.eval_actions(row)
+                actions.append(np.asarray(action))
+            return np.asarray(actions, np.float32)
+        if mode != 'train' and self.method == 'meow':
+            import torch
+            self.native.policy.eval()
+            with torch.no_grad():
+                actions, _ = self.native.policy.sample(num_samples=len(obs), obs=obs, deterministic=True)
+            return actions.cpu().numpy()
+        return self.native.act(obs, mode='train' if mode == 'train' else 'policy')
+
+    def bind_normalizer(self, normalizer):
+        self.normalizer = normalizer
+        if self.method in ('idac', 'idac-nodgn'):
+            from .normalization import NormalizedIDACReplay
+            self.native.replay = NormalizedIDACReplay(self.native.replay, normalizer)
+        else:
+            self.native.replay.normalizer = normalizer
+
+    def bind_her(self, config, env):
+        from .her import HERReplay, IDACHERReplay, reward_function
+        replay = HERReplay(capacity=config['replay_capacity'],
+            observation_dim=config['observation_dim'], action_dim=config['action_dim'],
+            seed=config['seed'], device=str(self.native.model.device) if self.method == 'sac' else 'cpu',
+            task=config['task'], compute_reward=reward_function(env))
+        replay.normalizer = self.normalizer
+        self.her_replay = replay
+        self.native.replay = (IDACHERReplay(replay,self.native.device)
+            if self.method in ('idac','idac-nodgn') else replay)
+        if self.method == 'sac':
+            self.native.model.replay_buffer = replay
+
+    def observe(self, obs, action, reward, next_obs, terminated, episode_ends=None):
+        if self.her_replay is not None:
+            self.her_replay.add(obs, action, reward, next_obs, terminated, episode_ends)
+            return
+        if self.method in ('idac', 'idac-nodgn'):
+            self.native.observe(obs, action, reward, next_obs, terminated)
+        else:
+            self.native.replay.add(obs, action, reward, next_obs, terminated)
+
+    def update(self, step):
+        self.native.update(step)
+        self.updates += 1
+        if self.native.updates != self.updates:
+            raise RuntimeError('Optimizer update count mismatch')
+
+    def evaluation_rng(self, seed):
+        return self.native.evaluation_rng(seed)
+
+    def save(self, folder, step):
+        if self.method in ('idac', 'idac-nodgn'):
+            self.native.save(folder/f'policy_{step:09d}.pt')
+        else:
+            self.native.save(folder, step)
+
+    def save_replay(self, path):
+        import numpy as np
+        if self.her_replay is not None:
+            self.her_replay.save(path)
+            return
+        if self.method in ('idac', 'idac-nodgn'):
+            self.native.save_replay(path)
+        else:
+            replay = self.native.replay
+            np.savez_compressed(path, **{k: v[:replay.size] for k, v in replay.data.items()},
+                                size=replay.size, position=replay.position)
+
+    def close(self):
+        if self.method in ('sac', 'td3'):
+            self.native.model.get_env().close()
+            self.native.model.logger.close()
+
+class IBOLTView:
+    def __init__(self, model):
+        self.model = model
+
+    def act(self, obs, mode='policy'):
+        normalizer = self.model.get_vec_normalize_env()
+        if normalizer is not None:
+            obs = normalizer.normalize_obs(obs)
+        action, _ = self.model.predict(obs, deterministic=(mode == 'zero_z'))
+        return action
+
+    @contextmanager
+    def evaluation_rng(self, seed):
+        import jax
+        key, noise_key = self.model.policy.key, self.model.policy.noise_key
+        mu_only = getattr(self.model.policy, 'evaluation_mu_only', False)
+        self.model.policy.evaluation_mu_only = True
+        self.model.policy.key = jax.random.key(seed)
+        try:
+            yield
+        finally:
+            self.model.policy.key = key
+            self.model.policy.noise_key = noise_key
+            self.model.policy.evaluation_mu_only = mu_only
+
+def evaluate(agent, task, episodes, seed, mode='policy'):
+    import numpy as np
+    from .env import make_env
+    env = make_env(task)
+    returns, final_success, any_success, lengths, initial_success = [], [], [], [], []
+    python_state, numpy_state = random.getstate(), np.random.get_state()
+    try:
+        with agent.evaluation_rng(seed):
+            for episode in range(episodes):
+                obs, _ = env.reset(seed=seed + episode)
+                initial_success.append(float(np.linalg.norm(obs[3:6] - obs[-3:]) < env.unwrapped.distance_threshold)
+                    if task != 'reach' else float(np.linalg.norm(obs[:3] - obs[-3:]) < env.unwrapped.distance_threshold))
+                total, any_hit, length = 0., False, 0
+                while True:
+                    action = agent.act(obs[None], mode=mode)[0]
+                    if not np.isfinite(action).all():
+                        raise FloatingPointError('Nonfinite evaluation action')
+                    obs, reward, terminated, truncated, info = env.step(np.clip(action, -1., 1.))
+                    total += float(reward)
+                    length += 1
+                    any_hit |= bool(info['is_success'])
+                    if terminated or truncated:
+                        returns.append(total)
+                        final_success.append(float(info['is_success']))
+                        any_success.append(float(any_hit))
+                        lengths.append(length)
+                        break
+    finally:
+        env.close()
+        random.setstate(python_state)
+        np.random.set_state(numpy_state)
+    return dict(episodes=episodes, distance_threshold_m=float(env.unwrapped.distance_threshold), success_rate=float(np.mean(final_success)),
+                any_success_rate=float(np.mean(any_success)), mean_return=float(np.mean(returns)),
+                returns=returns, final_success=final_success, any_success=any_success, lengths=lengths,
+                initial_success=initial_success,
+                new_final_success_count=int(sum(s and not initial for s, initial in zip(final_success, initial_success))),
+                new_any_success_count=int(sum(s and not initial for s, initial in zip(any_success, initial_success))))
+
+def record_evaluation(agent, cfg, output, step, updates, ibolt=False):
+    normalizer = (agent.model.get_vec_normalize_env() if ibolt else agent.normalizer)
+    norm_count = float(normalizer.obs_rms.count) if normalizer is not None else None
+    modes = ('stochastic_z', 'zero_z') if ibolt else ('policy',)
+    episodes = cfg['final_episodes'] if step == cfg['steps'] else cfg['eval_episodes']
+    # Common fixed evaluation seeds across methods and temperatures.
+    record = dict(steps=step, updates=updates, primary_mode=modes[0])
+    for mode in modes:
+        record[mode] = evaluate(agent, cfg['task'], episodes, 700000 + cfg['seed']*1000, mode)
+    if normalizer is not None and float(normalizer.obs_rms.count) != norm_count:
+        raise RuntimeError('Evaluation changed training normalization statistics')
+    save_json(output/'evaluations'/f'{step:09d}.json', record)
+    with (output/'evaluations.jsonl').open('a') as stream:
+        stream.write(json.dumps(record, allow_nan=False)+'\n')
+    print(json.dumps({'steps': step, 'updates': updates,
+        'success_rate': record[modes[0]]['success_rate']}), flush=True)
+    return record
+
+def run_ibolt(cfg, output, device):
+    import jax
+    from omegaconf import OmegaConf
+    from stable_baselines3.common.callbacks import BaseCallback
+    from stable_baselines3.common.logger import configure
+    from train import compose_config, validate_config
+    from exploration import ExplorationIBOLT
+    from .env import make_env, TASKS
+    hydra_cfg = compose_config(['benchmark=ant', 'wandb.activate=false'])
+    hydra_cfg.env_name, hydra_cfg.task = TASKS[cfg['task']], cfg['task']
+    hydra_cfg.seed, hydra_cfg.temperature = cfg['seed'], cfg['temperature']
+    hydra_cfg.total_steps, hydra_cfg.output_root = cfg['steps'], str(output)
+    hydra_cfg.alg.learning_starts = hydra_cfg.alg.actor.learning_starts = cfg['warmup']
+    hydra_cfg.alg.batch_size, hydra_cfg.alg.buffer_size = cfg['batch_size'], cfg['replay_capacity']
+    hydra_cfg.checkpoint_interval = cfg['checkpoint_every']
+    hydra_cfg.require_gpu = device == 'cuda'
+    validate_config(hydra_cfg)
+    if device == 'cuda' and jax.default_backend() != 'gpu':
+        raise RuntimeError('iBOLT JAX GPU required')
+    save_json(output/'mujoco-config.json', OmegaConf.to_container(hydra_cfg, resolve=True))
+    model_class, training_env = ExplorationIBOLT, make_env(cfg['task'])
+    if cfg.get('normalize_observations'):
+        from .normalization import make_normalized_env, normalized_ibolt_class
+        training_env.close()
+        training_env = make_normalized_env(cfg['task'])
+        model_class = normalized_ibolt_class(ExplorationIBOLT)
+    replay_options = {}
+    if cfg.get('HER'):
+        from .her import SB3HERReplayBuffer, reward_function
+        replay_options = dict(replay_buffer_class=SB3HERReplayBuffer,
+            replay_buffer_kwargs=dict(task=cfg['task'], compute_reward=reward_function(training_env),
+                                      her_seed=cfg['seed']))
+    model = model_class('MlpPolicy', env=training_env, cfg=hydra_cfg,
+        model_save_path=str(output/'checkpoints'), save_every_n_steps=cfg['checkpoint_every'],
+        **replay_options)
+    model.set_logger(configure(str(output/'learner'), ['csv']))
+    view = IBOLTView(model)
+    started = time.time()
+    class Callback(BaseCallback):
+        def _on_step(self):
+            step = self.num_timesteps
+            if step % 1000 == 0 or step == cfg['steps'] or step == cfg['warmup']+2:
+                save_json(output/'progress.json', dict(steps=step, updates=model._n_updates,
+                    elapsed_seconds=time.time()-started, observed_unix=time.time(), status='running'))
+            if step % cfg['eval_every'] == 0 or step == cfg['steps']:
+                record_evaluation(view, cfg, output, step, model._n_updates, ibolt=True)
+            return True
+    try:
+        record_evaluation(view, cfg, output, 0, 0, ibolt=True)
+        model.learn(total_timesteps=cfg['steps'], callback=Callback(), log_interval=1000)
+        model._save_model()
+        model.save_replay_buffer(output/'checkpoints/final-replay.pkl')
+        # Callback runs before the final update; overwrite its final record with
+        # the finished learner, preserving one authoritative record per step.
+        (output/'evaluations.jsonl').write_text(''.join(line+'\n' for line in
+            (output/'evaluations.jsonl').read_text().splitlines()
+            if json.loads(line)['steps'] != cfg['steps']))
+        record_evaluation(view, cfg, output, cfg['steps'], model._n_updates, ibolt=True)
+        runtime = {'backend': jax.default_backend(), 'devices': [str(d) for d in jax.devices()]}
+        if cfg.get('HER'):
+            runtime['her_replay_last_sample'] = dict(model.replay_buffer.her.last)
+        return model._n_updates, runtime
+    finally:
+        model.get_env().close()
+        model.logger.close()
+
+def run_baseline(cfg, output, device):
+    if cfg.get('normalize_observations'):
+        return run_normalized_baseline(cfg, output, device)
+    import numpy as np
+    from .env import make_env
+    method = cfg['method']
+    if method in ('sql', 'mfpo'):
+        import jax
+        backend = jax.default_backend()
+        if device == 'cuda' and backend != 'gpu':
+            raise RuntimeError('JAX GPU required')
+    else:
+        import torch
+        backend = 'gpu' if device == 'cuda' and torch.cuda.is_available() else 'cpu'
+        if device == 'cuda' and backend != 'gpu':
+            raise RuntimeError('Torch CUDA required')
+    agent = Baseline(method, cfg, output, device)
+    save_json(output/'native-config.json', agent.config)
+    env = make_env(cfg['task'])
+    if cfg.get('HER'):
+        agent.bind_her(cfg, env)
+    rng = np.random.default_rng(cfg['seed'])
+    started = time.time()
+    try:
+        obs, _ = env.reset(seed=cfg['seed'])
+        record_evaluation(agent, cfg, output, 0, 0)
+        for step in range(1, cfg['steps']+1):
+            action = (rng.uniform(-1., 1., (4,)).astype(np.float32) if step <= cfg['warmup']
+                      else agent.act(obs[None], mode='train')[0])
+            if not np.isfinite(action).all():
+                raise FloatingPointError('Nonfinite training action')
+            action = np.clip(action, -1., 1.).astype(np.float32)
+            next_obs, reward, terminated, truncated, info = env.step(action)
+            if not np.isfinite(next_obs).all() or reward not in (-1., 0.):
+                raise FloatingPointError('Invalid Fetch transition')
+            # TimeLimit is a truncation; bootstrap from the real final state.
+            agent.observe(obs[None], action[None], np.array([reward], np.float32),
+                          next_obs[None], np.array([terminated], np.float32),
+                          episode_ends=np.array([terminated or truncated]))
+            obs = next_obs
+            if terminated or truncated:
+                obs, _ = env.reset()
+            if step > cfg['warmup']:
+                agent.update(step)
+            if step % 1000 == 0 or step == cfg['steps'] or step == cfg['warmup']+1:
+                save_json(output/'progress.json', dict(steps=step, updates=agent.updates,
+                    elapsed_seconds=time.time()-started, observed_unix=time.time(), status='running'))
+            if step % cfg['eval_every'] == 0 or step == cfg['steps']:
+                record_evaluation(agent, cfg, output, step, agent.updates)
+            if step % cfg['checkpoint_every'] == 0 or step == cfg['steps']:
+                agent.save(output/'checkpoints', step)
+        agent.save_replay(output/'checkpoints/final-replay.npz')
+        return agent.updates, {'backend': backend}
+    finally:
+        env.close()
+        agent.close()
+
+
+def run_normalized_baseline(cfg, output, device):
+    import numpy as np
+    from .normalization import make_normalized_env, save_normalizer
+    if cfg['method'] == 'mfpo':
+        import jax
+        backend = jax.default_backend()
+    else:
+        import torch
+        backend = 'gpu' if device == 'cuda' and torch.cuda.is_available() else 'cpu'
+    if device == 'cuda' and backend != 'gpu':
+        raise RuntimeError('GPU backend required')
+    agent = Baseline(cfg['method'], cfg, output, device)
+    save_json(output/'native-config.json', agent.config)
+    env = make_normalized_env(cfg['task'])
+    agent.bind_normalizer(env)
+    if cfg.get('HER'):
+        agent.bind_her(cfg, env)
+    env.seed(cfg['seed'])
+    rng = np.random.default_rng(cfg['seed'])
+    started = time.time()
+    train_success_steps = train_episodes = train_any = train_final = train_new_any = 0
+    episode_any = False
+    try:
+        record_evaluation(agent, cfg, output, 0, 0)
+        obs = env.reset()
+        raw_obs = env.get_original_obs()
+        goal_slice = slice(0, 3) if cfg['task'] == 'reach' else slice(3, 6)
+        initial_hit = bool(np.linalg.norm(raw_obs[0, goal_slice]-raw_obs[0, -3:]) < float(env.get_attr('distance_threshold')[0]))
+        for step in range(1, cfg['steps']+1):
+            action = (rng.uniform(-1., 1., (1, 4)).astype(np.float32) if step <= cfg['warmup']
+                      else agent.act(obs, mode='train'))
+            if not np.isfinite(action).all():
+                raise FloatingPointError('Nonfinite training action')
+            action = np.clip(action, -1., 1.).astype(np.float32)
+            obs, rewards, dones, infos = env.step(action)
+            next_raw = np.asarray([infos[0]['fetch_raw_next_observation']], np.float32)
+            terminal = np.array([dones[0] and not infos[0].get('TimeLimit.truncated', False)], np.float32)
+            if not np.isfinite(next_raw).all() or float(rewards[0]) not in (-1., 0.):
+                raise FloatingPointError('Invalid Fetch transition')
+            agent.observe(raw_obs, action, rewards, next_raw, terminal, episode_ends=dones)
+            raw_obs = env.get_original_obs()
+            hit = bool(infos[0]['is_success'])
+            train_success_steps += int(hit); episode_any |= hit
+            if dones[0]:
+                train_episodes += 1; train_any += int(episode_any); train_final += int(hit)
+                train_new_any += int(episode_any and not initial_hit)
+                episode_any = False
+                initial_hit = bool(np.linalg.norm(raw_obs[0, goal_slice]-raw_obs[0, -3:]) < float(env.get_attr('distance_threshold')[0]))
+            if step > cfg['warmup']:
+                agent.update(step)
+            if step % 1000 == 0 or step == cfg['steps'] or step == cfg['warmup']+1:
+                save_json(output/'progress.json', dict(steps=step, updates=agent.updates,
+                    elapsed_seconds=time.time()-started, observed_unix=time.time(), status='running',
+                    normalization_count=float(env.obs_rms.count), training_success_steps=train_success_steps,
+                    training_episodes=train_episodes, training_any_success_episodes=train_any,
+                    training_final_success_episodes=train_final, training_new_any_success_episodes=train_new_any,
+                    her_replay_last_sample=dict(agent.her_replay.her.last) if agent.her_replay is not None else None))
+            if step % cfg['eval_every'] == 0 or step == cfg['steps']:
+                record_evaluation(agent, cfg, output, step, agent.updates)
+                if cfg['method'] == 'sac':
+                    agent.native.model.logger.dump(step)
+            if step % cfg['checkpoint_every'] == 0 or step == cfg['steps']:
+                agent.save(output/'checkpoints', step)
+                save_normalizer(env, output/'checkpoints', step)
+        agent.save_replay(output/'checkpoints/final-replay.npz')
+        runtime = {'backend': backend, 'observation_normalization': True}
+        if agent.her_replay is not None:
+            runtime['her_replay_last_sample'] = dict(agent.her_replay.her.last)
+        return agent.updates, runtime
+    finally:
+        env.close()
+        agent.close()
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--method', choices=METHODS, required=True)
+    parser.add_argument('--task', choices=('reach','push','slide','pick-and-place'), required=True)
+    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--seed', type=int, required=True)
+    parser.add_argument('--temperature', type=float, default=1.)
+    parser.add_argument('--batch-size', type=int, default=256)
+    parser.add_argument('--normalize-observations', action='store_true')
+    parser.add_argument('--her', action='store_true')
+    parser.add_argument('--device', choices=('cuda','cpu'), default='cuda')
+    parser.add_argument('--smoke', action='store_true')
+    args = parser.parse_args(argv)
+    if not 1 <= args.batch_size <= 5000:
+        parser.error('--batch-size must be between 1 and the 5000-step warmup')
+    branch = guard()
+    if args.device == 'cpu':
+        os.environ['JAX_PLATFORMS'] = 'cpu'
+    os.environ.setdefault('XLA_PYTHON_CLIENT_PREALLOCATE', 'false')
+    import numpy as np
+    import torch
+    torch.set_num_threads(1)
+    torch.set_num_interop_threads(1)
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    random.seed(args.seed)
+    from .env import make_env, TASKS
+    env = make_env(args.task)
+    try:
+        cfg = dict(method=args.method, task=args.task, env_id=TASKS[args.task], seed=args.seed,
+            temperature=args.temperature, steps=1000000, warmup=5000, batch_size=args.batch_size,
+            replay_capacity=1000000, eval_every=5000, eval_episodes=10, final_episodes=100,
+            checkpoint_every=100000, observation_dim=env.observation_space.shape[0], action_dim=4,
+            utd=1, num_envs=1, reward='original sparse -1/0', horizon=50, HER=args.her,
+            timeout_bootstrap=True, observation='observation concatenated with desired_goal',
+            normalize_observations=args.normalize_observations,
+            branch=branch, smoke=args.smoke,
+            primary_success='info.is_success at final episode step; anytime success also recorded',
+            packages={p: importlib.metadata.version(p) for p in ('gymnasium-robotics','gymnasium',
+                'mujoco','stable-baselines3','torch','jax','flax','optax','numpy')})
+    finally:
+        env.close()
+    if args.normalize_observations:
+        from .normalization import SETTINGS
+        cfg['normalization'] = SETTINGS
+    if args.her:
+        from .her import SETTINGS
+        cfg['her_settings'] = SETTINGS
+    if args.smoke:
+        smoke_warmup = max(256, cfg['batch_size'])
+        cfg.update(steps=smoke_warmup+4, warmup=smoke_warmup,
+                   replay_capacity=max(1024, smoke_warmup+4), eval_every=smoke_warmup+4,
+                   eval_episodes=2, final_episodes=2, checkpoint_every=smoke_warmup+4)
+    output = args.output.resolve()
+    output.mkdir(parents=True, exist_ok=False)
+    (output/'checkpoints').mkdir()
+    (output/'evaluations').mkdir()
+    save_json(output/'config.json', cfg)
+    save_json(output/'progress.json', dict(steps=0, updates=0, status='initializing', observed_unix=time.time()))
+    started = time.time()
+    try:
+        updates, runtime = (run_ibolt if args.method == 'ibolt' else run_baseline)(cfg, output, args.device)
+        if updates != cfg['steps']-cfg['warmup']:
+            raise RuntimeError(f'Expected {cfg["steps"]-cfg["warmup"]} updates, got {updates}')
+        result = dict(completed=True, method=args.method, task=args.task, seed=args.seed,
+            temperature=args.temperature, steps=cfg['steps'], updates=updates, runtime=runtime,
+            elapsed_seconds=time.time()-started, finished_unix=time.time(), smoke=args.smoke)
+        save_json(output/'completed.json', result)
+        save_json(output/'progress.json', dict(result, status='complete'))
+        print(json.dumps(result), flush=True)
+    except BaseException as error:
+        save_json(output/'failure.json', dict(error=repr(error), traceback=traceback.format_exc()))
+        raise
+
+if __name__ == '__main__':
+    main()

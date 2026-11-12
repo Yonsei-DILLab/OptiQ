@@ -1,0 +1,175 @@
+"""Audit original state restoration, then collect and replay 25 native successes.
+
+Selection is fixed before rollouts: try all 25 original trajectories in source
+order under two declared restoration profiles, else the first 25 successful
+expert-policy episodes in ascending seeds 100000..104999. No action/episode
+duplication, horizon extension, success-prefix cropping, or teacher warm-start.
+"""
+import argparse
+import copy
+import json
+import pickle
+from pathlib import Path
+import numpy as np
+import torch
+from .run import make_env, atomic
+from .verified_demos import fingerprint, sha, trajectory_hash, verify
+
+REVISION = '9a1de23df6574e1b94e1da742e3326eb1f61c013'
+CHECKPOINTS = dict(hammer='14c6b603af09acf87247f8b45d58f9671790d8e4ca0c48c8db5e1f7c98126ef4',
+                   pen='061dba4907a76b83139ae5a8d0809faa9774dd028d12ce869036b620bd728740')
+
+
+class HistoricalPolicy:
+    pass
+
+
+class HistoricalNetwork(torch.nn.Module):
+    def forward(self, x):
+        x = (x-self.in_shift)/(self.in_scale+1e-8)
+        for layer in self.fc_layers[:-1]:
+            x = self.nonlinearity(layer(x))
+        return self.fc_layers[-1](x)*self.out_scale+self.out_shift
+
+
+class CompatibilityUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        if (module,name) == ('mjrl.policies.gaussian_mlp','MLP'): return HistoricalPolicy
+        if (module,name) == ('mjrl.utils.fc_network','FCNetwork'): return HistoricalNetwork
+        if (module,name) == ('torch.nn.backends.thnn','_get_thnn_function_backend'): return lambda: None
+        return super().find_class(module,name)
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--task', choices=['hammer','pen'], required=True)
+    p.add_argument('--pack', type=Path, required=True)
+    p.add_argument('--checkpoint', type=Path, required=True)
+    p.add_argument('--output', type=Path, required=True)
+    a = p.parse_args(); torch.set_num_threads(1)
+    a.output.mkdir(parents=True, exist_ok=False)
+    (a.output/'attempts').mkdir(); (a.output/'original-audit').mkdir()
+    source = json.loads((Path(__file__).parent/'demo-source.json').read_text())
+    assert sha(a.pack) == source['action_pack_sha256'][a.pack.name]
+    assert sha(a.checkpoint) == CHECKPOINTS[a.task]
+    env = make_env(a.task)
+    physics = fingerprint(env)
+    assert physics['max_episode_steps'] == 200 and physics['reward_type'] == 'sparse'
+    protocol = dict(task=a.task, environment=physics, original_profiles=['supplied_state','observed_hand_qpos'],
+        expert_seed_order=dict(start=100000, stop_exclusive=105000, step=1),
+        selection='First 25 successes in the declared seed order; no performance ranking',
+        success='any current-env info[success] within the complete native episode; also record duration and final success',
+        full_episodes=True, source_revision=REVISION, checkpoint_sha256=CHECKPOINTS[a.task])
+    atomic(a.output/'collection-protocol.json', protocol)
+
+    def rollout(seed, initial=None, actions=None, teacher=None):
+        obs,_ = env.reset(seed=seed, options={'initial_state_dict':initial} if initial is not None else None)
+        actual = {k:v.copy() for k,v in env.unwrapped.get_env_state().items()}
+        rows = {k:[] for k in ('observations','actions','next_observations','rewards','terminated','truncated','success')}
+        for t in range(200):
+            if actions is not None:
+                if t >= len(actions): break
+                action = np.clip(actions[t],-1,1).astype(np.float32)
+            else:
+                with torch.no_grad():
+                    action = np.clip(teacher(torch.as_tensor(obs,dtype=torch.float32)[None]).numpy()[0],-1,1).astype(np.float32)
+            assert np.isfinite(action).all()
+            nxt,r,term,trunc,info = env.step(action)
+            for k,v in zip(rows,(obs.copy(),action.copy(),nxt.copy(),r,bool(term),bool(trunc),bool(info['success']))):rows[k].append(v)
+            obs = nxt
+            if term or trunc:break
+        arrays={k:np.asarray(v, dtype=np.float32 if k=='actions' else bool if k in ('terminated','truncated','success') else np.float64) for k,v in rows.items()}
+        ok=arrays['success'];length=len(ok)
+        record=dict(seed=seed,length=length,successful=bool(ok.any()),success_steps=int(ok.sum()),
+            final_step_success=bool(ok[-1]) if length else False,
+            first_success_step=next((i+1 for i,v in enumerate(ok) if v),None),
+            return_=float(arrays['rewards'].sum()),complete_episode=bool(length and (arrays['terminated'][-1] or arrays['truncated'][-1])),
+            state_keys=sorted(actual),trajectory_sha256=trajectory_hash(actual,arrays['actions']))
+        return actual,arrays,record
+
+    try:
+        pack=np.load(a.pack,allow_pickle=False); keys=json.loads(str(pack['state_keys_json']))
+        assert len(keys)==25
+        profiles={};chosen=None
+        for profile in protocol['original_profiles']:
+            candidates=[];records=[]
+            for i,ks in enumerate(keys):
+                initial={k:pack[f'state_{i}_{k}'].copy() for k in ks}
+                first=pack[f'observations_{i}'][0]
+                if profile=='observed_hand_qpos':
+                    prefix=len(initial['qpos'])-6
+                    initial['qpos'][:prefix]=first[:prefix]
+                actual,arrays,record=rollout(50000+i,initial=initial,actions=pack[f'actions_{i}'])
+                record.update(index=i,initial_observation_max_error=float(np.max(np.abs(arrays['observations'][0]-first))),
+                    supplied_state_roundtrip_error=max(float(np.max(np.abs(actual[k]-initial[k]))) for k in actual if k in initial))
+                # Preserve failed original attempts too, including full trajectories and states.
+                file=a.output/'original-audit'/f'{profile}-{i:02d}.npz'
+                np.savez_compressed(file,**arrays,**{'initial_'+k:v for k,v in actual.items()})
+                records.append(record);candidates.append((actual,arrays,record))
+            profiles[profile]=dict(episodes=records,successful=sum(r['successful'] and r['complete_episode'] for r in records),
+                max_initial_observation_error=max(r['initial_observation_max_error'] for r in records),
+                restoration='Only directly observed hand qpos reconstructed from first observation; supplied unobserved state/velocities retained' if profile!='supplied_state' else 'Supplied DAPG initial state restored without correction')
+            atomic(a.output/'original-state-audit.json',profiles)
+            print(json.dumps(dict(task=a.task,profile=profile,successful=profiles[profile]['successful'])),flush=True)
+            if chosen is None and all(r['successful'] and r['complete_episode'] for r in records) and len({r['trajectory_sha256'] for r in records})==25:
+                chosen=(profile,candidates)
+        attempts=[];accepted=[]
+        if chosen:
+            profile,accepted=chosen
+            provenance=dict(kind='human-DAPG-actions-reexecuted',restoration_profile=profile,
+                repository=source['repository'],revision=REVISION,source_sha256=source['sha256'][a.task+'-v0_demos.pickle'],
+                action_pack_sha256=sha(a.pack),horizon='Current native 200-step episode, not the longer original v0 horizon')
+        else:
+            with a.checkpoint.open('rb') as f:teacher=CompatibilityUnpickler(f).load().model.eval()
+            provenance=dict(kind='expert-policy-demonstration',human_demonstration=False,
+                repository=source['repository'],revision=REVISION,
+                checkpoint_url=f'https://raw.githubusercontent.com/aravindr93/hand_dapg/{REVISION}/dapg/policies/{a.task}-v0.pickle',
+                checkpoint_sha256=sha(a.checkpoint),teacher_layer_sizes=list(teacher.layer_sizes),
+                policy='Official pretrained DAPG-repository policy; deterministic mean with native bounds and original normalizers',
+                learner_initialization='Fresh random learner; expert used only to generate fixed replay data',
+                external_pretraining_reward='Historical v0 expert; do not describe its training as sparse online RL or these episodes as human data')
+            fingerprints=set()
+            for seed in range(100000,105000):
+                initial,arrays,record=rollout(seed,teacher=teacher)
+                file=a.output/'attempts'/f'seed-{seed}.npz'
+                np.savez_compressed(file,**arrays,**{'initial_'+k:v for k,v in initial.items()})
+                record.update(attempt=len(attempts),file=str(file.relative_to(a.output)),sha256=sha(file))
+                assert record['trajectory_sha256'] not in fingerprints,'Duplicate rollout encountered'
+                fingerprints.add(record['trajectory_sha256']);attempts.append(record)
+                with (a.output/'collection-history.jsonl').open('a') as history:
+                    history.write(json.dumps(record)+'\n');history.flush()
+                if record['successful'] and record['complete_episode']:accepted.append((initial,arrays,record))
+                print(json.dumps(dict(task=a.task,seed=seed,accepted=len(accepted),successful=record['successful'],success_steps=record['success_steps'])),flush=True)
+                if len(accepted)==25:break
+        assert len(accepted)==25,'Could not collect 25 successes in the predeclared attempt budget'
+        states={};episodes=[];offsets=[0]
+        arrays={k:[] for k in accepted[0][1]}
+        for i,(initial,rows,record) in enumerate(accepted):
+            for k,v in initial.items():states[f'state_{i}_{k}']=v
+            for k,v in rows.items():arrays[k].append(v)
+            offsets.append(offsets[-1]+record['length']);episodes.append(dict(record,index=i))
+        combined={k:np.concatenate(v) for k,v in arrays.items()}
+        combined.update(offsets=np.asarray(offsets,np.int64),trajectory_ids=np.concatenate([np.full(e['length'],i,np.int32) for i,e in enumerate(episodes)]))
+        combined['dones']=combined['terminated'].copy();combined['timeouts']=combined['truncated'] & ~combined['terminated']
+        dataset=a.output/(a.task+'-verified25-sparse-v2.npz');states_path=a.output/'initial-states.npz'
+        np.savez_compressed(dataset,**combined);np.savez_compressed(states_path,**states)
+        manifest=dict(passed=False,task=a.task,environment=physics,provenance=provenance,trajectories=25,successful_trajectories=25,
+            episodes=episodes,attempted=len(attempts),accepted_seeds=[e['seed'] for e in episodes],
+            selection=protocol['selection'],collection_protocol_sha256=sha(a.output/'collection-protocol.json'),
+            collection_history_sha256=sha(a.output/'collection-history.jsonl') if attempts else None,
+            original_state_audit_sha256=sha(a.output/'original-state-audit.json'),
+            dataset=dict(file=dataset.name,sha256=sha(dataset)),initial_states=dict(file=states_path.name,sha256=sha(states_path)))
+        atomic(a.output/'manifest.json',manifest)
+        proof=verify(a.output/'manifest.json',replay=True)
+        proof.pop('manifest_sha256')  # Final manifest hashes this report; avoid a circular hash.
+        atomic(a.output/'saved-replay-verification.json',proof)
+        manifest.update(passed=True,saved_dataset_replay=dict(passed=True,trajectories=25,
+            report_sha256=sha(a.output/'saved-replay-verification.json'),max_observation_error=max(e['max_observation_error'] for e in proof['episodes'])))
+        atomic(a.output/'manifest.json',manifest)
+        print(json.dumps(dict(task=a.task,passed=True,successful_trajectories=25,provenance=provenance['kind'],
+            replay_verified=25,final_step_successes=sum(e['final_step_success'] for e in episodes),dataset_sha256=sha(dataset))),flush=True)
+    finally:
+        env.close()
+
+
+if __name__=='__main__':main()

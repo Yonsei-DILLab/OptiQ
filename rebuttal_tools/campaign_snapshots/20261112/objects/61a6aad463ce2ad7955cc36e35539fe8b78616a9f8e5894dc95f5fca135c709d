@@ -1,0 +1,43 @@
+"""Fixed evaluation probe for value estimates and the actual Bellman target."""
+from functools import partial
+import json
+import jax
+import jax.numpy as jnp
+import numpy as np
+from ibolt.policy import IBOLTPolicy
+
+
+@partial(jax.jit, static_argnames=("gamma",))
+def infer(actor, critic, probe, gamma):
+    obs, nxt = probe["observations"], probe["next_observations"]
+    def q(params, batch_stats, s, a):
+        return critic.apply_fn({"params": params, "batch_stats": batch_stats}, s, a, train=False)[..., 0]
+
+    expert_q = q(critic.params, critic.batch_stats, obs, probe["actions"])
+    next_action = IBOLTPolicy.sample_action(actor, nxt, jax.random.key(7781))
+    target_q = q(critic.target_params, critic.target_batch_stats, nxt, next_action).min(axis=0)
+    target = probe["rewards"].reshape(-1) + (1 - probe["dones"].reshape(-1)) * gamma * target_q
+    actions = IBOLTPolicy.sample_action(actor, obs, jax.random.key(7782))
+    policy_q = q(critic.params, critic.batch_stats, obs, actions)
+    return expert_q.min(axis=0), policy_q.min(axis=0), target, expert_q[0] - expert_q[1]
+
+
+def checkpoint_metrics(model, probe, output):
+    values = infer(model.policy.actor_state, model.policy.qf_state, probe, float(model.gamma))
+    write_metrics(model, values, output)
+
+
+def write_metrics(model, values, output):
+    metrics = {}
+    for name, value in zip(("q_demo", "q_policy", "td_target", "head_gap"), values):
+        value = np.asarray(value, dtype=np.float64)
+        if not np.isfinite(value).all():
+            raise FloatingPointError(f"Nonfinite {name} at {model.num_timesteps} env steps")
+        metrics[name] = dict(median=float(np.median(value)),
+                             median_abs=float(np.median(np.abs(value))),
+                             p95_abs=float(np.quantile(np.abs(value), 0.95)))
+    row = dict(steps=int(model.num_timesteps), updates=int(model._n_updates), **metrics)
+    row["learner"] = {k: float(v) for k, v in model.logger.name_to_value.items()
+                      if k in ("train/current_q_values", "train/critic_loss", "train/actor_loss")}
+    with (output / "q-probes.jsonl").open("a") as stream:
+        stream.write(json.dumps(row, allow_nan=False) + "\n")

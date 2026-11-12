@@ -1,0 +1,1179 @@
+{
+  "campaign": "fetch-adroit-sac-alpha0-20261112",
+  "created_unix": 1794461158.805728,
+  "steps": 5000192,
+  "seeds": [
+    0,
+    1
+  ],
+  "new_runs": 16,
+  "alpha": 0.0,
+  "automatic_entropy_tuning": false,
+  "sources": {
+    "fetch": {
+      "manifest_sha256": "06bc998f62d5235783e3ef84a51b125852f15b6da6af73139188e474c838f3ba",
+      "parent_manifest_sha256": "b1286171495a26117e353a6f1ed75252a038909b4e7532aef305056ced1ad3c2",
+      "directory": "alpha0-fetch-v2-source"
+    },
+    "fetch-slide-20cm": {
+      "manifest_sha256": "7a4834792927d3233187f6f1733347156c6952f00a45cbe80d2122ded27ee2d2",
+      "parent_manifest_sha256": "ae2ea2dd984d7cfa2a68e0b9913a7433960aaa0bc9ff3c884daa399051d8630f",
+      "directory": "alpha0-fetch-slide-20cm-v2-source"
+    },
+    "adroit": {
+      "manifest_sha256": "38cf486a5a68c2be92d3024fe6f2d82a29b04c33789717556751d01631b6e97b",
+      "parent_manifest_sha256": "261486ed15ecdf0f4bb621b464b7b38646189fe4234daf06c44cec77d6bd6575"
+    }
+  },
+  "rows": [
+    {
+      "id": "fetch-reach-jax-sac-alpha0-s0-pilot",
+      "family": "fetch",
+      "task": "reach",
+      "method": "sac",
+      "seed": 0,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 4,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/fetch-reach-jax-sac-alpha0-s0-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-fetch.json",
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "06bc998f62d5235783e3ef84a51b125852f15b6da6af73139188e474c838f3ba",
+      "baseline_run_id": "fetch-reach-sac-s0-baseline",
+      "baseline_host": 3
+    },
+    {
+      "id": "fetch-reach-jax-sac-alpha0-s1-pilot",
+      "family": "fetch",
+      "task": "reach",
+      "method": "sac",
+      "seed": 1,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 4,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/fetch-reach-jax-sac-alpha0-s1-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-fetch.json",
+      "previous_host": 4,
+      "affinity_history": [
+        {
+          "at": 1794421495.832408,
+          "steps": 832256,
+          "old_learner": [
+            34,
+            98,
+            35,
+            99
+          ],
+          "old_workers": [
+            [
+              36,
+              100
+            ],
+            [
+              37,
+              101
+            ],
+            [
+              38,
+              102
+            ],
+            [
+              39,
+              103
+            ]
+          ],
+          "new_learner": [
+            19,
+            83
+          ],
+          "new_workers": [
+            [
+              20
+            ],
+            [
+              84
+            ],
+            [
+              21
+            ],
+            [
+              85
+            ]
+          ],
+          "processes": [
+            {
+              "pid": 439786,
+              "worker_index": null,
+              "old": [
+                34,
+                35,
+                98,
+                99
+              ],
+              "new": [
+                19,
+                83
+              ],
+              "threads": 21
+            },
+            {
+              "pid": 439907,
+              "worker_index": null,
+              "old": [
+                34,
+                35,
+                98,
+                99
+              ],
+              "new": [
+                19,
+                83
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 439909,
+              "worker_index": 0,
+              "old": [
+                36,
+                100
+              ],
+              "new": [
+                20
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 439911,
+              "worker_index": 1,
+              "old": [
+                37,
+                101
+              ],
+              "new": [
+                84
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 439913,
+              "worker_index": 2,
+              "old": [
+                38,
+                102
+              ],
+              "new": [
+                21
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 439914,
+              "worker_index": 3,
+              "old": [
+                39,
+                103
+              ],
+              "new": [
+                85
+              ],
+              "threads": 1
+            }
+          ]
+        }
+      ],
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "06bc998f62d5235783e3ef84a51b125852f15b6da6af73139188e474c838f3ba",
+      "baseline_run_id": "fetch-reach-sac-s1-baseline",
+      "baseline_host": 1
+    },
+    {
+      "id": "fetch-push-jax-sac-alpha0-s0-pilot",
+      "family": "fetch",
+      "task": "push",
+      "method": "sac",
+      "seed": 0,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 4,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/fetch-push-jax-sac-alpha0-s0-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-fetch.json",
+      "previous_host": 4,
+      "affinity_history": [
+        {
+          "at": 1794421495.8298972,
+          "steps": 762624,
+          "old_learner": [
+            10,
+            74,
+            11,
+            75
+          ],
+          "old_workers": [
+            [
+              12,
+              76
+            ],
+            [
+              13,
+              77
+            ],
+            [
+              14,
+              78
+            ],
+            [
+              15,
+              79
+            ]
+          ],
+          "new_learner": [
+            7,
+            71
+          ],
+          "new_workers": [
+            [
+              8
+            ],
+            [
+              72
+            ],
+            [
+              9
+            ],
+            [
+              73
+            ]
+          ],
+          "processes": [
+            {
+              "pid": 439636,
+              "worker_index": null,
+              "old": [
+                10,
+                11,
+                74,
+                75
+              ],
+              "new": [
+                7,
+                71
+              ],
+              "threads": 21
+            },
+            {
+              "pid": 439726,
+              "worker_index": null,
+              "old": [
+                10,
+                11,
+                74,
+                75
+              ],
+              "new": [
+                7,
+                71
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 439727,
+              "worker_index": 0,
+              "old": [
+                12,
+                76
+              ],
+              "new": [
+                8
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 439729,
+              "worker_index": 1,
+              "old": [
+                13,
+                77
+              ],
+              "new": [
+                72
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 439732,
+              "worker_index": 2,
+              "old": [
+                14,
+                78
+              ],
+              "new": [
+                9
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 439740,
+              "worker_index": 3,
+              "old": [
+                15,
+                79
+              ],
+              "new": [
+                73
+              ],
+              "threads": 1
+            }
+          ]
+        }
+      ],
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "06bc998f62d5235783e3ef84a51b125852f15b6da6af73139188e474c838f3ba",
+      "baseline_run_id": "fetch-push-sac-s0-baseline",
+      "baseline_host": 1
+    },
+    {
+      "id": "fetch-push-jax-sac-alpha0-s1-pilot",
+      "family": "fetch",
+      "task": "push",
+      "method": "sac",
+      "seed": 1,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 4,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/fetch-push-jax-sac-alpha0-s1-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-fetch.json",
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "06bc998f62d5235783e3ef84a51b125852f15b6da6af73139188e474c838f3ba",
+      "baseline_run_id": "fetch-push-sac-s1-baseline",
+      "baseline_host": 3
+    },
+    {
+      "id": "fetch-pick-and-place-jax-sac-alpha0-s0-pilot",
+      "family": "fetch",
+      "task": "pick-and-place",
+      "method": "sac",
+      "seed": 0,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 4,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/fetch-pick-and-place-jax-sac-alpha0-s0-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-fetch.json",
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "06bc998f62d5235783e3ef84a51b125852f15b6da6af73139188e474c838f3ba",
+      "baseline_run_id": "fetch-pick-and-place-sac-s0-baseline",
+      "baseline_host": 3
+    },
+    {
+      "id": "fetch-pick-and-place-jax-sac-alpha0-s1-pilot",
+      "family": "fetch",
+      "task": "pick-and-place",
+      "method": "sac",
+      "seed": 1,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 4,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/fetch-pick-and-place-jax-sac-alpha0-s1-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-fetch.json",
+      "previous_host": 4,
+      "affinity_history": [
+        {
+          "at": 1794421495.8336523,
+          "steps": 774912,
+          "old_learner": [
+            46,
+            110,
+            47,
+            111
+          ],
+          "old_workers": [
+            [
+              48,
+              112
+            ],
+            [
+              49,
+              113
+            ],
+            [
+              50,
+              114
+            ],
+            [
+              51,
+              115
+            ]
+          ],
+          "new_learner": [
+            25,
+            89
+          ],
+          "new_workers": [
+            [
+              26
+            ],
+            [
+              90
+            ],
+            [
+              27
+            ],
+            [
+              91
+            ]
+          ],
+          "processes": [
+            {
+              "pid": 439788,
+              "worker_index": null,
+              "old": [
+                46,
+                47,
+                110,
+                111
+              ],
+              "new": [
+                25,
+                89
+              ],
+              "threads": 21
+            },
+            {
+              "pid": 439906,
+              "worker_index": null,
+              "old": [
+                46,
+                47,
+                110,
+                111
+              ],
+              "new": [
+                25,
+                89
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 439908,
+              "worker_index": 0,
+              "old": [
+                48,
+                112
+              ],
+              "new": [
+                26
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 439910,
+              "worker_index": 1,
+              "old": [
+                49,
+                113
+              ],
+              "new": [
+                90
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 439912,
+              "worker_index": 2,
+              "old": [
+                50,
+                114
+              ],
+              "new": [
+                27
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 439915,
+              "worker_index": 3,
+              "old": [
+                51,
+                115
+              ],
+              "new": [
+                91
+              ],
+              "threads": 1
+            }
+          ]
+        }
+      ],
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "06bc998f62d5235783e3ef84a51b125852f15b6da6af73139188e474c838f3ba",
+      "baseline_run_id": "fetch-pick-and-place-sac-s1-baseline",
+      "baseline_host": 1
+    },
+    {
+      "id": "fetch-slide-r20cm-jax-sac-alpha0-s0-pilot",
+      "family": "fetch",
+      "task": "slide",
+      "method": "sac",
+      "seed": 0,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 4,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/fetch-slide-r20cm-jax-sac-alpha0-s0-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-slide-20cm-v2-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-slide-20cm-v2-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-fetch.json",
+      "protocol_variant": "F1-slide-20cm",
+      "distance_threshold_m": 0.2,
+      "environment_validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/slide-20cm-20261112/environment-verification.json",
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "7a4834792927d3233187f6f1733347156c6952f00a45cbe80d2122ded27ee2d2",
+      "baseline_run_id": "fetch-slide-r20cm-sac-s0-baseline",
+      "baseline_host": 4
+    },
+    {
+      "id": "fetch-slide-r20cm-jax-sac-alpha0-s1-pilot",
+      "family": "fetch",
+      "task": "slide",
+      "method": "sac",
+      "seed": 1,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 4,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/fetch-slide-r20cm-jax-sac-alpha0-s1-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-slide-20cm-v2-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-slide-20cm-v2-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-fetch.json",
+      "protocol_variant": "F1-slide-20cm",
+      "distance_threshold_m": 0.2,
+      "environment_validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/slide-20cm-20261112/environment-verification.json",
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "7a4834792927d3233187f6f1733347156c6952f00a45cbe80d2122ded27ee2d2",
+      "baseline_run_id": "fetch-slide-r20cm-sac-s1-baseline",
+      "baseline_host": 3
+    },
+    {
+      "id": "adroit-door-jax-sac-alpha0-s0-pilot",
+      "family": "adroit",
+      "task": "door",
+      "method": "sac",
+      "seed": 0,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 3,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/adroit-door-jax-sac-alpha0-s0-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-adroit.json",
+      "utd": 0.25,
+      "critic_layer_norm": true,
+      "paired_final_evaluation": true,
+      "demo_path": "/workspace/heechan-unified-f1-a1-20261112/datasets/door/door-verified25-sparse-v2.npz",
+      "demo_sha256": "0df809850b4663672b52da273b4e90bdc5fab82108b42e2981a48044dff6ffa0",
+      "demonstration_manifest": "/workspace/heechan-unified-f1-a1-20261112/datasets/door/manifest.json",
+      "demonstration_manifest_sha256": "6236e4701dc36ba0ac57f57a1fde5db125d73657ff20cd7c013f8433e4e486a0",
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "38cf486a5a68c2be92d3024fe6f2d82a29b04c33789717556751d01631b6e97b",
+      "baseline_run_id": "adroit-door-sac-s0-baseline",
+      "baseline_host": 3
+    },
+    {
+      "id": "adroit-door-jax-sac-alpha0-s1-pilot",
+      "family": "adroit",
+      "task": "door",
+      "method": "sac",
+      "seed": 1,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 3,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/adroit-door-jax-sac-alpha0-s1-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-adroit.json",
+      "utd": 0.25,
+      "critic_layer_norm": true,
+      "paired_final_evaluation": true,
+      "demo_path": "/workspace/heechan-unified-f1-a1-20261112/datasets/door/door-verified25-sparse-v2.npz",
+      "demo_sha256": "0df809850b4663672b52da273b4e90bdc5fab82108b42e2981a48044dff6ffa0",
+      "demonstration_manifest": "/workspace/heechan-unified-f1-a1-20261112/datasets/door/manifest.json",
+      "demonstration_manifest_sha256": "6236e4701dc36ba0ac57f57a1fde5db125d73657ff20cd7c013f8433e4e486a0",
+      "affinity_history": [
+        {
+          "at": 1794421496.152381,
+          "steps": 3594240,
+          "old_learner": [
+            58,
+            122,
+            59,
+            123
+          ],
+          "old_workers": [
+            [
+              60,
+              124
+            ],
+            [
+              61,
+              125
+            ],
+            [
+              62,
+              126
+            ],
+            [
+              63,
+              127
+            ]
+          ],
+          "new_learner": [
+            19,
+            83
+          ],
+          "new_workers": [
+            [
+              20
+            ],
+            [
+              84
+            ],
+            [
+              21
+            ],
+            [
+              85
+            ]
+          ],
+          "processes": [
+            {
+              "pid": 291785,
+              "worker_index": null,
+              "old": [
+                58,
+                59,
+                122,
+                123
+              ],
+              "new": [
+                19,
+                83
+              ],
+              "threads": 21
+            },
+            {
+              "pid": 292079,
+              "worker_index": null,
+              "old": [
+                58,
+                59,
+                122,
+                123
+              ],
+              "new": [
+                19,
+                83
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 292080,
+              "worker_index": 0,
+              "old": [
+                60,
+                124
+              ],
+              "new": [
+                20
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 292081,
+              "worker_index": 1,
+              "old": [
+                61,
+                125
+              ],
+              "new": [
+                84
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 292082,
+              "worker_index": 2,
+              "old": [
+                62,
+                126
+              ],
+              "new": [
+                21
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 292085,
+              "worker_index": 3,
+              "old": [
+                63,
+                127
+              ],
+              "new": [
+                85
+              ],
+              "threads": 1
+            }
+          ]
+        }
+      ],
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "38cf486a5a68c2be92d3024fe6f2d82a29b04c33789717556751d01631b6e97b",
+      "baseline_run_id": "adroit-door-sac-s1-baseline",
+      "baseline_host": 4
+    },
+    {
+      "id": "adroit-hammer-jax-sac-alpha0-s0-pilot",
+      "family": "adroit",
+      "task": "hammer",
+      "method": "sac",
+      "seed": 0,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 3,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/adroit-hammer-jax-sac-alpha0-s0-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-adroit.json",
+      "utd": 0.25,
+      "critic_layer_norm": true,
+      "paired_final_evaluation": true,
+      "demo_path": "/workspace/heechan-unified-f1-a1-20261112/datasets/hammer/hammer-verified25-sparse-v2.npz",
+      "demo_sha256": "9571e2ff840eaa1291977c182160887f68023ede5c904d113489d8ac2da2574d",
+      "demonstration_manifest": "/workspace/heechan-unified-f1-a1-20261112/datasets/hammer/manifest.json",
+      "demonstration_manifest_sha256": "b6853928e2fadbb87aeee17cc3a1bcbde6e8148c0a4dbeded3ac9ed79cae06e6",
+      "provenance": {
+        "checkpoint_sha256": "14c6b603af09acf87247f8b45d58f9671790d8e4ca0c48c8db5e1f7c98126ef4",
+        "checkpoint_url": "https://raw.githubusercontent.com/aravindr93/hand_dapg/9a1de23df6574e1b94e1da742e3326eb1f61c013/dapg/policies/hammer-v0.pickle",
+        "external_pretraining_reward": "Historical v0 expert; do not describe its training as sparse online RL or these episodes as human data",
+        "human_demonstration": false,
+        "kind": "expert-policy-demonstration",
+        "learner_initialization": "Fresh random learner; expert used only to generate fixed replay data",
+        "policy": "Official pretrained DAPG-repository policy; deterministic mean with native bounds and original normalizers",
+        "repository": "https://github.com/aravindr93/hand_dapg",
+        "revision": "9a1de23df6574e1b94e1da742e3326eb1f61c013",
+        "teacher_layer_sizes": [
+          46,
+          32,
+          32,
+          26
+        ]
+      },
+      "affinity_history": [
+        {
+          "at": 1794421496.1517334,
+          "steps": 3007488,
+          "old_learner": [
+            52,
+            116,
+            53,
+            117
+          ],
+          "old_workers": [
+            [
+              54,
+              118
+            ],
+            [
+              55,
+              119
+            ],
+            [
+              56,
+              120
+            ],
+            [
+              57,
+              121
+            ]
+          ],
+          "new_learner": [
+            16,
+            80
+          ],
+          "new_workers": [
+            [
+              17
+            ],
+            [
+              81
+            ],
+            [
+              18
+            ],
+            [
+              82
+            ]
+          ],
+          "processes": [
+            {
+              "pid": 291784,
+              "worker_index": null,
+              "old": [
+                52,
+                53,
+                116,
+                117
+              ],
+              "new": [
+                16,
+                80
+              ],
+              "threads": 21
+            },
+            {
+              "pid": 292270,
+              "worker_index": null,
+              "old": [
+                52,
+                53,
+                116,
+                117
+              ],
+              "new": [
+                16,
+                80
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 292271,
+              "worker_index": 0,
+              "old": [
+                54,
+                118
+              ],
+              "new": [
+                17
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 292272,
+              "worker_index": 1,
+              "old": [
+                55,
+                119
+              ],
+              "new": [
+                81
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 292273,
+              "worker_index": 2,
+              "old": [
+                56,
+                120
+              ],
+              "new": [
+                18
+              ],
+              "threads": 1
+            },
+            {
+              "pid": 292274,
+              "worker_index": 3,
+              "old": [
+                57,
+                121
+              ],
+              "new": [
+                82
+              ],
+              "threads": 1
+            }
+          ]
+        }
+      ],
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "38cf486a5a68c2be92d3024fe6f2d82a29b04c33789717556751d01631b6e97b",
+      "baseline_run_id": "adroit-hammer-sac-s0-baseline",
+      "baseline_host": 4
+    },
+    {
+      "id": "adroit-hammer-jax-sac-alpha0-s1-pilot",
+      "family": "adroit",
+      "task": "hammer",
+      "method": "sac",
+      "seed": 1,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 3,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/adroit-hammer-jax-sac-alpha0-s1-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-adroit.json",
+      "utd": 0.25,
+      "critic_layer_norm": true,
+      "paired_final_evaluation": true,
+      "demo_path": "/workspace/heechan-unified-f1-a1-20261112/datasets/hammer/hammer-verified25-sparse-v2.npz",
+      "demo_sha256": "9571e2ff840eaa1291977c182160887f68023ede5c904d113489d8ac2da2574d",
+      "demonstration_manifest": "/workspace/heechan-unified-f1-a1-20261112/datasets/hammer/manifest.json",
+      "demonstration_manifest_sha256": "b6853928e2fadbb87aeee17cc3a1bcbde6e8148c0a4dbeded3ac9ed79cae06e6",
+      "provenance": {
+        "checkpoint_sha256": "14c6b603af09acf87247f8b45d58f9671790d8e4ca0c48c8db5e1f7c98126ef4",
+        "checkpoint_url": "https://raw.githubusercontent.com/aravindr93/hand_dapg/9a1de23df6574e1b94e1da742e3326eb1f61c013/dapg/policies/hammer-v0.pickle",
+        "external_pretraining_reward": "Historical v0 expert; do not describe its training as sparse online RL or these episodes as human data",
+        "human_demonstration": false,
+        "kind": "expert-policy-demonstration",
+        "learner_initialization": "Fresh random learner; expert used only to generate fixed replay data",
+        "policy": "Official pretrained DAPG-repository policy; deterministic mean with native bounds and original normalizers",
+        "repository": "https://github.com/aravindr93/hand_dapg",
+        "revision": "9a1de23df6574e1b94e1da742e3326eb1f61c013",
+        "teacher_layer_sizes": [
+          46,
+          32,
+          32,
+          26
+        ]
+      },
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "38cf486a5a68c2be92d3024fe6f2d82a29b04c33789717556751d01631b6e97b",
+      "baseline_run_id": "adroit-hammer-sac-s1-baseline",
+      "baseline_host": 5
+    },
+    {
+      "id": "adroit-pen-jax-sac-alpha0-s0-pilot",
+      "family": "adroit",
+      "task": "pen",
+      "method": "sac",
+      "seed": 0,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 3,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/adroit-pen-jax-sac-alpha0-s0-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-adroit.json",
+      "utd": 0.25,
+      "critic_layer_norm": true,
+      "paired_final_evaluation": true,
+      "demo_path": "/workspace/heechan-unified-f1-a1-20261112/datasets/pen/pen-verified25-sparse-v2.npz",
+      "demo_sha256": "0c39548f501c335e7bda98f1a09a0904f2845ae96303039baaa33e6500928bc9",
+      "demonstration_manifest": "/workspace/heechan-unified-f1-a1-20261112/datasets/pen/manifest.json",
+      "demonstration_manifest_sha256": "c7d3f013235a2d65eda6ac46fa2d060a2fc79320a977adb1e2f9438619c8d1d1",
+      "provenance": {
+        "checkpoint_sha256": "061dba4907a76b83139ae5a8d0809faa9774dd028d12ce869036b620bd728740",
+        "checkpoint_url": "https://raw.githubusercontent.com/aravindr93/hand_dapg/9a1de23df6574e1b94e1da742e3326eb1f61c013/dapg/policies/pen-v0.pickle",
+        "external_pretraining_reward": "Historical v0 expert; do not describe its training as sparse online RL or these episodes as human data",
+        "human_demonstration": false,
+        "kind": "expert-policy-demonstration",
+        "learner_initialization": "Fresh random learner; expert used only to generate fixed replay data",
+        "policy": "Official pretrained DAPG-repository policy; deterministic mean with native bounds and original normalizers",
+        "repository": "https://github.com/aravindr93/hand_dapg",
+        "revision": "9a1de23df6574e1b94e1da742e3326eb1f61c013",
+        "teacher_layer_sizes": [
+          45,
+          64,
+          64,
+          24
+        ]
+      },
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "38cf486a5a68c2be92d3024fe6f2d82a29b04c33789717556751d01631b6e97b",
+      "baseline_run_id": "adroit-pen-sac-s0-baseline",
+      "baseline_host": 5
+    },
+    {
+      "id": "adroit-pen-jax-sac-alpha0-s1-pilot",
+      "family": "adroit",
+      "task": "pen",
+      "method": "sac",
+      "seed": 1,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 3,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/adroit-pen-jax-sac-alpha0-s1-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-adroit.json",
+      "utd": 0.25,
+      "critic_layer_norm": true,
+      "paired_final_evaluation": true,
+      "demo_path": "/workspace/heechan-unified-f1-a1-20261112/datasets/pen/pen-verified25-sparse-v2.npz",
+      "demo_sha256": "0c39548f501c335e7bda98f1a09a0904f2845ae96303039baaa33e6500928bc9",
+      "demonstration_manifest": "/workspace/heechan-unified-f1-a1-20261112/datasets/pen/manifest.json",
+      "demonstration_manifest_sha256": "c7d3f013235a2d65eda6ac46fa2d060a2fc79320a977adb1e2f9438619c8d1d1",
+      "provenance": {
+        "checkpoint_sha256": "061dba4907a76b83139ae5a8d0809faa9774dd028d12ce869036b620bd728740",
+        "checkpoint_url": "https://raw.githubusercontent.com/aravindr93/hand_dapg/9a1de23df6574e1b94e1da742e3326eb1f61c013/dapg/policies/pen-v0.pickle",
+        "external_pretraining_reward": "Historical v0 expert; do not describe its training as sparse online RL or these episodes as human data",
+        "human_demonstration": false,
+        "kind": "expert-policy-demonstration",
+        "learner_initialization": "Fresh random learner; expert used only to generate fixed replay data",
+        "policy": "Official pretrained DAPG-repository policy; deterministic mean with native bounds and original normalizers",
+        "repository": "https://github.com/aravindr93/hand_dapg",
+        "revision": "9a1de23df6574e1b94e1da742e3326eb1f61c013",
+        "teacher_layer_sizes": [
+          45,
+          64,
+          64,
+          24
+        ]
+      },
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "38cf486a5a68c2be92d3024fe6f2d82a29b04c33789717556751d01631b6e97b",
+      "baseline_run_id": "adroit-pen-sac-s1-baseline",
+      "baseline_host": 5
+    },
+    {
+      "id": "adroit-relocate-jax-sac-alpha0-s0-pilot",
+      "family": "adroit",
+      "task": "relocate",
+      "method": "sac",
+      "seed": 0,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 3,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/adroit-relocate-jax-sac-alpha0-s0-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-adroit.json",
+      "utd": 0.25,
+      "critic_layer_norm": true,
+      "paired_final_evaluation": true,
+      "demo_path": "/workspace/heechan-unified-f1-a1-20261112/datasets/relocate/relocate-verified25-sparse-v2.npz",
+      "demo_sha256": "820631b811e1471d3e85bc2dff1192df509f51f2ac2518a8f350e75ccdb98758",
+      "demonstration_manifest": "/workspace/heechan-unified-f1-a1-20261112/datasets/relocate/manifest.json",
+      "demonstration_manifest_sha256": "799b832225f1dbb43d539aa1ce6645d06640b4b5f56f95d3c0a9436f82c9066d",
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "38cf486a5a68c2be92d3024fe6f2d82a29b04c33789717556751d01631b6e97b",
+      "baseline_run_id": "adroit-relocate-sac-s0-baseline",
+      "baseline_host": 5
+    },
+    {
+      "id": "adroit-relocate-jax-sac-alpha0-s1-pilot",
+      "family": "adroit",
+      "task": "relocate",
+      "method": "sac",
+      "seed": 1,
+      "temperature": 0.25,
+      "phase": "sac_alpha0_pilot",
+      "host": 3,
+      "depth": 2,
+      "steps": 5000192,
+      "status": "queued",
+      "output": "/workspace/heechan-unified-f1-a1-20261112/runs/adroit-relocate-jax-sac-alpha0-s1-pilot",
+      "source": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source",
+      "source_manifest": "/workspace/heechan-unified-f1-a1-20261112/alpha0-adroit-source/source-sha256.json",
+      "ibolt_reference_config": "/workspace/heechan-unified-f1-a1-20261112/fetch-reference.json",
+      "validation_manifest": "/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validation-adroit.json",
+      "utd": 0.25,
+      "critic_layer_norm": true,
+      "paired_final_evaluation": true,
+      "demo_path": "/workspace/heechan-unified-f1-a1-20261112/datasets/relocate/relocate-verified25-sparse-v2.npz",
+      "demo_sha256": "820631b811e1471d3e85bc2dff1192df509f51f2ac2518a8f350e75ccdb98758",
+      "demonstration_manifest": "/workspace/heechan-unified-f1-a1-20261112/datasets/relocate/manifest.json",
+      "demonstration_manifest_sha256": "799b832225f1dbb43d539aa1ce6645d06640b4b5f56f95d3c0a9436f82c9066d",
+      "campaign": "fetch-adroit-sac-alpha0-20261112",
+      "sac_ent_coef": 0.0,
+      "source_manifest_sha256": "38cf486a5a68c2be92d3024fe6f2d82a29b04c33789717556751d01631b6e97b",
+      "baseline_run_id": "adroit-relocate-sac-s1-baseline",
+      "baseline_host": 3
+    }
+  ],
+  "selection": "Exploratory fixed-alpha ablation; no seed replacement or winner selection",
+  "unchanged": "F1/A1, same expert demos, LN setting, HER, normalization, UTD, evaluation and network as matching automatic-alpha SAC controls",
+  "startup_repair": {
+    "reason": "Duplicate automatic_entropy_tuning keyword in metadata dict before first environment/update",
+    "source_change": "Only remove redundant metadata keyword; JAX module and validated numerical path unchanged",
+    "preserve": "All failed attempt logs/configs/specs and original sources",
+    "affected": "Fetch eight runs, zero optimizer updates"
+  }
+}

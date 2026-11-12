@@ -1,0 +1,17 @@
+# @package _global_
+# CrossQ critic (Bhatt et al., ICLR 2024; SBX defaults): BatchRenorm critic, no target
+# network, joint (s,a)/(s',a') forward pass, Adam lr 1e-3 with b1=0.5 for the critic.
+# Critic width follows the CrossQ paper (2048x2). The iBOLT actor, its optimizer,
+# temperature, N=M, DACER exploration and the TD backup are unchanged.
+# Usage: python train.py benchmark=ant +critic=crossq seed=0
+alg:
+  critic:
+    type: crossq
+    hs: [2048, 2048]
+    bn_momentum: 0.99
+    renorm_warmup_steps: 100000
+  optimizer:
+    lr_critic: 0.001
+    critic_b1: 0.5
+    critic_b2: 0.999
+run_name: ${task}-ibolt-crossq-T${alg.actor.temperature}-s${seed}

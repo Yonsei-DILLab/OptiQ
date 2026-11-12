@@ -1,0 +1,10 @@
+{
+  "hammer": {
+    "demonstration_manifest": "/workspace/heechan-adroit/hp-verified25-20261110/datasets/hammer/manifest.json",
+    "demonstration_manifest_sha256": "b6853928e2fadbb87aeee17cc3a1bcbde6e8148c0a4dbeded3ac9ed79cae06e6"
+  },
+  "pen": {
+    "demonstration_manifest": "/workspace/heechan-adroit/hp-verified25-20261110/datasets/pen/manifest.json",
+    "demonstration_manifest_sha256": "c7d3f013235a2d65eda6ac46fa2d060a2fc79320a977adb1e2f9438619c8d1d1"
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "hammer": {
+    "dataset": {
+      "file": "hammer-verified25-sparse-v2.npz",
+      "sha256": "9571e2ff840eaa1291977c182160887f68023ede5c904d113489d8ac2da2574d"
+    },
+    "manifest_sha256": "b6853928e2fadbb87aeee17cc3a1bcbde6e8148c0a4dbeded3ac9ed79cae06e6",
+    "provenance": {
+      "kind": "expert-policy-demonstration",
+      "human_demonstration": false,
+      "repository": "https://github.com/aravindr93/hand_dapg",
+      "revision": "9a1de23df6574e1b94e1da742e3326eb1f61c013",
+      "checkpoint_url": "https://raw.githubusercontent.com/aravindr93/hand_dapg/9a1de23df6574e1b94e1da742e3326eb1f61c013/dapg/policies/hammer-v0.pickle",
+      "checkpoint_sha256": "14c6b603af09acf87247f8b45d58f9671790d8e4ca0c48c8db5e1f7c98126ef4",
+      "teacher_layer_sizes": [
+        46,
+        32,
+        32,
+        26
+      ],
+      "policy": "Official pretrained DAPG-repository policy; deterministic mean with native bounds and original normalizers",
+      "learner_initialization": "Fresh random learner; expert used only to generate fixed replay data",
+      "external_pretraining_reward": "Historical v0 expert; do not describe its training as sparse online RL or these episodes as human data"
+    },
+    "attempts": 25,
+    "successes": 25,
+    "replay": {
+      "passed": true,
+      "trajectories": 25,
+      "report_sha256": "879a04e74bee42bbadba30211d9fd6c4f0ccbaf17f750f337bc82e726b714fc4",
+      "max_observation_error": 0.0
+    },
+    "success_steps": [
+      162,
+      158,
+      157,
+      162,
+      161,
+      161,
+      161,
+      162,
+      157,
+      161,
+      157,
+      163,
+      162,
+      157,
+      161,
+      161,
+      161,
+      161,
+      162,
+      162,
+      161,
+      158,
+      162,
+      162,
+      162
+    ],
+    "final_step_successes": 25
+  },
+  "pen": {
+    "dataset": {
+      "file": "pen-verified25-sparse-v2.npz",
+      "sha256": "0c39548f501c335e7bda98f1a09a0904f2845ae96303039baaa33e6500928bc9"
+    },
+    "manifest_sha256": "c7d3f013235a2d65eda6ac46fa2d060a2fc79320a977adb1e2f9438619c8d1d1",
+    "provenance": {
+      "kind": "expert-policy-demonstration",
+      "human_demonstration": false,
+      "repository": "https://github.com/aravindr93/hand_dapg",
+      "revision": "9a1de23df6574e1b94e1da742e3326eb1f61c013",
+      "checkpoint_url": "https://raw.githubusercontent.com/aravindr93/hand_dapg/9a1de23df6574e1b94e1da742e3326eb1f61c013/dapg/policies/pen-v0.pickle",
+      "checkpoint_sha256": "061dba4907a76b83139ae5a8d0809faa9774dd028d12ce869036b620bd728740",
+      "teacher_layer_sizes": [
+        45,
+        64,
+        64,
+        24
+      ],
+      "policy": "Official pretrained DAPG-repository policy; deterministic mean with native bounds and original normalizers",
+      "learner_initialization": "Fresh random learner; expert used only to generate fixed replay data",
+      "external_pretraining_reward": "Historical v0 expert; do not describe its training as sparse online RL or these episodes as human data"
+    },
+    "attempts": 29,
+    "successes": 25,
+    "replay": {
+      "passed": true,
+      "trajectories": 25,
+      "report_sha256": "753182fae2eb7335ed032abd3cd3c6cf9dcc54cfba2d08d51be163114d54c61a",
+      "max_observation_error": 0.0
+    },
+    "success_steps": [
+      153,
+      180,
+      180,
+      181,
+      30,
+      184,
+      168,
+      185,
+      177,
+      165,
+      168,
+      147,
+      167,
+      169,
+      185,
+      174,
+      159,
+      163,
+      167,
+      160,
+      166,
+      156,
+      154,
+      160,
+      167
+    ],
+    "final_step_successes": 25
+  }
+}

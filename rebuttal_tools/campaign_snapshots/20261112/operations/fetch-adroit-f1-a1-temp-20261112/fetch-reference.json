@@ -1,0 +1,75 @@
+{
+  "env_name": "FetchSlide-v4",
+  "task": "slide",
+  "temperature": 0.5,
+  "alg": {
+    "tau": 0.005,
+    "utd": 0.125,
+    "gamma": 0.99,
+    "batch_size": 256,
+    "buffer_size": 1000000,
+    "learning_starts": 12800,
+    "critic": {
+      "hs": [
+        256,
+        256
+      ],
+      "n_critics": 2
+    },
+    "optimizer": {
+      "lr_critic": 0.0003,
+      "lr_actor": 0.0003,
+      "critic_b1": 0.9,
+      "critic_b2": 0.999,
+      "actor_b1": 0.9,
+      "actor_b2": 0.999
+    },
+    "actor": {
+      "hidden_dims": [
+        256,
+        256
+      ],
+      "num_policy_samples": 64,
+      "proposals_per_policy_sample": 1,
+      "temperature": 0.5,
+      "density_correction_beta": 1.0,
+      "learning_starts": 12800,
+      "log_std_min": -5.0,
+      "log_std_max": 1.0,
+      "initial_log_std": -1.0,
+      "mean_output_init_scale": 0.0001,
+      "log_std_output_init_scale": 0.0
+    }
+  },
+  "seed": 0,
+  "use_jit": true,
+  "require_gpu": true,
+  "total_steps": 5000192,
+  "eval_interval": 5000,
+  "num_eval_episodes": 10,
+  "diagnostic_interval": 5000,
+  "checkpoint_interval": 100000,
+  "log_interval": 1,
+  "progress_bar": false,
+  "output_root": "/workspace/heechan-fetch-slide-corrected-her-confirmation/outputs/fetch-slide-corrected-her-sac-auto-5m-5seed-20261111T033322Z/runs/slide-ibolt-s0-final",
+  "run_name": "slide-ibolt-T0.5-s0",
+  "wandb": {
+    "activate": false,
+    "mode": "offline",
+    "entity": null,
+    "project": "ibolt",
+    "group": "FetchSlide-v4_T0.5",
+    "job_type": "training"
+  },
+  "dacer": {
+    "enabled": true,
+    "target_entropy_per_dim": -0.9,
+    "initial_alpha": 0.27,
+    "alpha_lr": 0.03,
+    "interval_updates": 10000,
+    "components": 3,
+    "samples": 200,
+    "noise_scale": 2.0,
+    "entropy_seed": 42
+  }
+}

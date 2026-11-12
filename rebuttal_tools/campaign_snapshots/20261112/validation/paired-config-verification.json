@@ -1,0 +1,563 @@
+{
+  "passed": true,
+  "checked": 16,
+  "at": 1794461643.1573892,
+  "rows": [
+    {
+      "run": "fetch-reach-jax-sac-alpha0-s0-pilot",
+      "baseline": "fetch-reach-sac-s0-baseline",
+      "config_differences": {
+        "source_manifest": [
+          "/workspace/heechan-unified-f1-a1-20261112/fetch-source/source-sha256.json",
+          "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source/source-sha256.json"
+        ],
+        "entropy_coefficient": [
+          null,
+          0.0
+        ],
+        "automatic_entropy_tuning": [
+          null,
+          false
+        ],
+        "worker_cpus": [
+          [
+            [
+              66,
+              258
+            ],
+            [
+              67,
+              259
+            ],
+            [
+              68,
+              260
+            ],
+            [
+              69,
+              261
+            ]
+          ],
+          [
+            [
+              5
+            ],
+            [
+              69
+            ],
+            [
+              6
+            ],
+            [
+              70
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "run": "fetch-reach-jax-sac-alpha0-s1-pilot",
+      "baseline": "fetch-reach-sac-s1-baseline",
+      "config_differences": {
+        "source_manifest": [
+          "/workspace/heechan-unified-f1-a1-20261112/fetch-source/source-sha256.json",
+          "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source/source-sha256.json"
+        ],
+        "entropy_coefficient": [
+          null,
+          0.0
+        ],
+        "automatic_entropy_tuning": [
+          null,
+          false
+        ],
+        "worker_cpus": [
+          [
+            [
+              36,
+              100
+            ],
+            [
+              37,
+              101
+            ],
+            [
+              38,
+              102
+            ],
+            [
+              39,
+              103
+            ]
+          ],
+          [
+            [
+              8
+            ],
+            [
+              72
+            ],
+            [
+              9
+            ],
+            [
+              73
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "run": "fetch-push-jax-sac-alpha0-s0-pilot",
+      "baseline": "fetch-push-sac-s0-baseline",
+      "config_differences": {
+        "source_manifest": [
+          "/workspace/heechan-unified-f1-a1-20261112/fetch-source/source-sha256.json",
+          "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source/source-sha256.json"
+        ],
+        "entropy_coefficient": [
+          null,
+          0.0
+        ],
+        "automatic_entropy_tuning": [
+          null,
+          false
+        ],
+        "worker_cpus": [
+          [
+            [
+              12,
+              76
+            ],
+            [
+              13,
+              77
+            ],
+            [
+              14,
+              78
+            ],
+            [
+              15,
+              79
+            ]
+          ],
+          [
+            [
+              17
+            ],
+            [
+              81
+            ],
+            [
+              18
+            ],
+            [
+              82
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "run": "fetch-push-jax-sac-alpha0-s1-pilot",
+      "baseline": "fetch-push-sac-s1-baseline",
+      "config_differences": {
+        "source_manifest": [
+          "/workspace/heechan-unified-f1-a1-20261112/fetch-source/source-sha256.json",
+          "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-v2-source/source-sha256.json"
+        ],
+        "entropy_coefficient": [
+          null,
+          0.0
+        ],
+        "automatic_entropy_tuning": [
+          null,
+          false
+        ],
+        "worker_cpus": [
+          [
+            [
+              78,
+              270
+            ],
+            [
+              79,
+              271
+            ],
+            [
+              80,
+              272
+            ],
+            [
+              81,
+              273
+            ]
+          ],
+          [
+            [
+              26
+            ],
+            [
+              90
+            ],
+            [
+              27
+            ],
+            [
+              91
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "run": "fetch-pick-and-place-jax-sac-alpha0-s0-pilot",
+      "baseline": "fetch-pick-and-place-sac-s0-baseline",
+      "config_differences": {
+        "source_manifest": [
+          "/workspace/heechan-unified-f1-a1-20261112/fetch-source/source-sha256.json",
+          "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-source/source-sha256.json"
+        ],
+        "entropy_coefficient": [
+          null,
+          0.0
+        ],
+        "automatic_entropy_tuning": [
+          null,
+          false
+        ],
+        "worker_cpus": [
+          [
+            [
+              72,
+              264
+            ],
+            [
+              73,
+              265
+            ],
+            [
+              74,
+              266
+            ],
+            [
+              75,
+              267
+            ]
+          ],
+          [
+            [
+              32
+            ],
+            [
+              96
+            ],
+            [
+              33
+            ],
+            [
+              97
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "run": "fetch-pick-and-place-jax-sac-alpha0-s1-pilot",
+      "baseline": "fetch-pick-and-place-sac-s1-baseline",
+      "config_differences": {
+        "source_manifest": [
+          "/workspace/heechan-unified-f1-a1-20261112/fetch-source/source-sha256.json",
+          "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-source/source-sha256.json"
+        ],
+        "entropy_coefficient": [
+          null,
+          0.0
+        ],
+        "automatic_entropy_tuning": [
+          null,
+          false
+        ],
+        "worker_cpus": [
+          [
+            [
+              48,
+              112
+            ],
+            [
+              49,
+              113
+            ],
+            [
+              50,
+              114
+            ],
+            [
+              51,
+              115
+            ]
+          ],
+          [
+            [
+              53
+            ],
+            [
+              117
+            ],
+            [
+              54
+            ],
+            [
+              118
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "run": "fetch-slide-r20cm-jax-sac-alpha0-s0-pilot",
+      "baseline": "fetch-slide-r20cm-sac-s0-baseline",
+      "config_differences": {
+        "source_manifest": [
+          "/workspace/heechan-unified-f1-a1-20261112/fetch-slide-20cm-source/source-sha256.json",
+          "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-slide-20cm-source/source-sha256.json"
+        ],
+        "entropy_coefficient": [
+          null,
+          0.0
+        ],
+        "automatic_entropy_tuning": [
+          null,
+          false
+        ],
+        "worker_cpus": [
+          [
+            [
+              26
+            ],
+            [
+              90
+            ],
+            [
+              27
+            ],
+            [
+              91
+            ]
+          ],
+          [
+            [
+              56
+            ],
+            [
+              120
+            ],
+            [
+              57
+            ],
+            [
+              121
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "run": "fetch-slide-r20cm-jax-sac-alpha0-s1-pilot",
+      "baseline": "fetch-slide-r20cm-sac-s1-baseline",
+      "config_differences": {
+        "source_manifest": [
+          "/workspace/heechan-unified-f1-a1-20261112/fetch-slide-20cm-source/source-sha256.json",
+          "/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-slide-20cm-source/source-sha256.json"
+        ],
+        "entropy_coefficient": [
+          null,
+          0.0
+        ],
+        "automatic_entropy_tuning": [
+          null,
+          false
+        ],
+        "worker_cpus": [
+          [
+            [
+              102,
+              294
+            ],
+            [
+              103,
+              295
+            ],
+            [
+              104,
+              296
+            ],
+            [
+              105,
+              297
+            ]
+          ],
+          [
+            [
+              59
+            ],
+            [
+              123
+            ],
+            [
+              60
+            ],
+            [
+              124
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "run": "adroit-door-jax-sac-alpha0-s0-pilot",
+      "baseline": "adroit-door-sac-s0-baseline",
+      "config_differences": {
+        "entropy_coefficient": [
+          "auto",
+          0.0
+        ],
+        "source_revision": [
+          "3a32d785780739c005d76c7217be0d7460575f54",
+          "6a812d31dc06dada62630578e5c59033a37ba8f7"
+        ],
+        "automatic_entropy_tuning": [
+          true,
+          false
+        ]
+      }
+    },
+    {
+      "run": "adroit-door-jax-sac-alpha0-s1-pilot",
+      "baseline": "adroit-door-sac-s1-baseline",
+      "config_differences": {
+        "entropy_coefficient": [
+          "auto",
+          0.0
+        ],
+        "source_revision": [
+          "3a32d785780739c005d76c7217be0d7460575f54",
+          "6a812d31dc06dada62630578e5c59033a37ba8f7"
+        ],
+        "automatic_entropy_tuning": [
+          true,
+          false
+        ]
+      }
+    },
+    {
+      "run": "adroit-hammer-jax-sac-alpha0-s0-pilot",
+      "baseline": "adroit-hammer-sac-s0-baseline",
+      "config_differences": {
+        "entropy_coefficient": [
+          "auto",
+          0.0
+        ],
+        "source_revision": [
+          "3a32d785780739c005d76c7217be0d7460575f54",
+          "6a812d31dc06dada62630578e5c59033a37ba8f7"
+        ],
+        "automatic_entropy_tuning": [
+          true,
+          false
+        ]
+      }
+    },
+    {
+      "run": "adroit-hammer-jax-sac-alpha0-s1-pilot",
+      "baseline": "adroit-hammer-sac-s1-baseline",
+      "config_differences": {
+        "entropy_coefficient": [
+          "auto",
+          0.0
+        ],
+        "source_revision": [
+          "3a32d785780739c005d76c7217be0d7460575f54",
+          "6a812d31dc06dada62630578e5c59033a37ba8f7"
+        ],
+        "automatic_entropy_tuning": [
+          true,
+          false
+        ]
+      }
+    },
+    {
+      "run": "adroit-pen-jax-sac-alpha0-s0-pilot",
+      "baseline": "adroit-pen-sac-s0-baseline",
+      "config_differences": {
+        "entropy_coefficient": [
+          "auto",
+          0.0
+        ],
+        "source_revision": [
+          "3a32d785780739c005d76c7217be0d7460575f54",
+          "6a812d31dc06dada62630578e5c59033a37ba8f7"
+        ],
+        "automatic_entropy_tuning": [
+          true,
+          false
+        ]
+      }
+    },
+    {
+      "run": "adroit-pen-jax-sac-alpha0-s1-pilot",
+      "baseline": "adroit-pen-sac-s1-baseline",
+      "config_differences": {
+        "entropy_coefficient": [
+          "auto",
+          0.0
+        ],
+        "source_revision": [
+          "3a32d785780739c005d76c7217be0d7460575f54",
+          "6a812d31dc06dada62630578e5c59033a37ba8f7"
+        ],
+        "automatic_entropy_tuning": [
+          true,
+          false
+        ]
+      }
+    },
+    {
+      "run": "adroit-relocate-jax-sac-alpha0-s0-pilot",
+      "baseline": "adroit-relocate-sac-s0-baseline",
+      "config_differences": {
+        "entropy_coefficient": [
+          "auto",
+          0.0
+        ],
+        "source_revision": [
+          "3a32d785780739c005d76c7217be0d7460575f54",
+          "6a812d31dc06dada62630578e5c59033a37ba8f7"
+        ],
+        "automatic_entropy_tuning": [
+          true,
+          false
+        ]
+      }
+    },
+    {
+      "run": "adroit-relocate-jax-sac-alpha0-s1-pilot",
+      "baseline": "adroit-relocate-sac-s1-baseline",
+      "config_differences": {
+        "entropy_coefficient": [
+          "auto",
+          0.0
+        ],
+        "source_revision": [
+          "3a32d785780739c005d76c7217be0d7460575f54",
+          "6a812d31dc06dada62630578e5c59033a37ba8f7"
+        ],
+        "automatic_entropy_tuning": [
+          true,
+          false
+        ]
+      }
+    }
+  ]
+}

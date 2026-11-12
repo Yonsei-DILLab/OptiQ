@@ -1,0 +1,6 @@
+{
+  "passed": false,
+  "results": [],
+  "error": "AssertionError('fused32_actor: max_abs=0.00010438263416290283, scale=0.07707293331623077')",
+  "traceback": "Traceback (most recent call last):\n  File \"/workspace/heechan-unified-f1-a1-20261112/sac-alpha0-20261112/validate.py\", line 13, in <module>\n    results.append(run(2,'cpu',out,task,0.))\n                   ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-source/rebuttal_tools/check_fetch_jax_sac.py\", line 278, in run\n    compare(label, actual, expected, stats, atol=8e-5, rtol=8e-4)\n  File \"/workspace/heechan-unified-f1-a1-20261112/alpha0-fetch-source/rebuttal_tools/check_fetch_jax_sac.py\", line 40, in compare\n    raise AssertionError(f'{label}: max_abs={np.max(np.abs(a-b))}, scale={np.max(np.abs(b))}')\nAssertionError: fused32_actor: max_abs=0.00010438263416290283, scale=0.07707293331623077\n"
+}

@@ -1,0 +1,106 @@
+# Queued Adroit native baselines
+
+Continuation on server 1, explicitly requested after the active iBOLT/SAC
+campaign. Execution order is **all 40 iBOLT/SAC runs → DIPO → MEOW → MFPO**.
+Each added method has 4 tasks × seeds 0–4 = 20 full runs, so 60 full runs total.
+No running learner or its immutable source snapshot is modified.
+
+Shared Adroit protocol: the same 25 demonstrations/task, native sparse rewards,
+256 environments, batch 256 with 128 demonstration + 128 online samples, UTD 1/8
+(32 optimizer updates per vector collection), warmup 12,800, 5,000,192 aligned
+online transitions and 623,424 updates. No HER, observation/reward normalization,
+extra BC loss or offline pretraining. Each native learner keeps its own optimizer,
+sampling defaults, with policy/value backbones explicitly matched to two hidden layers of width 256. Native auxiliary timestep embeddings and flow-block counts are retained. There is no tuning on the reported seeds.
+
+- DIPO: official `c6d8d1b39d6cea22e7d779e08111dbf974dbb4fc`, Diffusion policy,
+  100 cosine-schedule diffusion steps, action-gradient steps 20, action LR 0.03,
+  actor/critic LR 0.0003, gradient clipping 2, action gradient cap 0.1 × action
+  dimension, gamma 0.99, tau 0.005, actor target update every optimizer update.
+  Native actor accepts batched states for vector collection. Critic replay keeps
+  executed actions; a separate mutable action-label buffer persists improved
+  policy targets for both demonstration and online states. Indexed assignment
+  implements the replacement contract (NumPy `copyto` on advanced-index copies
+  would not persist those labels). Neither original dataset files nor critic
+  demonstration actions are changed. Native `DiPo.train` and vendor bytes remain
+  unchanged. Source: https://github.com/BellmanTimeHut/DIPO
+- MEOW: official `b786d27aa9b03e4242ee8904ff884b21fe65e2f7`, original CleanRL
+  flow/Q identity and regression update, alpha 0.2, prior log-scales [-5,-0.3],
+  LR 0.001, tau 0.005 and gradient clipping 30. Native deterministic flow sampling
+  at evaluation. Source: https://github.com/ChienFeng-hub/meow
+- MFPO: official `d8b3977d29d4ef2d315e871337e5826f2eb79eb2`, original
+  distributional twin-Q and mean-flow update; matched 2×256 policy/value networks with native LayerNorm,
+  T=2, initial temperature 0.01, target entropy coefficient -0.5, native entropy
+  backup, 16/32 policy/Gaussian proposals and 10-candidate evaluation selection.
+  Source: https://github.com/dongxiaoyi-xyz/MFPO
+
+Vendor file hashes and upstream revisions are in `UPSTREAM.json`; existing
+licenses/notices are retained. Private adapters are isolated from other
+experiments and must not enter any anonymous snapshot.
+
+Evaluation uses the same paired Adroit reset seeds and the native evaluation
+rule of each algorithm. DIPO's eval flag disables intermediate diffusion noise
+but retains its random initial noise; it is not labeled a deterministic policy.
+Record returns and separate any-step, final-step, and 25-success-step metrics,
+as well as first online success excluding demonstrations. Native evaluation RNG
+is restored. The monitor writes each method's JSON state and CSV curves every
+60 seconds. Checkpoints are inference artifacts, not replay-resume promises.
+
+A quick compatibility check performs a real GPU update and native inference for
+every method/task shape, verifies exact replay composition, immutable executed
+actions and persistent DIPO labels. After the upstream 40-run campaign finishes,
+each method additionally receives 4 full-configuration vector smoke checks
+(13,568 transitions, 96 updates, 256 environments), before releasing that
+method's 20 full jobs. Failure holds later phases for inspection; no automatic
+rerun overwrites existing results. A failed upstream run or mismatched completion
+marker also holds release. Upstream Supervisor must exit before release.
+
+Supervisor: `adroit-followup-queue-20261110-host1` and three per-method monitor
+programs. Queue configuration/state/logs live in `/workspace/heechan-adroit/followup/`.
+Code is frozen separately in `/workspace/heechan-adroit/followup-source-20261110`.
+All six phase plans are under `/workspace/heechan-adroit/outputs/demo-sparse-followup-*`.
+
+## Superseding architecture profile: matched_256x2
+
+User requested actor and critic 256×2 for all methods. Active iBOLT and SAC already match. DIPO removes the third main hidden layer before training and recreates target networks and optimizers. MEOW widens the prior and four coupling MLPs from 64×2 to 256×2; its two value-shifting MLPs already match. MFPO explicitly overrides both hidden-dimension tuples to (256,256). DIPO and MFPO auxiliary time embeddings retain their native shapes, separately recorded in the audit. Vendor files remain byte-identical. Actual constructed parameters, target networks and GPU updates are checked for all four task shapes.
+
+The old queued native-profile plans are superseded; new plans use the `demo-sparse-followup-256x2-*` prefix and immutable `followup-256x2-source-20261110` source. No old result is relabeled as a matched-architecture result.
+
+
+## Hammer/Pen verified-dataset replacement, 2026-11-10
+
+Previous Hammer/Pen results used incompatible DAPG action replay and are preserved
+as previous-dataset results; they cannot enter this cohort's averages.
+The source-state audit first tries supplied initial state and then only hand qpos
+directly observed in the first source observation, with native 200-step TimeLimit.
+Neither profile supplies 25 successes. The replacement data are explicitly
+EXPERT-POLICY DEMONSTRATIONS, not human demonstrations: the pinned official
+hand_dapg pretrained policies are executed in the same current Sparse-v2 MDP.
+The learner never loads those policy weights and receives no BC/pretraining loss.
+
+Predeclared collection order: seeds 100000..104999 ascending, stop at the first
+25 complete successful episodes, success from current info["success"] only.
+Hammer accepts the first 25 attempts; Pen accepts 25 of the first 29 attempts.
+Every attempted rollout, including failures, and original-state audit is saved.
+Each accepted episode retains the full native episode, approach/grasp included;
+all 25 episodes in each task are 200 steps. State/action trajectory digests are
+distinct. Success duration and final-step success are recorded separately.
+
+The saved NPZ arrays contain current observations/actions/next observations,
+rewards, true termination, raw truncation, bootstrap timeout, success flags,
+trajectory ids/offsets; initial states are stored separately. Independent replay
+checks all transitions/rewards/end flags/successes with observation atol=1e-8.
+Observed replay error is 0 for both tasks; all 25 end successfully.
+Datasets and manifests are hash pinned in verified-dataset-registry.json.
+
+All 20 iBOLT/SAC task/seed jobs start from random initialization in new output
+directories (no checkpoint resume). 5,000,192 aligned steps, 256 environments,
+UTD 1/8, batch 256, exact 128-demo/128-online per optimizer minibatch, 256x2
+actor/critic, original learning rates, SAC auto entropy, iBOLT temperature/logstd,
+sparse reward and evaluation rules remain unchanged. No HER or normalization.
+The same immutable per-task dataset is mandatory for every algorithm and seed,
+including queued DIPO/MEOW/MFPO. Missing proof/hash, changed physics, duplicate
+episodes, truncated prefixes, forged labels or failed replay prevent training.
+
+Reports use all seeds 0..4, mean and sample SD (ddof=1), separate task/algorithm
+groups, 100 final evaluation episodes/seed, and learning curves at common recorded
+steps. Partial results are labeled incomplete; no best-seed or best-rerun selection.

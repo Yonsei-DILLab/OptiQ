@@ -1,0 +1,346 @@
+"""Adroit v2 adapters using the existing iBOLT and shared JAX SAC learners."""
+import argparse
+from contextlib import contextmanager
+import hashlib
+import importlib.metadata
+import json
+import os
+from pathlib import Path
+import random
+import subprocess
+import time
+import traceback
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_HORIZON = 200
+TASKS = dict(door='AdroitHandDoorSparse-v2', hammer='AdroitHandHammerSparse-v2',
+             pen='AdroitHandPenSparse-v2', relocate='AdroitHandRelocateSparse-v2')
+
+
+def atomic(path, data):
+    path = Path(path)
+    temp = path.with_suffix(path.suffix + '.tmp')
+    temp.write_text(json.dumps(data, indent=2, allow_nan=False) + '\n')
+    temp.replace(path)
+
+
+def guard():
+    branch = subprocess.check_output(['git', 'branch', '--show-current'], cwd=ROOT, text=True).strip()
+    if not branch or 'anonymous' in branch.lower():
+        raise RuntimeError('Adroit experiments require a named non-anonymous source branch')
+    manifest = ROOT / 'source-sha256.json'
+    if manifest.exists():
+        for name, digest in json.loads(manifest.read_text()).items():
+            if hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest:
+                raise RuntimeError('Frozen experiment source changed: ' + name)
+    return branch
+
+
+def make_env(task):
+    import gymnasium as gym
+    import gymnasium_robotics
+    gym.register_envs(gymnasium_robotics)
+    return gym.make(TASKS[task], reward_type='sparse', max_episode_steps=DEFAULT_HORIZON)
+
+
+@contextmanager
+def evaluation_rng(model, seed, method):
+    import numpy as np
+    import torch
+    np_state, py_state = np.random.get_state(), random.getstate()
+    policy = model.policy
+    keys = (policy.key, policy.noise_key, getattr(policy, 'evaluation_mu_only', False)) if method == 'ibolt' else None
+    sac_key = model.jax_state.key if method == 'sac' else None
+    try:
+        with torch.random.fork_rng(devices=[]):
+            np.random.seed(seed)
+            random.seed(seed)
+            import jax
+            if method == 'ibolt':
+                policy.key = jax.random.PRNGKey(seed)
+            else:
+                model.jax_state = model.jax_state.replace(key=jax.random.PRNGKey(seed))
+            yield
+    finally:
+        np.random.set_state(np_state)
+        random.setstate(py_state)
+        if keys is not None:
+            policy.key, policy.noise_key, policy.evaluation_mu_only = keys
+        if sac_key is not None:
+            model.jax_state = model.jax_state.replace(key=sac_key)
+
+
+def evaluate(model, task, method, training_seed, episodes):
+    import numpy as np
+    # Paired reset and policy seeds across algorithms and evaluation milestones.
+    rng = np.random.default_rng(np.random.SeedSequence([training_seed, 4404]))
+    reset_seeds = rng.integers(0, 2**30, episodes).tolist()
+    policy_seeds = rng.integers(0, 2**30, episodes).tolist()
+    modes = ('zero_z', 'stochastic_z', 'stochastic_z_sigma') if method == 'ibolt' else ('deterministic', 'stochastic')
+    env = make_env(task)
+    result = dict(env_seeds=reset_seeds, policy_seeds=policy_seeds,
+                  primary_mode='zero_z' if method == 'ibolt' else 'deterministic')
+    try:
+        for mode in modes:
+            rows = []
+            for env_seed, policy_seed in zip(reset_seeds, policy_seeds):
+                obs, _ = env.reset(seed=env_seed)
+                total, length, success_steps, final_success = 0., 0, 0, False
+                with evaluation_rng(model, policy_seed, method):
+                    if method == 'ibolt':
+                        model.policy.evaluation_mu_only = mode != 'stochastic_z_sigma'
+                    while True:
+                        action, _ = model.predict(obs, deterministic=mode in ('zero_z', 'deterministic'))
+                        obs, reward, terminated, truncated, info = env.step(action)
+                        total += float(reward)
+                        length += 1
+                        final_success = bool(info['success'])
+                        success_steps += int(final_success)
+                        if terminated or truncated:
+                            break
+                rows.append(dict(return_=total, length=length, success_any=success_steps > 0,
+                                 success_final=final_success, success_steps=success_steps,
+                                 success_25_steps=success_steps >= 25))
+            if not np.isfinite([r['return_'] for r in rows]).all():
+                raise FloatingPointError('Nonfinite evaluation return')
+            result[mode] = dict(mean_return=float(np.mean([r['return_'] for r in rows])),
+                std_return=float(np.std([r['return_'] for r in rows])),
+                success_rate=float(np.mean([r['success_any'] for r in rows])),
+                final_success_rate=float(np.mean([r['success_final'] for r in rows])),
+                success_25_steps_rate=float(np.mean([r['success_25_steps'] for r in rows])),
+                episodes=rows)
+    finally:
+        env.close()
+    return result
+
+
+def run(spec, smoke=False):
+    branch = guard()
+    method, task, seed = spec['method'], spec['task'], int(spec['seed'])
+    from .verified_demos import resolve
+    demo_path, demo_proof = resolve(task, spec)
+    if not demo_proof or demo_proof['provenance']['kind'] != 'expert-policy-demonstration':
+        raise ValueError(f'{task} requires 25 replay-verified expert-policy demonstrations')
+    if 'demo_sha256' in spec:
+        assert hashlib.sha256(demo_path.read_bytes()).hexdigest() == spec['demo_sha256']
+    revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+    output = Path(spec['output']).resolve()
+    output.mkdir(parents=True, exist_ok=False)
+    if demo_proof is not None:
+        atomic(output/'demonstration-validation.json', demo_proof)
+    target_steps = int(spec.get('steps', 1_000_000))
+    total = 13568 if smoke else ((target_steps+255)//256)*256
+    warmup = 12800
+    utd = float(spec.get('utd', .125))
+    assert utd in (.125, .25)
+    gradient_steps = int(256 * utd)
+    depth = int(spec.get('depth', 2))
+    assert depth in (2, 3)
+    hidden = [256] * depth
+    layer_norm = bool(spec.get('critic_layer_norm', False))
+    evaluation_every = total if smoke else 50176
+    started = time.time()
+    model = env = None
+    atomic(output/'spec.json', dict(spec, smoke=smoke, branch=branch, source_revision=revision))
+    atomic(output/'progress.json', dict(status='initializing', steps=0, updates=0, observed_unix=time.time()))
+    try:
+        import numpy as np
+        import torch
+        from stable_baselines3.common.callbacks import BaseCallback
+        from stable_baselines3.common.logger import configure
+        from .vector_env import GroupedAdroitVecEnv
+        from .demo_replay import DemonstrationReplay
+        torch.set_num_threads(1)
+        assert demo_path.exists(), 'Verified demonstrations must be prepared first'
+        env = GroupedAdroitVecEnv(task, num_envs=256, worker_cpus=spec.get('worker_cpus', [[], [], [], []]))
+        settings = dict(method=method, task=task, env_name=TASKS[task], seed=seed, steps=total,
+            warmup=warmup, batch_size=256, utd=utd, num_envs=256, gradient_steps_per_collect=gradient_steps,
+            reward_type='sparse', demonstration_ratio=.5, demonstration_path=str(demo_path),
+            actor_hidden=hidden, critic_hidden=hidden, critic_layer_norm=layer_norm,
+            critic_layer_norm_eps=1e-6 if layer_norm else None,
+            critic_norm_placement='before_activation' if layer_norm else None,
+            offline_pretraining_updates=0, behavior_cloning_loss=False,
+            normalize_observations=False, normalize_rewards=False, her=False,
+            horizon=DEFAULT_HORIZON, learning_rate=3e-4, gamma=.99, tau=.005,
+            evaluation_every=evaluation_every, evaluation_episodes=1 if smoke else 10,
+            final_evaluation_episodes=1 if smoke else 100,
+            source_revision=revision, robotics_revision='b8da02a89191daf8f004e7f7510ff655f7a90100',
+            packages={n: importlib.metadata.version(n) for n in
+                ('gymnasium', 'gymnasium-robotics', 'mujoco', 'stable-baselines3', 'torch', 'jax', 'flax')})
+        if method == 'ibolt':
+            import jax
+            from train import compose_config, validate_config
+            from exploration import ExplorationIBOLT
+            assert jax.default_backend() == 'gpu', 'iBOLT requires a CUDA JAX backend'
+            temperature = float(spec.get('temperature', .25))
+            cfg = compose_config([f'env_name={TASKS[task]}', f'task=adroit-{task}',
+                f'seed={seed}', f'temperature={temperature}', f'total_steps={total}',
+                f'alg.learning_starts={warmup}', f'alg.actor.learning_starts={warmup}', f'alg.utd={utd}',
+                f'alg.actor.hidden_dims={hidden}', f'alg.critic.hs={hidden}',
+                f'+alg.critic.layer_norm={str(layer_norm).lower()}',
+                f'alg.buffer_size={32768 if smoke else 1000000}', 'wandb.activate=false',
+                f'output_root={output}', 'diagnostic_interval=0', 'checkpoint_interval=100000'])
+            validate_config(cfg)
+            n, m = int(spec['num_policy_samples']), int(spec['num_reference_actions'])
+            assert (n, m) in [(64, 256), (16, 64)] and m % n == 0
+            repeats = m // n
+            target = float(spec['dacer_target_entropy_per_dim'])
+            assert target == -.9
+            cfg.dacer.target_entropy_per_dim = target
+            cfg.alg.actor.num_policy_samples=n
+            cfg.alg.actor.proposals_per_policy_sample=repeats
+            assert cfg.dacer.enabled and cfg.dacer.noise_scale == .1
+            from omegaconf import OmegaConf
+            atomic(output/'ibolt-config.json', OmegaConf.to_container(cfg, resolve=True))
+            settings.update(temperature=temperature, num_policy_samples=n, num_reference_actions=m, proposals_per_policy_sample=repeats,
+                log_std_bounds=[-5., -1.], initial_log_std=-1., dacer_enabled=True, dacer_noise_scale=.1,
+                dacer_target_entropy_per_dim=target,
+                dacer_total_target_entropy=target * int(env.action_space.shape[0]),
+                backend=jax.default_backend())
+            model = ExplorationIBOLT('MlpPolicy', env=env, cfg=cfg,
+                model_save_path=str(output/'checkpoints'), save_every_n_steps=100096,
+                gradient_steps=gradient_steps, replay_buffer_class=DemonstrationReplay,
+                replay_buffer_kwargs=dict(demo_path=str(demo_path), demo_seed=seed+9214))
+        else:
+            assert method == 'sac'
+            import jax
+            from baselines.jax_sac import JaxSAC
+            from .sac_layernorm import LayerNormSACPolicy
+
+            assert jax.default_backend() == 'gpu', 'SAC requires a JAX GPU backend'
+            ent_coef = spec.get('sac_ent_coef', 'auto')
+            if not isinstance(ent_coef, str):
+                ent_coef = float(ent_coef)
+                assert np.isfinite(ent_coef) and ent_coef > 0
+            policy = LayerNormSACPolicy if layer_norm else 'MlpPolicy'
+            model = JaxSAC(policy, env, learning_rate=3e-4,
+                buffer_size=32768 if smoke else 1_000_000, learning_starts=warmup,
+                batch_size=256, tau=.005, gamma=.99, train_freq=1, gradient_steps=gradient_steps,
+                replay_buffer_class=DemonstrationReplay,
+                replay_buffer_kwargs=dict(demo_path=str(demo_path), demo_seed=seed+9214),
+                ent_coef=ent_coef, target_entropy='auto', policy_kwargs=dict(net_arch=hidden),
+                seed=seed, device='cpu', verbose=0)
+            if not isinstance(ent_coef, str):
+                assert model.ent_coef_optimizer is None
+                assert np.isclose(float(model.ent_coef_tensor.item()), ent_coef)
+            settings.update(entropy_coefficient=ent_coef, target_entropy='auto', backend=jax.default_backend(),
+                            learner='JAX SAC', target_entropy_value=model.target_entropy,
+                            automatic_entropy_tuning=isinstance(ent_coef, str),
+                            initial_actor_sha256=hashlib.sha256(b''.join(p.detach().cpu().numpy().tobytes()
+                                for p in model.actor.parameters())).hexdigest())
+        if 'demo_sha256' in spec:
+            settings['demonstration_dataset_sha256'] = spec['demo_sha256']
+        if demo_proof is not None:
+            settings.update(demonstration_manifest=spec['demonstration_manifest'],
+                demonstration_manifest_sha256=spec['demonstration_manifest_sha256'],
+                demonstration_dataset_sha256=demo_proof['dataset_sha256'],
+                demonstration_provenance=demo_proof['provenance'])
+        atomic(output/'config.json', settings)
+        model.set_logger(configure(str(output/'learner'), ['csv']))
+
+        def record(episodes, final=False):
+            numpy_before, python_before = np.random.get_state(), random.getstate()
+            torch_before = torch.random.get_rng_state().clone()
+            if method == 'ibolt':
+                keys_before = (np.asarray(jax.random.key_data(model.policy.key)).copy(),
+                               np.asarray(jax.random.key_data(model.policy.noise_key)).copy())
+            else:
+                sac_key_before = np.asarray(model.jax_state.key).copy()
+            r = dict(steps=int(model.num_timesteps), updates=int(model._n_updates),
+                     **evaluate(model, task, method, seed, episodes))
+            numpy_after = np.random.get_state()
+            assert numpy_before[0] == numpy_after[0] and np.array_equal(numpy_before[1], numpy_after[1])
+            assert numpy_before[2:] == numpy_after[2:] and python_before == random.getstate()
+            assert torch.equal(torch_before, torch.random.get_rng_state())
+            if method == 'ibolt':
+                assert np.array_equal(keys_before[0], np.asarray(jax.random.key_data(model.policy.key)))
+                assert np.array_equal(keys_before[1], np.asarray(jax.random.key_data(model.policy.noise_key)))
+            else:
+                assert np.array_equal(sac_key_before, np.asarray(model.jax_state.key))
+            if final and spec.get('paired_final_evaluation'):
+                atomic(output/'final-evaluation.json', r)
+            else:
+                with (output/'evaluations.jsonl').open('a') as stream:
+                    stream.write(json.dumps(r, allow_nan=False)+'\n')
+            print(json.dumps(dict(task=task, method=method, steps=r['steps'],
+                mean_return=r[r['primary_mode']]['mean_return'],
+                success_rate=r[r['primary_mode']]['success_rate'])), flush=True)
+
+        class Progress(BaseCallback):
+            def _on_step(self):
+                if self.n_calls % (1 if smoke else 4) == 0:
+                    metrics = {k: float(v) for k, v in self.model.logger.name_to_value.items()
+                               if k.startswith('train/') and isinstance(v, (int, float, np.number))}
+                    if not np.isfinite(list(metrics.values())).all():
+                        raise FloatingPointError('Nonfinite learner metrics')
+                    if method == 'sac' and not isinstance(ent_coef, str) and 'train/ent_coef' in metrics:
+                        assert np.isclose(metrics['train/ent_coef'], ent_coef), 'Fixed alpha changed'
+                    atomic(output/'progress.json', dict(status='running', steps=self.num_timesteps,
+                        updates=int(self.model._n_updates), elapsed_seconds=time.time()-started,
+                        observed_unix=time.time(), metrics=metrics, discovery=self.model.replay_buffer.discovery()))
+                    if self.n_calls % 40 == 0:
+                        with (output/'training-metrics.jsonl').open('a') as stream:
+                            stream.write(json.dumps(dict(steps=self.num_timesteps, updates=int(self.model._n_updates), metrics=metrics), allow_nan=False)+'\n')
+                # Final evaluation is after the last update, below.
+                if self.num_timesteps % evaluation_every == 0 and (
+                        self.num_timesteps < total or (not smoke and spec.get('paired_final_evaluation'))):
+                    record(10)
+                return True
+
+        record(1 if smoke else 10)
+        model.learn(total_timesteps=total, callback=Progress(), log_interval=1000000)
+        assert model.num_timesteps == total and model._n_updates == (total-warmup)*gradient_steps//256
+        assert model.replay_buffer.last_mix['per_optimizer_minibatch'] == [128, 128]
+        if method == 'ibolt':
+            for state in (model.policy.actor_state, model.policy.qf_state):
+                assert all(np.isfinite(np.asarray(x)).all() for x in jax.tree_util.tree_leaves(state))
+            model._save_model()
+        else:
+            assert int(model.jax_state.updates) == model._n_updates
+            assert all(np.isfinite(np.asarray(x)).all() for x in jax.tree_util.tree_leaves(model.jax_state))
+            (output/'checkpoints').mkdir(exist_ok=True)
+            model.save(output/'checkpoints/final.zip')
+        if smoke:
+            probe_env = make_env(task)
+            try:
+                probe, _ = probe_env.reset(seed=9144)
+            finally:
+                probe_env.close()
+            before, _ = model.predict(probe, deterministic=True)
+            if method == 'ibolt':
+                model.load_model(output/'checkpoints', total, total)
+                restored = model
+            else:
+                restored = JaxSAC.load(output/'checkpoints/final.zip', device='cpu')
+            after, _ = restored.predict(probe, deterministic=True)
+            assert np.array_equal(before, after), 'Checkpoint inference changed'
+        record(1 if smoke else 100, final=True)
+        done = dict(completed=True, smoke=smoke, method=method, task=task, seed=seed,
+            steps=int(model.num_timesteps), updates=int(model._n_updates), backend=settings['backend'],
+            num_envs=256, observed_utd=model._n_updates/(total-warmup),
+            replay_mix=model.replay_buffer.last_mix,
+            discovery=model.replay_buffer.discovery(),
+            elapsed_seconds=time.time()-started, observed_unix=time.time())
+        atomic(output/'completed.json', done)
+        atomic(output/'progress.json', dict(done, status='completed'))
+    except BaseException as error:
+        atomic(output/'failure.json', dict(error=repr(error), traceback=traceback.format_exc()))
+        raise
+    finally:
+        if model is not None:
+            model.get_env().close()
+            model.logger.close()
+        elif env is not None:
+            env.close()
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--spec', type=Path, required=True)
+    p.add_argument('--smoke', action='store_true')
+    a = p.parse_args()
+    run(json.loads(a.spec.read_text()), a.smoke)
+
+
+if __name__ == '__main__':
+    main()

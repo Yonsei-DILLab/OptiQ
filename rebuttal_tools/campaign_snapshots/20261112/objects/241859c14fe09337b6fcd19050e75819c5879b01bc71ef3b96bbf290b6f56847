@@ -1,0 +1,4 @@
+# @package _global_
+env_name: HalfCheetah-v4
+task: halfcheetah
+temperature: 0.25

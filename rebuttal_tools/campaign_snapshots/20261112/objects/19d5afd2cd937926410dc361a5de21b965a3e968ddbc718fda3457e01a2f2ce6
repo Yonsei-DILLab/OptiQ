@@ -1,0 +1,94 @@
+"""Entropy-only overrides around frozen, already verified Fetch5M workers."""
+import argparse
+import importlib
+import json
+from pathlib import Path
+
+
+def install(spec):
+    method, value = spec['method'], float(spec['value'])
+    restorers=[]
+    audit = dict(method=method, parameter=spec['parameter'], value=value,
+        phase=spec['phase'], seed=spec['seed'], task=spec['task'],
+        common_settings_unchanged=True)
+    if method == 'sac':
+        import stable_baselines3
+        original = stable_baselines3.SAC.__init__
+
+        def initialize(model, *args, **kwargs):
+            assert kwargs.get('ent_coef','auto') == 'auto'
+            assert kwargs.get('target_entropy','auto') == 'auto'
+            kwargs['target_entropy'] = value
+            original(model, *args, **kwargs)
+            assert model.target_entropy == value
+            assert model.ent_coef_optimizer is not None and model.log_ent_coef.requires_grad
+            assert float(model.log_ent_coef.detach().exp().cpu()) == 1.
+            assert model.actor.optimizer.param_groups[0]['lr'] == 3e-4
+            audit.update(target_entropy=float(model.target_entropy), automatic_alpha=True,
+                initial_alpha=1., actor_hidden_dims=[256,256],critic_hidden_dims=[256,256])
+
+        stable_baselines3.SAC.__init__ = initialize
+        restorers.append(lambda: setattr(stable_baselines3.SAC,'__init__',original))
+        module = importlib.import_module('rebuttal_tools.fetch_suite_5m_worker')
+    elif method == 'meow':
+        from fetch_rebuttal.baselines.native import MEOW
+        original = MEOW.__init__
+
+        def initialize(agent, *args, **kwargs):
+            assert kwargs.get('alpha',.2) == .2
+            kwargs['alpha'] = value
+            original(agent, *args, **kwargs)
+            assert agent.policy.alpha == agent.target.alpha == value
+            assert agent.optimizer.param_groups[0]['lr'] == 1e-3
+            audit.update(alpha=float(agent.policy.alpha),target_alpha=float(agent.target.alpha),
+                automatic_alpha=False,flow_hidden_dims=[64,64],scaling_hidden_dims=[256,256])
+
+        MEOW.__init__ = initialize
+        restorers.append(lambda: setattr(MEOW,'__init__',original))
+        module = importlib.import_module('rebuttal_tools.fetch_suite_native_worker')
+    elif method == 'mfpo':
+        assert spec['mfpo_target_entropy_coeff'] == value
+        assert spec['mfpo_initial_temperature'] == 1.
+        audit.update(target_entropy_coeff=value,target_entropy=4*value,
+            initial_temperature=1.,automatic_temperature=True,
+            actor_hidden_dims=[256,256],critic_hidden_dims=[256,256],layer_norm=False)
+        module = importlib.import_module('rebuttal_tools.fetch_mfpo2_worker')
+    elif method == 'ibolt':
+        assert spec['temperature'] == value
+        audit.update(temperature=value,logstd_min=-5.,logstd_max=1.,initial_logstd=-1.,
+            dacer_target_entropy_per_dim=-.9,dacer_noise_scale=2.,
+            actor_hidden_dims=[256,256],critic_hidden_dims=[256,256])
+        module = importlib.import_module('rebuttal_tools.fetch_suite_5m_worker')
+    else:
+        raise ValueError(method)
+    original_atomic = module.atomic
+
+    def atomic(path, data):
+        if path.name in ('config.json','verified-completion.json','native-config.json','sac-config.json'):
+            data = dict(data,entropy_search=dict(audit),parameter_selection='Paired HER normalization correction; fixed method parameters')
+            if method == 'sac' and path.name == 'sac-config.json':
+                data.update(target_entropy=value,target_entropy_per_dim=value/4,entropy='automatic')
+        original_atomic(path,data)
+        # The constructor fills in the actual SAC/MEOW values before optimization.
+        if path.name in ('sac-config.json','native-config.json','mujoco-config.json'):
+            original_atomic(Path(spec['output'])/'entropy-parameter-audit.json',audit)
+
+    module.atomic = atomic
+    def restore():
+        module.atomic=original_atomic
+        for callback in restorers:callback()
+    module.restore_entropy_override=restore
+    return module
+
+
+def main():
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--spec',type=Path,required=True)
+    parser.add_argument('--smoke',action='store_true')
+    args=parser.parse_args()
+    spec=json.loads(args.spec.read_text())
+    install(spec).run(spec,args.smoke)
+
+
+if __name__=='__main__':
+    main()

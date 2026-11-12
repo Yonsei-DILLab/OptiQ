@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "backend": "cpu",
+  "synthetic_batch_only": true,
+  "default_vs_frozen_max_abs": 0.0,
+  "opt_in_minimum_finite": true,
+  "training_runs_started": 0
+}

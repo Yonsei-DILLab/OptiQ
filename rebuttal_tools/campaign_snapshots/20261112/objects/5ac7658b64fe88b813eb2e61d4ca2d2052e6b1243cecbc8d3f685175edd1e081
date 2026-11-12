@@ -1,0 +1,14 @@
+# @package _global_
+# CrossQ-style actor training (SBX CrossQ defaults) for the iBOLT actor: BatchRenorm in the
+# actor (input and after each hidden activation), Adam lr 1e-3 with b1=0.5, one actor update
+# per 3 critic updates. The iBOLT actor loss, temperature, DACER exploration and the plain TD
+# backup are unchanged. Use together with the CrossQ critic:
+#   python train.py benchmark=humanoid +critic=crossq "alg.critic.hs=[1024,1024]" +actor=crossq temperature=0.5
+alg:
+  actor:
+    batch_renorm: true
+    policy_delay: 3
+  optimizer:
+    lr_actor: 0.001
+    actor_b1: 0.5
+run_name: ${task}-ibolt-crossqAC-T${alg.actor.temperature}-s${seed}

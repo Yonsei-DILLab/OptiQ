@@ -1,0 +1,28 @@
+{
+  "fetch_cpu_reference": {
+    "passed": false,
+    "where": "32 sequential updates after 16 aligned single-update checks passed",
+    "maximum_actor_parameter_difference": 0.00010438263416290283,
+    "record": "validation-fetch-cpu.json"
+  },
+  "fetch_gpu_reference": {
+    "passed": true,
+    "fixed_zero_and_auto": true,
+    "tolerances": "unchanged existing comparator",
+    "record": "validation-fetch.json"
+  },
+  "adroit_cpu_reference": {
+    "passed": true,
+    "tasks": [
+      "door",
+      "hammer",
+      "pen",
+      "relocate"
+    ],
+    "layer_norm": true,
+    "tolerances": "unchanged existing Adroit float32 comparison",
+    "record": "validation-adroit.json"
+  },
+  "fixed_alpha_zero_representation": "Static zero_alpha=True, alpha_opt=None, finite unused log_alpha placeholder; effective coefficient exactly zero; restore recovers flag from saved ent_coef=0.",
+  "startup_metadata_failure": "Fetch first attempts stopped at zero env/update due to duplicate metadata key; all attempts and source snapshots preserved and same seeds reissued after one-line metadata fix."
+}

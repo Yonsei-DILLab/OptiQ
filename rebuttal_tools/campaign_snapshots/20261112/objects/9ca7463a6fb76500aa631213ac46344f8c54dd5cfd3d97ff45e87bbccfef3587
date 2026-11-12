@@ -1,0 +1,20 @@
+"""Fixed-seed SAC Q and soft Bellman target, with training RNG restored."""
+import torch
+from .critic_probe import write_metrics
+
+
+def checkpoint_metrics(model, probe, output):
+    obs, nxt = probe["observations"], probe["next_observations"]
+    with torch.inference_mode(), torch.random.fork_rng(devices=[torch.cuda.current_device()]):
+        torch.manual_seed(7781)
+        next_action, log_prob = model.actor.action_log_prob(nxt)
+        actions, _ = model.actor.action_log_prob(obs)
+        q = torch.cat(model.critic(obs, probe["actions"]), dim=1)
+        policy_q = torch.cat(model.critic(obs, actions), dim=1)
+        target_q = torch.cat(model.critic_target(nxt, next_action), dim=1).min(dim=1).values
+        alpha = model.log_ent_coef.exp()
+        target = probe["rewards"].reshape(-1) + (1 - probe["dones"].reshape(-1)) * model.gamma * (
+            target_q - alpha * log_prob.reshape(-1)
+        )
+        values = (q.min(dim=1).values, policy_q.min(dim=1).values, target, q[:, 0] - q[:, 1])
+        write_metrics(model, [x.cpu().numpy() for x in values], output)
