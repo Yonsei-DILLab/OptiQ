@@ -10,7 +10,7 @@ import random
 import time
 import traceback
 
-from .config import configuration, run_id
+from .config import IBOLT_TEMPERATURES, configuration, run_id
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -312,8 +312,9 @@ def main():
     p.add_argument('--profile', required=True, choices=('e256-u025', 'e256-u1', 'e64-u1'))
     p.add_argument('--output', required=True, type=Path)
     p.add_argument('--smoke', action='store_true')
+    p.add_argument('--temperature', type=float, choices=IBOLT_TEMPERATURES)
     a = p.parse_args()
-    train(configuration(a.method, a.task, a.seed, a.profile, a.smoke), a.output)
+    train(configuration(a.method, a.task, a.seed, a.profile, a.smoke, a.temperature), a.output)
 
 
 if __name__ == '__main__':

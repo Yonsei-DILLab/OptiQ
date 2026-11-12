@@ -7,11 +7,12 @@ import subprocess
 import sys
 import time
 
-from .config import TASKS, configuration
+from .config import IBOLT_TEMPERATURES, TASKS, configuration
+from .ibolt_allocation import wait_for_admission
 from .run import ROOT, atomic, source_provenance
 
 
-def worker(task, output):
+def worker(task, output, temperature):
     import jax
     import jax.numpy as jnp
     import numpy as np
@@ -24,7 +25,7 @@ def worker(task, output):
     assert jax.default_backend() == 'gpu'
     x = jnp.ones((512, 512))
     assert float((x @ x).block_until_ready()[0, 0]) == 512
-    c = configuration('ibolt', task, 4, 'e256-u025', smoke=True)
+    c = configuration('ibolt', task, 4, 'e256-u025', smoke=True, temperature=temperature)
     output.mkdir(parents=True, exist_ok=False)
     env, paired = make_env(task), make_env(task)
     try:
@@ -53,7 +54,7 @@ def worker(task, output):
         assert model.replay_buffer.size() == 0
         assert not getattr(model.policy, 'evaluation_mu_only', False)
         atomic(output / 'environment-and-evaluation.json', dict(
-            passed=True, task=task, jax_devices=[str(d) for d in jax.devices()],
+            passed=True, task=task, temperature=temperature, jax_devices=[str(d) for d in jax.devices()],
             primary=report['primary'], evaluation_rng_preserved=True,
             empty_standard_replay=True, shapes=dict(observation=env.observation_space.shape,
                                                    action=env.action_space.shape)))
@@ -69,35 +70,42 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--root', type=Path, required=True)
     p.add_argument('--task', choices=tuple(TASKS))
+    p.add_argument('--temperature', type=float, choices=IBOLT_TEMPERATURES, default=.25)
+    p.add_argument('--temperatures', type=float, nargs='+', choices=IBOLT_TEMPERATURES, default=[.25])
+    p.add_argument('--peer-root', type=Path)
     a = p.parse_args()
     proof = source_provenance()
     if a.task:
-        worker(a.task, a.root)
+        worker(a.task, a.root, a.temperature)
         return
     a.root.mkdir(parents=True, exist_ok=True)
     attempt = a.root / time.strftime('attempt-%Y%m%dT%H%M%S', time.gmtime())
     attempt.mkdir(exist_ok=False)
     cpus = sorted(os.sched_getaffinity(0)); assert len(cpus) >= 32
-    children = []
-    for i, task in enumerate(TASKS):
-        env = dict(os.environ, CUDA_VISIBLE_DEVICES=str(i % 2), JAX_PLATFORMS='cuda',
-                   XLA_PYTHON_CLIENT_PREALLOCATE='false', OMP_NUM_THREADS='1',
-                   OPENBLAS_NUM_THREADS='1', MKL_NUM_THREADS='1', NUMEXPR_NUM_THREADS='1',
-                   MUJOCO_GL='egl', PYTHONUNBUFFERED='1')
-        log = (attempt / (task + '.log')).open('w')
-        cmd = ['taskset', '-c', ','.join(map(str, cpus[i * 8:(i + 1) * 8])),
-               sys.executable, '-m', 'adroit_online.ibolt_preflight', '--root', str(attempt / task),
-               '--task', task]
-        children.append((task, subprocess.Popen(cmd, cwd=ROOT, env=env, stdout=log,
-                                                stderr=subprocess.STDOUT), log))
-        time.sleep(5)
-    failures = []
-    for task, proc, log in children:
-        code = proc.wait(); log.close()
-        if code: failures.append((task, code))
-    assert not failures, (failures, attempt)
+    for temperature in a.temperatures:
+        wait_for_admission(a.peer_root, attempt / 'gpu-admission.json')
+        children = []
+        for i, task in enumerate(TASKS):
+            name = f't{round(temperature * 100):03d}-{task}'
+            env = dict(os.environ, CUDA_VISIBLE_DEVICES=str(i % 2), JAX_PLATFORMS='cuda',
+                       XLA_PYTHON_CLIENT_PREALLOCATE='false', OMP_NUM_THREADS='1',
+                       OPENBLAS_NUM_THREADS='1', MKL_NUM_THREADS='1', NUMEXPR_NUM_THREADS='1',
+                       MUJOCO_GL='egl', PYTHONUNBUFFERED='1')
+            log = (attempt / (name + '.log')).open('w')
+            cmd = ['taskset', '-c', ','.join(map(str, cpus[i * 8:(i + 1) * 8])),
+                   sys.executable, '-m', 'adroit_online.ibolt_preflight', '--root', str(attempt / name),
+                   '--task', task, '--temperature', str(temperature)]
+            children.append((name, subprocess.Popen(cmd, cwd=ROOT, env=env, stdout=log,
+                                                    stderr=subprocess.STDOUT), log))
+            time.sleep(5)
+        failures = []
+        for name, proc, log in children:
+            code = proc.wait(); log.close()
+            if code: failures.append((name, code))
+        assert not failures, (failures, attempt)
     atomic(a.root / 'passed.json', dict(passed=True, source_commit=proof['commit'],
-           gpus=[0, 1], attempt=str(attempt), tasks=list(TASKS), smoke_runs=4,
+           gpus=[0, 1], attempt=str(attempt), tasks=list(TASKS), temperatures=a.temperatures,
+           smoke_runs=4 * len(a.temperatures),
            finished_unix=time.time()))
 
 

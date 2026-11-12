@@ -24,6 +24,7 @@ def create_model(c, env, output):
         'wandb.activate=false', f'output_root={output}', 'diagnostic_interval=0',
         f"checkpoint_interval={c['checkpoint_every']}"])
     validate_config(cfg)
+    assert cfg.alg.actor.temperature == c['temperature']
     assert cfg.alg.actor.num_policy_samples == 64 and cfg.alg.actor.proposals_per_policy_sample == 1
     assert cfg.alg.actor.log_std_min == -5 and cfg.alg.actor.log_std_max == -1
     assert cfg.alg.actor.initial_log_std == -1 and cfg.alg.actor.density_correction_beta == 1

@@ -131,3 +131,42 @@ preservation, finite updates, exact optimizer counts, timeout bootstrapping and
 exact actor/critic optimizer checkpoint restoration. The shared runner saves
 native Flax checkpoints, separate DACER/RNG state and final replay. Simulator
 state is not saved; these files do not imply a bit-exact interrupted-run resume.
+
+## Additional iBOLT temperatures — user authorization, 2026-11-12
+
+The user requested additional temperature0.05 and0.10 experiments. Add16 fresh
+runs: each temperature x Door/Hammer/Pen/Relocate x seeds4/5. Match T0.25 exactly
+except actor temperature and run/output identifiers: env256, UTD0.25,3,000,064
+transitions,747,456 updates, warmup10,240, all native sparse/environment/replay/
+network/DACER/evaluation settings above. Preserve the same paired evaluation
+seeds. Existing T0.25 run IDs and all24 iBOLT runs are distinct. No warm-start,
+result-based early stopping, automatic temperature choice, or seed0-3 follow-up.
+
+The original T0.25 immutable source86354642a0936688d3b268f1c8ba10e74d1480b0,
+controller, running PIDs, queue and outputs remain unchanged. The new queue is
+`/mnt/data1/heejoonorm/OptiQ/runs/adroit-online-ibolt-temps-20261112`, directly on
+the same dildata NFS storage. Reuse the exact private116-package runtime. Commit
+the extended configuration, protocol and launch scripts before GPU smoke/full
+learning; write the new full SHA and manifest beside every new run.
+
+Run only on dilg-01 GPUs0/1. The new controller permits at most2 additional jobs
+per GPU, at most4 total including existing T0.25 jobs. CPU affinity is operational
+and may overlap the existing jobs; preserve4 collection workers and8 logical
+CPUs per learner. Current measured CPU load is under5 on32 logical CPUs and GPU
+memory use under3GB of96GB per device, permitting this additional concurrency.
+
+The peer-aware admission guard recognizes only the explicitly authorized T0.25
+queue, verifies live process ownership, command/output, immutable source cwd,
+spec source SHA, temperature and GPU assignment, and rejects unrelated GPU PIDs.
+The old controller does not know the new queue, so wait until its already queued
+seeds have STARTED before introducing new GPU work. Do not wait for their learning
+to complete. This prevents starving its remaining starts without restarting or
+editing it. New runs remain independently eligible; no task-completion gates.
+
+Preflight checks each new temperature on each native task:8 smoke runs total,
+up to4 concurrent (two/GPU), plus the existing config/distribution checks.
+Require real GPU updates, finite metrics, exact counts, empty online-only replay,
+unchanged evaluation RNG, timeout bootstrapping and checkpoint restoration.
+Admission checks and preflight receipts name both temperatures. Each job passes
+its temperature explicitly through CLI to the resolved actor config; a regression
+check verifies temperature is the only scientific configuration difference.

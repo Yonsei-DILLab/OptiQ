@@ -19,8 +19,13 @@
   `dilg-01` GPUs0/1 only, all four tasks, seeds4/5, the currently running
   env256/UTD0.25 profile and the same3M budget. Preserve the existing iBOLT
   learner/DACER defaults and document algorithm-specific differences. This
-  supersedes the earlier iBOLT exclusion for this extension only; do not add
-  iBOLT temperature/profile sweeps or change running SAC/TD3 snapshots.
+  supersedes the earlier iBOLT exclusion for this extension only. Preserve
+  running SAC/TD3 snapshots; additional authorized temperatures are listed below.
+- Further extension authorized 2026-11-12: add iBOLT temperatures0.05 and0.10,
+  each four tasks x seeds4/5, with the same env256/UTD0.25/3M settings as T0.25.
+  Use dilg-01 GPUs0/1 and preserve all T0.25 runs. This adds16 fresh runs; no
+  automatic temperature selection, other temperature/profile sweep, or seed0-3
+  confirmation is authorized. Version and store the extra queue separately.
 
 ## 실험 전체 중지 및 프로토콜 확정 대기 — 사용자 지시, 2026-11-12
 

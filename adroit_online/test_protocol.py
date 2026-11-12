@@ -2,6 +2,7 @@
 import unittest
 from .config import campaign, configuration, run_id
 from .controller import assigned
+from .ibolt_controller import campaign as ibolt_campaign
 
 
 class ProtocolTest(unittest.TestCase):
@@ -34,6 +35,23 @@ class ProtocolTest(unittest.TestCase):
             c = configuration('sac', 'pen', 4, p, smoke=True)
             self.assertGreaterEqual(c['steps'] // c['num_envs'], c['horizon'])
             self.assertEqual((c['steps'] - c['warmup']) * c['utd'], c['expected_updates'])
+
+    def test_temperature_extension_preserves_matched_protocol_and_run_identity(self):
+        original = ibolt_campaign()
+        extra = ibolt_campaign((.05, .10))
+        self.assertEqual(len(original), 8)
+        self.assertEqual(len(extra), 16)
+        self.assertEqual(len({run_id(c) for c in original + extra}), 24)
+        for c in extra:
+            reference = configuration('ibolt', c['task'], c['seed'], 'e256-u025')
+            self.assertEqual({k: v for k, v in c.items() if k != 'temperature'},
+                             {k: v for k, v in reference.items() if k != 'temperature'})
+            self.assertEqual(c['expected_updates'], 747456)
+        self.assertEqual(run_id(original[0]), 'door-ibolt-s4-e256-u025-t025')
+        self.assertEqual({c['temperature'] for c in extra[:4]}, {.05, .10})
+        self.assertEqual({c['task'] for c in extra[:4]}, {'door', 'hammer', 'pen', 'relocate'})
+        with self.assertRaises(AssertionError):
+            configuration('sac', 'door', 4, 'e256-u025', temperature=.05)
 
 
 if __name__ == '__main__':

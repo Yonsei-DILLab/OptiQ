@@ -4,10 +4,12 @@ TASKS = {t: 'AdroitHand' + t.title() + 'Sparse-v2'
 ROBOTICS_COMMIT = 'b8da02a89191daf8f004e7f7510ff655f7a90100'
 REFERENCE_COMMIT = 'ebdc46e59db1642902e0331c1e3aa662556c6553'
 PROFILES = {'e256-u025': (256, .25), 'e256-u1': (256, 1.), 'e64-u1': (64, 1.)}
+IBOLT_TEMPERATURES = (.05, .10, .25)
 
 
-def configuration(method, task, seed, profile, smoke=False):
+def configuration(method, task, seed, profile, smoke=False, temperature=None):
     assert method in ('sac', 'td3', 'ibolt') and task in TASKS and seed in (4, 5)
+    assert temperature is None or method == 'ibolt', 'Actor temperature is an iBOLT-only setting'
     n, utd = PROFILES[profile]
     c = dict(method=method, task=task, seed=seed, profile=profile,
              env_id=TASKS[task], num_envs=n, utd=utd, workers=4,
@@ -29,9 +31,11 @@ def configuration(method, task, seed, profile, smoke=False):
     c['expected_updates'] = int((c['steps'] - c['warmup']) * utd)
     if method == 'ibolt':
         assert profile == 'e256-u025', 'Only the current baseline profile is authorized for iBOLT'
+        temperature = .25 if temperature is None else float(temperature)
+        assert temperature in IBOLT_TEMPERATURES
         for name in ('entropy', 'td3_exploration_std', 'policy_delay', 'target_policy_noise', 'target_noise_clip'):
             c.pop(name)
-        c.update(temperature=.25, num_policy_samples=64, proposals_per_policy_sample=1,
+        c.update(temperature=temperature, num_policy_samples=64, proposals_per_policy_sample=1,
                  activation='gelu', log_std_bounds=[-5., -1.], initial_log_std=-1.,
                  density_correction_beta=1., use_min_candidate_q=False,
                  actor_policy_delay=1, dacer_enabled=True, dacer_noise_scale=.1,
@@ -50,4 +54,5 @@ def campaign():
 
 def run_id(c):
     return (f"{c['task']}-{c['method']}-s{c['seed']}-{c['profile']}"
-            + ('-t025' if c['method'] == 'ibolt' else '') + ('-smoke' if c['smoke'] else ''))
+            + (f"-t{round(c['temperature'] * 100):03d}" if c['method'] == 'ibolt' else '')
+            + ('-smoke' if c['smoke'] else ''))
