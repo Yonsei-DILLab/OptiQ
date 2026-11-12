@@ -269,3 +269,12 @@ and the failed strict comparison. For the reviewed cross-kernel float32 check us
 atol5e-6/rtol1e-5 plus per-leaf relative-L2<0.002 and exact integer/RNG equality.
 This is numerical agreement within tolerances, not bitwise identity. Only the
 diagnostic controller is continued; a full scientific retry has not started yet.
+
+The Triton-disabled memcheck then identified an actual out-of-bounds16-byte global
+read in `loop_multiply_fusion_1`, launched through `CudaCommandBuffer::LaunchGraph`
+and `CommandBufferThunk`. It exited86; no full retry started. Preserve that log and
+queue state. Also disable XLA CUDA graph command buffers in this process:
+`XLA_FLAGS=--xla_gpu_enable_triton_gemm=false --xla_gpu_enable_command_buffer=`.
+Before memcheck/stress/full training, compare another one-update probe with the
+previous cuBLAS-path probe, keeping exact RNG/counter checks. Neither compiler
+flag changes the intended loss, samples, update count, replay or environment.

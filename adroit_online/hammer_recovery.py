@@ -22,7 +22,7 @@ from .run import ROOT, atomic, source_provenance
 NAME = 'hammer-ibolt-s4-e256-u025-t010'
 ATTEMPT = NAME + '-retry1'
 CHECKPOINT = 1_003_520
-XLA_FLAGS = '--xla_gpu_enable_triton_gemm=false'
+XLA_FLAGS = '--xla_gpu_enable_triton_gemm=false --xla_gpu_enable_command_buffer='
 
 
 def diagnostic(failed, output, blocks, probe=False):
@@ -120,11 +120,11 @@ def recovery(root):
     if state_file.exists():
         previous_diagnostic = json.loads(state_file.read_text())
         previous = previous_diagnostic['jobs'][NAME]
-        assert previous['phase'] == 'probe-cublas' and previous['status'] == 'diagnostic'
-        assert previous['source_commit'] == '8f5e189301daaabe30bd86dadf181a3eea26485e'
+        assert previous['phase'] == 'memcheck-cublas' and previous['status'] == 'failed'
+        assert previous['source_commit'] == '4dda1cce316c940d6062f1125909f8930031f84d'
         assert not alive(previous) and not (root / 'runs' / ATTEMPT).exists()
         assert not (Path('/proc') / str(previous['controller_pid'])).exists()
-        history = root / 'recovery-comparison-review.json'
+        history = root / 'recovery-command-buffer-failure.json'
         assert not history.exists()
         atomic(history, previous_diagnostic)
     q = json.loads((root / 'priority-queue-state.json').read_text())
@@ -194,16 +194,18 @@ def recovery(root):
         max_relative_l2=max(e['relative_l2'] for e in errors.values()),
         exact_integer_rng_and_counters=True, rtol=1e-5, atol=5e-6, per_leaf=errors)
     atomic(folder / 'numerical-comparison.json', record['numerical_comparison'])
-    cases = [('memcheck-cublas', 4), ('stress-cublas', 128)]
+    cases = [('probe-safe', 0), ('memcheck-safe', 4), ('stress-safe', 128)]
     save()
     for label, blocks in cases:
         dest = root / 'preflight' / 'hammer-recovery' / label
         cmd = [*prefix]
-        if label == 'memcheck-cublas':
+        if label == 'memcheck-safe':
             cmd += ['/usr/local/cuda/bin/compute-sanitizer', '--tool', 'memcheck',
                     '--error-exitcode', '86', '--target-processes', 'application-only']
         cmd += [sys.executable, '-m', 'adroit_online.hammer_recovery', '--diagnostic',
                 '--root', str(root), '--output', str(dest), '--blocks', str(blocks)]
+        if label == 'probe-safe':
+            cmd += ['--probe']
         child_env = dict(env, XLA_FLAGS=XLA_FLAGS)
         with (root / 'process-logs' / ('hammer-recovery-' + label + '.log')).open('x') as log:
             p = subprocess.Popen(cmd, cwd=ROOT, env=child_env, stdout=log, stderr=subprocess.STDOUT)
@@ -212,6 +214,20 @@ def recovery(root):
         if code or not (dest / 'passed.json').exists():
             record.update(status='failed', returncode=code, finished_unix=time.time()); save()
             raise RuntimeError(('Recovery diagnostic failed', label, code))
+        if label == 'probe-safe':
+            with np.load(folder / 'probe-cublas' / 'one-update.npz') as a, np.load(
+                    folder / 'probe-safe' / 'one-update.npz') as b:
+                assert a.files == b.files
+                differences = {}
+                for key in a.files:
+                    if np.issubdtype(a[key].dtype, np.integer):
+                        np.testing.assert_array_equal(a[key], b[key])
+                    else:
+                        np.testing.assert_allclose(a[key], b[key], rtol=1e-5, atol=5e-6)
+                    differences[key] = float(np.max(np.abs(a[key].astype(float) - b[key].astype(float))))
+            record['command_buffer_comparison'] = dict(passed=True, leaves=len(differences),
+                max_absolute_difference=max(differences.values()))
+            atomic(folder / 'command-buffer-comparison.json', record['command_buffer_comparison'])
     record['diagnostics_passed'] = [label for label, _ in cases]
     cmd = [*prefix, sys.executable, '-m', 'adroit_online.run', '--method', 'ibolt',
            '--task', 'hammer', '--seed', '4', '--profile', 'e256-u025',
