@@ -309,3 +309,19 @@ on another available5090 GPU, retaining failed evidence, to separate device-loca
 faults from software/runtime faults. Hardware-only exact integer arithmetic probes
 may use available diagnostic slots on GPUs0/1 and compare JAX/Torch against NumPy.
 These contain no RL learning and are not benchmark results. Keep all peers running.
+
+Final recovery placement supersedes the GPU1/flag experiments above: GPU0 passed
+CUDA13.2 memcheck with256 original-runtime updates, finite checkpoint round trip
+and native20-episode evaluation (source857000e210b38d1cebac69f333636a8747e7479b).
+Both devices passed the integer arithmetic probe. This does not establish a
+hardware defect: instrumented GPU1 and GPU0 tests are not all identical, and a
+passing short test cannot rule out an intermittent compiler/runtime/device fault.
+Use shard0 GPU0, CPUs64-71, with original JAX flags (unset), synchronization
+adapter OFF, and unchanged wheels/scientific settings. Extend original-runtime
+GPU0 memcheck to4,096 updates and uninstrumented stress to8,192 updates, both
+crossing the250,000-update DACER boundary. Require finite states, checkpoint
+round trips and native evaluation. Then launch the single fresh3M retry under
+Supervisor. Keep all failed diagnostics and report the original failure as a
+CUDA illegal address with unresolved lower-level cause, operationally mitigated
+by a fresh process on a validated different GPU. Do not describe discarded
+Triton/graph/synchronization experiments as verified fixes.

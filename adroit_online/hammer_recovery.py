@@ -14,7 +14,7 @@ import subprocess
 import sys
 import time
 
-from .config import configuration, run_id
+from .config import configuration
 from .controller import gpu_state
 from .priority_controller import alive, choose_slot, process_ticks, verify_adopted
 from .run import ROOT, atomic, source_provenance
@@ -22,7 +22,6 @@ from .run import ROOT, atomic, source_provenance
 NAME = 'hammer-ibolt-s4-e256-u025-t010'
 ATTEMPT = NAME + '-retry1'
 CHECKPOINT = 1_003_520
-XLA_FLAGS = '--xla_gpu_enable_triton_gemm=false --xla_gpu_enable_command_buffer='
 
 
 def diagnostic(failed, output, blocks, probe=False):
@@ -120,11 +119,11 @@ def recovery(root):
     if state_file.exists():
         previous_diagnostic = json.loads(state_file.read_text())
         previous = previous_diagnostic['jobs'][NAME]
-        assert previous['phase'] == 'memcheck-13.2' and previous['status'] == 'failed'
-        assert previous['source_commit'] == 'd758b8b9bad6cb28efbb7d73dd54dfd17bacb0e8'
+        assert previous['phase'] == 'memcheck-sync' and previous['status'] == 'failed'
+        assert previous['source_commit'] == '312e6c0c242bbfff0fa9989064e0f7e5ff4e6c67'
         assert not alive(previous) and not (root / 'runs' / ATTEMPT).exists()
         assert not (Path('/proc') / str(previous['controller_pid'])).exists()
-        history = root / 'recovery-async-failure.json'
+        history = root / 'recovery-gpu1-diagnostics.json'
         assert not history.exists()
         atomic(history, previous_diagnostic)
     q = json.loads((root / 'priority-queue-state.json').read_text())
@@ -144,16 +143,17 @@ def recovery(root):
     config = configuration('ibolt', 'hammer', 4, 'e256-u025', temperature=.10)
     spec = json.loads((failed / 'spec.json').read_text())
     assert all(spec[k] == v for k, v in config.items())
-    slot = choose_slot(config, peers, gpu_state(), sorted(os.sched_getaffinity(0)), 1)
-    assert slot is not None, 'GPU1 recovery slot is occupied'
+    slot = choose_slot(config, peers, gpu_state(), sorted(os.sched_getaffinity(0)), 0)
+    assert slot is not None, 'GPU0 recovery slot is occupied'
     gpu, cpus = slot
     record = dict(logical_run_id=NAME, attempt_id=ATTEMPT, output=str(output),
                   original_output=str(failed), original_source_commit=spec['source_commit'],
                   source_commit=proof['commit'], gpu=gpu, cpus=cpus,
                   status='diagnostic', fresh_from_scratch=True, automatic_retry=False,
                   controller_pid=os.getpid(), started_unix=time.time(),
-                  runtime_environment={'XLA_FLAGS': XLA_FLAGS,
-                                       'ADROIT_JAX_SYNCHRONIZE_UPDATES': '1'},
+                  runtime_environment={'XLA_FLAGS': None,
+                                       'ADROIT_JAX_SYNCHRONIZE_UPDATES': None},
+                  placement_change='GPU1 to GPU0; original execution flags',
                   previous_diagnostic=previous_diagnostic,
                   preserved_peers={s['pid']: s['start_ticks'] for s in peers})
     def save():
@@ -163,89 +163,54 @@ def recovery(root):
                XLA_PYTHON_CLIENT_PREALLOCATE='false', OMP_NUM_THREADS='1',
                OPENBLAS_NUM_THREADS='1', MKL_NUM_THREADS='1', NUMEXPR_NUM_THREADS='1',
                MUJOCO_GL='egl', PYTHONUNBUFFERED='1', JAX_TRACEBACK_FILTERING='off',
-               PYTHONFAULTHANDLER='1', ADROIT_JAX_SYNCHRONIZE_UPDATES='1')
-    # Isolate the reproduced GEMM autotuner crash without changing shared wheels,
-    # drivers or the numerical algorithm. Each diagnostic gets a fresh context.
+               PYTHONFAULTHANDLER='1')
+    env.pop('XLA_FLAGS', None)
+    env.pop('ADROIT_JAX_SYNCHRONIZE_UPDATES', None)
+    # GPU0 passed the original-runtime checkpoint diagnostic. Retain all GPU1
+    # failures as evidence, but do not carry unverified compiler workarounds
+    # into the scientific retry. Extend the GPU0 check across the DACER boundary.
     prefix = ['taskset', '-c', ','.join(map(str, cpus))]
-    # The original comparison stopped on four near-zero float32 elements. Both
-    # probes completed. Review all leaves rather than relaxing a large error:
-    # measured global max1.47e-6, parameter relative L2<=1.29e-6, exact RNG/counts.
-    import numpy as np
     folder = root / 'preflight' / 'hammer-recovery'
-    errors = {}
-    for label in ['probe-original', 'probe-cublas']:
-        receipt = json.loads((folder / label / 'passed.json').read_text())
-        assert receipt['passed'] and receipt['source_commit'] == '8f5e189301daaabe30bd86dadf181a3eea26485e'
-    with np.load(folder / 'probe-original' / 'one-update.npz') as a, np.load(
-            folder / 'probe-cublas' / 'one-update.npz') as b:
-        assert a.files == b.files
-        for key in a.files:
-            x, y = a[key], b[key]
-            assert x.dtype == y.dtype and x.shape == y.shape
-            if np.issubdtype(x.dtype, np.integer):
-                np.testing.assert_array_equal(x, y)
-            else:
-                np.testing.assert_allclose(x, y, rtol=1e-5, atol=5e-6, err_msg=key)
-            delta = x.astype(float) - y.astype(float)
-            relative = float(np.linalg.norm(delta) / max(np.linalg.norm(x.astype(float)), 1e-12))
-            assert relative < .002, (key, relative)
-            errors[key] = dict(max_absolute=float(np.max(np.abs(delta))), relative_l2=relative)
-    record['numerical_comparison'] = dict(passed=True, leaves=len(errors),
-        max_absolute_difference=max(e['max_absolute'] for e in errors.values()),
-        max_relative_l2=max(e['relative_l2'] for e in errors.values()),
-        exact_integer_rng_and_counters=True, rtol=1e-5, atol=5e-6, per_leaf=errors)
-    atomic(folder / 'numerical-comparison.json', record['numerical_comparison'])
-    stress = json.loads((folder / 'stress-safe' / 'passed.json').read_text())
-    assert stress['passed'] and stress['additional_updates'] == 8192
-    assert stress['source_commit'] == '7c21cf08d7bfb6dfb7e3d85929af49c1bba8dda2'
-    comparison = json.loads((folder / 'command-buffer-comparison.json').read_text())
-    assert comparison['passed'] and comparison['max_absolute_difference'] == 0
-    record['command_buffer_comparison'] = comparison
-    record['stress_receipt'] = stress
+    receipt = json.loads((folder / 'memcheck-gpu0-original' / 'passed.json').read_text())
+    assert receipt['passed'] and receipt['finite_states']
+    assert receipt['additional_updates'] == 256
+    assert receipt['source_commit'] == '857000e210b38d1cebac69f333636a8747e7479b'
+    record['prior_gpu0_receipt'] = receipt
     package = root / 'setup/sanitizer-13.2/cuda-sanitizer-13-2_13.2.87-1_amd64.deb'
     package_hash = hashlib.sha256(package.read_bytes()).hexdigest()
     assert package_hash == '8899b0126b75be7ff0df6b11b685312b180c5928f567c67f1e4962d4df6b4aad'
     sanitizer = root / 'setup/sanitizer-13.2/extracted/usr/local/cuda-13.2/compute-sanitizer/compute-sanitizer'
     record['sanitizer'] = dict(package='cuda-sanitizer-13-2=13.2.87-1',
                                sha256=package_hash, path=str(sanitizer))
-    cases = [('probe-sync', 0), ('memcheck-sync', 4), ('stress-sync', 128)]
+    cases = [('memcheck-gpu0-extended', 64), ('stress-gpu0-original', 128)]
     save()
     for label, blocks in cases:
         dest = root / 'preflight' / 'hammer-recovery' / label
         cmd = [*prefix]
-        if label == 'memcheck-sync':
+        if label == 'memcheck-gpu0-extended':
             cmd += [str(sanitizer), '--tool', 'memcheck',
                     '--error-exitcode', '86', '--target-processes', 'application-only']
         cmd += [sys.executable, '-m', 'adroit_online.hammer_recovery', '--diagnostic',
                 '--root', str(root), '--output', str(dest), '--blocks', str(blocks)]
-        if label == 'probe-sync':
-            cmd += ['--probe']
-        child_env = dict(env, XLA_FLAGS=XLA_FLAGS)
         with (root / 'process-logs' / ('hammer-recovery-' + label + '.log')).open('x') as log:
-            p = subprocess.Popen(cmd, cwd=ROOT, env=child_env, stdout=log, stderr=subprocess.STDOUT)
+            p = subprocess.Popen(cmd, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
             record.update(phase=label, pid=p.pid, start_ticks=process_ticks(p.pid)); save()
             code = p.wait()
         if code or not (dest / 'passed.json').exists():
             record.update(status='failed', returncode=code, finished_unix=time.time()); save()
             raise RuntimeError(('Recovery diagnostic failed', label, code))
-        if label == 'probe-sync':
-            with np.load(folder / 'probe-safe' / 'one-update.npz') as a, np.load(
-                    folder / 'probe-sync' / 'one-update.npz') as b:
-                assert a.files == b.files
-                differences = {}
-                for key in a.files:
-                    np.testing.assert_array_equal(a[key], b[key])
-                    differences[key] = float(np.max(np.abs(a[key].astype(float) - b[key].astype(float))))
-            record['synchronization_comparison'] = dict(passed=True, leaves=len(differences),
-                max_absolute_difference=max(differences.values()))
-            atomic(folder / 'synchronization-comparison.json', record['synchronization_comparison'])
-    record['diagnostics_passed'] = ['probe-original', 'probe-cublas', 'probe-safe',
-                                    'stress-safe', *[label for label, _ in cases]]
+        receipt = json.loads((dest / 'passed.json').read_text())
+        assert receipt['source_commit'] == proof['commit']
+        assert receipt['passed'] and receipt['finite_states']
+        assert receipt['additional_updates'] == blocks * 64
+        record.setdefault('diagnostic_receipts', {})[label] = receipt
+        save()
+    record['diagnostics_passed'] = ['memcheck-gpu0-original', *[label for label, _ in cases]]
     cmd = [*prefix, sys.executable, '-m', 'adroit_online.run', '--method', 'ibolt',
            '--task', 'hammer', '--seed', '4', '--profile', 'e256-u025',
            '--temperature', '0.10', '--output', str(output)]
     with (root / 'process-logs' / (ATTEMPT + '.log')).open('x') as log:
-        p = subprocess.Popen(cmd, cwd=ROOT, env=dict(env, XLA_FLAGS=XLA_FLAGS),
+        p = subprocess.Popen(cmd, cwd=ROOT, env=env,
                              stdout=log, stderr=subprocess.STDOUT)
         record.update(status='running', phase='full', pid=p.pid,
                       start_ticks=process_ticks(p.pid), command=cmd, full_started_unix=time.time())
