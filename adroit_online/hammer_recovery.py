@@ -120,11 +120,11 @@ def recovery(root):
     if state_file.exists():
         previous_diagnostic = json.loads(state_file.read_text())
         previous = previous_diagnostic['jobs'][NAME]
-        assert previous['phase'] == 'memcheck-cublas' and previous['status'] == 'failed'
-        assert previous['source_commit'] == '4dda1cce316c940d6062f1125909f8930031f84d'
+        assert previous['phase'] == 'memcheck-safe' and previous['status'] == 'failed'
+        assert previous['source_commit'] == '7c21cf08d7bfb6dfb7e3d85929af49c1bba8dda2'
         assert not alive(previous) and not (root / 'runs' / ATTEMPT).exists()
         assert not (Path('/proc') / str(previous['controller_pid'])).exists()
-        history = root / 'recovery-command-buffer-failure.json'
+        history = root / 'recovery-sanitizer-12.8-failure.json'
         assert not history.exists()
         atomic(history, previous_diagnostic)
     q = json.loads((root / 'priority-queue-state.json').read_text())
@@ -194,13 +194,26 @@ def recovery(root):
         max_relative_l2=max(e['relative_l2'] for e in errors.values()),
         exact_integer_rng_and_counters=True, rtol=1e-5, atol=5e-6, per_leaf=errors)
     atomic(folder / 'numerical-comparison.json', record['numerical_comparison'])
-    cases = [('probe-safe', 0), ('memcheck-safe', 4), ('stress-safe', 128)]
+    stress = json.loads((folder / 'stress-safe' / 'passed.json').read_text())
+    assert stress['passed'] and stress['additional_updates'] == 8192
+    assert stress['source_commit'] == '7c21cf08d7bfb6dfb7e3d85929af49c1bba8dda2'
+    comparison = json.loads((folder / 'command-buffer-comparison.json').read_text())
+    assert comparison['passed'] and comparison['max_absolute_difference'] == 0
+    record['command_buffer_comparison'] = comparison
+    record['stress_receipt'] = stress
+    package = root / 'setup/sanitizer-13.2/cuda-sanitizer-13-2_13.2.87-1_amd64.deb'
+    package_hash = hashlib.sha256(package.read_bytes()).hexdigest()
+    assert package_hash == '8899b0126b75be7ff0df6b11b685312b180c5928f567c67f1e4962d4df6b4aad'
+    sanitizer = root / 'setup/sanitizer-13.2/extracted/usr/local/cuda-13.2/compute-sanitizer/compute-sanitizer'
+    record['sanitizer'] = dict(package='cuda-sanitizer-13-2=13.2.87-1',
+                               sha256=package_hash, path=str(sanitizer))
+    cases = [('memcheck-13.2', 4)]
     save()
     for label, blocks in cases:
         dest = root / 'preflight' / 'hammer-recovery' / label
         cmd = [*prefix]
-        if label == 'memcheck-safe':
-            cmd += ['/usr/local/cuda/bin/compute-sanitizer', '--tool', 'memcheck',
+        if label == 'memcheck-13.2':
+            cmd += [str(sanitizer), '--tool', 'memcheck',
                     '--error-exitcode', '86', '--target-processes', 'application-only']
         cmd += [sys.executable, '-m', 'adroit_online.hammer_recovery', '--diagnostic',
                 '--root', str(root), '--output', str(dest), '--blocks', str(blocks)]
@@ -228,7 +241,8 @@ def recovery(root):
             record['command_buffer_comparison'] = dict(passed=True, leaves=len(differences),
                 max_absolute_difference=max(differences.values()))
             atomic(folder / 'command-buffer-comparison.json', record['command_buffer_comparison'])
-    record['diagnostics_passed'] = [label for label, _ in cases]
+    record['diagnostics_passed'] = ['probe-original', 'probe-cublas', 'probe-safe',
+                                    'stress-safe', *[label for label, _ in cases]]
     cmd = [*prefix, sys.executable, '-m', 'adroit_online.run', '--method', 'ibolt',
            '--task', 'hammer', '--seed', '4', '--profile', 'e256-u025',
            '--temperature', '0.10', '--output', str(output)]

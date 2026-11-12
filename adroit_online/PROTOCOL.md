@@ -278,3 +278,16 @@ queue state. Also disable XLA CUDA graph command buffers in this process:
 Before memcheck/stress/full training, compare another one-update probe with the
 previous cuBLAS-path probe, keeping exact RNG/counter checks. Neither compiler
 flag changes the intended loss, samples, update count, replay or environment.
+
+The graph-disabled one-update probe is bitwise identical to the cuBLAS-only probe
+on all53 leaves. Nevertheless the old CUDA12.8 Compute Sanitizer2025.1 reports an
+invalid read in another kernel (`loop_add_fusion`) with graphs disabled. Therefore
+do NOT identify command buffers alone as the root cause. The ordinary uninstrumented
+8,192-update stress with both flags passed, including DACER, native evaluation,
+finite states and exact checkpoint round trips. Cross-check the memory findings
+using NVIDIA's official standalone cuda-sanitizer-13-2=13.2.87-1, matching the host
+driver's CUDA13.2 capability. Extract it under setup only, never install a system
+driver/toolkit or alter training wheels. Package SHA256:
+8899b0126b75be7ff0df6b11b685312b180c5928f567c67f1e4962d4df6b4aad.
+Require that256-update memcheck to pass before full retry. Preserve all earlier
+failed diagnostics; no suppressed sanitizer errors or ignored nonzero exits.
