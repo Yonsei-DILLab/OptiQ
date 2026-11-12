@@ -18,7 +18,7 @@ def gpu_worker(task, output):
     import torch
     from .env import make_env
     from .run import create_model, evaluate
-    from rebuttal_tools import check_fetch_jax_sac as numerical
+    from . import numerical
     assert jax.default_backend() == 'gpu' and torch.cuda.is_available()
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
@@ -48,8 +48,7 @@ def gpu_worker(task, output):
     # Reuse the independent golden-equation checker with native observation/action
     # shapes and the ordinary MlpPolicy (LayerNorm off). Its synthetic reward set
     # tests equations; actual +/-10/-0.1 rewards are covered by the native smoke.
-    numerical.ShapeEnv = lambda: make_env(task)
-    report = numerical.run(2, 'cuda', output, task=None)
+    report = numerical.run(task, output)
     report.update(task=task, actual_shapes=shape, layer_norm=False)
     # Verify the evaluator leaves all learner RNG streams and empty replay intact.
     c = configuration('sac', task, 4, 'e256-u025', smoke=True)

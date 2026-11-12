@@ -135,7 +135,7 @@ def aligned_state(reference, template):
         alpha_opt=alpha_opt,updates=jnp.int32(updates))
 
 
-def run(depth,device,out,task=None,ent_coef='auto'):
+def run(depth,device,out,task=None,ent_coef='auto',actor_gradient_checker=None,fused_parameter_checker=None):
     seed=901+depth;rng=np.random.default_rng(seed);stats={}
     reference=make_model(SAC,depth,seed,device,task,ent_coef)
     adapter=make_model(JaxSAC,depth,seed,'cpu',task,ent_coef)
@@ -203,7 +203,10 @@ def run(depth,device,out,task=None,ent_coef='auto'):
                 if k not in info:
                     continue
                 try:
-                    compare(k,info[k],captured[k],stats)
+                    if k == 'actor_grad' and actor_gradient_checker is not None:
+                        actor_gradient_checker(info[k],captured[k],stats,state,reference,b,ec)
+                    else:
+                        compare(k,info[k],captured[k],stats)
                 except AssertionError:
                     if task is None or k != 'critic_grad':
                         raise
@@ -274,7 +277,9 @@ def run(depth,device,out,task=None,ent_coef='auto'):
             ('critic', updated.critic, export_critic(reference.critic)),
         ):
             label = f'fused{group_size}_{name}'
-            if task is None:
+            if fused_parameter_checker is not None:
+                fused_parameter_checker(label,actual,expected,stats)
+            elif task is None:
                 compare(label, actual, expected, stats, atol=8e-5, rtol=8e-4)
             else:
                 compare_adroit_rounding(label, actual, expected, stats, 5e-3, 3e-4)
