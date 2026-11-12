@@ -48,8 +48,8 @@ def main():
                 active.write_text(json.dumps(job,indent=2)+'\n');active.replace(a.root/'completed'/active.name)
                 continue
             if hold is None or hold.poll() is not None:
-                stop_hold();hold_log=(a.root/'logs'/'reservation.log').open('a')
-                hold=subprocess.Popen([sys.executable,'-u',str(Path(__file__).with_name('tda_gpu_hold.py')),'--gpu',a.gpu],
+                stop_hold();hold_log=(a.root/'logs'/'runtime.log').open('a')
+                hold=subprocess.Popen([sys.executable,'-u',str(Path(__file__).with_name('tda_runtime.py')),'--gpu',a.gpu],
                                       env=env,stdout=hold_log,stderr=subprocess.STDOUT)
                 status(state='reservation',child_pid=hold.pid)
             time.sleep(.25)

@@ -162,7 +162,7 @@ state; do not present pilot averages as a new five-seed result.
 ## GPU occupancy handoff requested by user
 
 User explicitly requested continuous GPU 0/1 utilization between TDA jobs on
-2026-11-12. tda_gpu_queue.py runs tda_gpu_hold.py while its queue is empty,
+2026-11-12. tda_executor.py runs tda_runtime.py while its queue is empty,
 terminates only its own reservation child before a committed experiment,
 and immediately restores the reservation after completion/failure. It does
 not terminate other users' jobs. Keep source commit, child PIDs, commands and
