@@ -12,11 +12,13 @@ from zoneinfo import ZoneInfo
 
 TASKS = ('door', 'hammer', 'pen', 'relocate')
 SEEDS = (4, 5)
-METHODS = ('sac', 'td3', 'ibolt')
+METHODS = ('sac', 'td3', 'ibolt_t005', 'ibolt_t010', 'ibolt_t025')
 STYLES = {
     'sac': dict(color='#2171B5', linestyle='-', marker='o', label='SAC'),
     'td3': dict(color='#E07818', linestyle='--', marker='s', label='TD3'),
-    'ibolt': dict(color='#19856B', linestyle='-.', marker='^', label='iBOLT (T = 0.25)'),
+    'ibolt_t005': dict(color='#AC3B7A', linestyle='-', marker='D', label='iBOLT T=0.05'),
+    'ibolt_t010': dict(color='#7D62B3', linestyle=':', marker='v', label='iBOLT T=0.10'),
+    'ibolt_t025': dict(color='#19856B', linestyle='-.', marker='^', label='iBOLT T=0.25'),
 }
 TOTAL = 3_000_064
 INTERVAL = 50_176
@@ -27,14 +29,16 @@ def load_snapshot(path):
     runs = {}
     for host, data in snapshot.items():
         for name, row in data['runs'].items():
-            s = row['spec']; key = (s['task'], s['seed'], s['method'])
+            s = row['spec']
+            variant = f"ibolt_t{round(s['temperature'] * 100):03d}" if s['method'] == 'ibolt' else s['method']
+            key = (s['task'], s['seed'], variant)
             assert key not in runs, key
             assert s['profile'] == 'e256-u025' and s['num_envs'] == 256 and s['utd'] == .25
-            assert s['seed'] in SEEDS and s['task'] in TASKS and s['method'] in METHODS
+            assert s['seed'] in SEEDS and s['task'] in TASKS and variant in METHODS
             assert s['steps'] == TOTAL and s['demonstration_ratio'] == 0
             assert not s['her'] and not s['behavior_cloning']
             assert not s['normalize_observations'] and not s['normalize_rewards']
-            if s['method'] == 'ibolt': assert s['temperature'] == .25
+            if s['method'] == 'ibolt': assert s['temperature'] in (.05, .10, .25)
             evaluations = {}
             for e in row['evaluations']:
                 step = e['step']; assert step not in evaluations
@@ -64,6 +68,8 @@ def align(runs):
             steps = sorted(set.intersection(*sets)); assert steps and steps[0] == 0
             for step in steps:
                 assert len({runs[task, seed, m]['evaluations'][step]['episodes'] for m in available}) == 1
+                reset_hashes = {runs[task, seed, m]['evaluations'][step].get('reset_seeds_sha256') for m in available}
+                assert len(reset_hashes) == 1, (task, seed, step, 'evaluation reset seeds differ')
             panels[task, seed] = dict(methods=available, steps=steps,
                                      missing=[m for m in METHODS if m not in available])
     return panels
@@ -81,21 +87,23 @@ def plot(runs, panels, metric, title, output, stamp, matched=True):
                          'xtick.labelsize': 11, 'ytick.labelsize': 11,
                          'pdf.fonttype': 42, 'ps.fonttype': 42,
                          'axes.spines.top': False, 'axes.spines.right': False})
-    fig, axes = plt.subplots(2, 4, figsize=(17.2, 8.8), sharex=True, sharey=True)
+    fig, axes = plt.subplots(2, 4, figsize=(18.2, 9.2), sharex=True, sharey=True)
     fig.subplots_adjust(left=.065, right=.99, bottom=.235, top=.80, hspace=.37, wspace=.15)
     fig.suptitle(title, x=.065, y=.978, ha='left', fontsize=22, fontweight='bold', color='#182A39')
-    policy = 'Exact shared evaluation steps in each panel' if matched else 'All recorded evaluation steps'
+    policy = 'Exact shared steps among available variants, per panel' if matched else 'All recorded evaluation steps'
     fig.text(.065, .928, f'Adroit Sparse-v2  |  256 environments  |  UTD 0.25  |  {policy}',
              fontsize=13, color='#526575')
     handles = [Line2D([0], [0], linewidth=2.2, markersize=5, **STYLES[m]) for m in METHODS]
     fig.legend(handles=handles, loc='upper center', bbox_to_anchor=(.53, .897),
-               ncol=3, frameon=False, fontsize=14, handlelength=3, columnspacing=3)
+               ncol=5, frameon=False, fontsize=12.5, handlelength=2.7, columnspacing=1.9)
+    xmax = (max(p['steps'][-1] for p in panels.values()) if matched else TOTAL) / 1e6
+    xmax = max(.25, float(np.ceil(xmax * 4) / 4))
     for row, seed in enumerate(SEEDS):
         for col, task in enumerate(TASKS):
             ax = axes[row, col]; panel = panels[task, seed]
             cutoff = panel['steps'][-1] / 1e6
             if matched and cutoff < TOTAL / 1e6:
-                ax.axvspan(cutoff, TOTAL / 1e6, color='#E6EAEE', alpha=.70, linewidth=0, zorder=0)
+                ax.axvspan(cutoff, xmax, color='#E6EAEE', alpha=.70, linewidth=0, zorder=0)
                 ax.axvline(cutoff, color='#8493A0', linestyle=':', linewidth=1, zorder=1)
             for index, method in enumerate(METHODS):
                 if method not in panel['methods']: continue
@@ -106,15 +114,18 @@ def plot(runs, panels, metric, title, output, stamp, matched=True):
                 ax.plot(np.asarray(steps) / 1e6, values, linewidth=2.0, markersize=3.4,
                         markevery=(index, 5), alpha=.97, zorder=3 + index, **STYLES[method])
             ax.set_title(task.title(), pad=9, fontweight='semibold')
-            ax.set_xlim(0, TOTAL / 1e6 + .035); ax.set_ylim(-3, 104)
-            ax.set_xticks([0, 1, 2, 3]); ax.set_yticks([0, 25, 50, 75, 100])
+            ax.set_xlim(0, xmax + .01); ax.set_ylim(-3, 104)
+            ax.set_xticks(np.arange(0, xmax + .01, .5 if xmax <= 2 else 1))
+            ax.set_yticks([0, 25, 50, 75, 100])
             ax.grid(axis='y', color='#DCE2E7', linewidth=.65, zorder=0)
             ax.tick_params(axis='both', length=3, color='#93A2AD')
             ax.spines['left'].set_color('#A8B3BC'); ax.spines['bottom'].set_color('#A8B3BC')
             ax.set_facecolor('#FCFDFE')
             if col == 0: ax.set_ylabel(f'Seed {seed}\nSuccess rate (%)', labelpad=10)
-            label = f'Matched through {cutoff:.3f}M' if matched else 'No extrapolation'
-            if panel['missing']: label = 'iBOLT queued\nSAC / TD3 only'
+            label = f'Shared through {cutoff:.3f}M' if matched else 'All available progress'
+            if panel['missing']:
+                missing = ', '.join(STYLES[m]['label'].replace('iBOLT ', '') for m in panel['missing'])
+                label += f'\nQueued: {missing}'
             ax.text(.035, .95, label, transform=ax.transAxes, ha='left', va='top',
                     fontsize=10.5, color='#566875',
                     bbox=dict(facecolor='white', edgecolor='none', alpha=.90, pad=3))
@@ -128,7 +139,7 @@ def plot(runs, panels, metric, title, output, stamp, matched=True):
              fontsize=11, color='#526575')
     fig.text(.065, .056,
              '100 episodes per regular evaluation; 1,000 at 3M. No smoothing or seed averaging. '
-             + ('Gray area: not compared yet.' if matched else 'Each line stops at its latest recorded evaluation.'),
+             + ('Gray: beyond shared steps. Queued variants omitted.' if matched else 'Lines stop at latest evaluation; queued variants omitted.'),
              fontsize=10.5, color='#526575')
     fig.text(.065, .024, f'Snapshot: {stamp}', fontsize=10.5, color='#71828E')
     for suffix in ('.png', '.pdf', '.svg'):
@@ -165,7 +176,7 @@ def main():
         audit['panels'].append(dict(task=task, seed=seed, **panel, endpoints=endpoints))
     (a.output / 'alignment_audit.json').write_text(json.dumps(audit, indent=2) + '\n')
     print(json.dumps(dict(snapshot=stamp, runs=len(runs), panels=len(panels),
-                         three_method_panels=sum(len(x['methods']) == 3 for x in panels.values()),
+                         five_variant_panels=sum(len(x['methods']) == 5 for x in panels.values()),
                          output=str(a.output)), indent=2))
 
 

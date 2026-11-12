@@ -1,0 +1,70 @@
+"""Read-only, standard-library collector for frozen Adroit curve snapshots.
+
+Run on an experiment host and redirect stdout to an analysis snapshot. No learner
+modules are imported and no files on the experiment host are changed.
+"""
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import time
+
+
+def collect(root):
+    result = dict(observed_start_unix=time.time(), root=str(root), runs={}, status={})
+    queue_path = root / 'queue-state.json'
+    result['queue'] = json.loads(queue_path.read_text())
+    for run in sorted((root / 'runs').glob('*')):
+        if not (run / 'spec.json').exists():
+            continue
+        raw_spec = (run / 'spec.json').read_bytes()
+        spec = json.loads(raw_spec)
+        row = dict(spec=spec, spec_sha256=hashlib.sha256(raw_spec).hexdigest())
+        for filename in ('progress.json', 'completed.json', 'error.json'):
+            if (run / filename).exists():
+                row[filename] = json.loads((run / filename).read_text())
+        pid = spec.get('pid')
+        row['process_present'] = bool(pid and (Path('/proc') / str(pid)).exists())
+        result['status'][run.name] = row.copy()
+        if spec['profile'] != 'e256-u025':
+            continue
+        row['evaluations'] = []
+        for path in sorted((run / 'evaluations').glob('*.json')):
+            if path.name.endswith('-uniform-random.json'):
+                continue
+            raw = path.read_bytes()
+            evaluation = json.loads(raw)
+            assert evaluation['kind'] in ('initial', 'regular', 'final')
+            count = evaluation['episodes']
+            record = {k: evaluation[k] for k in ('step', 'updates', 'episodes', 'primary', 'kind')}
+            record.update(path=str(path), sha256=hashlib.sha256(raw).hexdigest(), modes={},
+                          reset_seeds_sha256=hashlib.sha256(json.dumps(evaluation['reset_seeds']).encode()).hexdigest())
+            for mode, values in evaluation.items():
+                if not isinstance(values, dict) or 'episode_records' not in values:
+                    continue
+                episodes = values['episode_records']
+                assert len(episodes) == count
+                for ep in episodes:
+                    assert bool(ep['success_any']) == (ep['success_steps'] > 0)
+                    assert bool(ep['success_25_steps']) == (ep['success_steps'] >= 25)
+                    assert 0 <= ep['success_steps'] <= spec['horizon']
+                metrics = {}
+                for metric in ('success_any', 'success_25_steps', 'success_final'):
+                    successes = sum(bool(ep[metric]) for ep in episodes)
+                    assert abs(values[metric] - successes / count) < 1e-12
+                    metrics[metric] = successes / count
+                    metrics[metric + '_count'] = successes
+                metrics['mean_success_steps'] = sum(ep['success_steps'] for ep in episodes) / count
+                record['modes'][mode] = metrics
+            assert record['primary'] in record['modes']
+            row['evaluations'].append(record)
+        result['runs'][run.name] = row
+    result['observed_unix'] = time.time()
+    return result
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('root', type=Path)
+    args = parser.parse_args()
+    print(json.dumps(collect(args.root)))
