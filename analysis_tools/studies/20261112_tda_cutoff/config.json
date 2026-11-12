@@ -1,0 +1,9 @@
+{
+  "cutoffs": [0.01, 0.001, 0.0001, 0.0],
+  "taus": [0.5, 1.0, 2.0],
+  "curve_min": 0.01,
+  "curve_max": 4.0,
+  "curve_points": 60,
+  "expected_training_seeds": {"Hopper/iBOLT": 5, "Hopper/SAC": 5, "Humanoid/iBOLT": 5, "Humanoid/SAC": 2},
+  "expected_states_per_seed": {"Hopper/iBOLT": 64, "Hopper/SAC": 320, "Humanoid/iBOLT": 32, "Humanoid/SAC": 160}
+}
