@@ -63,8 +63,8 @@ def main():
         col=colors[name]
         ax.annotate('',xy=(b,b),xytext=(b,d),arrowprops=dict(arrowstyle='<->',color=col,lw=1.5))
         ax.scatter([b],[d],s=70,facecolor=col if name=='B' else 'white',edgecolor=col,lw=2,zorder=5)
-    ax.annotate('B: 4 − 1 = 3',xy=(4,1),xytext=(4.37,1.32),fontsize=12,color=colors['B'])
-    ax.annotate('C: 3 − 2.5 = 0.5',xy=(3,2.5),xytext=(.25,3.8),fontsize=12,color=colors['C'],
+    ax.annotate('B: 4 - 1 = 3',xy=(4,1),xytext=(4.37,1.32),fontsize=12,color=colors['B'])
+    ax.annotate('C: 3 - 2.5 = 0.5',xy=(3,2.5),xytext=(.25,3.8),fontsize=12,color=colors['C'],
                 arrowprops=dict(arrowstyle='-',color=colors['C'],lw=1))
     ax.text(.15,5.6,'A는 끝까지 남아\n별도로 1개를 셉니다.',fontsize=11,color=colors['A'])
     ax.set(xlim=(0,6.25),ylim=(0,6.25),xticks=[0,2,4,6],yticks=[0,2,4,6],
