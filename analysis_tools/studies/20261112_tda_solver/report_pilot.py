@@ -46,7 +46,8 @@ def main():
     taus=np.unique(np.r_[np.linspace(.25,2.5,450),.5,1.,2.])
     colors={32768:'#2465a8',65536:'#cf651d'}
     for cutoff,filename,title in [(0.01,'curves_1pct.png','1% peak-height cutoff'),(0.,'curves_no_cutoff.png','No peak-height cutoff')]:
-        fig,axes=plt.subplots(2,3,figsize=(14,7.7),sharex=True,layout='constrained')
+        fig,axes=plt.subplots(2,3,figsize=(14,8.1),sharex=True)
+        fig.subplots_adjust(left=.065,right=.985,top=.905,bottom=.16,wspace=.21,hspace=.19)
         handles=[];labels=[]
         for ci,(ax,case) in enumerate(zip(axes.flat,cases)):
             for n in cfg['n_values']:
@@ -61,10 +62,10 @@ def main():
             ax.set_xlim(.25,2.5);ax.set_ylim(bottom=0);ax.yaxis.set_major_locator(MaxNLocator(integer=True))
             ax.grid(alpha=.18);ax.spines[['right','top']].set_visible(False)
             for tau in (.5,1,2):ax.axvline(tau,color='#777777',linestyle=':',linewidth=.65,alpha=.5)
-        fig.suptitle('iBOLT N/M sensitivity — '+title,fontsize=16)
-        fig.supxlabel('Persistence threshold τ (log-density units)',fontsize=11)
+        fig.suptitle('iBOLT N/M sensitivity — '+title,fontsize=16,y=.98)
+        fig.supxlabel('Persistence threshold τ (log-density units)',fontsize=11,y=.083)
         fig.supylabel('K(τ)',fontsize=12)
-        fig.legend(handles,labels,loc='outside lower center',ncol=4,frameon=False)
+        fig.legend(handles,labels,loc='lower center',bbox_to_anchor=(.5,.018),ncol=4,frameon=False)
         fig.savefig(a.out/filename,dpi=160);plt.close(fig)
     print(json.dumps(dict(conditions=len(rows),all_far_zero=all(r['far']==0 for r in rows),
                           all_negative_zero=all(r['negative_pairs']==0 for r in rows),
