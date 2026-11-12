@@ -3,6 +3,7 @@ import unittest
 from .release_monitor import ready
 from .release_audit import compare, essential_path
 from .archive_direct import constraint_args, REMOTE
+from .release_stop import validate_gate, stopped
 
 
 class ReleaseTest(unittest.TestCase):
@@ -48,6 +49,18 @@ class ReleaseTest(unittest.TestCase):
             self.assertTrue(essential_path(name))
         self.assertFalse(essential_path('runs/x/checkpoints/final-replay.pkl'))
         self.assertFalse(essential_path('runs/x/checkpoints/policy-000500224.zip'))
+
+    def test_stop_rejects_stale_audit_or_destroy_permission(self):
+        plan = dict(final_action='stop_only', destroy_authorized=False,
+                    preserve_instance_and_disk=True, backup_gate='essential_with_full_source_hash_manifest')
+        audit = dict(passed=True, final_action='stop_only', destroy_authorized=False,
+                     completion=self.reports, verified_unix=100, scope='essential',
+                     receipts=[dict(instance_id=i, passed=True, files=10) for i in (60326900,60327673)])
+        validate_gate(plan, audit, 100)
+        for bad_plan, now in [(dict(plan, destroy_authorized=True),100), (plan,2000)]:
+            with self.assertRaises(AssertionError):validate_gate(bad_plan,audit,now)
+        self.assertTrue(stopped(dict(actual_status='exited',intended_status='stopped')))
+        self.assertFalse(stopped(dict(actual_status='offline',intended_status='stopped')))
 
 
 if __name__ == '__main__':

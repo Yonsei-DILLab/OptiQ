@@ -400,6 +400,13 @@ authentication without printing credentials. Record provider responses and verif
 stopped status; a lost SSH connection alone is not proof of stopping. References:
 https://vast.ai/developers/api and the Vast Docker environment documentation at
 https://github.com/vast-ai/docs/blob/main/guides/instances/docker-environment.mdx.
+The existing per-instance keys were verified to be source-IP restricted: local
+GET requests fail while the same request succeeds from its own instance. Execute
+the stop-only PUT on each instance using its existing environment key. The helper
+requires a fresh completion probe and an archive audit less than30 minutes old,
+records each provider acknowledgement, and leaves stopped-state verification
+explicitly pending until confirmed through the Vast account console. It never
+equates an accepted request or a lost SSH connection with verified stopped state.
 
 The laptop relay was measured at sub-MB/s throughput. `archive_direct.py` can
 transfer the same immutable files directly from each Vast host to dildata, using
