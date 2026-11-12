@@ -1,6 +1,9 @@
 """Independent numerical oracles and regression cases for invalid labels."""
 import math
 import unittest
+import tempfile
+from pathlib import Path
+from types import SimpleNamespace
 import numpy as np
 from scipy.integrate import quad
 from scipy.optimize import brentq
@@ -59,6 +62,24 @@ class VerificationTests(unittest.TestCase):
         np.testing.assert_allclose(pairs[:,0]-pairs[:,1],lp(u)-lp(0.),atol=1e-13)
         self.assertEqual(len(pairs),3);self.assertEqual(len(roots),1)
         with self.assertRaises(ValueError):filtration(np.array([1.,2.]),np.array([[0,1]]),np.array([1.1]))
+
+    def test_endpoint_cache_does_not_leak_larger_sample_modes(self):
+        from run_verified import execute
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);data=root/'mix.npz';samples=root/'samples.npy'
+            np.savez(data,mu=np.array([[[-.45],[.45]]]),log_std=np.full((1,2,1),np.log(.16)))
+            np.save(samples,np.linspace(-.9,.9,64)[:,None])
+            base=dict(data=data,samples=samples,device='cpu',maxit=20000,k=15,commit='unit-test',
+                      upstream=Path(__file__).with_name('upstream_basin_ph.py'))
+            for name,limit,cache in [('full',0,None),('direct',32,None),('cached',32,root/'full'/'endpoints.npz')]:
+                out=root/name;out.mkdir();execute(SimpleNamespace(**base,out=out,limit=limit,endpoints=cache))
+            with np.load(root/'full'/'verified_graph.npz') as f:self.assertEqual(len(f['modes']),2)
+            with np.load(root/'direct'/'verified_graph.npz') as f,np.load(root/'cached'/'verified_graph.npz') as c:
+                self.assertEqual(len(c['modes']),1)
+                for key in ('modes','births','pairs','labels'):np.testing.assert_allclose(f[key],c[key],atol=1e-7)
+            wrong=root/'wrong.npz';np.savez(wrong,points=np.zeros((64,1)),data_sha256='wrong',samples_sha256='wrong')
+            out=root/'invalid';out.mkdir()
+            with self.assertRaises(ValueError):execute(SimpleNamespace(**base,out=out,limit=32,endpoints=wrong))
 
 
 if __name__=='__main__':

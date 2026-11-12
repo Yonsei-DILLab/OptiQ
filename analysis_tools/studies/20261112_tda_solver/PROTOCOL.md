@@ -137,3 +137,24 @@ been generated. Run run_validation_queue.py on GPU0 for case indices 0,1,2
 and GPU1 for indices 3,4,5, with independent queues. Each runs legacy then
 verified analysis on exactly the same saved CUDA-generated M=32768 actions.
 Do not start N/M convergence trials until all six validation cases pass.
+
+## Phase C pilot implementation
+
+Use convergence.json for the predeclared six-case 2x2 pilot. extract_convergence
+checks all six original-N/M pass files before writing any new inputs. Generate
+one N=65536 latent bank per action dimension with key 12345; N=32768 uses its
+prefix. This differs from the original shape-generated N=32768 bank and must
+not be confused with a pure M-change relative to the original table.
+
+For each state generate 65536 component indices and conditional uniforms once
+using CUDA seed 271828+case_index. Reduce indices modulo N (both N are powers
+of two) to couple the N conditions; all marginal samples remain uniform-weight
+mixture samples. M=32768 is the first half of the M=65536 bank. Run M=65536
+first, then reuse its per-point converged endpoints for M=32768, verifying
+input/sample hashes, residuals and ascent density again. Rebuild the mode
+catalog, exploration points, graph and counts separately for each M. A larger
+M's additional modes are never inserted into the smaller M catalog.
+
+Queue GPU0 case indices 0,1,2,4 and GPU1 indices 3,5. Preserve every outcome,
+including failures. Report exact tau=.5,1,2 and all four cutoffs for each pilot
+state; do not present pilot averages as a new five-seed result.

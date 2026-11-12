@@ -1,0 +1,10 @@
+{
+  "n_values": [32768, 65536],
+  "m_values": [32768, 65536],
+  "latent_seed": 12345,
+  "sampling_seed": 271828,
+  "k": 15,
+  "cutoffs": [0.01, 0.001, 0.0001, 0.0],
+  "taus": [0.5, 1.0, 2.0],
+  "cases_from": "phase_a.json"
+}

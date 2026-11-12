@@ -26,8 +26,21 @@ def execute(a):
     if a.limit:samples=samples[:a.limit]
     mix=Mixture(mu,ls,a.device)
     X=torch.tensor(samples,dtype=torch.float64,device=a.device)
-    end,res,info=ascend(mix,X,maxit=a.maxit,callback=lambda it,left:report('ascent_progress',iteration=it,remaining=left))
-    np.savez(a.out/'endpoints.npz',points=end.cpu().numpy(),residual=res.cpu().numpy())
+    if a.endpoints:
+        with np.load(a.endpoints) as cache:
+            if str(cache['data_sha256'])!=digest(a.data) or str(cache['samples_sha256'])!=digest(a.samples):
+                raise ValueError('Endpoint cache belongs to different density or samples')
+            end=torch.tensor(cache['points'][:len(X)],dtype=torch.float64,device=a.device)
+        if len(end)!=len(X):raise ValueError('Endpoint cache is too short')
+        res=torch.cat([mix.em(xx)[1] for xx in end.split(mix.chunk)])
+        decrease=float((mix.logp(X)-mix.logp(end)).max())
+        if decrease>1e-7:raise ValueError('Cached ascent decreases density')
+        info=dict(unconverged=int((res>1e-8).sum()),max_residual=float(res.max()),
+                  density_decrease=decrease,reused_endpoint_sha256=digest(a.endpoints))
+    else:
+        end,res,info=ascend(mix,X,maxit=a.maxit,callback=lambda it,left:report('ascent_progress',iteration=it,remaining=left))
+    np.savez(a.out/'endpoints.npz',points=end.cpu().numpy(),residual=res.cpu().numpy(),
+             data_sha256=digest(a.data),samples_sha256=digest(a.samples))
     report('sample_ascent',**info)
     if info['unconverged']:raise RuntimeError('Unconverged samples; assignments not fabricated')
     M,verification=catalog(mix,end);lab,assignment=assign(mix,end,M)
@@ -82,6 +95,7 @@ def main():
     p.add_argument('--commit',required=True);p.add_argument('--device',default='cuda')
     p.add_argument('--k',type=int,default=15);p.add_argument('--maxit',type=int,default=20000)
     p.add_argument('--limit',type=int,default=0)
+    p.add_argument('--endpoints',type=Path)
     a=p.parse_args();a.out.mkdir(parents=True,exist_ok=False)
     torch.set_num_threads(4);torch.backends.cuda.matmul.allow_tf32=False
     try:execute(a)
