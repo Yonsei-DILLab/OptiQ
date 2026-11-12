@@ -67,9 +67,9 @@ print(json.dumps(files))
         immutable = [n for n in changed if 'checkpoints/' in n or n.endswith(('.zip', '.msgpack'))]
         if immutable:
             script = '''
-import hashlib,json
+import hashlib,json,sys
 from pathlib import Path
-root=Path(%r); names=%r; hashes={}
+root=Path(sys.argv[1]); names=json.load(sys.stdin); hashes={}
 for n in names:
  h=hashlib.sha256()
  with (root/n).open('rb') as f:
@@ -77,10 +77,13 @@ for n in names:
  hashes[n]=h.hexdigest()
 print(json.dumps(hashes))
 '''
+            # Send the potentially large filename list over stdin, not argv.
             original = json.loads(subprocess.check_output([*ssh, 'python3 -c ' +
-                shlex.quote(script % (REMOTE_ROOT, immutable))], text=True))
+                shlex.quote(script) + ' ' + shlex.quote(REMOTE_ROOT)],
+                input=json.dumps(immutable), text=True))
             stored = json.loads(subprocess.check_output([*SSH, '-o', 'BatchMode=yes', 'dildata',
-                'python3 -c ' + shlex.quote(script % (destination, immutable))], text=True))
+                'python3 -c ' + shlex.quote(script) + ' ' + shlex.quote(destination)],
+                input=json.dumps(immutable), text=True))
             assert original == stored, 'Stored checkpoint hash mismatch'
             (state_dir / f'shard{shard}-last-checkpoint-hashes.json').write_text(json.dumps(stored, indent=2))
         tmp = state_file.with_suffix('.tmp')
