@@ -13,13 +13,14 @@ import time
 SERVERS = [('175.155.64.205', 19159), ('179.255.127.236', 31020)]
 REMOTE_ROOT = '/workspace/heejoon-adroit-online-20261112'
 STORAGE_ROOT = '/data1/heejoonorm/OptiQ/runs/adroit-online-20261112'
+SSH = ['ssh', '-S', 'none', '-o', 'ServerAliveInterval=30', '-o', 'ServerAliveCountMax=3']
 
 
 def archive_once(state_dir):
     state_dir.mkdir(parents=True, exist_ok=True)
     reports = []
     for shard, (host, port) in enumerate(SERVERS):
-        ssh = ['ssh', '-p', str(port), '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=15',
+        ssh = [*SSH, '-p', str(port), '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=15',
                f'heejoonorm@{host}']
         inventory = '''
 import json,time
@@ -42,7 +43,7 @@ print(json.dumps(files))
         if not changed:
             reports.append(dict(shard=shard, changed=0)); continue
         destination = f'{STORAGE_ROOT}/shard{shard}'
-        receive = subprocess.Popen(['ssh', '-o', 'BatchMode=yes', 'dildata',
+        receive = subprocess.Popen([*SSH, '-o', 'BatchMode=yes', 'dildata',
             f'mkdir -p {shlex.quote(destination)} && tar -xf - -C {shlex.quote(destination)}'],
             stdin=subprocess.PIPE)
         send = subprocess.Popen([*ssh, f'tar -C {shlex.quote(REMOTE_ROOT)} -cf - --null -T -'],
@@ -68,7 +69,7 @@ print(json.dumps(hashes))
 '''
             original = json.loads(subprocess.check_output([*ssh, 'python3 -c ' +
                 shlex.quote(script % (REMOTE_ROOT, immutable))], text=True))
-            stored = json.loads(subprocess.check_output(['ssh', '-o', 'BatchMode=yes', 'dildata',
+            stored = json.loads(subprocess.check_output([*SSH, '-o', 'BatchMode=yes', 'dildata',
                 'python3 -c ' + shlex.quote(script % (destination, immutable))], text=True))
             assert original == stored, 'Stored checkpoint hash mismatch'
             (state_dir / f'shard{shard}-last-checkpoint-hashes.json').write_text(json.dumps(stored, indent=2))
@@ -92,7 +93,7 @@ def main():
         finished = []
         for host, port in SERVERS:
             try:
-                raw = subprocess.check_output(['ssh', '-p', str(port), '-o', 'BatchMode=yes',
+                raw = subprocess.check_output([*SSH, '-p', str(port), '-o', 'BatchMode=yes',
                     '-o', 'ConnectTimeout=15', f'heejoonorm@{host}',
                     'python3 -c ' + shlex.quote(
                         "from pathlib import Path; p=Path(%r); f=p/'priority-queue-state.json'; "
