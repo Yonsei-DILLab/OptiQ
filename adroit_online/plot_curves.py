@@ -82,7 +82,7 @@ def plot(runs, panels, metric, title, output, stamp, matched=True):
                          'pdf.fonttype': 42, 'ps.fonttype': 42,
                          'axes.spines.top': False, 'axes.spines.right': False})
     fig, axes = plt.subplots(2, 4, figsize=(17.2, 8.8), sharex=True, sharey=True)
-    fig.subplots_adjust(left=.065, right=.99, bottom=.19, top=.80, hspace=.37, wspace=.15)
+    fig.subplots_adjust(left=.065, right=.99, bottom=.235, top=.80, hspace=.37, wspace=.15)
     fig.suptitle(title, x=.065, y=.978, ha='left', fontsize=22, fontweight='bold', color='#182A39')
     policy = 'Exact shared evaluation steps in each panel' if matched else 'All recorded evaluation steps'
     fig.text(.065, .928, f'Adroit Sparse-v2  |  256 environments  |  UTD 0.25  |  {policy}',
@@ -113,12 +113,12 @@ def plot(runs, panels, metric, title, output, stamp, matched=True):
             ax.spines['left'].set_color('#A8B3BC'); ax.spines['bottom'].set_color('#A8B3BC')
             ax.set_facecolor('#FCFDFE')
             if col == 0: ax.set_ylabel(f'Seed {seed}\nSuccess rate (%)', labelpad=10)
-            if row == 1: ax.set_xlabel('Training transitions (millions)', labelpad=7)
             label = f'Matched through {cutoff:.3f}M' if matched else 'No extrapolation'
             if panel['missing']: label = 'iBOLT queued\nSAC / TD3 only'
             ax.text(.035, .95, label, transform=ax.transAxes, ha='left', va='top',
                     fontsize=10.5, color='#566875',
                     bbox=dict(facecolor='white', edgecolor='none', alpha=.90, pad=3))
+    fig.text(.53, .172, 'Training transitions (millions)', ha='center', fontsize=13, color='#182A39')
     definition = ('Episode success = native success at least once during the 200-step episode.'
                   if metric == 'success_any' else
                   'Episode success = at least 25 successful steps out of 200; steps need not be consecutive.')
