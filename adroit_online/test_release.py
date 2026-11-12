@@ -1,6 +1,7 @@
 """A partial, unreachable, failed or busy instance never passes the release gate."""
 import unittest
 from .release_monitor import ready
+from .release_audit import compare
 
 
 class ReleaseTest(unittest.TestCase):
@@ -22,6 +23,14 @@ class ReleaseTest(unittest.TestCase):
             reports = [dict(r) for r in self.reports]
             reports[0].update(patch)
             self.assertFalse(ready(reports))
+
+    def test_missing_or_corrupted_archive_cannot_pass(self):
+        source = dict(files={'checkpoints/final': dict(bytes=123, sha256='abc')}, missing=[])
+        self.assertTrue(compare(source, source)['passed'])
+        for stored in [dict(files={}, missing=['checkpoints/final']),
+                       dict(files={'checkpoints/final': dict(bytes=123, sha256='bad')}, missing=[])]:
+            with self.assertRaises(AssertionError):
+                compare(source, stored)
 
 
 if __name__ == '__main__':
