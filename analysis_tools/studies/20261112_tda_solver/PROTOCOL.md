@@ -73,3 +73,15 @@ concurrently once eligible. Do not gate one environment on the other.
 Cutoffs 1%,0.1%,0.01%,none are postprocessing only. Evaluate exactly tau=.5,1,2
 and a full curve; report mean/std across training seeds only when an entire
 seed/state protocol is completed. Pilot cases are not a replacement final table.
+
+## Phase A diagnostic amendment
+
+The first Apple-arm64 CPU restore attempt (commit 76311eb) failed the 1e-5
+fixture gate: seed0 max mu error 2.32e-5, log_std 3.15e-5; latent arrays matched
+exactly. No N=32768 inputs were generated. Preserve that failed attempt.
+Repeat the same verifier on Linux x86 CPU with original JAX 0.4.33, NumPy
+1.26.4 and SciPy 1.11.4 before attributing the difference to architecture.
+Independently diagnose the supplied Hopper N=1024 fixtures (seed3 state6 and
+state28), at M=32768, on GPU1. These are exact supplied mixture parameters,
+not substitutes for the original N=32768 result; label them as small-N
+diagnostic cases. Use their original 64-state-bank indices to replay RNG.
