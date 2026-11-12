@@ -117,3 +117,9 @@ M=32768 actions. The 512-row run is a numerical smoke test only. GPU 0/1 may
 be used once available; do not interrupt other users' processes. Keep the
 legacy midpoint saddle approximation during this controlled solver comparison;
 do not claim continuous-edge certification from midpoint checks.
+
+Batch-size probe: 1/8/64-state outputs had identical discrepancies for all five
+seeds, so batching did not explain restoration. Probe equivalent BatchRenorm
+arithmetic orders (left-associated, combined scale, division, affine) and a
+float64 reference. These are diagnostic implementations of the same real-valued
+equations; record every variant, do not select a changed policy to fit fixtures.
