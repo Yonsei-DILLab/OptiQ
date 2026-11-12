@@ -92,3 +92,28 @@ upstream extract.py closes over actor variables before jitting, whereas the
 first reconstruction supplied them as dynamic arguments. Keep the 1e-5 gate
 unchanged; preserve failed outputs and do not generate new mixtures until it
 passes.
+
+## First repair candidate and CPU work while GPUs are occupied
+
+The constant-capture JIT revision also failed with the same error. Run
+fixture_probe.py to compare 1-, 8- and original 64-state extraction batches,
+without weakening the restoration gate. Preserve all probe results.
+
+The supplied N=1024 Hopper seed3/state6 run reproduced 5 far assignments but
+no negative persistence. The repaired candidate uses fp64 ascent for every
+sample, explicit dimensionless projected-gradient convergence (1e-8), verified
+stationarity (1e-7) and negative precision-scaled curvature (<-1e-7). Candidate
+deduplication is performed only after convergence (L_inf 1e-7), and assignment
+must agree within 1e-6 and within 1e-7 nats in density. These are numerical
+tolerances, not a definition of a persistent mode. No failed candidate or
+distant assignment is silently accepted. A state with unresolved points fails.
+The mixture normalization is corrected; the legacy -(D-1)log(N) constant
+does not explain its negative persistence at fixed N.
+
+Run independent density/autodiff/normalization, unimodal, bimodal 1D-root and
+separable-SAC filtration tests before real cases. First validate the first 512
+saved sample rows of the supplied N=1024 problem case on CPU, then its full
+M=32768 actions. The 512-row run is a numerical smoke test only. GPU 0/1 may
+be used once available; do not interrupt other users' processes. Keep the
+legacy midpoint saddle approximation during this controlled solver comparison;
+do not claim continuous-edge certification from midpoint checks.
