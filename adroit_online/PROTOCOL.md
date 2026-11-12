@@ -247,3 +247,15 @@ does not prove the root cause. Full Python tracebacks/faulthandler aid a recurre
 No automatic second retry and no selection based on reward/success. Commit and
 manifest diagnostics, launch script and protocol before running them. Archive both
 attempts and recovery metadata to the same dildata campaign destination.
+
+The initial diagnostic (b15bb764cdaaadc4a605c5d35070cc73c2171fed) crashed under
+Compute Sanitizer during XLA GEMM fusion autotuning, repeatedly reporting
+`Red zone modified`, before any full retry. This is a reproduced compiler-path
+failure under instrumentation, not proof that it caused the original asynchronous
+illegal-address error. Preserve that diagnostic's state/logs and test the narrow
+process-local workaround `XLA_FLAGS=--xla_gpu_enable_triton_gemm=false`.
+Compare one identical checkpoint/batch/RNG update on the original and fallback
+GPU paths, including actor/critic/optimizer/target/RNG leaves (rtol1e-5, atol1e-6).
+Require the fallback memcheck and8,192-update DACER/checkpoint stress to pass before
+the fresh full run. No shared runtime mutation. Record the compiler flag with the
+new run; different GPU kernels may introduce floating-point rounding differences.

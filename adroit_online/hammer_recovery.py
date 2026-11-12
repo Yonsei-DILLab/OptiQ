@@ -22,9 +22,10 @@ from .run import ROOT, atomic, source_provenance
 NAME = 'hammer-ibolt-s4-e256-u025-t010'
 ATTEMPT = NAME + '-retry1'
 CHECKPOINT = 1_003_520
+XLA_FLAGS = '--xla_gpu_enable_triton_gemm=false'
 
 
-def diagnostic(failed, output, blocks):
+def diagnostic(failed, output, blocks, probe=False):
     import jax
     import jax.numpy as jnp
     import numpy as np
@@ -77,6 +78,20 @@ def diagnostic(failed, output, blocks):
                 obs, _ = env.reset(seed=int(generator.integers(2**30)))
         np.random.seed(24680)
         started = time.time()
+        if probe:
+            model.train(batch_size=256, gradient_steps=1)
+            leaves = jax.tree_util.tree_leaves((model.policy.actor_state,
+                                               model.policy.qf_state, model.key))
+            def host_array(x):
+                if hasattr(x, 'dtype') and jax.dtypes.issubdtype(x.dtype, jax.dtypes.prng_key):
+                    x = jax.random.key_data(x)
+                return np.asarray(x)
+            np.savez(output / 'one-update.npz', **{f'leaf{i}': host_array(x)
+                                                  for i, x in enumerate(leaves)})
+            atomic(output / 'passed.json', dict(passed=True, diagnostic_only=True,
+                source_commit=proof['commit'], additional_updates=1,
+                xla_flags=os.environ.get('XLA_FLAGS', ''), leaves=len(leaves)))
+            return
         for block in range(blocks):
             model.num_timesteps += 256
             model.train(batch_size=256, gradient_steps=64)
@@ -101,7 +116,16 @@ def recovery(root):
     lock = (root / 'hammer-recovery.lock').open('a')
     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     state_file = root / 'recovery-queue-state.json'
-    assert not state_file.exists(), 'One authorized attempt only; no automatic retry'
+    previous_diagnostic = None
+    if state_file.exists():
+        previous_diagnostic = json.loads(state_file.read_text())
+        previous = previous_diagnostic['jobs'][NAME]
+        assert previous['status'] == 'failed' and previous['phase'] == 'memcheck'
+        assert previous['source_commit'] == 'b15bb764cdaaadc4a605c5d35070cc73c2171fed'
+        assert not alive(previous) and not (root / 'runs' / ATTEMPT).exists()
+        history = root / 'recovery-initial-diagnostic.json'
+        assert not history.exists()
+        atomic(history, previous_diagnostic)
     q = json.loads((root / 'priority-queue-state.json').read_text())
     old = q['jobs'][NAME]
     assert old['status'] == 'failed' and old['returncode'] == -6 and not alive(old)
@@ -127,6 +151,8 @@ def recovery(root):
                   source_commit=proof['commit'], gpu=gpu, cpus=cpus,
                   status='diagnostic', fresh_from_scratch=True, automatic_retry=False,
                   controller_pid=os.getpid(), started_unix=time.time(),
+                  runtime_environment={'XLA_FLAGS': XLA_FLAGS},
+                  previous_diagnostic=previous_diagnostic,
                   preserved_peers={s['pid']: s['start_ticks'] for s in peers})
     def save():
         atomic(state_file, dict(source_commit=proof['commit'], jobs={NAME: record},
@@ -136,32 +162,51 @@ def recovery(root):
                OPENBLAS_NUM_THREADS='1', MKL_NUM_THREADS='1', NUMEXPR_NUM_THREADS='1',
                MUJOCO_GL='egl', PYTHONUNBUFFERED='1', JAX_TRACEBACK_FILTERING='off',
                PYTHONFAULTHANDLER='1')
-    # Diagnose in separate CUDA contexts. Do not change shared wheels, drivers,
-    # compiler flags, or any numerical source as a speculative workaround.
+    # Isolate the reproduced GEMM autotuner crash without changing shared wheels,
+    # drivers or the numerical algorithm. Each diagnostic gets a fresh context.
     prefix = ['taskset', '-c', ','.join(map(str, cpus))]
-    cases = [('memcheck', 4), ('stress', 128)]
+    cases = [('probe-original', 0), ('probe-cublas', 0),
+             ('memcheck-cublas', 4), ('stress-cublas', 128)]
     save()
     for label, blocks in cases:
         dest = root / 'preflight' / 'hammer-recovery' / label
         cmd = [*prefix]
-        if label == 'memcheck':
+        if label == 'memcheck-cublas':
             cmd += ['/usr/local/cuda/bin/compute-sanitizer', '--tool', 'memcheck',
                     '--error-exitcode', '86', '--target-processes', 'application-only']
         cmd += [sys.executable, '-m', 'adroit_online.hammer_recovery', '--diagnostic',
                 '--root', str(root), '--output', str(dest), '--blocks', str(blocks)]
+        if label.startswith('probe-'):
+            cmd += ['--probe']
+        child_env = dict(env, XLA_FLAGS='' if label == 'probe-original' else XLA_FLAGS)
         with (root / 'process-logs' / ('hammer-recovery-' + label + '.log')).open('x') as log:
-            p = subprocess.Popen(cmd, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
+            p = subprocess.Popen(cmd, cwd=ROOT, env=child_env, stdout=log, stderr=subprocess.STDOUT)
             record.update(phase=label, pid=p.pid, start_ticks=process_ticks(p.pid)); save()
             code = p.wait()
         if code or not (dest / 'passed.json').exists():
             record.update(status='failed', returncode=code, finished_unix=time.time()); save()
             raise RuntimeError(('Recovery diagnostic failed', label, code))
+        if label == 'probe-cublas':
+            import numpy as np
+            folder = root / 'preflight' / 'hammer-recovery'
+            with np.load(folder / 'probe-original' / 'one-update.npz') as a, np.load(
+                    folder / 'probe-cublas' / 'one-update.npz') as b:
+                assert a.files == b.files
+                errors = {}
+                for key in a.files:
+                    np.testing.assert_allclose(a[key], b[key], rtol=1e-5, atol=1e-6,
+                                               err_msg=key)
+                    errors[key] = float(np.max(np.abs(a[key].astype(float) - b[key].astype(float))))
+            record['numerical_comparison'] = dict(passed=True, leaves=len(errors),
+                max_absolute_difference=max(errors.values()), rtol=1e-5, atol=1e-6)
+            atomic(folder / 'numerical-comparison.json', record['numerical_comparison'])
     record['diagnostics_passed'] = [label for label, _ in cases]
     cmd = [*prefix, sys.executable, '-m', 'adroit_online.run', '--method', 'ibolt',
            '--task', 'hammer', '--seed', '4', '--profile', 'e256-u025',
            '--temperature', '0.10', '--output', str(output)]
     with (root / 'process-logs' / (ATTEMPT + '.log')).open('x') as log:
-        p = subprocess.Popen(cmd, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
+        p = subprocess.Popen(cmd, cwd=ROOT, env=dict(env, XLA_FLAGS=XLA_FLAGS),
+                             stdout=log, stderr=subprocess.STDOUT)
         record.update(status='running', phase='full', pid=p.pid,
                       start_ticks=process_ticks(p.pid), command=cmd, full_started_unix=time.time())
         save()
@@ -177,8 +222,9 @@ if __name__ == '__main__':
     parser.add_argument('--diagnostic', action='store_true')
     parser.add_argument('--output', type=Path)
     parser.add_argument('--blocks', type=int, default=128)
+    parser.add_argument('--probe', action='store_true')
     args = parser.parse_args()
     if args.diagnostic:
-        diagnostic(args.root / 'runs' / NAME, args.output, args.blocks)
+        diagnostic(args.root / 'runs' / NAME, args.output, args.blocks, args.probe)
     else:
         recovery(args.root)
