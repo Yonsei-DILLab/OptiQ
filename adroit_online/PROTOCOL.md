@@ -170,3 +170,52 @@ unchanged evaluation RNG, timeout bootstrapping and checkpoint restoration.
 Admission checks and preflight receipts name both temperatures. Each job passes
 its temperature explicitly through CLI to the resolved actor config; a regression
 check verifies temperature is the only scientific configuration difference.
+
+## Move pending iBOLT jobs to RTX5090 — user authorization, 2026-11-12
+
+The user requested freeing dilg-01 for another task and prioritizing iBOLT.
+Move exactly the eight still-unstarted jobs recorded in `migration_5090.json`:
+Door/Pen seed5 and Hammer/Relocate seed4, each T0.05/T0.10. No restart/resume of
+the four already running dilg learners, and no numerical or budget change.
+Split four jobs per existing5090 host, including every task and both temperatures
+on each host. The retained run IDs are globally unique; origin output directories
+must not exist. Record origin delegation before enabling destination controllers.
+
+Send SIGTERM to each verified original controller PID only. The existing signal
+handlers stop dispatch and drain their active children. Do not use Supervisor
+stop/group signals. Save the command, owner, start ticks, source manifest and
+queue snapshot. The old baseline controllers have autostart/autorestart disabled.
+Record `queue-delegation.json` at the dilg root immediately; a metadata-only
+finalizer marks its eight stale pending entries migrated after the old controller
+exits. While draining, the delegation record overrides those pending entries.
+
+The5090 `priority-plan.json` and `priority-queue-state.json` become authoritative
+for each host's24 baseline jobs plus four migrated iBOLT jobs. Existing baseline
+learners are adopted for monitoring/resource accounting; their processes and
+source commit e1a244a8216d3286fee1dbcc84fd3adfb748dabb are preserved. Unstarted
+baseline jobs use the same original snapshot and runtime after higher-priority
+iBOLT dispatch. There is no environment-completion gate. No automatic retries,
+overwrite of run folders, or result-based selection is allowed.
+
+Resource budget: two baseline slots plus one iBOLT slot per5090, at most three
+total learners per GPU. Each has8 logical CPUs and four collector workers. The
+new iBOLT CPU blocks64-95 are disjoint from baseline blocks0-63. Both hosts have
+more than120 effective cgroup CPU cores, over250GB available container memory,
+over95GB free disk and over29GB free GPU memory at migration inspection. Do not
+admit an unrelated GPU PID or a GPU with less than12GB free memory. Baseline
+capacity remains two slots/GPU after iBOLT completion.
+
+Reuse the116-package runtimes. Verify installed package versions and native
+robotics assets across hosts; shard1's freeze differs only in local archive URLs
+for the same pinned Torch wheel and Gymnasium-Robotics archive. Perform a real
+GPU/native-task/learning/checkpoint smoke for each migrated task/temperature on
+its target GPU before its full run. This preserves the prior53,248-step/512-update
+smoke protocol. Record per-job receipts, old and new full source SHAs, unchanged
+learner/config hashes, controller PID and learner PID/GPU UUID. Commit all new
+scheduling inputs before smoke/full starts. Store new results under the existing
+Vast root's `runs/` so central dildata archiving includes them automatically.
+
+Archive termination must use the authoritative priority queue, including migrated
+iBOLT jobs. Preserve original legacy queue files while their controllers live;
+after they exit, mirror the24 baseline statuses from the priority queue for
+compatibility. No keys or credentials are transferred as part of this migration.

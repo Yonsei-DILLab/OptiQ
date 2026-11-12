@@ -94,10 +94,12 @@ def main():
             try:
                 raw = subprocess.check_output(['ssh', '-p', str(port), '-o', 'BatchMode=yes',
                     '-o', 'ConnectTimeout=15', f'heejoonorm@{host}',
-                    'cat ' + shlex.quote(REMOTE_ROOT + '/queue-state.json')], text=True,
+                    'python3 -c ' + shlex.quote(
+                        "from pathlib import Path; p=Path(%r); f=p/'priority-queue-state.json'; "
+                        "print((f if f.exists() else p/'queue-state.json').read_text())" % REMOTE_ROOT)], text=True,
                     stderr=subprocess.DEVNULL)
                 jobs = json.loads(raw)['jobs']
-                finished.append(len(jobs) == 24 and all(v['status'] in
+                finished.append(len(jobs) >= 24 and all(v['status'] in
                     ('completed', 'failed', 'requires_review') for v in jobs.values()))
             except Exception:
                 finished.append(False)

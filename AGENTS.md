@@ -26,6 +26,14 @@
   Use dilg-01 GPUs0/1 and preserve all T0.25 runs. This adds16 fresh runs; no
   automatic temperature selection, other temperature/profile sweep, or seed0-3
   confirmation is authorized. Version and store the extra queue separately.
+- Migration authorized 2026-11-12: move only unstarted dilg-01 iBOLT jobs to
+  the two existing RTX5090 servers; prioritize iBOLT over pending SAC/TD3.
+  Drain original controllers without stopping their learner children. Preserve
+  all running PIDs, source snapshots and scientific settings. Allow one iBOLT
+  job in addition to the two baseline slots per5090, with disjoint CPU affinity.
+  No further iBOLT starts on dilg-01; it becomes free of this study after the
+  four existing learners finish. See `adroit_online/migration_5090.json` and the
+  priority plan/queue/delegation records. Do not restart drained controllers.
 
 ## 실험 전체 중지 및 프로토콜 확정 대기 — 사용자 지시, 2026-11-12
 

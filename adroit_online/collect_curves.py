@@ -13,7 +13,15 @@ import time
 def collect(root):
     result = dict(observed_start_unix=time.time(), root=str(root), runs={}, status={})
     queue_path = root / 'queue-state.json'
+    if (root / 'priority-queue-state.json').exists():
+        queue_path = root / 'priority-queue-state.json'
     result['queue'] = json.loads(queue_path.read_text())
+    if (root / 'queue-delegation.json').exists():
+        result['delegation'] = json.loads((root / 'queue-delegation.json').read_text())
+        for name, destination in result['delegation']['jobs'].items():
+            state = result['queue']['jobs'][name]
+            assert state['status'] in ('pending', 'migrated')
+            state.update(status='migrated', destination=destination)
     for run in sorted((root / 'runs').glob('*')):
         if not (run / 'spec.json').exists():
             continue
