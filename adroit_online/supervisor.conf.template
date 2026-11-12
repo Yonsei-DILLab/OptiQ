@@ -1,6 +1,6 @@
 [program:heejoon-adroit-online]
 directory=SOURCE_DIRECTORY
-command=PYTHON_EXECUTABLE -m adroit_online.controller --root RUN_ROOT --shard SHARD_ID --slots-per-gpu 2
+command=/bin/bash SOURCE_DIRECTORY/adroit_online/launch.sh SOURCE_DIRECTORY RUN_ROOT SHARD_ID
 user=heejoonorm
 autostart=false
 autorestart=false
