@@ -158,3 +158,13 @@ M's additional modes are never inserted into the smaller M catalog.
 Queue GPU0 case indices 0,1,2,4 and GPU1 indices 3,5. Preserve every outcome,
 including failures. Report exact tau=.5,1,2 and all four cutoffs for each pilot
 state; do not present pilot averages as a new five-seed result.
+
+## GPU occupancy handoff requested by user
+
+User explicitly requested continuous GPU 0/1 utilization between TDA jobs on
+2026-11-12. tda_gpu_queue.py runs tda_gpu_hold.py while its queue is empty,
+terminates only its own reservation child before a committed experiment,
+and immediately restores the reservation after completion/failure. It does
+not terminate other users' jobs. Keep source commit, child PIDs, commands and
+timestamps in status/job sidecars. The reservation is an explicitly requested
+resource-holding workload, not a scientific result or a training experiment.
