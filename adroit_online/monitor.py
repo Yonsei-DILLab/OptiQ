@@ -20,9 +20,12 @@ def summarize(root):
         rows.append(dict(run=run.name, method=spec['method'], task=spec['task'],
             seed=spec['seed'], profile=spec['profile'], status=p['status'], steps=p['steps'],
             updates=p['updates'], first_success=f.get('vector_step_end'),
-            evaluation_step=e.get('step'), deterministic_success=e.get('success'),
+            evaluation_step=e.get('step'), primary_mode=e.get('primary_mode', 'deterministic'),
+            primary_success=e.get('success'),
+            deterministic_success=e.get('success') if spec['method'] != 'ibolt' else e.get('zero_z_success'),
+            success_25_steps=e.get('success_25_steps'), final_success=e.get('final_success'),
             stochastic_success=e.get('stochastic_success'),
-            elapsed_seconds=round(p['elapsed_seconds'], 1),
+            elapsed_seconds=round(p.get('elapsed_seconds', 0), 1),
             transitions_per_second=round(p.get('transitions_per_second', 0), 1),
             source_commit=spec['source_commit']))
     atomic(root / 'summary.json', rows)

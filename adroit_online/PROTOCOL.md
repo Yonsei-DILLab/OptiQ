@@ -1,11 +1,12 @@
-# Pure online Adroit Sparse-v2: SAC and TD3
+# Pure online Adroit Sparse-v2: SAC, TD3, and iBOLT
 
 User authorization, 2026-11-12: run seeds **4 and 5**, vary only vector environment
 count and UTD, start with 256 environments, use four GPUs on the supplied server.
 The user then expanded the allocation to **eight GPUs across two servers**.
 Use branch **heejoon-rebuttal**. This supersedes the earlier seed5/6 pilot and the
-workspace's older branch instruction for this study only. No iBOLT, alpha/noise
-tuning, or automatic confirmation on seeds0-3 is authorized in this campaign.
+workspace's older branch instruction for this study only. The initial campaign
+excluded iBOLT; the later authorization below adds one fixed-temperature iBOLT
+comparison. No alpha/noise tuning or automatic confirmation on seeds0-3.
 
 Reference: heechan-rebuttal ebdc46e59db1642902e0331c1e3aa662556c6553.
 The existing A1 demonstration-based experiment is not resumed or modified.
@@ -76,3 +77,57 @@ installation reuses the pinned Adroit requirements. The controller requires an
 explicit GPU-preflight receipt tied to the source SHA; it refuses unverified starts.
 Never start jobs from mutable working copies. The monitor produces JSON/CSV summaries
 with current steps, first success, evaluation success and throughput per run.
+
+## iBOLT extension — user authorization, 2026-11-12
+
+The user requested "same current settings, iBOLT temp=0.25, dilg-01 GPUs0/1".
+Run **eight** fresh iBOLT models: all four tasks x seeds4/5, env256/UTD0.25,
+3,000,064 transitions (747,456 optimizer updates), warmup10,240. No other iBOLT
+temperature/profile/seed sweep is included. Existing SAC/TD3 immutable source
+e1a244a8216d3286fee1dbcc84fd3adfb748dabb and running jobs remain unchanged.
+
+Use the same native robotics source, horizon200, sparse reward, grouped four-worker
+collector, empty standard replay1M, batch256, width/depth256x2, lr3e-4, gamma0.99,
+tau0.005, evaluation reset/action-seed schedules, 100 regular/1000 final episodes,
+and evaluation/checkpoint step schedule. No demonstrations, BC, HER, observation
+or reward normalization, LayerNorm, BatchRenorm, or CrossQ.
+
+The repository's `exploration.ExplorationIBOLT`, `ibolt/` and `models/critic.py`
+numerical source is reused unchanged. Algorithm-specific defaults are explicit:
+GELU actor/critic (SAC/TD3 use ReLU), N=M=64, density correction beta1, mean twin-Q
+proposal scoring, ordinary min twin-Q TD backup without SAC entropy bonus, actor
+update every critic update, conditional log sigma[-5,-1] initialized at-1.
+Actor temperature is fixed0.25. DACER behavior exploration remains on, lambda0.1,
+initial alpha0.27, alpha lr0.03, target entropy -0.9 per action dimension, update
+interval10,000 learner updates, 200 samples and3 mixture components. Its adaptive
+alpha is intrinsic to the existing algorithm; it is not a new hyperparameter sweep.
+
+Primary iBOLT evaluation uses a fresh random latent with conditional mean
+(`stochastic_z`), consistent with the current repository Adroit comparison.
+Also save zero-latent mean (`zero_z`) and full mixture (`stochastic_z_sigma`),
+all without external DACER noise. Never label stochastic-z as a deterministic
+policy. All modes use the same reset episodes as SAC/TD3 and record any-success,
+success-step count, >=25 success steps (not consecutive), and final-step success.
+Evaluation preserves learner, policy, DACER, NumPy, Python, and Torch RNG streams.
+
+Use only dilg-01 GPUs0/1 (RTX PRO6000 Blackwell Max-Q,96GB each), initially two
+concurrent jobs/GPU with eight logical CPUs/job, including the same four collection
+workers. Four tasks and both seeds appear in the first wave; remaining jobs are
+independently eligible with no cross-task completion dependency. Do not interrupt
+other jobs or use GPUs2/3. Protect starts with GPU PID/memory checks and a controller
+lock. Run under a dedicated tmux session; no automatic retry/overwrite/resume.
+
+Local runtime: `/home/heejoonorm/adroit-online-ibolt-20261112/venv`, Python3.11.17
+and the exact installed package lock from baseline shard0. Sources, manifests,
+runtime receipts, evaluations, logs and checkpoints are written directly to
+`/mnt/data1/heejoonorm/OptiQ/runs/adroit-online-ibolt-20261112`, the NFS mount of
+`dildata:/data1/heejoonorm/OptiQ/runs/adroit-online-ibolt-20261112`.
+Commit before any smoke/full learning; deploy a fresh immutable manifest.
+
+Preflight uses existing distribution/config checks and a real native-task smoke
+on each of the four tasks. Require actual JAX GPU arithmetic, seeded trajectory
+agreement, native reward/horizon checks, empty standard replay, evaluation RNG
+preservation, finite updates, exact optimizer counts, timeout bootstrapping and
+exact actor/critic optimizer checkpoint restoration. The shared runner saves
+native Flax checkpoints, separate DACER/RNG state and final replay. Simulator
+state is not saved; these files do not imply a bit-exact interrupted-run resume.

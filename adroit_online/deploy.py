@@ -17,16 +17,20 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--host', required=True); p.add_argument('--port', type=int, required=True)
     p.add_argument('--root', default='/workspace/heejoon-adroit-online-20261112')
+    p.add_argument('--include-ibolt', action='store_true')
     a = p.parse_args()
+    paths = PATHS + (['ibolt', 'models', 'configs', 'exploration.py', 'train.py',
+                     'environment.py', 'tests/test_config.py', 'tests/test_distribution.py']
+                    if a.include_ibolt else [])
     def git(*args):
         return subprocess.check_output(['git', *args], cwd=ROOT, text=True).strip()
     commit = git('rev-parse', 'HEAD')
     assert git('branch', '--show-current') == 'heejoon-rebuttal'
-    assert not git('status', '--porcelain', '--', *PATHS), 'Commit experiment inputs before deployment'
+    assert not git('status', '--porcelain', '--', *paths), 'Commit experiment inputs before deployment'
     with tempfile.TemporaryDirectory(prefix='adroit-online-deploy-') as temp:
         temp = Path(temp)
         archive = temp / 'source.tar'
-        subprocess.run(['git', 'archive', '--format=tar', '-o', str(archive), commit, *PATHS],
+        subprocess.run(['git', 'archive', '--format=tar', '-o', str(archive), commit, *paths],
                        cwd=ROOT, check=True)
         source = temp / 'source'; source.mkdir()
         # The archive was generated locally from these committed repository paths.

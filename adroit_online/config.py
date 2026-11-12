@@ -7,7 +7,7 @@ PROFILES = {'e256-u025': (256, .25), 'e256-u1': (256, 1.), 'e64-u1': (64, 1.)}
 
 
 def configuration(method, task, seed, profile, smoke=False):
-    assert method in ('sac', 'td3') and task in TASKS and seed in (4, 5)
+    assert method in ('sac', 'td3', 'ibolt') and task in TASKS and seed in (4, 5)
     n, utd = PROFILES[profile]
     c = dict(method=method, task=task, seed=seed, profile=profile,
              env_id=TASKS[task], num_envs=n, utd=utd, workers=4,
@@ -27,6 +27,17 @@ def configuration(method, task, seed, profile, smoke=False):
                  eval_episodes=20, final_episodes=20, checkpoint_every=53_248)
     c['gradient_steps'] = int(n * utd)
     c['expected_updates'] = int((c['steps'] - c['warmup']) * utd)
+    if method == 'ibolt':
+        assert profile == 'e256-u025', 'Only the current baseline profile is authorized for iBOLT'
+        for name in ('entropy', 'td3_exploration_std', 'policy_delay', 'target_policy_noise', 'target_noise_clip'):
+            c.pop(name)
+        c.update(temperature=.25, num_policy_samples=64, proposals_per_policy_sample=1,
+                 activation='gelu', log_std_bounds=[-5., -1.], initial_log_std=-1.,
+                 density_correction_beta=1., use_min_candidate_q=False,
+                 actor_policy_delay=1, dacer_enabled=True, dacer_noise_scale=.1,
+                 dacer_target_entropy_per_dim=-.9, dacer_initial_alpha=.27,
+                 dacer_alpha_lr=.03, dacer_interval_updates=10000,
+                 primary_evaluation='stochastic_z')
     assert all(c[k] % n == 0 for k in ('steps', 'warmup', 'eval_every'))
     return c
 
@@ -38,4 +49,5 @@ def campaign():
 
 
 def run_id(c):
-    return f"{c['task']}-{c['method']}-s{c['seed']}-{c['profile']}" + ('-smoke' if c['smoke'] else '')
+    return (f"{c['task']}-{c['method']}-s{c['seed']}-{c['profile']}"
+            + ('-t025' if c['method'] == 'ibolt' else '') + ('-smoke' if c['smoke'] else ''))

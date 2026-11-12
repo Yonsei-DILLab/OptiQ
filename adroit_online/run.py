@@ -37,6 +37,9 @@ def evaluation_rng(model, seed):
     import torch
     py, np_state = random.getstate(), np.random.get_state()
     jax_key = model.jax_state.key if hasattr(model, 'jax_state') else None
+    ibolt_state = ((model.policy.key, model.policy.noise_key,
+                    getattr(model.policy, 'evaluation_mu_only', False))
+                   if hasattr(model.policy, 'actor_state') else None)
     devices = list(range(torch.cuda.device_count())) if torch.cuda.is_initialized() else []
     try:
         with torch.random.fork_rng(devices=devices):
@@ -48,12 +51,17 @@ def evaluation_rng(model, seed):
             if jax_key is not None:
                 import jax
                 model.jax_state = model.jax_state.replace(key=jax.random.PRNGKey(seed))
+            if ibolt_state is not None:
+                import jax
+                model.policy.key = jax.random.PRNGKey(seed)
             yield
     finally:
         random.setstate(py)
         np.random.set_state(np_state)
         if jax_key is not None:
             model.jax_state = model.jax_state.replace(key=jax_key)
+        if ibolt_state is not None:
+            model.policy.key, model.policy.noise_key, model.policy.evaluation_mu_only = ibolt_state
 
 
 def evaluate(model, c, episodes, random_actions=False):
@@ -63,6 +71,7 @@ def evaluate(model, c, episodes, random_actions=False):
     reset_rng = np.random.default_rng(np.random.SeedSequence([c['seed'], 4404]))
     reset_seeds = reset_rng.integers(0, 2**30, episodes).tolist()
     modes = ['uniform_random'] if random_actions else (
+        ['stochastic_z', 'zero_z', 'stochastic_z_sigma'] if c['method'] == 'ibolt' else
         ['deterministic', 'stochastic'] if c['method'] == 'sac' else ['deterministic'])
     envs = [make_env(c['task']) for _ in range(20)]
     result = {'episodes': episodes, 'reset_seeds': reset_seeds, 'primary': modes[0]}
@@ -71,6 +80,8 @@ def evaluate(model, c, episodes, random_actions=False):
             rows = []
             uniform = np.random.default_rng(np.random.SeedSequence([c['seed'], 7090]))
             with evaluation_rng(model, c['seed'] + 900_000):
+                if c['method'] == 'ibolt':
+                    model.policy.evaluation_mu_only = mode != 'stochastic_z_sigma'
                 for start in range(0, episodes, len(envs)):
                     obs = np.stack([e.reset(seed=s)[0] for e, s in
                                     zip(envs, reset_seeds[start:start + len(envs)], strict=True)])
@@ -80,7 +91,7 @@ def evaluate(model, c, episodes, random_actions=False):
                         if random_actions:
                             actions = uniform.uniform(-1, 1, size=(len(envs), *envs[0].action_space.shape)).astype(np.float32)
                         else:
-                            actions, _ = model.predict(obs, deterministic=mode == 'deterministic')
+                            actions, _ = model.predict(obs, deterministic=mode in ('deterministic', 'zero_z'))
                         transitions = [e.step(a) for e, a in zip(envs, actions, strict=True)]
                         obs = np.stack([x[0] for x in transitions])
                         success = np.array([bool(x[4]['success']) for x in transitions])
@@ -101,7 +112,7 @@ def evaluate(model, c, episodes, random_actions=False):
     return result
 
 
-def create_model(c, env):
+def create_model(c, env, output=None):
     import numpy as np
     from stable_baselines3 import TD3
     from stable_baselines3.common.noise import NormalActionNoise
@@ -109,7 +120,10 @@ def create_model(c, env):
                   learning_starts=c['warmup'], batch_size=256, tau=c['tau'], gamma=c['gamma'],
                   train_freq=1, gradient_steps=c['gradient_steps'], seed=c['seed'],
                   policy_kwargs=dict(net_arch=c['hidden']), verbose=0)
-    if c['method'] == 'sac':
+    if c['method'] == 'ibolt':
+        from .ibolt import create_model as create_ibolt
+        model = create_ibolt(c, env, output)
+    elif c['method'] == 'sac':
         import jax
         from baselines.jax_sac import JaxSAC
         assert jax.default_backend() == 'gpu', 'Reported SAC must use JAX GPU'
@@ -142,7 +156,7 @@ def train(c, output):
     torch.backends.cudnn.allow_tf32 = False
     started = time.monotonic()
     affinity = sorted(os.sched_getaffinity(0))
-    worker_cpus = [[affinity[-4 + i]] for i in range(4)] if len(affinity) >= 5 else [[], [], [], []]
+    worker_cpus = [[affinity[-4 + i]] for i in range(4)] if len(affinity) >= 4 else [[], [], [], []]
     spec = dict(c, run_id=run_id(c), source_commit=provenance['commit'],
                 source_branch=provenance['branch'], pid=os.getpid(),
                 cuda_visible_devices=os.environ.get('CUDA_VISIBLE_DEVICES'), cpu_affinity=affinity,
@@ -211,10 +225,15 @@ def train(c, output):
                       kind=label, elapsed_seconds=time.monotonic() - started)
         atomic(output / 'evaluations' / f'{model.num_timesteps:09d}-{label}.json', result)
         if not random_actions:
+            primary = result[result['primary']]
             latest_eval = dict(step=model.num_timesteps, episodes=episodes,
-                               success=result['deterministic']['success_any'],
-                               final_success=result['deterministic']['success_final'],
-                               success_25_steps=result['deterministic']['success_25_steps'])
+                               success=primary['success_any'],
+                               final_success=primary['success_final'],
+                               success_25_steps=primary['success_25_steps'])
+            if c['method'] == 'ibolt':
+                latest_eval.update(primary_mode=result['primary'],
+                                   zero_z_success=result['zero_z']['success_any'],
+                                   full_policy_success=result['stochastic_z_sigma']['success_any'])
             if 'stochastic' in result:
                 latest_eval['stochastic_success'] = result['stochastic']['success_any']
         progress('running')
@@ -222,13 +241,17 @@ def train(c, output):
     def checkpoint(final=False):
         folder = output / 'checkpoints'
         folder.mkdir(exist_ok=True)
-        model.save(folder / f'policy-{model.num_timesteps:09d}.zip')
+        if c['method'] == 'ibolt':
+            from .ibolt import checkpoint as save_ibolt
+            save_ibolt(model, folder, verify=c['smoke'])
+        else:
+            model.save(folder / f'policy-{model.num_timesteps:09d}.zip')
         if final:
             model.save_replay_buffer(folder / 'final-replay.pkl')
 
     try:
         env = GroupedAdroitVecEnv(c['task'], num_envs=c['num_envs'], worker_cpus=worker_cpus)
-        model = create_model(c, env)
+        model = create_model(c, env, output)
         model.set_logger(configure(str(output / 'learner'), ['csv']))
         total, callback = model._setup_learn(c['steps'], callback=trace, reset_num_timesteps=True)
         callback.on_training_start(locals(), globals())
@@ -283,7 +306,7 @@ def train(c, output):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('--method', required=True, choices=('sac', 'td3'))
+    p.add_argument('--method', required=True, choices=('sac', 'td3', 'ibolt'))
     p.add_argument('--task', required=True, choices=('door', 'hammer', 'pen', 'relocate'))
     p.add_argument('--seed', required=True, type=int, choices=(4, 5))
     p.add_argument('--profile', required=True, choices=('e256-u025', 'e256-u1', 'e64-u1'))

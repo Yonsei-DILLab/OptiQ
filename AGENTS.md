@@ -5,7 +5,7 @@
 - This study uses branch `heejoon-rebuttal`, based on `heechan-rebuttal`.
 - Run only SAC and TD3 from scratch on native Adroit Sparse-v2, seeds4/5,
   approximately3M interactions. Vary only environment count and UTD as recorded
-  in `adroit_online/PROTOCOL.md`; no iBOLT or alpha/noise sweep, no confirmation
+  in `adroit_online/PROTOCOL.md`; no alpha/noise sweep, no confirmation
   seed0-3 jobs yet. Existing F1/A1 experiments are unrelated and remain untouched.
 - Use the two explicitly supplied servers `175.155.64.205:19159` and
   `179.255.127.236:31020`, user `heejoonorm`, four GPUs each. The original
@@ -15,6 +15,12 @@
   to `dildata:/data1/heejoonorm/OptiQ/runs/adroit-online-20261112`.
 - New SAC uses the shared verified JAX implementation. Preserve the anonymous
   separation rules below. Do not restart or alter other users' campaigns.
+- Extension authorized 2026-11-12: add pure-online iBOLT temperature0.25 on
+  `dilg-01` GPUs0/1 only, all four tasks, seeds4/5, the currently running
+  env256/UTD0.25 profile and the same3M budget. Preserve the existing iBOLT
+  learner/DACER defaults and document algorithm-specific differences. This
+  supersedes the earlier iBOLT exclusion for this extension only; do not add
+  iBOLT temperature/profile sweeps or change running SAC/TD3 snapshots.
 
 ## 실험 전체 중지 및 프로토콜 확정 대기 — 사용자 지시, 2026-11-12
 
