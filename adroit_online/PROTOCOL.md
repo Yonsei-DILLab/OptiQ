@@ -325,3 +325,36 @@ Supervisor. Keep all failed diagnostics and report the original failure as a
 CUDA illegal address with unresolved lower-level cause, operationally mitigated
 by a fresh process on a validated different GPU. Do not describe discarded
 Triton/graph/synchronization experiments as verified fixes.
+
+## Temperature0.01 extension — user authorization, 2026-11-12
+
+The user requested "temp0.01도 돌려봐". Add exactly eight fresh pure-online runs:
+Door/Hammer/Pen/Relocate x seeds4/5, actor temperature0.01. All other scientific
+settings remain identical to the previous iBOLT temperatures: env256, UTD0.25,
+3,000,064 transitions, warmup10,240,747,456 updates, standard empty replay1M,
+native Sparse-v2, DACER on, original learner/runtime, and paired evaluation seeds.
+Keep the original evaluation modes,100 regular/1000 final episodes, and report
+any-success and cumulative>=25 success steps separately. No checkpoint warm start,
+demonstrations, altered exploration, additional temperatures, or seed0-3 selection.
+
+Use `temp001-queue-state.json` under each existing5090 root, independent of the
+priority and Hammer recovery queues. Seed4 goes to shard0 and seed5 to shard1.
+Every task is independently eligible; Hammer/Relocate have scheduling priority,
+not completion dependencies. Preserve the two baseline slots and one iBOLT slot
+per GPU with disjoint8-CPU allocations. Shard0 GPU0 remains occupied by the
+authorized Hammer retry until it finishes. Exclude shard0 GPU1 from new iBOLT
+placement because its prior diagnostic failures remain unexplained; do not stop
+its existing baselines or claim a proven hardware defect. Eligible GPUs are
+shard0 {0,2,3}, shard1 {0,1,2,3}: initially six new runs can start, two wait.
+Use original execution flags; do not enable abandoned recovery workarounds.
+
+Before each full run, run the established native task/temperature smoke on the
+same target GPU (53,248 transitions,512 updates, seed4 diagnostic). Check actual
+GPU arithmetic, native physics/reward/timeouts, empty replay, preserved evaluation
+RNG, finite parameters and exact checkpoint restoration. Smoke data are separate.
+The full run uses its assigned seed and fresh parameters/replay. Controller PID,
+full source SHA/manifest, runtime packages, GPU UUID, CPU affinity, smoke and full
+PIDs and receipts are recorded. Use Supervisor, no automatic retry or overwrite.
+Reporting merges this queue with the existing cohorts, preserving the Hammer
+retry replacement rule. Archive the new cohort additionally to central
+`runs/adroit-online-20261112/temp001/shard{0,1}` with checkpoint hashes.

@@ -16,7 +16,7 @@ STORAGE_ROOT = '/data1/heejoonorm/OptiQ/runs/adroit-online-20261112'
 SSH = ['ssh', '-S', 'none', '-o', 'ServerAliveInterval=30', '-o', 'ServerAliveCountMax=3']
 
 
-def archive_once(state_dir):
+def archive_once(state_dir, cohort=None):
     state_dir.mkdir(parents=True, exist_ok=True)
     reports = []
     for shard, (host, port) in enumerate(SERVERS):
@@ -25,28 +25,36 @@ def archive_once(state_dir):
         inventory = '''
 import json,time
 from pathlib import Path
-root=Path(%r); now=time.time(); files={}
+root=Path(%r); now=time.time(); files={}; cohort=%r
+cohort_source=json.loads((root/'temp001-plan.json').read_text())['source_commit'] if cohort else None
 for top in root.iterdir():
  if top.name=='venv' or top.name=='setup': continue
  if top.is_dir() and not (top.name.startswith('source-') or top.name in ('runs','preflight','process-logs')): continue
+ if cohort and top.name.startswith('source-') and top.name!='source-'+cohort_source: continue
  for f in (top.rglob('*') if top.is_dir() else [top]):
   if not f.is_file() or '__pycache__' in f.parts or f.suffix in ('.tmp','.pyc'): continue
+  rel=f.relative_to(root); parts=rel.parts
+  if cohort and not (parts[0]=='source-'+cohort_source or
+      (len(parts)==1 and parts[0].startswith('temp001-')) or
+      (parts[0]=='runs' and parts[1].endswith('-t001')) or
+      (parts[0]=='preflight' and parts[1]=='temp001') or
+      (parts[0]=='process-logs' and '-t001' in f.name)): continue
   s=f.stat()
   if ('checkpoints' in f.parts or f.suffix in ('.zip','.pkl','.msgpack')) and now-s.st_mtime<90: continue
   files[str(f.relative_to(root))]=[s.st_size,s.st_mtime_ns]
 print(json.dumps(files))
-''' % REMOTE_ROOT
+''' % (REMOTE_ROOT, cohort)
         files = json.loads(subprocess.check_output([*ssh, 'python3 -c ' + shlex.quote(inventory)], text=True))
         state_file = state_dir / f'shard{shard}.json'
         old = json.loads(state_file.read_text()) if state_file.exists() else {}
         changed = sorted(name for name, stat in files.items() if old.get(name) != stat)
         if not changed:
             reports.append(dict(shard=shard, changed=0)); continue
-        destination = f'{STORAGE_ROOT}/shard{shard}'
+        destination = f'{STORAGE_ROOT}' + ('/temp001' if cohort else '') + f'/shard{shard}'
         receive = subprocess.Popen([*SSH, '-o', 'BatchMode=yes', 'dildata',
-            f'mkdir -p {shlex.quote(destination)} && tar -xf - -C {shlex.quote(destination)}'],
+            f'mkdir -p {shlex.quote(destination)} && tar -xzf - -C {shlex.quote(destination)}'],
             stdin=subprocess.PIPE)
-        send = subprocess.Popen([*ssh, f'tar -C {shlex.quote(REMOTE_ROOT)} -cf - --null -T -'],
+        send = subprocess.Popen([*ssh, f'tar -C {shlex.quote(REMOTE_ROOT)} -czf - --null -T -'],
                                 stdin=subprocess.PIPE, stdout=receive.stdin)
         receive.stdin.close()
         send.stdin.write(b''.join(name.encode() + b'\0' for name in changed))
@@ -82,10 +90,11 @@ print(json.dumps(hashes))
 
 def main():
     p = argparse.ArgumentParser(); p.add_argument('--state-dir', type=Path, required=True)
+    p.add_argument('--cohort', choices=('temp001',))
     p.add_argument('--once', action='store_true'); a = p.parse_args()
     while True:
         try:
-            print(json.dumps(dict(time=time.time(), transfers=archive_once(a.state_dir))), flush=True)
+            print(json.dumps(dict(time=time.time(), transfers=archive_once(a.state_dir, a.cohort))), flush=True)
         except Exception as error:
             print(json.dumps(dict(time=time.time(), error=repr(error))), flush=True)
             if a.once: raise
@@ -96,21 +105,24 @@ def main():
                 raw = subprocess.check_output([*SSH, '-p', str(port), '-o', 'BatchMode=yes',
                     '-o', 'ConnectTimeout=15', f'heejoonorm@{host}',
                     'python3 -c ' + shlex.quote(
-                        "from pathlib import Path; p=Path(%r); f=p/'priority-queue-state.json'; "
+                        "from pathlib import Path; p=Path(%r); cohort=%r; "
+                        "f=p/('temp001-queue-state.json' if cohort else 'priority-queue-state.json'); "
                         "import json; q=json.loads((f if f.exists() else p/'queue-state.json').read_text()); "
                         "r=p/'recovery-queue-state.json'; "
-                        "q['jobs'].update(json.loads(r.read_text())['jobs'] if r.exists() else {}); "
-                        "print(json.dumps(q))" % REMOTE_ROOT)], text=True,
+                        "q['jobs'].update(json.loads(r.read_text())['jobs'] if r.exists() and not cohort else {}); "
+                        "t=p/'temp001-queue-state.json'; "
+                        "q['jobs'].update(json.loads(t.read_text())['jobs'] if t.exists() and not cohort else {}); "
+                        "print(json.dumps(q))" % (REMOTE_ROOT, a.cohort))], text=True,
                     stderr=subprocess.DEVNULL)
                 jobs = json.loads(raw)['jobs']
-                finished.append(len(jobs) >= 24 and all(v['status'] in
+                finished.append(len(jobs) >= (4 if a.cohort else 24) and all(v['status'] in
                     ('completed', 'failed', 'requires_review') for v in jobs.values()))
             except Exception:
                 finished.append(False)
         if all(finished):
             # Include newly written final checkpoints after the stability interval.
             time.sleep(120)
-            print(json.dumps(dict(final=True, transfers=archive_once(a.state_dir))), flush=True)
+            print(json.dumps(dict(final=True, transfers=archive_once(a.state_dir, a.cohort))), flush=True)
             break
         time.sleep(300)
 

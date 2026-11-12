@@ -4,7 +4,7 @@ TASKS = {t: 'AdroitHand' + t.title() + 'Sparse-v2'
 ROBOTICS_COMMIT = 'b8da02a89191daf8f004e7f7510ff655f7a90100'
 REFERENCE_COMMIT = 'ebdc46e59db1642902e0331c1e3aa662556c6553'
 PROFILES = {'e256-u025': (256, .25), 'e256-u1': (256, 1.), 'e64-u1': (64, 1.)}
-IBOLT_TEMPERATURES = (.05, .10, .25)
+IBOLT_TEMPERATURES = (.01, .05, .10, .25)
 
 
 def configuration(method, task, seed, profile, smoke=False, temperature=None):

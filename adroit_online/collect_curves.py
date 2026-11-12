@@ -16,6 +16,11 @@ def collect(root):
     if (root / 'priority-queue-state.json').exists():
         queue_path = root / 'priority-queue-state.json'
     result['queue'] = json.loads(queue_path.read_text())
+    extra = root / 'temp001-queue-state.json'
+    if extra.exists():
+        result['temp001'] = json.loads(extra.read_text())
+        assert not (result['queue']['jobs'].keys() & result['temp001']['jobs'].keys())
+        result['queue']['jobs'].update(result['temp001']['jobs'])
     recovery = root / 'recovery-queue-state.json'
     replacements = {}
     if recovery.exists():

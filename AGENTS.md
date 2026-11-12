@@ -34,6 +34,10 @@
   No further iBOLT starts on dilg-01; it becomes free of this study after the
   four existing learners finish. See `adroit_online/migration_5090.json` and the
   priority plan/queue/delegation records. Do not restart drained controllers.
+- Extension authorized 2026-11-12: add iBOLT temperature0.01, four native sparse
+  tasks x seeds4/5, preserving env256/UTD0.25/3M and all other scientific settings.
+  Use a separate queue on the existing5090 servers, preserve the running Hammer
+  T0.10 retry and baselines, and keep dilg-01 released. No additional temperatures.
 
 ## 실험 전체 중지 및 프로토콜 확정 대기 — 사용자 지시, 2026-11-12
 
