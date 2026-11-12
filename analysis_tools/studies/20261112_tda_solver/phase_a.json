@@ -1,0 +1,16 @@
+{
+  "n": 32768,
+  "samples": 32768,
+  "k": 15,
+  "sampling_seed": 0,
+  "latent_seed": 12345,
+  "fixture_atol": 0.00001,
+  "cases": [
+    {"env": "hopper", "seed": 3, "state": 6, "role": "large_far"},
+    {"env": "hopper", "seed": 3, "state": 28, "role": "negative_persistence"},
+    {"env": "hopper", "seed": 0, "state": 5, "role": "negative_other_seed"},
+    {"env": "humanoid", "seed": 3, "state": 21, "role": "large_far"},
+    {"env": "hopper", "seed": 1, "state": 0, "role": "control"},
+    {"env": "humanoid", "seed": 0, "state": 0, "role": "control"}
+  ]
+}
