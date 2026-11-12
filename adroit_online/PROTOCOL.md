@@ -393,3 +393,18 @@ authentication without printing credentials. Record provider responses and verif
 stopped status; a lost SSH connection alone is not proof of stopping. References:
 https://vast.ai/developers/api and the Vast Docker environment documentation at
 https://github.com/vast-ai/docs/blob/main/guides/instances/docker-environment.mdx.
+
+The laptop relay was measured at sub-MB/s throughput. `archive_direct.py` can
+transfer the same immutable files directly from each Vast host to dildata, using
+a separate local agent with a120-second lifetime and destination constraints for
+only these two hosts and the existing dildata account. Private keys stay local;
+no authorized_keys or SSH configuration changes. Pin known host keys and reuse
+the initially authenticated storage connection for the transfer and SHA256 check.
+Stop only the old local archive relay before a direct pass writes the same shard;
+preserve its inventory and all partial destination data. The direct pass advances
+inventory only after transfer success and checkpoint hash equality. Full final
+auditing and the stop-only completion gate above remain unchanged.
+Before resending an interrupted relay's files, compare existing destination
+sizes/SHA256 to the stable source; reuse exact matches and resend partial files.
+The separate T0.01 archive can be stopped once its covered files are incorporated
+into this canonical backup. Preserve all original files in both destinations.

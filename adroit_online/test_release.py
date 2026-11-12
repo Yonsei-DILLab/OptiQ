@@ -2,6 +2,7 @@
 import unittest
 from .release_monitor import ready
 from .release_audit import compare
+from .archive_direct import constraint_args, REMOTE
 
 
 class ReleaseTest(unittest.TestCase):
@@ -31,6 +32,12 @@ class ReleaseTest(unittest.TestCase):
                        dict(files={'checkpoints/final': dict(bytes=123, sha256='bad')}, missing=[])]:
             with self.assertRaises(AssertionError):
                 compare(source, stored)
+
+    def test_archive_agent_is_scoped_to_explicit_hop_and_storage(self):
+        self.assertEqual(constraint_args(['[175.155.64.205]:19159']), [
+            '-h', 'heejoonorm@[175.155.64.205]:19159',
+            '-h', '[175.155.64.205]:19159>heejoonorm@[dil.yonsei.ac.kr]:2200'])
+        compile(REMOTE, 'remote-archive', 'exec')
 
 
 if __name__ == '__main__':
