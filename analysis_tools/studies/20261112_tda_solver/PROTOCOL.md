@@ -85,3 +85,10 @@ Independently diagnose the supplied Hopper N=1024 fixtures (seed3 state6 and
 state28), at M=32768, on GPU1. These are exact supplied mixture parameters,
 not substitutes for the original N=32768 result; label them as small-N
 diagnostic cases. Use their original 64-state-bank indices to replay RNG.
+
+The Linux x86 repeat had the same ~3e-5 fixture discrepancy, so it is not
+explained by ARM alone. Test the original constant-capture JIT semantics:
+upstream extract.py closes over actor variables before jitting, whereas the
+first reconstruction supplied them as dynamic arguments. Keep the 1e-5 gate
+unchanged; preserve failed outputs and do not generate new mixtures until it
+passes.

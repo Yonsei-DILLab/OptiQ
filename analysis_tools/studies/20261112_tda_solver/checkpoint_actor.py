@@ -44,13 +44,16 @@ def forward(params, stats, obs, z):
 
 
 def evaluate(params, stats, states, z, batch=4096):
+    # Upstream extract.py closes over saved variables before jitting. Preserve
+    # that constant-folding graph rather than supplying parameters dynamically.
+    captured = jax.jit(lambda obs, zz: forward(params, stats, obs, zz))
     means, logstds = [], []
     for state in states:
         mm, ll = [], []
         for start in range(0, len(z), batch):
             zz = z[start:start+batch]
             obs = np.broadcast_to(state, (len(zz), len(state))).copy()
-            m, l = forward(params, stats, jnp.asarray(obs), jnp.asarray(zz))
+            m, l = captured(jnp.asarray(obs), jnp.asarray(zz))
             mm.append(np.asarray(m)); ll.append(np.asarray(l))
         means.append(np.concatenate(mm)); logstds.append(np.concatenate(ll))
     return np.stack(means), np.stack(logstds)
