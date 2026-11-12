@@ -17,7 +17,7 @@ def main():
     proofs=[]
     for case in cases:
         stem=f'{case["env"]}_s{case["seed"]}_state{case["state"]}_n32768_verified'
-        found=list(a.validation_root.glob(f'validation-ca3f7e1-gpu*/{stem}/result.json'))
+        found=list(a.validation_root.glob(f'validation-final-gpu*/{stem}/result.json'))
         if len(found)!=1:raise ValueError(('Validation result missing or ambiguous',case))
         result=json.loads(found[0].read_text())
         if not result['validation_passed'] or result['n']!=32768 or result['m']!=32768:

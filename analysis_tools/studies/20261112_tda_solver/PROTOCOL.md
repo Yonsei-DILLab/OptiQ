@@ -168,3 +168,22 @@ and immediately restores the reservation after completion/failure. It does
 not terminate other users' jobs. Keep source commit, child PIDs, commands and
 timestamps in status/job sidecars. The reservation is an explicitly requested
 resource-holding workload, not a scientific result or a training experiment.
+
+## Final candidate-root verification before the N/M gate
+
+All six initial runs had no unresolved assignments or negative persistence.
+Inspection found one Humanoid control peak represented twice, separated by
+1.585e-7 despite equal density, because both approximate endpoints met the
+1e-8 gradient tolerance but differed by more than the 1e-7 equality tolerance.
+Its K(.5/1/2) was unchanged (the duplicate had zero persistence). Refine only
+already-converged candidate maxima by local fp64 Newton steps (goal scaled
+gradient 1e-11; final acceptance 1e-10), then deduplicate at the unchanged
+1e-7 coordinate tolerance. Reject nonnegative curvature or a Newton step >1e-3
+instead of jumping. Sample ascent and its tolerances are unchanged.
+
+Revalidate all six cases under validation-final-gpu0/1 by reusing the identical
+converged endpoints with verified hashes and residuals, rebuilding all mode
+catalogs and graphs. Preserve the original endpoint archives and write derived
+metadata-bearing caches alongside the new results. Add a regression fixture
+for two converged approximations of one root. Gate the N/M pilot on these final
+six results, not the earlier unpolished candidate catalogs.

@@ -12,7 +12,7 @@ def main():
     for case in cases:
         stem=f'{case["env"]}_s{case["seed"]}_state{case["state"]}_n32768'
         old=next(a.runs.glob(f'validation-ca3f7e1-gpu*/{stem}_legacy'))
-        new=next(a.runs.glob(f'validation-ca3f7e1-gpu*/{stem}_verified'))
+        new=next(a.runs.glob(f'validation-final-gpu*/{stem}_verified'))
         before=json.loads((old/'diagnosis.json').read_text());after=json.loads((new/'result.json').read_text())
         mode=before['diagnostics'][1];graph=before['diagnostics'][2];fixed=after['events'][-1]
         row=dict(case,old_far=mode['far'],new_far=fixed['far'],old_modes=mode['modes'],new_modes=fixed['modes'],

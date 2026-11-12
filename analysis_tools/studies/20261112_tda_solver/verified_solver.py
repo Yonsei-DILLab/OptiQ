@@ -83,7 +83,7 @@ def verify(mix,x,grad_tol=1e-7,curvature_tol=1e-7):
     return torch.cat(accepted),torch.cat(residuals),torch.cat(curvatures)
 
 
-def catalog(mix,endpoints,dedup_tol=1e-7):
+def deduplicate(mix,endpoints,dedup_tol):
     # Greedy numerical equality after convergence; no coarse pre-ascent merge.
     order=torch.argsort(mix.logp(endpoints),descending=True)
     representatives=[]
@@ -98,8 +98,39 @@ def catalog(mix,endpoints,dedup_tol=1e-7):
         for i in range(len(x)):
             if not suppressed[i]:keep.append(i);suppressed|=adj[i]
         representatives.append(x[keep])
-    modes=torch.cat(representatives)
-    ok,res,curv=verify(mix,modes)
+    return torch.cat(representatives)
+
+
+def polish(mix,points,tol=1e-11,maxit=12):
+    """Refine already converged candidates to roots before testing equality.
+
+    This is a local numerical polish, not a shortcut for sample basin ascent.
+    Large steps or nonnegative curvature fail instead of jumping to a mode.
+    """
+    result=[]
+    for part in points.split(max(1,min(16,2_000_000//len(mix.mu)))):
+        x=part.clone();start_height=mix.logp(x)
+        for _ in range(maxit):
+            g,h,prec=mix.derivatives(x);scale=prec.sqrt();sg=g/scale
+            active=(x.abs()>=1-1e-12)&(sg*x.sign()>tol)
+            pg=sg.masked_fill(active,0)
+            if float(pg.abs().max())<=tol:break
+            hh=h/(scale[:,:,None]*scale[:,None,:]);free=(~active).double()
+            hh=hh*free[:,:,None]*free[:,None,:]-torch.diag_embed(1-free)
+            if bool((torch.linalg.eigvalsh(hh)[:,-1]>=-1e-7).any()):
+                raise RuntimeError('Candidate polish lacks negative curvature')
+            delta=-torch.linalg.solve(hh,pg[:,:,None]).squeeze(-1)/scale
+            if float(delta.abs().max())>1e-3:raise RuntimeError('Candidate requires more than local polishing')
+            x=(x+delta).clamp(-1,1)
+        if float((start_height-mix.logp(x)).max())>1e-7:raise RuntimeError('Candidate polish decreased density')
+        result.append(x)
+    return torch.cat(result)
+
+
+def catalog(mix,endpoints,dedup_tol=1e-7):
+    candidates=deduplicate(mix,endpoints,dedup_tol)
+    modes=deduplicate(mix,polish(mix,candidates),dedup_tol)
+    ok,res,curv=verify(mix,modes,grad_tol=1e-10)
     if not bool(ok.all()):
         raise RuntimeError(f'{int((~ok).sum())}/{len(ok)} candidates fail gradient/curvature verification; no forced fallback')
     return modes,dict(max_mode_residual=float(res.max()),maximum_scaled_eigenvalue=float(curv.max()))

@@ -81,6 +81,15 @@ class VerificationTests(unittest.TestCase):
             out=root/'invalid';out.mkdir()
             with self.assertRaises(ValueError):execute(SimpleNamespace(**base,out=out,limit=32,endpoints=wrong))
 
+    def test_nearby_approximations_polish_to_one_root(self):
+        # Both endpoints meet a scaled 1e-8 gradient tolerance, yet their
+        # coordinate separation exceeds the equality tolerance. They are one root.
+        mix=Mixture([[0.]],[[np.log(100.)]])
+        endpoints=torch.tensor([[-8e-8],[8e-8]],dtype=torch.float64)
+        self.assertTrue(bool(verify(mix,endpoints)[0].all()))
+        modes,info=catalog(mix,endpoints)
+        self.assertEqual(len(modes),1);self.assertLess(abs(float(modes[0,0])),1e-12)
+
 
 if __name__=='__main__':
     torch.set_num_threads(4)
