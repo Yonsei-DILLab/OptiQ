@@ -1,5 +1,21 @@
 # Repository instructions
 
+## Heejoon pure-online Adroit pilot — user instruction, 2026-11-12
+
+- This study uses branch `heejoon-rebuttal`, based on `heechan-rebuttal`.
+- Run only SAC and TD3 from scratch on native Adroit Sparse-v2, seeds4/5,
+  approximately3M interactions. Vary only environment count and UTD as recorded
+  in `adroit_online/PROTOCOL.md`; no iBOLT or alpha/noise sweep, no confirmation
+  seed0-3 jobs yet. Existing F1/A1 experiments are unrelated and remain untouched.
+- Use the two explicitly supplied servers `175.155.64.205:19159` and
+  `179.255.127.236:31020`, user `heejoonorm`, four GPUs each. The original
+  `203.75.167.56:42913` failed GPU device access and is excluded from this study.
+- Commit exact source/configuration/protocol/launch scripts before training;
+  record the full SHA and source manifest with run IDs. Archive data outside Git
+  to `dildata:/data1/heejoonorm/OptiQ/runs/adroit-online-20261112`.
+- New SAC uses the shared verified JAX implementation. Preserve the anonymous
+  separation rules below. Do not restart or alter other users' campaigns.
+
 ## 실험 전체 중지 및 프로토콜 확정 대기 — 사용자 지시, 2026-11-12
 
 - Fetch는 F1, Adroit는 A1을 기준으로 정리한다. 모든 신규 SAC는 검증된 JAX SAC를 사용한다.

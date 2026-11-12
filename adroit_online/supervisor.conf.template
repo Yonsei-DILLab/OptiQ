@@ -1,0 +1,15 @@
+[program:heejoon-adroit-online]
+directory=SOURCE_DIRECTORY
+command=PYTHON_EXECUTABLE -m adroit_online.controller --root RUN_ROOT --shard SHARD_ID --slots-per-gpu 2
+user=heejoonorm
+autostart=false
+autorestart=false
+startsecs=3
+stopasgroup=true
+killasgroup=true
+stopwaitsecs=30
+redirect_stderr=true
+stdout_logfile=RUN_ROOT/controller.log
+stdout_logfile_maxbytes=20MB
+stdout_logfile_backups=3
+environment=PYTHONUNBUFFERED="1",OMP_NUM_THREADS="1",OPENBLAS_NUM_THREADS="1"
