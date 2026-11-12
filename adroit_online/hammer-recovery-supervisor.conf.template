@@ -1,0 +1,14 @@
+[program:heejoon-adroit-hammer-recovery]
+directory=SOURCE_DIRECTORY
+command=RUN_ROOT/venv/bin/python -m adroit_online.hammer_recovery --root RUN_ROOT
+user=heejoonorm
+autostart=false
+autorestart=false
+startsecs=3
+stopasgroup=false
+killasgroup=false
+redirect_stderr=true
+stdout_logfile=RUN_ROOT/hammer-recovery-controller.log
+stdout_logfile_maxbytes=20MB
+stdout_logfile_backups=2
+environment=PYTHONUNBUFFERED="1",OMP_NUM_THREADS="1",OPENBLAS_NUM_THREADS="1",MKL_NUM_THREADS="1",NUMEXPR_NUM_THREADS="1"

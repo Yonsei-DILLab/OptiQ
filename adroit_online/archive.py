@@ -97,7 +97,10 @@ def main():
                     '-o', 'ConnectTimeout=15', f'heejoonorm@{host}',
                     'python3 -c ' + shlex.quote(
                         "from pathlib import Path; p=Path(%r); f=p/'priority-queue-state.json'; "
-                        "print((f if f.exists() else p/'queue-state.json').read_text())" % REMOTE_ROOT)], text=True,
+                        "import json; q=json.loads((f if f.exists() else p/'queue-state.json').read_text()); "
+                        "r=p/'recovery-queue-state.json'; "
+                        "q['jobs'].update(json.loads(r.read_text())['jobs'] if r.exists() else {}); "
+                        "print(json.dumps(q))" % REMOTE_ROOT)], text=True,
                     stderr=subprocess.DEVNULL)
                 jobs = json.loads(raw)['jobs']
                 finished.append(len(jobs) >= 24 and all(v['status'] in

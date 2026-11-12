@@ -16,6 +16,14 @@ def collect(root):
     if (root / 'priority-queue-state.json').exists():
         queue_path = root / 'priority-queue-state.json'
     result['queue'] = json.loads(queue_path.read_text())
+    recovery = root / 'recovery-queue-state.json'
+    replacements = {}
+    if recovery.exists():
+        result['recovery'] = json.loads(recovery.read_text())
+        for name, state in result['recovery']['jobs'].items():
+            result['queue']['jobs'][name] = state.copy()
+            if (Path(state['output']) / 'spec.json').exists():
+                replacements[name] = state['attempt_id']
     if (root / 'queue-delegation.json').exists():
         result['delegation'] = json.loads((root / 'queue-delegation.json').read_text())
         for name, destination in result['delegation']['jobs'].items():
@@ -23,17 +31,22 @@ def collect(root):
             assert state['status'] in ('pending', 'migrated')
             state.update(status='migrated', destination=destination)
     for run in sorted((root / 'runs').glob('*')):
+        if run.name in replacements:
+            continue  # Failed attempts remain on disk; never splice their curves.
         if not (run / 'spec.json').exists():
             continue
         raw_spec = (run / 'spec.json').read_bytes()
         spec = json.loads(raw_spec)
+        logical_name = next((n for n, attempt in replacements.items() if attempt == run.name), run.name)
         row = dict(spec=spec, spec_sha256=hashlib.sha256(raw_spec).hexdigest())
+        if logical_name != run.name:
+            row.update(attempt_id=run.name, logical_run_id=logical_name)
         for filename in ('progress.json', 'completed.json', 'error.json'):
             if (run / filename).exists():
                 row[filename] = json.loads((run / filename).read_text())
         pid = spec.get('pid')
         row['process_present'] = bool(pid and (Path('/proc') / str(pid)).exists())
-        result['status'][run.name] = row.copy()
+        result['status'][logical_name] = row.copy()
         if spec['profile'] != 'e256-u025':
             continue
         row['evaluations'] = []
@@ -66,7 +79,7 @@ def collect(root):
                 record['modes'][mode] = metrics
             assert record['primary'] in record['modes']
             row['evaluations'].append(record)
-        result['runs'][run.name] = row
+        result['runs'][logical_name] = row
     result['observed_unix'] = time.time()
     return result
 

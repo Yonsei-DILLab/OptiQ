@@ -219,3 +219,31 @@ Archive termination must use the authoritative priority queue, including migrate
 iBOLT jobs. Preserve original legacy queue files while their controllers live;
 after they exit, mirror the24 baseline statuses from the priority queue for
 compatibility. No keys or credentials are transferred as part of this migration.
+
+## Hammer CUDA failure recovery — user authorization, 2026-11-12
+
+The user explicitly requested diagnosing and rerunning Hammer seed4 T0.10.
+The first5090 attempt aborted at1,003,520 transitions with SIGABRT and JAX/PJRT
+CUDA_ERROR_ILLEGAL_ADDRESS. CUDA copy-stream errors do not identify the original
+faulting kernel. No host/cgroup OOM was recorded; kernel Xid logs are unavailable
+inside the container. Do not claim a proven compiler/driver defect without a repro.
+
+Preserve the failed folder and all original controller/learner processes. Use one
+explicit retry, `hammer-ibolt-s4-e256-u025-t010-retry1`, on shard0 GPU1's vacant
+iBOLT slot, CPUs72-79. Its separate `recovery-queue-state.json` overrides the
+logical run's failed status for reporting; retain the original queue as history.
+Before the retry, load the1,003,520 checkpoint into separate diagnostic processes:
+256 updates under Compute Sanitizer memcheck, then8,192 normal updates including
+DACER, repeated exact checkpoint round trips, and native evaluation. Diagnostic
+replay is newly collected native random transitions and is NOT a scientific resume.
+
+Only after both diagnostic processes pass, start the full original scientific
+configuration from scratch with seed4, fresh parameters, empty replay,3,000,064
+transitions. Intermediate replay/simulator state was not saved, so continuing the
+checkpoint would not preserve the intended experiment. No speculative changes to
+temperature, exploration, architecture, loss, environment, shared packages or
+drivers. A fresh CUDA process clears the aborted context; a successful retry alone
+does not prove the root cause. Full Python tracebacks/faulthandler aid a recurrence.
+No automatic second retry and no selection based on reward/success. Commit and
+manifest diagnostics, launch script and protocol before running them. Archive both
+attempts and recovery metadata to the same dildata campaign destination.
