@@ -378,9 +378,16 @@ unrelated GPU processes block stopping. Verify32 completed3,000,064-step runs pe
 host, expected update counts,1,000-episode final evaluations and final model/
 optimizer/replay files. Preserve all active learners and their original commits.
 
-Before stopping, finish a stable central archive and compare SHA256 manifests
-for all scientific outputs, checkpoints, failed attempts, source snapshots and
-logs. Keep credentials/venvs out of the archive; preserve runtime version metadata.
+Before stopping, finish a stable central archive of final models/optimizer state,
+evaluations, progress, failed-attempt evidence, source snapshots and logs, and
+compare SHA256 manifests. Keep credentials/venvs out of the archive; preserve
+runtime version metadata. Compute and preserve full source SHA256 inventories.
+The stop-only instruction retains the disks: large replay files and intermediate
+checkpoints may remain there if their full archive is still transferring when
+all experiments finish. Record this as an incomplete full backup, not as verified
+full archival. Prioritize the essential archive so idle GPUs are not kept running
+solely for slow replay transfers. Never delete the retained originals or destroy
+either instance; any future return still requires verified full data recovery.
 The older uncompressed backup relay may be replaced with the committed compressed
 relay, preserving its inventory and all source/destination files. Defer files
 modified in the last120 seconds to avoid live logs invalidating large transfers.
@@ -402,8 +409,8 @@ no authorized_keys or SSH configuration changes. Pin known host keys and reuse
 the initially authenticated storage connection for the transfer and SHA256 check.
 Stop only the old local archive relay before a direct pass writes the same shard;
 preserve its inventory and all partial destination data. The direct pass advances
-inventory only after transfer success and checkpoint hash equality. Full final
-auditing and the stop-only completion gate above remain unchanged.
+inventory only after transfer success and checkpoint hash equality. The full
+source hashing and stop-only completion gates above remain mandatory.
 Before resending an interrupted relay's files, compare existing destination
 sizes/SHA256 to the stable source; reuse exact matches and resend partial files.
 The separate T0.01 archive can be stopped once its covered files are incorporated

@@ -35,6 +35,8 @@ for top in root.iterdir():
  if top.is_dir() and not (top.name.startswith('source-') or top.name in ('runs','preflight','process-logs')):continue
  for f in (top.rglob('*') if top.is_dir() else [top]):
   if not f.is_file() or '__pycache__' in f.parts or f.suffix in ('.tmp','.pyc'):continue
+  if r.get('essential') and not top.name.startswith('source-') and 'checkpoints' in f.relative_to(root).parts:
+   if f.name not in ('policy-003000064.zip','actor_state_3000064.msgpack','critic_state_3000064.msgpack','auxiliary-state-003000064.pkl'):continue
   assert f.resolve().is_relative_to(root.resolve())
   s=f.stat()
   if now-s.st_mtime<120:continue
@@ -110,6 +112,7 @@ print(json.dumps(out))
    assert stored==hashes, 'Stored checkpoint hash mismatch'
   hashes.update({n:h for n,h in reused.items() if 'checkpoints/' in n})
   print(json.dumps(dict(instance=r['instance'],shard=shard,files=files,hashes=hashes,
+    scope='essential' if r.get('essential') else 'full',
     changed=len(changed),bytes=sum(files[n][0] for n in changed),destination=destination,
     verified_reused=len(reused),reused_bytes=sum(files[n][0] for n in reused),
     seconds=time.time()-start,finished_unix=time.time())),flush=True)
@@ -126,12 +129,13 @@ def constraint_args(names):
     return result
 
 
-def archive_one(server, state_dir, env, destination_keys, probe=False):
+def archive_one(server, state_dir, env, destination_keys, probe=False, essential=False):
     instance, host, port = server
     shard = 0 if instance == 60326900 else 1
     state = state_dir / f'shard{shard}.json'
     old = json.loads(state.read_text()) if state.exists() else {}
-    request = dict(instance=instance, old=old, known_hosts=destination_keys, probe=probe)
+    request = dict(instance=instance, old=old, known_hosts=destination_keys, probe=probe,
+                   essential=essential)
     command = ['ssh', '-S', 'none', '-A', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=15',
                '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=3',
                '-o', 'IdentityAgent=' + env['SSH_AUTH_SOCK'], '-p', str(port),
@@ -154,6 +158,7 @@ def archive_one(server, state_dir, env, destination_keys, probe=False):
 def main():
     p = argparse.ArgumentParser(); p.add_argument('--state-dir', type=Path, required=True)
     p.add_argument('--probe', action='store_true'); p.add_argument('--shard', type=int, choices=(0, 1))
+    p.add_argument('--essential', action='store_true')
     a = p.parse_args(); a.state_dir.mkdir(parents=True, exist_ok=True)
     servers = SERVERS if a.shard is None else [SERVERS[a.shard]]
     names = [f'[{s[1]}]:{s[2]}' for s in servers]
@@ -175,7 +180,7 @@ def main():
                             *constraints, str(Path.home() / '.ssh/id_ed25519')],
                            env=env, check=True, stdin=subprocess.DEVNULL, timeout=10)
             with ThreadPoolExecutor(max_workers=len(servers)) as pool:
-                list(pool.map(lambda s: archive_one(s, a.state_dir, env, keys[DESTINATION], a.probe), servers))
+                list(pool.map(lambda s: archive_one(s, a.state_dir, env, keys[DESTINATION], a.probe, a.essential), servers))
         finally:
             agent.terminate(); agent.wait(timeout=10)
 

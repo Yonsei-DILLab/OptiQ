@@ -1,7 +1,7 @@
 """A partial, unreachable, failed or busy instance never passes the release gate."""
 import unittest
 from .release_monitor import ready
-from .release_audit import compare
+from .release_audit import compare, essential_path
 from .archive_direct import constraint_args, REMOTE
 
 
@@ -38,6 +38,16 @@ class ReleaseTest(unittest.TestCase):
             '-h', 'heejoonorm@[175.155.64.205]:19159',
             '-h', '[175.155.64.205]:19159>heejoonorm@[dil.yonsei.ac.kr]:2200'])
         compile(REMOTE, 'remote-archive', 'exec')
+
+    def test_stop_only_archive_keeps_provenance_and_final_models(self):
+        for name in ('source-abc/checkpoints/fixture.pkl', 'runs/x/evaluations/final.json',
+                     'runs/x/checkpoints/policy-003000064.zip',
+                     'runs/x/checkpoints/actor_state_3000064.msgpack',
+                     'runs/x/checkpoints/critic_state_3000064.msgpack',
+                     'runs/x/checkpoints/auxiliary-state-003000064.pkl'):
+            self.assertTrue(essential_path(name))
+        self.assertFalse(essential_path('runs/x/checkpoints/final-replay.pkl'))
+        self.assertFalse(essential_path('runs/x/checkpoints/policy-000500224.zip'))
 
 
 if __name__ == '__main__':

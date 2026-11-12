@@ -57,17 +57,28 @@ def compare(source, stored):
                 bytes=sum(v['bytes'] for v in source['files'].values()))
 
 
-def audit_host(server, output):
+def essential_path(name):
+    p = Path(name)
+    return (p.parts[0].startswith('source-') or 'checkpoints' not in p.parts or
+            p.name in ('policy-003000064.zip', 'actor_state_3000064.msgpack',
+                       'critic_state_3000064.msgpack', 'auxiliary-state-003000064.pkl'))
+
+
+def audit_host(server, output, essential=False):
     instance, host, port = server; shard = 0 if instance == 60326900 else 1
     origin = [*SSH, '-p', str(port), 'heejoonorm@' + host]
     command = 'python3 -c ' + shlex.quote(HASH_CODE)
     source = json.loads(subprocess.check_output([*origin, command],
         input=json.dumps(dict(root=REMOTE_ROOT, stable=True, source_manifests=True)), text=True))
     (output / f'shard{shard}-source-hashes.json').write_text(json.dumps(source, indent=2) + '\n')
+    deferred = {n: v for n, v in source['files'].items() if essential and not essential_path(n)}
+    selected = {**source, 'files': {n: v for n, v in source['files'].items() if n not in deferred}}
     stored = json.loads(subprocess.check_output([*SSH, 'dildata', command],
-        input=json.dumps(dict(root=f'{STORAGE_ROOT}/shard{shard}', names=list(source['files']))), text=True))
+        input=json.dumps(dict(root=f'{STORAGE_ROOT}/shard{shard}', names=list(selected['files']))), text=True))
     (output / f'shard{shard}-stored-hashes.json').write_text(json.dumps(stored, indent=2) + '\n')
-    receipt = dict(compare(source, stored), instance_id=instance, shard=shard,
+    receipt = dict(compare(selected, stored), instance_id=instance, shard=shard,
+                   scope='essential' if essential else 'full',
+                   deferred_files=len(deferred), deferred_bytes=sum(v['bytes'] for v in deferred.values()),
                    destination=f'dildata:{STORAGE_ROOT}/shard{shard}', verified_unix=time.time())
     print(json.dumps(receipt), flush=True)
     return receipt
@@ -75,9 +86,13 @@ def audit_host(server, output):
 
 def main():
     p = argparse.ArgumentParser(); p.add_argument('--output', type=Path, required=True)
-    p.add_argument('--plan', type=Path, required=True); a = p.parse_args()
+    p.add_argument('--plan', type=Path, required=True)
+    p.add_argument('--essential', action='store_true'); a = p.parse_args()
     plan = json.loads(a.plan.read_text())
     assert plan['final_action'] == 'stop_only' and plan['destroy_authorized'] is False
+    if a.essential:
+        assert plan['preserve_instance_and_disk'] is True
+        assert plan.get('backup_gate') == 'essential_with_full_source_hash_manifest'
     a.output.mkdir(parents=True, exist_ok=True)
     code = Path(__file__).with_name('release_probe.py').read_text()
     with ThreadPoolExecutor(max_workers=2) as pool:
@@ -85,11 +100,13 @@ def main():
     assert ready(reports), 'Both instances must pass a fresh completion check'
     (a.output / 'completion-before-audit.json').write_text(json.dumps(reports, indent=2) + '\n')
     with ThreadPoolExecutor(max_workers=2) as pool:
-        receipts = list(pool.map(lambda server: audit_host(server, a.output), SERVERS))
+        receipts = list(pool.map(lambda server: audit_host(server, a.output, a.essential), SERVERS))
     with ThreadPoolExecutor(max_workers=2) as pool:
         final = list(pool.map(lambda server: snapshot(server, code), SERVERS))
     assert ready(final), 'Completion state changed during archival verification'
     result = dict(passed=True, final_action='stop_only', destroy_authorized=False,
+                  scope='essential' if a.essential else 'full',
+                  remaining_data_preserved_on_instance=a.essential,
                   verified_unix=time.time(), receipts=receipts, completion=final)
     (a.output / 'verified.json').write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps(dict(event='backup_verified', **{k:v for k,v in result.items() if k!='completion'})), flush=True)
