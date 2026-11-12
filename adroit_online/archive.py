@@ -89,6 +89,23 @@ def main():
             print(json.dumps(dict(time=time.time(), error=repr(error))), flush=True)
             if a.once: raise
         if a.once: break
+        finished = []
+        for host, port in SERVERS:
+            try:
+                raw = subprocess.check_output(['ssh', '-p', str(port), '-o', 'BatchMode=yes',
+                    '-o', 'ConnectTimeout=15', f'heejoonorm@{host}',
+                    'cat ' + shlex.quote(REMOTE_ROOT + '/queue-state.json')], text=True,
+                    stderr=subprocess.DEVNULL)
+                jobs = json.loads(raw)['jobs']
+                finished.append(len(jobs) == 24 and all(v['status'] in
+                    ('completed', 'failed', 'requires_review') for v in jobs.values()))
+            except Exception:
+                finished.append(False)
+        if all(finished):
+            # Include newly written final checkpoints after the stability interval.
+            time.sleep(120)
+            print(json.dumps(dict(final=True, transfers=archive_once(a.state_dir))), flush=True)
+            break
         time.sleep(300)
 
 
