@@ -130,3 +130,10 @@ seeds (zero maximum error). The prior reconstruction used NumPy leaves and
 an additional nested JIT boundary. Restore the Flax leaf types and one graph,
 retain the original formula, and expand the final gate to all 512 stored
 states per seed before generating the N=32768 mixtures. No gate relaxation.
+
+All 512 states in all five Hopper fixtures now reproduce exactly (mu, log_std,
+latent and alternate-batch errors all zero). The six N=32768 mixtures have
+been generated. Run run_validation_queue.py on GPU0 for case indices 0,1,2
+and GPU1 for indices 3,4,5, with independent queues. Each runs legacy then
+verified analysis on exactly the same saved CUDA-generated M=32768 actions.
+Do not start N/M convergence trials until all six validation cases pass.
