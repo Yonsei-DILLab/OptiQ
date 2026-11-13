@@ -85,7 +85,7 @@ Keep data/credentials/venvs out of Git. Preserve original server files; do not
 delete or claim complete backup before hashes verify. No new SAC/TD3, T0.01,
 Pen/Relocate, confirmation seeds0-3, temperature selection or other hosts.
 
-## Reviewed GPU1 recurrence and one fresh retry
+## Reviewed GPU1 recurrence and fresh retries
 
 Both GPUs0/1 passed integer arithmetic and the2,048-update Hammer T0.10 smoke.
 The full Hammer seed4 T0.25 on GPU1 nevertheless aborted at10,496 transitions
@@ -93,22 +93,30 @@ after192 completed updates: CUDA_ERROR_ILLEGAL_ADDRESS while setting CUDA graph
 kernel node parameters, with earlier XLA GEMM autotuning red-zone errors. The
 short smoke therefore did not establish durable GPU1 reliability. The lower-level
 cause remains unresolved; do not claim a confirmed hardware defect or a flag fix.
-The controller quarantined GPU1 for all subsequent starts. Preserve its still-live
-T0.05 peer and all other learners; do not reset the device or change shared wheels.
+The controller quarantined GPU1 for all subsequent starts. Initial review preserved
+the still-live T0.05 peer. Subsequent log inspection found56 red-zone errors in
+that peer as well, while the six full learners on GPUs0/2/3 had none. Stop only
+this verified T0.05 learner and its verified descendant processes with SIGTERM,
+recording PID/start ticks/commands and progress before/after. Preserve its outputs
+as an interrupted diagnostic-evidence attempt. Do not reset the device, change
+shared wheels, or stop any other learners. No further starts on GPU1.
 
-After reviewing this specific error, perform exactly one fresh full3M retry,
-hammer-ibolt-s4-e64-u1-t025-retry1, on GPU0. Keep the failed original as evidence,
-and use recovery-queue-state.json as the logical replacement in comparison.
+After reviewing these errors, perform one fresh full3M retry per affected run:
+hammer-ibolt-s4-e64-u1-t025-retry1 on GPU0 and
+hammer-ibolt-s4-e64-u1-t005-retry1 on GPU2. Keep both originals as evidence,
+and use recovery-queue-state.json as logical replacements in comparison.
 No replay/checkpoint/simulator resume: reset parameters/replay with the same seed.
 Before retry, require same-temperature env64 smoke, finite state and exact restore
-on GPU0. Verify scientific config equality and all numerical source hashes against
+on the assigned GPU. Verify scientific config equality and all numerical source hashes against
 the original34aaa0a40ad2aab1b326bbc74c103215cebfa16b snapshot. Record the new retry
 source and operation commit separately; never edit running snapshots.
 
-Use one additional operational slot on GPU0, CPUs64-71, bringing that GPU to at
-most3 learners and total concurrent learners back to8. At review, the existing
-two GPU0 learners used about2.1GiB of32GiB; require12GiB free and known peer PIDs
+Use one additional operational slot on GPU0, CPUs64-71, and on GPU2, CPUs72-79,
+bringing each to at most3 learners and total concurrent learners back to8.
+At review the existing two learners per GPU used about2.1GiB of32GiB;
+require12GiB free and known peer PIDs
 again at both admissions. CPU sets stay disjoint, four collection workers/run and
 all scientific settings stay unchanged. The original controller rejects the new
-peer as an unknown PID for further GPU0 starts, preserving its two-slot limit.
-No automatic repeat of this retry; preserve any new failure for review.
+peers as unknown PIDs for further starts on those GPUs, preserving its two-slot limit.
+No automatic repeat of either retry; preserve any new failure for review. The
+archive completion check must merge recovery state before deciding to exit.

@@ -23,7 +23,10 @@ def main():
             if a.once:
                 break
             command = ('python3 -c ' + shlex.quote(
-                'import json; print(open(' + repr(archive.REMOTE_ROOT + '/queue-state.json') + ').read())'))
+                'import json; from pathlib import Path; r=Path(' + repr(archive.REMOTE_ROOT) + '); '
+                'q=json.loads((r/"queue-state.json").read_text()); p=r/"recovery-queue-state.json"; '
+                'q["jobs"].update(json.loads(p.read_text())["jobs"] if p.exists() else {}); '
+                'print(json.dumps(q))'))
             raw = subprocess.check_output([*archive.SSH, '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=15',
                 '-p', '19159', 'heejoonorm@175.155.64.205', command], text=True)
             jobs = json.loads(raw)['jobs']
