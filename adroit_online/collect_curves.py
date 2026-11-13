@@ -10,7 +10,7 @@ from pathlib import Path
 import time
 
 
-def collect(root):
+def collect(root, profile='e256-u025'):
     result = dict(observed_start_unix=time.time(), root=str(root), runs={}, status={})
     queue_path = root / 'queue-state.json'
     if (root / 'priority-queue-state.json').exists():
@@ -52,7 +52,7 @@ def collect(root):
         pid = spec.get('pid')
         row['process_present'] = bool(pid and (Path('/proc') / str(pid)).exists())
         result['status'][logical_name] = row.copy()
-        if spec['profile'] != 'e256-u025':
+        if spec['profile'] != profile:
             continue
         row['evaluations'] = []
         for path in sorted((run / 'evaluations').glob('*.json')):
@@ -92,5 +92,6 @@ def collect(root):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('root', type=Path)
+    parser.add_argument('--profile', choices=('e256-u025', 'e256-u1', 'e64-u1'), default='e256-u025')
     args = parser.parse_args()
-    print(json.dumps(collect(args.root)))
+    print(json.dumps(collect(args.root, args.profile)))

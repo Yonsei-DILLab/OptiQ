@@ -29,7 +29,7 @@ root=Path(%r); now=time.time(); files={}; cohort=%r
 cohort_source=json.loads((root/'temp001-plan.json').read_text())['source_commit'] if cohort else None
 for top in root.iterdir():
  if top.name=='venv' or top.name=='setup': continue
- if top.is_dir() and not (top.name.startswith('source-') or top.name in ('runs','preflight','process-logs')): continue
+ if top.is_dir() and not (top.name.startswith('source-') or top.name in ('runs','preflight','process-logs','device-checks')): continue
  if cohort and top.name.startswith('source-') and top.name!='source-'+cohort_source: continue
  for f in (top.rglob('*') if top.is_dir() else [top]):
   if not f.is_file() or '__pycache__' in f.parts or f.suffix in ('.tmp','.pyc'): continue

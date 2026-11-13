@@ -1,0 +1,15 @@
+[program:heejoon-adroit-e64u1]
+directory=SOURCE_DIRECTORY
+command=/workspace/heejoon-adroit-online-20261112/venv/bin/python -m adroit_online.e64u1_controller --root RUN_ROOT
+user=heejoonorm
+autostart=false
+autorestart=false
+startsecs=3
+stopasgroup=false
+killasgroup=false
+stopwaitsecs=86400
+redirect_stderr=true
+stdout_logfile=RUN_ROOT/controller.log
+stdout_logfile_maxbytes=20MB
+stdout_logfile_backups=2
+environment=PYTHONUNBUFFERED="1",OMP_NUM_THREADS="1",OPENBLAS_NUM_THREADS="1",MKL_NUM_THREADS="1",NUMEXPR_NUM_THREADS="1"

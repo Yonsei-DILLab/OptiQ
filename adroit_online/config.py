@@ -30,9 +30,11 @@ def configuration(method, task, seed, profile, smoke=False, temperature=None):
     c['gradient_steps'] = int(n * utd)
     c['expected_updates'] = int((c['steps'] - c['warmup']) * utd)
     if method == 'ibolt':
-        assert profile == 'e256-u025', 'Only the current baseline profile is authorized for iBOLT'
         temperature = .25 if temperature is None else float(temperature)
         assert temperature in IBOLT_TEMPERATURES
+        assert profile == 'e256-u025' or (
+            profile == 'e64-u1' and task in ('door', 'hammer') and temperature in (.05, .10, .25)
+        ), 'iBOLT env64/UTD1 is authorized only for Door/Hammer at T0.05/0.10/0.25'
         for name in ('entropy', 'td3_exploration_std', 'policy_delay', 'target_policy_noise', 'target_noise_clip'):
             c.pop(name)
         c.update(temperature=temperature, num_policy_samples=64, proposals_per_policy_sample=1,

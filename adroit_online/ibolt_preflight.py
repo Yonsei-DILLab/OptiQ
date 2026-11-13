@@ -12,7 +12,7 @@ from .ibolt_allocation import wait_for_admission
 from .run import ROOT, atomic, source_provenance
 
 
-def worker(task, output, temperature):
+def worker(task, output, temperature, profile='e256-u025'):
     import jax
     import jax.numpy as jnp
     import numpy as np
@@ -25,7 +25,7 @@ def worker(task, output, temperature):
     assert jax.default_backend() == 'gpu'
     x = jnp.ones((512, 512))
     assert float((x @ x).block_until_ready()[0, 0]) == 512
-    c = configuration('ibolt', task, 4, 'e256-u025', smoke=True, temperature=temperature)
+    c = configuration('ibolt', task, 4, profile, smoke=True, temperature=temperature)
     output.mkdir(parents=True, exist_ok=False)
     env, paired = make_env(task), make_env(task)
     try:
@@ -54,7 +54,9 @@ def worker(task, output, temperature):
         assert model.replay_buffer.size() == 0
         assert not getattr(model.policy, 'evaluation_mu_only', False)
         atomic(output / 'environment-and-evaluation.json', dict(
-            passed=True, task=task, temperature=temperature, jax_devices=[str(d) for d in jax.devices()],
+            passed=True, task=task, temperature=temperature, profile=profile,
+            num_envs=c['num_envs'], gradient_steps=c['gradient_steps'],
+            jax_devices=[str(d) for d in jax.devices()],
             primary=report['primary'], evaluation_rng_preserved=True,
             empty_standard_replay=True, shapes=dict(observation=env.observation_space.shape,
                                                    action=env.action_space.shape)))
@@ -71,13 +73,15 @@ def main():
     p.add_argument('--root', type=Path, required=True)
     p.add_argument('--task', choices=tuple(TASKS))
     p.add_argument('--temperature', type=float, choices=IBOLT_TEMPERATURES, default=.25)
+    p.add_argument('--profile', choices=('e256-u025', 'e64-u1'), default='e256-u025')
     p.add_argument('--temperatures', type=float, nargs='+', choices=IBOLT_TEMPERATURES, default=[.25])
     p.add_argument('--peer-root', type=Path)
     a = p.parse_args()
     proof = source_provenance()
     if a.task:
-        worker(a.task, a.root, a.temperature)
+        worker(a.task, a.root, a.temperature, a.profile)
         return
+    assert a.profile == 'e256-u025', 'env64 preflight requires an explicit authorized task'
     a.root.mkdir(parents=True, exist_ok=True)
     attempt = a.root / time.strftime('attempt-%Y%m%dT%H%M%S', time.gmtime())
     attempt.mkdir(exist_ok=False)

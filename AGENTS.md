@@ -2,6 +2,13 @@
 
 ## Heejoon pure-online Adroit pilot — user instruction, 2026-11-12
 
+- Extension authorized 2026-11-13: launch exactly12 fresh iBOLT runs, Door/Hammer
+  x temperatures0.05/0.10/0.25 x seeds4/5, env64/UTD1 and3,000,064 transitions.
+  Use only heejoonorm@175.155.64.205:19159, a separate queue and immutable source.
+  Reuse completed SAC/TD3 env64/UTD1 baselines. Keep all other scientific settings.
+  This new request permits these starts after the earlier campaign's stop; do not
+  restart old queues, use dilg-01 or the other Vast instance, or destroy instances.
+  See adroit_online/E64U1_PROTOCOL.md for placement, validation and comparison.
 - This study uses branch `heejoon-rebuttal`, based on `heechan-rebuttal`.
 - Run only SAC and TD3 from scratch on native Adroit Sparse-v2, seeds4/5,
   approximately3M interactions. Vary only environment count and UTD as recorded
