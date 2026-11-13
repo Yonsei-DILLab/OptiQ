@@ -84,3 +84,31 @@ seed-specific plots and an audit against the verified old baseline index.
 Keep data/credentials/venvs out of Git. Preserve original server files; do not
 delete or claim complete backup before hashes verify. No new SAC/TD3, T0.01,
 Pen/Relocate, confirmation seeds0-3, temperature selection or other hosts.
+
+## Reviewed GPU1 recurrence and one fresh retry
+
+Both GPUs0/1 passed integer arithmetic and the2,048-update Hammer T0.10 smoke.
+The full Hammer seed4 T0.25 on GPU1 nevertheless aborted at10,496 transitions
+after192 completed updates: CUDA_ERROR_ILLEGAL_ADDRESS while setting CUDA graph
+kernel node parameters, with earlier XLA GEMM autotuning red-zone errors. The
+short smoke therefore did not establish durable GPU1 reliability. The lower-level
+cause remains unresolved; do not claim a confirmed hardware defect or a flag fix.
+The controller quarantined GPU1 for all subsequent starts. Preserve its still-live
+T0.05 peer and all other learners; do not reset the device or change shared wheels.
+
+After reviewing this specific error, perform exactly one fresh full3M retry,
+hammer-ibolt-s4-e64-u1-t025-retry1, on GPU0. Keep the failed original as evidence,
+and use recovery-queue-state.json as the logical replacement in comparison.
+No replay/checkpoint/simulator resume: reset parameters/replay with the same seed.
+Before retry, require same-temperature env64 smoke, finite state and exact restore
+on GPU0. Verify scientific config equality and all numerical source hashes against
+the original34aaa0a40ad2aab1b326bbc74c103215cebfa16b snapshot. Record the new retry
+source and operation commit separately; never edit running snapshots.
+
+Use one additional operational slot on GPU0, CPUs64-71, bringing that GPU to at
+most3 learners and total concurrent learners back to8. At review, the existing
+two GPU0 learners used about2.1GiB of32GiB; require12GiB free and known peer PIDs
+again at both admissions. CPU sets stay disjoint, four collection workers/run and
+all scientific settings stay unchanged. The original controller rejects the new
+peer as an unknown PID for further GPU0 starts, preserving its two-slot limit.
+No automatic repeat of this retry; preserve any new failure for review.
